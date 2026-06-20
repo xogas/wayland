@@ -1,0 +1,75 @@
+// font8x8 glyphs by https://github.com/dhepper/font8x8.
+// Bit 0 of each row byte is the leftmost pixel.
+
+package main
+
+const (
+	glyphWidth  = 8
+	glyphHeight = 8
+)
+
+var font = map[rune][8]byte{
+	' ': {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+	'!': {0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00},
+	',': {0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C, 0x06},
+	'H': {0x33, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x33, 0x00},
+	'W': {0x63, 0x63, 0x63, 0x6B, 0x7F, 0x77, 0x63, 0x00},
+	'a': {0x00, 0x00, 0x1E, 0x30, 0x3E, 0x33, 0x6E, 0x00},
+	'd': {0x38, 0x30, 0x30, 0x3e, 0x33, 0x33, 0x6E, 0x00},
+	'e': {0x00, 0x00, 0x1E, 0x33, 0x3f, 0x03, 0x1E, 0x00},
+	'l': {0x0E, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00},
+	'n': {0x00, 0x00, 0x1F, 0x33, 0x33, 0x33, 0x33, 0x00},
+	'o': {0x00, 0x00, 0x1E, 0x33, 0x33, 0x33, 0x1E, 0x00},
+	'y': {0x00, 0x00, 0x33, 0x33, 0x33, 0x3E, 0x30, 0x1F},
+}
+
+func textWidth(text string, scale int) int {
+	return len(text) * glyphWidth * scale
+}
+
+func textHeight(scale int) int {
+	return glyphHeight * scale
+}
+
+func drawText(dst []byte, stride, width, height int, text string, x, y, scale int, color uint32) {
+	r := byte(color >> 16)
+	g := byte(color >> 8)
+	b := byte(color)
+	penX := x
+	for _, ch := range text {
+		glyph, ok := font[ch]
+		if !ok {
+			penX += glyphWidth * scale
+			continue
+		}
+		for row := 0; row < glyphHeight; row++ {
+			bits := glyph[row]
+			if bits == 0 {
+				continue
+			}
+			for col := 0; col < glyphWidth; col++ {
+				if bits&(1<<col) == 0 {
+					continue
+				}
+				for dy := 0; dy < scale; dy++ {
+					py := y + row*scale + dy
+					if py < 0 || py >= height {
+						continue
+					}
+					for dx := 0; dx < scale; dx++ {
+						px := penX + col*scale + dx
+						if px < 0 || px >= width {
+							continue
+						}
+						o := py*stride + px*4
+						dst[o+0] = b
+						dst[o+1] = g
+						dst[o+2] = r
+						dst[o+3] = 0
+					}
+				}
+			}
+		}
+		penX += glyphWidth * scale
+	}
+}
