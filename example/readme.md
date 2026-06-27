@@ -35,3 +35,55 @@ go run ./example/helloworld
 ```
 
 无交互按键, 30 秒超时自动退出.
+
+## 渲染示例
+
+### simpleshm -- 双缓冲动画
+
+250x250 窗口, 绘制随时间变化的同心圆环动画. 演示双缓冲 (2 个 shm buffer + wl_buffer release 跟踪) 与 wl_surface.frame 回调驱动的动画循环.
+
+```sh
+go run ./example/simpleshm
+```
+
+无交互按键, 60 秒超时自动退出, 退出时打印帧率统计.
+
+### damage -- 增量 Damage 演示
+
+400x400 窗口, 小方块沿圆形轨迹移动. 使用 wl_surface.damage 或 damage_buffer (根据 compositor 版本) 仅刷新脏区域, 计算并打印实际 damage 面积占比.
+
+```sh
+go run ./example/damage
+```
+
+按 D 键切换增量 damage / 全量 damage 模式, 终端可见比率为 0.007 vs 1.0.
+
+### viewport -- wp_viewporter 裁剪与缩放
+
+512x512 大缓冲区, 通过 wp_viewport 设定 256x256 源矩形旋转描画区, 目标尺寸可调. 演示不重新 attach buffer 即改变显示区域.
+
+```sh
+go run ./example/viewport
+```
+
+空格暂停/恢复; -/= 缩小/放大目标尺寸.
+
+### presentation -- presentation-time 反馈
+
+256x256 窗口, 移动方块动画. 每帧通过 wp_presentation_feedback 获取呈现时间戳, 计算并打印 commit-to-present 延迟统计数据 (avg/min/max).
+
+```sh
+go run ./example/presentation
+```
+
+无交互按键, 每 60 帧打印一次延迟报告.
+
+### cube -- 软件渲染旋转 3D 立方体
+
+480x480 窗口, 纯 CPU 渲染: 透视投影、背面剔除、画家算法排序、扫描线三角形光栅化. 双缓冲 + frame 回调驱动.
+
+```sh
+go run ./example/cube
+```
+
+无交互按键, 60 秒超时, 退出时打印帧率.
