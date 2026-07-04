@@ -87,3 +87,35 @@ go run ./example/cube
 ```
 
 无交互按键, 60 秒超时, 退出时打印帧率.
+
+## 输入示例
+
+### eventdemo -- 统一输入事件查看器
+
+640x260 窗口, 内嵌完整 ASCII 32-126 字体. 实时打印 wl_keyboard (keymap/enter/leave/key/modifiers/repeat)、wl_pointer (enter/leave/motion/button/axis/wheel) 和 wl_touch (down/up/motion) 全部事件. 每次事件触发即重绘整个缓冲区 (演示简单实现, 非性能优化).
+
+```sh
+go run ./example/eventdemo
+```
+
+无交互按键, 60 秒超时, 使用输入设备即可看到窗口与终端的事件输出.
+
+### cursor -- 光标形状演示
+
+400x300 窗口, 支持两种光标模式: (A) 自绘十字光标 surface; (B) 通过 cursor-shape-v1 协议使用 compositor 内置光标.
+
+```sh
+go run ./example/cursor
+```
+
+1 切换到自绘光标模式 (A); 2 切换到 cursor-shape-v1 模式 (B); 在模式 B 中, 左/右方向键循环形状: default, pointer, crosshair, text, move, grab.
+
+### smoke -- 烟雾流体模拟
+
+400x400 窗口, Jos Stam 流体求解器. 鼠标移动搅动烟雾, 无操作时自动周期注入随机烟团.
+
+```sh
+go run ./example/smoke
+```
+
+鼠标移动搅动流体 (无点击), 60 秒超时.
