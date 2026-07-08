@@ -119,3 +119,45 @@ go run ./example/smoke
 ```
 
 鼠标移动搅动流体 (无点击), 60 秒超时.
+
+## 窗口管理示例
+
+### resizor -- 交互式窗口管理
+
+窗口支持指针拖拽移动/边缘拖拽缩放, 键盘切换最大化/全屏/最小化/手动调整大小. 绘制彩色边框指示当前状态 (activated/resizing/tiled 等). 可选 zxdg_decoration_manager_v1 请求 server-side decoration.
+
+```sh
+go run ./example/resizor
+```
+
+m 切换最大化; f 切换全屏; n 最小化; 上/下方向键增减窗口高度 (30px 步进); 鼠标左键拖拽窗口移动, 边缘拖拽窗口缩放; q 退出. 120 秒超时.
+
+### popup -- 右键菜单 + xdg_positioner
+
+400x300 窗口, 右键弹出自绘 160x100 三色菜单 (Item 1/2/3). 2 秒后自动弹出一个 popup, 3 秒后自动关闭. 演示 xdg_popup + xdg_positioner + grab 机制.
+
+```sh
+go run ./example/popup
+```
+
+右键弹出菜单; 左键点击菜单项选择 (终端打印选中项); 2 秒后自动弹窗演示.
+
+### subsurfaces -- 子表面动画
+
+400x400 主窗口 + 120x120 子表面, 子表面沿圆形轨迹移动, 演示 sync/desync 模式切换和 z-order 控制 (place_above/place_below).
+
+```sh
+go run ./example/subsurfaces
+```
+
+S 切换 sync/desync 模式; R 切换 place_above/place_below.
+
+### activation -- xdg-activation 焦点转移
+
+创建红蓝两个 300x200 窗口, 按 Tab 键通过 xdg_activation_v1 协议请求焦点在窗口间转移.
+
+```sh
+go run ./example/activation
+```
+
+Tab 键转移焦点 (当前焦点窗口 -> 另一窗口); 3 秒内无键盘输入则自动尝试激活窗口 B.
