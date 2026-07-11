@@ -161,3 +161,15 @@ go run ./example/activation
 ```
 
 Tab 键转移焦点 (当前焦点窗口 -> 另一窗口); 3 秒内无键盘输入则自动尝试激活窗口 B.
+
+## 数据交换示例
+
+### dnd -- 拖放与剪贴板
+
+500x300 窗口, 显示 4 个彩色方块. 左键拖动方块触发 drag-and-drop (发送颜色值 application/x-color); c/v 键通过 wl_data_device 实现剪贴板复制粘贴.
+
+```sh
+go run ./example/dnd
+```
+
+左键拖拽彩色方块 (开始 drag-and-drop); c 复制 (set_selection); v 粘贴 (receive). 120 秒超时.
