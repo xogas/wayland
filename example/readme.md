@@ -173,3 +173,15 @@ go run ./example/dnd
 ```
 
 左键拖拽彩色方块 (开始 drag-and-drop); c 复制 (set_selection); v 粘贴 (receive). 120 秒超时.
+
+## 媒体示例
+
+### imageviewer -- 图片查看器
+
+用 Go 标准库解码 PNG/JPEG/GIF 并显示在窗口中; 超过 1600x1000 的图片按比例缩小.
+
+```sh
+go run ./example/imageviewer <image-file>
+```
+
+无交互按键, 60 秒超时自动退出.
