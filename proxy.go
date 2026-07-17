@@ -106,14 +106,19 @@ func (p *Proxy) dispatchEvent(opcode uint16, r *wire.Reader) {
 	copy(handlers, p.events[opcode])
 	p.eventsMu.Unlock()
 
-	hasFDs := p.fdCountForOpcode(opcode) > 0
+	totalFDs := len(r.UnconsumedFDs())
+	maxConsumed := 0
 	for _, h := range handlers {
 		cr := r.Clone()
 		h(cr)
-		if hasFDs {
-			for _, fd := range cr.UnconsumedFDs() {
-				_ = syscall.Close(fd)
+		if totalFDs > 0 {
+			consumed := totalFDs - len(cr.UnconsumedFDs())
+			if consumed > maxConsumed {
+				maxConsumed = consumed
 			}
 		}
+	}
+	for _, fd := range r.UnconsumedFDs()[maxConsumed:] {
+		_ = syscall.Close(fd)
 	}
 }
