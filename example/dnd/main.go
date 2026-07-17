@@ -85,8 +85,11 @@ func writeAndClose(fd int, s string) {
 
 func readAndClose(fd int) string {
 	var buf [4096]byte
-	n, _ := syscall.Read(fd, buf[:])
+	n, err := syscall.Read(fd, buf[:])
 	_ = syscall.Close(fd)
+	if err != nil {
+		return ""
+	}
 	return string(buf[:n])
 }
 
@@ -409,8 +412,11 @@ func main() {
 				return
 			}
 			_ = syscall.Close(wfd)
-			_ = dpy.Flush()
-			_ = dpy.Roundtrip(ctx)
+			if err := dpy.Roundtrip(ctx); err != nil {
+				fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+				_ = syscall.Close(rfd)
+				return
+			}
 			data := readAndClose(rfd)
 			fmt.Printf("clipboard: paste mime=%q data=%q\n", mime, data)
 		}
@@ -543,8 +549,11 @@ func main() {
 			return
 		}
 		_ = syscall.Close(wfd)
-		_ = dpy.Flush()
-		_ = dpy.Roundtrip(ctx)
+		if err := dpy.Roundtrip(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+			_ = syscall.Close(rfd)
+			return
+		}
 		data := readAndClose(rfd)
 		fmt.Printf("dnd: drop data=%q\n", data)
 		if ddmVersion >= 3 {

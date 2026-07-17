@@ -17,19 +17,18 @@ import (
 )
 
 func fillRect(data []byte, stride int, x, y, w, h int, r, g, b byte) {
-	for row := y; row < y+h; row++ {
-		off := row*stride + x*4
-		for col := 0; col < w; col++ {
-			o := off + col*4
-			data[o+0] = b
-			data[o+1] = g
-			data[o+2] = r
-			data[o+3] = 0xFF
+	for dy := range h {
+		for dx := range w {
+			off := (y+dy)*stride + (x+dx)*4
+			data[off+0] = b
+			data[off+1] = g
+			data[off+2] = r
+			data[off+3] = 0xFF
 		}
 	}
 }
 
-func shmFile(size int64) (int, func(), error) {
+func shmFile(size int64) (fd int, closeFn func(), err error) {
 	f, err := os.CreateTemp("", "wayland-shm-*")
 	if err != nil {
 		return 0, nil, err

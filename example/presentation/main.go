@@ -328,7 +328,11 @@ func main() {
 			})
 
 			var ts syscall.Timespec
-			_, _, _ = syscall.Syscall(syscall.SYS_CLOCK_GETTIME, 1, uintptr(unsafe.Pointer(&ts)), 0)
+			_, _, e1 := syscall.Syscall(syscall.SYS_CLOCK_GETTIME, 1, uintptr(unsafe.Pointer(&ts)), 0)
+			if e1 != 0 {
+				fmt.Fprintf(os.Stderr, "clock_gettime: %v\n", e1)
+				return
+			}
 			commitNS := ts.Sec*1e9 + ts.Nsec
 
 			feedback, err := presentation.Feedback(wire.ObjectID(surface.Proxy().ID()))

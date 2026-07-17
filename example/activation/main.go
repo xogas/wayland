@@ -42,7 +42,7 @@ func fillBuf(data []byte, c [4]byte) {
 	}
 }
 
-func shmFile(size int64) (int, func(), error) {
+func shmFile(size int64) (fd int, closeFn func(), err error) {
 	f, err := os.CreateTemp("", "wayland-shm-*")
 	if err != nil {
 		return 0, nil, err

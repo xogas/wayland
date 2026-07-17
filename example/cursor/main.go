@@ -257,7 +257,7 @@ func main() {
 		cursorData[i+3] = 0x00
 	}
 	for x := range cursorSize {
-		off := hotspot*int32(cursorStride) + x*4
+		off := hotspot*cursorStride + x*4
 		cursorData[off+0] = 0xFF
 		cursorData[off+1] = 0xFF
 		cursorData[off+2] = 0xFF

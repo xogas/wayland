@@ -175,7 +175,7 @@ func redraw(surface *wayland.Surface, shm *wayland.Shm, w, h int32, states []xdg
 }
 
 func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-resizor-*")
+	f, err := os.CreateTemp("", "wayland-shm-*")
 	if err != nil {
 		return 0, nil, err
 	}
@@ -453,7 +453,9 @@ func main() {
 	}
 
 	if seat != nil {
-		_ = dpy.Roundtrip(ctx)
+		if err := dpy.Roundtrip(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "seat roundtrip: %v\n", err)
+		}
 	}
 
 	fmt.Printf("resizor: %dx%d, keys: m=Max f=Full n=Min Up/Dn=Resize q=Quit, mouse: drag=Move edge=Resize\n", winW, winH)

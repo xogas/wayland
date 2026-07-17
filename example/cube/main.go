@@ -350,7 +350,11 @@ func main() {
 	bi := <-freeBufs
 	clearBlack(bufData[bi])
 	renderCube(bufData[bi], 0, 0)
-	cb, _ := surface.Frame()
+	cb, err := surface.Frame()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "frame: %v\n", err)
+		return
+	}
 	cb.OnDone(func(ev wayland.CallbackDoneEvent) {
 		select {
 		case frameReady <- struct{}{}:
@@ -367,31 +371,22 @@ func main() {
 	fmt.Printf("cube: %dx%d, animating...\n", winW, winH)
 
 	for {
-		timer := time.NewTimer(time.Second)
 		select {
 		case <-shutdown:
-			timer.Stop()
 			goto report
 		case <-ctx.Done():
-			timer.Stop()
 			goto report
 		case <-frameReady:
-			timer.Stop()
-		case <-timer.C:
+		case <-time.After(time.Second):
 		}
 
-		timer = time.NewTimer(time.Second)
 		select {
 		case bi = <-freeBufs:
-			timer.Stop()
 		case <-shutdown:
-			timer.Stop()
 			goto report
 		case <-ctx.Done():
-			timer.Stop()
 			goto report
-		case <-timer.C:
-			timer.Stop()
+		case <-time.After(time.Second):
 			continue
 		}
 
@@ -399,7 +394,11 @@ func main() {
 		clearBlack(bufData[bi])
 		renderCube(bufData[bi], elapsed*speedY, elapsed*speedX)
 
-		cb, _ = surface.Frame()
+		cb, err = surface.Frame()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "frame: %v\n", err)
+			goto report
+		}
 		cb.OnDone(func(ev wayland.CallbackDoneEvent) {
 			select {
 			case frameReady <- struct{}{}:
