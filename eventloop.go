@@ -76,6 +76,7 @@ func (c *Conn) DispatchPending() error {
 }
 
 func (c *Conn) Flush() error {
+	// NOTE: no buffer, SendMessage writes directly to the socket
 	return nil
 }
 
