@@ -107,14 +107,14 @@ func main() {
 
 	dpy, err := wayland.Connect(ctx)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "wayland-info: connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "wayland-info: connect: %v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
 
 	reg, err := dpy.GetRegistry()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "wayland-info: get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "wayland-info: get_registry: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -124,7 +124,7 @@ func main() {
 	})
 
 	if err := dpy.Roundtrip(ctx); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -382,7 +382,7 @@ func main() {
 	}
 
 	if err := dpy.Roundtrip(ctx); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -416,7 +416,7 @@ func main() {
 
 	if needSecondRoundtrip {
 		if err := dpy.Roundtrip(ctx); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+			fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
 			os.Exit(1)
 		}
 	}
@@ -446,7 +446,7 @@ func printAll(w io.Writer, globals []wayland.RegistryGlobalEvent, cd *collectedD
 		if padSpaces < 0 {
 			padSpaces = 0
 		}
-		_, _ = fmt.Fprintf(w, "%s%*s version: %2d, name: %2d\n", padded, padSpaces, "", g.Version, g.Name)
+		fmt.Fprintf(w, "%s%*s version: %2d, name: %2d\n", padded, padSpaces, "", g.Version, g.Name)
 
 		printDetail(w, g, cd)
 	}
@@ -456,15 +456,15 @@ func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) 
 	switch g.Interface {
 	case wayland.InterfaceShm:
 		if len(cd.shmFormats) > 0 {
-			_, _ = fmt.Fprintf(w, "\tformats (fourcc):\n")
+			fmt.Fprintf(w, "\tformats (fourcc):\n")
 			for _, f := range cd.shmFormats {
 				switch f {
 				case 0:
-					_, _ = fmt.Fprintf(w, "\t%10d = '%s'\n", 0, "AR24")
+					fmt.Fprintf(w, "\t%10d = '%s'\n", 0, "AR24")
 				case 1:
-					_, _ = fmt.Fprintf(w, "\t%10d = '%s'\n", 1, "XR24")
+					fmt.Fprintf(w, "\t%10d = '%s'\n", 1, "XR24")
 				default:
-					_, _ = fmt.Fprintf(w, "\t0x%08x = '%s'\n", f, fourccStr(f))
+					fmt.Fprintf(w, "\t0x%08x = '%s'\n", f, fourccStr(f))
 				}
 			}
 		}
@@ -474,35 +474,35 @@ func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) 
 			return
 		}
 		if od.name != "" {
-			_, _ = fmt.Fprintf(w, "\tname: %s\n", od.name)
+			fmt.Fprintf(w, "\tname: %s\n", od.name)
 		}
 		if od.description != "" {
-			_, _ = fmt.Fprintf(w, "\tdescription: %s\n", od.description)
+			fmt.Fprintf(w, "\tdescription: %s\n", od.description)
 		}
-		_, _ = fmt.Fprintf(w, "\tx: %d, y: %d, scale: %d,\n", od.x, od.y, od.scale)
-		_, _ = fmt.Fprintf(w, "\tphysical_width: %d mm, physical_height: %d mm,\n", od.physW, od.physH)
-		_, _ = fmt.Fprintf(w, "\tmake: '%s', model: '%s',\n", od.make, od.model)
-		_, _ = fmt.Fprintf(w, "\tsubpixel_orientation: %s, output_transform: %s,\n",
+		fmt.Fprintf(w, "\tx: %d, y: %d, scale: %d,\n", od.x, od.y, od.scale)
+		fmt.Fprintf(w, "\tphysical_width: %d mm, physical_height: %d mm,\n", od.physW, od.physH)
+		fmt.Fprintf(w, "\tmake: '%s', model: '%s',\n", od.make, od.model)
+		fmt.Fprintf(w, "\tsubpixel_orientation: %s, output_transform: %s,\n",
 			subpixelName(od.subpixel), transformName(od.transform))
 		for _, m := range od.modes {
-			_, _ = fmt.Fprintf(w, "\tmode:\n")
-			_, _ = fmt.Fprintf(w, "\t\twidth: %d px, height: %d px, refresh: %.3f Hz,\n",
+			fmt.Fprintf(w, "\tmode:\n")
+			fmt.Fprintf(w, "\t\twidth: %d px, height: %d px, refresh: %.3f Hz,\n",
 				m.width, m.height, float64(m.refresh)/1000.0)
-			_, _ = fmt.Fprintf(w, "\t\tflags: %s\n", modeFlagString(m.flags))
+			fmt.Fprintf(w, "\t\tflags: %s\n", modeFlagString(m.flags))
 		}
 
 	case xdgoutputunstable.InterfaceOutputManagerV1:
 		for _, xi := range cd.xdgOutputs {
-			_, _ = fmt.Fprintf(w, "\txdg_output_v1\n")
-			_, _ = fmt.Fprintf(w, "\t\toutput: %d\n", xi.wlOutputName)
+			fmt.Fprintf(w, "\txdg_output_v1\n")
+			fmt.Fprintf(w, "\t\toutput: %d\n", xi.wlOutputName)
 			if xi.name != "" {
-				_, _ = fmt.Fprintf(w, "\t\tname: '%s'\n", xi.name)
+				fmt.Fprintf(w, "\t\tname: '%s'\n", xi.name)
 			}
 			if xi.description != "" {
-				_, _ = fmt.Fprintf(w, "\t\tdescription: '%s'\n", xi.description)
+				fmt.Fprintf(w, "\t\tdescription: '%s'\n", xi.description)
 			}
-			_, _ = fmt.Fprintf(w, "\t\tlogical_x: %d, logical_y: %d\n", xi.logX, xi.logY)
-			_, _ = fmt.Fprintf(w, "\t\tlogical_width: %d, logical_height: %d\n", xi.logW, xi.logH)
+			fmt.Fprintf(w, "\t\tlogical_x: %d, logical_y: %d\n", xi.logX, xi.logY)
+			fmt.Fprintf(w, "\t\tlogical_width: %d, logical_height: %d\n", xi.logW, xi.logH)
 		}
 
 	case wayland.InterfaceSeat:
@@ -511,12 +511,12 @@ func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) 
 			return
 		}
 		if sd.name != "" {
-			_, _ = fmt.Fprintf(w, "\tname: %s\n", sd.name)
+			fmt.Fprintf(w, "\tname: %s\n", sd.name)
 		}
-		_, _ = fmt.Fprintf(w, "\tcapabilities: %s\n", capabilitiesString(sd.capabilities))
+		fmt.Fprintf(w, "\tcapabilities: %s\n", capabilitiesString(sd.capabilities))
 		if sd.capabilities&uint32(wayland.SeatCapabilityKeyboard) != 0 {
-			_, _ = fmt.Fprintf(w, "\tkeyboard repeat rate: %d\n", sd.repeatRate)
-			_, _ = fmt.Fprintf(w, "\tkeyboard repeat delay: %d\n", sd.repeatDelay)
+			fmt.Fprintf(w, "\tkeyboard repeat rate: %d\n", sd.repeatRate)
+			fmt.Fprintf(w, "\tkeyboard repeat delay: %d\n", sd.repeatDelay)
 		}
 	case linuxdmabuf.InterfaceLinuxDmabufV1:
 		if cd.dmabuf == nil {
@@ -524,78 +524,78 @@ func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) 
 		}
 		if len(cd.dmabuf.mainDevice) >= 8 {
 			dev := binary.LittleEndian.Uint64(cd.dmabuf.mainDevice[:8])
-			_, _ = fmt.Fprintf(w, "\tmain device: 0x%X", dev)
+			fmt.Fprintf(w, "\tmain device: 0x%X", dev)
 			if p := devPath(dev); p != "" {
-				_, _ = fmt.Fprintf(w, " (%s)", p)
+				fmt.Fprintf(w, " (%s)", p)
 			}
-			_, _ = fmt.Fprintln(w)
+			fmt.Fprintln(w)
 		}
 		for _, t := range cd.dmabuf.tranches {
-			_, _ = fmt.Fprintf(w, "\ttranche\n")
+			fmt.Fprintf(w, "\ttranche\n")
 			if len(t.targetDevice) >= 8 {
 				dev := binary.LittleEndian.Uint64(t.targetDevice[:8])
-				_, _ = fmt.Fprintf(w, "\t\ttarget device: 0x%X", dev)
+				fmt.Fprintf(w, "\t\ttarget device: 0x%X", dev)
 				if p := devPath(dev); p != "" {
-					_, _ = fmt.Fprintf(w, " (%s)", p)
+					fmt.Fprintf(w, " (%s)", p)
 				}
-				_, _ = fmt.Fprintln(w)
+				fmt.Fprintln(w)
 			}
-			_, _ = fmt.Fprintf(w, "\t\tflags: %s\n", dmabufTrancheFlags(t.flags))
-			_, _ = fmt.Fprintf(w, "\t\tformats (fourcc) and modifiers (names):\n%s", t.formats)
+			fmt.Fprintf(w, "\t\tflags: %s\n", dmabufTrancheFlags(t.flags))
+			fmt.Fprintf(w, "\t\tformats (fourcc) and modifiers (names):\n%s", t.formats)
 		}
 	case presentationtime.InterfacePresentation:
 		clkName := "CLOCK_REALTIME"
 		if cd.presClockID == 1 {
 			clkName = "CLOCK_MONOTONIC"
 		}
-		_, _ = fmt.Fprintf(w, "\tpresentation clock id: %d (%s)\n", cd.presClockID, clkName)
+		fmt.Fprintf(w, "\tpresentation clock id: %d (%s)\n", cd.presClockID, clkName)
 	case drmlease.InterfaceDrmLeaseDeviceV1:
 		if cd.drmLeaseFd > 0 {
-			_, _ = fmt.Fprintf(w, "\tpath: %s\n", cd.drmLeasePath)
+			fmt.Fprintf(w, "\tpath: %s\n", cd.drmLeasePath)
 		}
 		for _, c := range cd.drmLeaseConn {
-			_, _ = fmt.Fprintf(w, "\tconnector: %s\n", c.name)
+			fmt.Fprintf(w, "\tconnector: %s\n", c.name)
 			if c.description != "" {
-				_, _ = fmt.Fprintf(w, "\t\tdescription: %s\n", c.description)
+				fmt.Fprintf(w, "\t\tdescription: %s\n", c.description)
 			}
-			_, _ = fmt.Fprintf(w, "\t\tconnector id: %d\n", c.connectorID)
+			fmt.Fprintf(w, "\t\tconnector id: %d\n", c.connectorID)
 		}
 	case colormanagement.InterfaceColorManagerV1:
 		if len(cd.cmIntents) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported rendering intents:\n")
+			fmt.Fprintf(w, "\tsupported rendering intents:\n")
 			for _, v := range cd.cmIntents {
-				_, _ = fmt.Fprintf(w, "\t\t%s\n", renderIntentName(v))
+				fmt.Fprintf(w, "\t\t%s\n", renderIntentName(v))
 			}
 		}
 		if len(cd.cmFeatures) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported features:\n")
+			fmt.Fprintf(w, "\tsupported features:\n")
 			for _, v := range cd.cmFeatures {
-				_, _ = fmt.Fprintf(w, "\t\t%s\n", cmFeatureName(v))
+				fmt.Fprintf(w, "\t\t%s\n", cmFeatureName(v))
 			}
 		}
 		if len(cd.cmTf) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported transfer functions:\n")
+			fmt.Fprintf(w, "\tsupported transfer functions:\n")
 			for _, v := range cd.cmTf {
-				_, _ = fmt.Fprintf(w, "\t\t%s\n", tfName(v))
+				fmt.Fprintf(w, "\t\t%s\n", tfName(v))
 			}
 		}
 		if len(cd.cmPrimaries) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported primaries:\n")
+			fmt.Fprintf(w, "\tsupported primaries:\n")
 			for _, v := range cd.cmPrimaries {
-				_, _ = fmt.Fprintf(w, "\t\t%s\n", primariesName(v))
+				fmt.Fprintf(w, "\t\t%s\n", primariesName(v))
 			}
 		}
 	case colorrepresentation.InterfaceColorRepresentationManagerV1:
 		if len(cd.crAlphaModes) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported alpha modes:\n")
+			fmt.Fprintf(w, "\tsupported alpha modes:\n")
 			for _, v := range cd.crAlphaModes {
-				_, _ = fmt.Fprintf(w, "\t\t%d\n", v)
+				fmt.Fprintf(w, "\t\t%d\n", v)
 			}
 		}
 		if len(cd.crCoeffAndRanges) > 0 {
-			_, _ = fmt.Fprintf(w, "\tsupported matrix coefficients and ranges:\n")
+			fmt.Fprintf(w, "\tsupported matrix coefficients and ranges:\n")
 			for _, cr := range cd.crCoeffAndRanges {
-				_, _ = fmt.Fprintf(w, "\t\tcoefficients: %d, range: %d\n", cr.coefficients, cr.rangeVal)
+				fmt.Fprintf(w, "\t\tcoefficients: %d, range: %d\n", cr.coefficients, cr.rangeVal)
 			}
 		}
 	}
