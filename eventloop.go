@@ -82,22 +82,29 @@ func (c *Conn) Flush() error {
 func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 	p := c.LookupProxy(objID)
 	if p == nil {
-		c.objectsMu.RLock()
+		c.objectsMu.Lock()
 		zombieFdCounts, isZombie := c.zombies[objID]
-		c.objectsMu.RUnlock()
+		var n int
 		if isZombie {
-			n := zombieFdCounts[opcode]
+			n = zombieFdCounts[opcode]
+			delete(zombieFdCounts, opcode)
+			if len(zombieFdCounts) == 0 {
+				delete(c.zombies, objID)
+			}
+		}
+		c.objectsMu.Unlock()
+		if isZombie {
 			if n > 0 {
 				fds := c.wc.TakeFDs(n)
 				for _, fd := range fds {
 					_ = syscall.Close(fd)
 				}
 			}
+			c.connMu.Lock()
+			logger := c.logger
+			c.connMu.Unlock()
+			logger.Warn("receiving event for unknown object", "id", objID, "opcode", opcode)
 		}
-		c.connMu.Lock()
-		logger := c.logger
-		c.connMu.Unlock()
-		logger.Warn("receiving event for unknown object", "id", objID, "opcode", opcode)
 		return
 	}
 	n := p.fdCountForOpcode(opcode)

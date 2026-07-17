@@ -741,9 +741,8 @@ func TestZombieFDClose(t *testing.T) {
 	if lp := conn.LookupProxy(proxyID); lp != nil {
 		t.Fatal("proxy should be removed after delete_id + dispatch")
 	}
-	_, isZombie := conn.zombies[proxyID]
-	if !isZombie {
-		t.Fatal("zombie entry should exist for fd-bearing deleted object")
+	if _, isZombie := conn.zombies[proxyID]; isZombie {
+		t.Fatal("zombie entry should be cleaned up after fd event is dispatched")
 	}
 
 	fds := conn.wc.TakeAllFDs()
