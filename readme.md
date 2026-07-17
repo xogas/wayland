@@ -1,27 +1,28 @@
 # wayland
 
-纯 Go 实现的 Wayland 客户端协议库, 零外部依赖 (仅标准库).
+A Wayland client protocol library in pure Go. Zero dependencies beyond the standard library.
 
 - wayland version: 1.25.0
 - wayland-protocols version: 1.49
 
-## 特性
+## Features
 
-- 完整的 wire 协议实现: Unix socket 通信, SCM_RIGHTS fd 传递
-- 核心协议 (wayland.xml) 全部接口绑定, 位于根包
-- 65+ 扩展协议绑定 (xdg-shell, viewporter, presentation-time 等), 按成熟度分层于 `protocol/`
-- 代码生成器 `wayland-scanner`: 从协议 XML 生成类型安全的 Go 绑定
-- 并发安全的事件分发, 正确的对象与 fd 生命周期管理
+- Complete wire protocol implementation: Unix socket I/O, `SCM_RIGHTS` fd passing
+- Core protocol (wayland.xml) bindings in the root `wayland` package — a single import
+- 65+ extension protocol bindings (xdg-shell, viewporter, presentation-time, and more), organized by stability tier under `protocol/`
+- Code generator `wayland-scanner`: produces type-safe Go bindings from protocol XML
+- Concurrency-safe event dispatch with proper object and fd lifecycle management
+- Generated comments: enum values, struct fields, and types carry the XML summaries inline
 
-## 安装
+## Install
 
 ```sh
 go get github.com/xogas/wayland
 ```
 
-## 快速开始
+## Quick start
 
-连接 compositor 并列出全部全局对象:
+Connect to the compositor and list all available globals:
 
 ```go
 package main
@@ -42,31 +43,46 @@ func main() {
     }
     defer dpy.Close()
 
+    var globals []wayland.RegistryGlobalEvent
     reg, _ := dpy.GetRegistry()
     reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-        fmt.Printf("%s (version %d)\n", ev.Interface, ev.Version)
+        globals = append(globals, ev)
     })
 
     dpy.Roundtrip(ctx)
+    for _, g := range globals {
+        fmt.Printf("%s (version %d)\n", g.Interface, g.Version)
+    }
 }
 ```
 
-更多示例见 [example/](./example/readme.md): 窗口创建, shm 渲染, 输入处理, 拖放, 子表面等 17 个可运行示例.
+More runnable examples in [example/](./example/readme.md): window creation, shm rendering, input handling, sub-surfaces, and more.
 
-## 代码生成
+## Code generation
 
-`*_gen.go` 文件由 wayland-scanner 生成, 不要手动修改:
+`*_gen.go` files are produced by `wayland-scanner`. Do not edit them by hand:
 
 ```sh
-make gen        # 重新生成核心协议与全部扩展协议
+make gen
 ```
 
-## 要求
+## Requirements
 
 - Linux
 - Go 1.26+
-- 运行中的 Wayland compositor (KWin, Mutter, Sway, Weston 等)
+- A running Wayland compositor (KWin, Mutter, Sway, Weston, etc.)
+
+## Packages at a glance
+
+| Package | Content |
+| :--- | :--- |
+| `github.com/xogas/wayland` | Connection management, core protocol bindings, runtime engine |
+| `github.com/xogas/wayland/wire` | Low-level message encoding, fd control, reader/writer |
+| `github.com/xogas/wayland/protocol/stable/*` | Stable extension protocols (xdg-shell, viewporter, linux-dmabuf, ...) |
+| `github.com/xogas/wayland/protocol/staging/*` | Staging protocols (fractional-scale, cursor-shape, tearing-control, ...) |
+| `github.com/xogas/wayland/protocol/unstable/*` | Unstable protocols (pointer-constraints, relative-pointer, text-input, ...) |
+| `github.com/xogas/wayland/protocol/experimental/*` | Experimental protocols |
 
 ## License
 
-The MIT License (MIT) - see [license](./license) for more details.
+MIT - see [license](./license) for details.
