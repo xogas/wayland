@@ -29,8 +29,10 @@ func runBatch(rootDir, outBase string) error {
 // genCore generates wayland.xml at the batch root into the root package.
 func genCore(rootDir, outBase string) error {
 	coreXML := filepath.Join(rootDir, "wayland.xml")
-	if _, err := os.Stat(coreXML); err != nil {
+	if _, err := os.Stat(coreXML); os.IsNotExist(err) {
 		return nil
+	} else if err != nil {
+		return fmt.Errorf("stat %s: %w", coreXML, err)
 	}
 	fmt.Println("=== wayland core ===")
 	proto, err := Parse(coreXML)
