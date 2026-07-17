@@ -166,15 +166,13 @@ func (d *Display) Roundtrip(ctx context.Context) error {
 		close(done)
 	})
 	for {
+		if err := d.Dispatch(ctx); err != nil {
+			return err
+		}
 		select {
 		case <-done:
 			return nil
-		case <-ctx.Done():
-			return ctx.Err()
 		default:
-		}
-		if err := d.Dispatch(ctx); err != nil {
-			return err
 		}
 	}
 }
