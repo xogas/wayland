@@ -144,6 +144,7 @@ func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 	o.proxy.RegisterEvent(FullscreenShellV1EventCapability, func(r *wire.Reader) {
 		var ev FullscreenShellV1CapabilityEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capability", "error", err)
 			return
 		}
 		fn(ev)

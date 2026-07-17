@@ -261,6 +261,7 @@ func (o *Keyboard) OnKeymap(fn KeyboardKeymapFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKeymap, func(r *wire.Reader) {
 		var ev KeyboardKeymapEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Keymap", "error", err)
 			return
 		}
 		fn(ev)
@@ -271,6 +272,7 @@ func (o *Keyboard) OnEnter(fn KeyboardEnterFunc) {
 	o.proxy.RegisterEvent(KeyboardEventEnter, func(r *wire.Reader) {
 		var ev KeyboardEnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -281,6 +283,7 @@ func (o *Keyboard) OnLeave(fn KeyboardLeaveFunc) {
 	o.proxy.RegisterEvent(KeyboardEventLeave, func(r *wire.Reader) {
 		var ev KeyboardLeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -291,6 +294,7 @@ func (o *Keyboard) OnKey(fn KeyboardKeyFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKey, func(r *wire.Reader) {
 		var ev KeyboardKeyEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Key", "error", err)
 			return
 		}
 		fn(ev)
@@ -301,6 +305,7 @@ func (o *Keyboard) OnModifiers(fn KeyboardModifiersFunc) {
 	o.proxy.RegisterEvent(KeyboardEventModifiers, func(r *wire.Reader) {
 		var ev KeyboardModifiersEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modifiers", "error", err)
 			return
 		}
 		fn(ev)
@@ -311,6 +316,7 @@ func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 	o.proxy.RegisterEvent(KeyboardEventRepeatInfo, func(r *wire.Reader) {
 		var ev KeyboardRepeatInfoEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "RepeatInfo", "error", err)
 			return
 		}
 		fn(ev)

@@ -145,6 +145,7 @@ func (o *Seat) OnCapabilities(fn SeatCapabilitiesFunc) {
 	o.proxy.RegisterEvent(SeatEventCapabilities, func(r *wire.Reader) {
 		var ev SeatCapabilitiesEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
 			return
 		}
 		fn(ev)
@@ -155,6 +156,7 @@ func (o *Seat) OnName(fn SeatNameFunc) {
 	o.proxy.RegisterEvent(SeatEventName, func(r *wire.Reader) {
 		var ev SeatNameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
 			return
 		}
 		fn(ev)

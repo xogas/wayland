@@ -74,6 +74,7 @@ func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(ToplevelSessionV1EventRestored, func(r *wire.Reader) {
 		var ev ToplevelSessionV1RestoredEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Restored", "error", err)
 			return
 		}
 		fn(ev)

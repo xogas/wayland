@@ -116,6 +116,7 @@ func (o *ToplevelDecorationV1) OnConfigure(fn ToplevelDecorationV1ConfigureFunc)
 	o.proxy.RegisterEvent(ToplevelDecorationV1EventConfigure, func(r *wire.Reader) {
 		var ev ToplevelDecorationV1ConfigureEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
 		fn(ev)

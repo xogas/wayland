@@ -72,6 +72,7 @@ func (o *IDleNotificationV1) OnIDled(fn IDleNotificationV1IDledFunc) {
 	o.proxy.RegisterEvent(IDleNotificationV1EventIDled, func(r *wire.Reader) {
 		var ev IDleNotificationV1IDledEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IDled", "error", err)
 			return
 		}
 		fn(ev)
@@ -82,6 +83,7 @@ func (o *IDleNotificationV1) OnResumed(fn IDleNotificationV1ResumedFunc) {
 	o.proxy.RegisterEvent(IDleNotificationV1EventResumed, func(r *wire.Reader) {
 		var ev IDleNotificationV1ResumedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Resumed", "error", err)
 			return
 		}
 		fn(ev)

@@ -111,6 +111,7 @@ func (o *Registry) OnGlobal(fn RegistryGlobalFunc) {
 	o.proxy.RegisterEvent(RegistryEventGlobal, func(r *wire.Reader) {
 		var ev RegistryGlobalEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Global", "error", err)
 			return
 		}
 		fn(ev)
@@ -121,6 +122,7 @@ func (o *Registry) OnGlobalRemove(fn RegistryGlobalRemoveFunc) {
 	o.proxy.RegisterEvent(RegistryEventGlobalRemove, func(r *wire.Reader) {
 		var ev RegistryGlobalRemoveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "GlobalRemove", "error", err)
 			return
 		}
 		fn(ev)

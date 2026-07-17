@@ -202,6 +202,7 @@ func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventSize, func(r *wire.Reader) {
 		var ev ZoneV1SizeEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Size", "error", err)
 			return
 		}
 		fn(ev)
@@ -212,6 +213,7 @@ func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventHandle, func(r *wire.Reader) {
 		var ev ZoneV1HandleEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Handle", "error", err)
 			return
 		}
 		fn(ev)
@@ -222,6 +224,7 @@ func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventDone, func(r *wire.Reader) {
 		var ev ZoneV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -232,6 +235,7 @@ func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemBlocked, func(r *wire.Reader) {
 		var ev ZoneV1ItemBlockedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemBlocked", "error", err)
 			return
 		}
 		fn(ev)
@@ -242,6 +246,7 @@ func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemEntered, func(r *wire.Reader) {
 		var ev ZoneV1ItemEnteredEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemEntered", "error", err)
 			return
 		}
 		fn(ev)
@@ -252,6 +257,7 @@ func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemLeft, func(r *wire.Reader) {
 		var ev ZoneV1ItemLeftEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemLeft", "error", err)
 			return
 		}
 		fn(ev)

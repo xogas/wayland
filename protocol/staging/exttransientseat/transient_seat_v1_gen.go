@@ -78,6 +78,7 @@ func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventReady, func(r *wire.Reader) {
 		var ev TransientSeatV1ReadyEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
 			return
 		}
 		fn(ev)
@@ -88,6 +89,7 @@ func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventDenied, func(r *wire.Reader) {
 		var ev TransientSeatV1DeniedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Denied", "error", err)
 			return
 		}
 		fn(ev)

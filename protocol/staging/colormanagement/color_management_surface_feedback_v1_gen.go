@@ -139,6 +139,7 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagement
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredChanged", "error", err)
 			return
 		}
 		fn(ev)
@@ -149,6 +150,7 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagemen
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged2, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChanged2Event
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredChanged2", "error", err)
 			return
 		}
 		fn(ev)

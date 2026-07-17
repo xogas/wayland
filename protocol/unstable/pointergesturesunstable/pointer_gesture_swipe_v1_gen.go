@@ -148,6 +148,7 @@ func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1BeginEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Begin", "error", err)
 			return
 		}
 		fn(ev)
@@ -158,6 +159,7 @@ func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventUpdate, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1UpdateEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Update", "error", err)
 			return
 		}
 		fn(ev)
@@ -168,6 +170,7 @@ func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1EndEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "End", "error", err)
 			return
 		}
 		fn(ev)

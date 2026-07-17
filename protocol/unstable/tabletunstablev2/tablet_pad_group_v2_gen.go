@@ -170,6 +170,7 @@ func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ButtonsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Buttons", "error", err)
 			return
 		}
 		fn(ev)
@@ -180,6 +181,7 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventRing, func(r *wire.Reader) {
 		var ev TabletPadGroupV2RingEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ring", "error", err)
 			return
 		}
 		fn(ev)
@@ -190,6 +192,7 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventStrip, func(r *wire.Reader) {
 		var ev TabletPadGroupV2StripEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Strip", "error", err)
 			return
 		}
 		fn(ev)
@@ -200,6 +203,7 @@ func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModes, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModesEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modes", "error", err)
 			return
 		}
 		fn(ev)
@@ -210,6 +214,7 @@ func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadGroupV2DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -220,6 +225,7 @@ func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModeSwitch, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModeSwitchEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModeSwitch", "error", err)
 			return
 		}
 		fn(ev)

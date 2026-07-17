@@ -452,6 +452,7 @@ func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventEnter, func(r *wire.Reader) {
 		var ev TextInputV3EnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -462,6 +463,7 @@ func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLeave, func(r *wire.Reader) {
 		var ev TextInputV3LeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -472,6 +474,7 @@ func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV3PreeditStringEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditString", "error", err)
 			return
 		}
 		fn(ev)
@@ -482,6 +485,7 @@ func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV3CommitStringEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitString", "error", err)
 			return
 		}
 		fn(ev)
@@ -492,6 +496,7 @@ func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTex
 	o.proxy.RegisterEvent(TextInputV3EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV3DeleteSurroundingTextEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteSurroundingText", "error", err)
 			return
 		}
 		fn(ev)
@@ -502,6 +507,7 @@ func (o *TextInputV3) OnMoveCursor(fn TextInputV3MoveCursorFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventMoveCursor, func(r *wire.Reader) {
 		var ev TextInputV3MoveCursorEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "MoveCursor", "error", err)
 			return
 		}
 		fn(ev)
@@ -512,6 +518,7 @@ func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDone, func(r *wire.Reader) {
 		var ev TextInputV3DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -522,6 +529,7 @@ func (o *TextInputV3) OnPerformAction(fn TextInputV3PerformActionFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPerformAction, func(r *wire.Reader) {
 		var ev TextInputV3PerformActionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PerformAction", "error", err)
 			return
 		}
 		fn(ev)

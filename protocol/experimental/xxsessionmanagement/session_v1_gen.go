@@ -160,6 +160,7 @@ func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventCreated, func(r *wire.Reader) {
 		var ev SessionV1CreatedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Created", "error", err)
 			return
 		}
 		fn(ev)
@@ -170,6 +171,7 @@ func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(SessionV1EventRestored, func(r *wire.Reader) {
 		var ev SessionV1RestoredEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Restored", "error", err)
 			return
 		}
 		fn(ev)
@@ -180,6 +182,7 @@ func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventReplaced, func(r *wire.Reader) {
 		var ev SessionV1ReplacedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Replaced", "error", err)
 			return
 		}
 		fn(ev)

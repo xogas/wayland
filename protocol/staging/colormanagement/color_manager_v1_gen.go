@@ -368,6 +368,7 @@ func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc)
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedIntent, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedIntentEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedIntent", "error", err)
 			return
 		}
 		fn(ev)
@@ -378,6 +379,7 @@ func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFun
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedFeature, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedFeatureEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedFeature", "error", err)
 			return
 		}
 		fn(ev)
@@ -388,6 +390,7 @@ func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFun
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedTfNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedTfNamedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedTfNamed", "error", err)
 			return
 		}
 		fn(ev)
@@ -398,6 +401,7 @@ func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPri
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedPrimariesNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedPrimariesNamedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedPrimariesNamed", "error", err)
 			return
 		}
 		fn(ev)
@@ -408,6 +412,7 @@ func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorManagerV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)

@@ -135,6 +135,7 @@ func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDrmFd, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DrmFdEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DrmFd", "error", err)
 			return
 		}
 		fn(ev)
@@ -145,6 +146,7 @@ func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventConnector, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ConnectorEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Connector", "error", err)
 			return
 		}
 		fn(ev)
@@ -155,6 +157,7 @@ func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDone, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -165,6 +168,7 @@ func (o *DrmLeaseDeviceV1) OnReleased(fn DrmLeaseDeviceV1ReleasedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventReleased, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ReleasedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Released", "error", err)
 			return
 		}
 		fn(ev)

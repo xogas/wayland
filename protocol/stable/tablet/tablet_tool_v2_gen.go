@@ -519,6 +519,7 @@ func (o *TabletToolV2) OnType(fn TabletToolV2TypeFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventType, func(r *wire.Reader) {
 		var ev TabletToolV2TypeEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Type", "error", err)
 			return
 		}
 		fn(ev)
@@ -529,6 +530,7 @@ func (o *TabletToolV2) OnHardwareSerial(fn TabletToolV2HardwareSerialFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventHardwareSerial, func(r *wire.Reader) {
 		var ev TabletToolV2HardwareSerialEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "HardwareSerial", "error", err)
 			return
 		}
 		fn(ev)
@@ -539,6 +541,7 @@ func (o *TabletToolV2) OnHardwareIDWacom(fn TabletToolV2HardwareIDWacomFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventHardwareIDWacom, func(r *wire.Reader) {
 		var ev TabletToolV2HardwareIDWacomEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "HardwareIDWacom", "error", err)
 			return
 		}
 		fn(ev)
@@ -549,6 +552,7 @@ func (o *TabletToolV2) OnCapability(fn TabletToolV2CapabilityFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventCapability, func(r *wire.Reader) {
 		var ev TabletToolV2CapabilityEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capability", "error", err)
 			return
 		}
 		fn(ev)
@@ -559,6 +563,7 @@ func (o *TabletToolV2) OnDone(fn TabletToolV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventDone, func(r *wire.Reader) {
 		var ev TabletToolV2DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -569,6 +574,7 @@ func (o *TabletToolV2) OnRemoved(fn TabletToolV2RemovedFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventRemoved, func(r *wire.Reader) {
 		var ev TabletToolV2RemovedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
 			return
 		}
 		fn(ev)
@@ -579,6 +585,7 @@ func (o *TabletToolV2) OnProximityIn(fn TabletToolV2ProximityInFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventProximityIn, func(r *wire.Reader) {
 		var ev TabletToolV2ProximityInEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ProximityIn", "error", err)
 			return
 		}
 		fn(ev)
@@ -589,6 +596,7 @@ func (o *TabletToolV2) OnProximityOut(fn TabletToolV2ProximityOutFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventProximityOut, func(r *wire.Reader) {
 		var ev TabletToolV2ProximityOutEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ProximityOut", "error", err)
 			return
 		}
 		fn(ev)
@@ -599,6 +607,7 @@ func (o *TabletToolV2) OnDown(fn TabletToolV2DownFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventDown, func(r *wire.Reader) {
 		var ev TabletToolV2DownEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Down", "error", err)
 			return
 		}
 		fn(ev)
@@ -609,6 +618,7 @@ func (o *TabletToolV2) OnUp(fn TabletToolV2UpFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventUp, func(r *wire.Reader) {
 		var ev TabletToolV2UpEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Up", "error", err)
 			return
 		}
 		fn(ev)
@@ -619,6 +629,7 @@ func (o *TabletToolV2) OnMotion(fn TabletToolV2MotionFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventMotion, func(r *wire.Reader) {
 		var ev TabletToolV2MotionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
 			return
 		}
 		fn(ev)
@@ -629,6 +640,7 @@ func (o *TabletToolV2) OnPressure(fn TabletToolV2PressureFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventPressure, func(r *wire.Reader) {
 		var ev TabletToolV2PressureEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Pressure", "error", err)
 			return
 		}
 		fn(ev)
@@ -639,6 +651,7 @@ func (o *TabletToolV2) OnDistance(fn TabletToolV2DistanceFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventDistance, func(r *wire.Reader) {
 		var ev TabletToolV2DistanceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Distance", "error", err)
 			return
 		}
 		fn(ev)
@@ -649,6 +662,7 @@ func (o *TabletToolV2) OnTilt(fn TabletToolV2TiltFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventTilt, func(r *wire.Reader) {
 		var ev TabletToolV2TiltEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Tilt", "error", err)
 			return
 		}
 		fn(ev)
@@ -659,6 +673,7 @@ func (o *TabletToolV2) OnRotation(fn TabletToolV2RotationFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventRotation, func(r *wire.Reader) {
 		var ev TabletToolV2RotationEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Rotation", "error", err)
 			return
 		}
 		fn(ev)
@@ -669,6 +684,7 @@ func (o *TabletToolV2) OnSlider(fn TabletToolV2SliderFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventSlider, func(r *wire.Reader) {
 		var ev TabletToolV2SliderEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Slider", "error", err)
 			return
 		}
 		fn(ev)
@@ -679,6 +695,7 @@ func (o *TabletToolV2) OnWheel(fn TabletToolV2WheelFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventWheel, func(r *wire.Reader) {
 		var ev TabletToolV2WheelEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Wheel", "error", err)
 			return
 		}
 		fn(ev)
@@ -689,6 +706,7 @@ func (o *TabletToolV2) OnButton(fn TabletToolV2ButtonFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventButton, func(r *wire.Reader) {
 		var ev TabletToolV2ButtonEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
 			return
 		}
 		fn(ev)
@@ -699,6 +717,7 @@ func (o *TabletToolV2) OnFrame(fn TabletToolV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletToolV2EventFrame, func(r *wire.Reader) {
 		var ev TabletToolV2FrameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
 		fn(ev)

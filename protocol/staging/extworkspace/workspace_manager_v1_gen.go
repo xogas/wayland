@@ -126,6 +126,7 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspaceGroup, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceGroupEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceGroup", "error", err)
 			return
 		}
 		fn(ev)
@@ -136,6 +137,7 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspace, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Workspace", "error", err)
 			return
 		}
 		fn(ev)
@@ -146,6 +148,7 @@ func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventDone, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -156,6 +159,7 @@ func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventFinished, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1FinishedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
 		fn(ev)

@@ -122,6 +122,7 @@ func (o *SessionLockV1) OnLocked(fn SessionLockV1LockedFunc) {
 	o.proxy.RegisterEvent(SessionLockV1EventLocked, func(r *wire.Reader) {
 		var ev SessionLockV1LockedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Locked", "error", err)
 			return
 		}
 		fn(ev)
@@ -132,6 +133,7 @@ func (o *SessionLockV1) OnFinished(fn SessionLockV1FinishedFunc) {
 	o.proxy.RegisterEvent(SessionLockV1EventFinished, func(r *wire.Reader) {
 		var ev SessionLockV1FinishedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
 		fn(ev)

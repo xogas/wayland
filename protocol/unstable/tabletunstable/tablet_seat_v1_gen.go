@@ -84,6 +84,7 @@ func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1TabletAddedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TabletAdded", "error", err)
 			return
 		}
 		fn(ev)
@@ -94,6 +95,7 @@ func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1ToolAddedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ToolAdded", "error", err)
 			return
 		}
 		fn(ev)

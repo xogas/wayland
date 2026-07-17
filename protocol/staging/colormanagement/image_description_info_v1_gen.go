@@ -376,6 +376,7 @@ func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventDone, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -386,6 +387,7 @@ func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc)
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventIccFile, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1IccFileEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IccFile", "error", err)
 			return
 		}
 		fn(ev)
@@ -396,6 +398,7 @@ func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesF
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Primaries", "error", err)
 			return
 		}
 		fn(ev)
@@ -406,6 +409,7 @@ func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1Prima
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimariesNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesNamedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PrimariesNamed", "error", err)
 			return
 		}
 		fn(ev)
@@ -416,6 +420,7 @@ func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc)
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfPower, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfPowerEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TfPower", "error", err)
 			return
 		}
 		fn(ev)
@@ -426,6 +431,7 @@ func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc)
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfNamedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TfNamed", "error", err)
 			return
 		}
 		fn(ev)
@@ -436,6 +442,7 @@ func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1Luminance
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventLuminances, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1LuminancesEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Luminances", "error", err)
 			return
 		}
 		fn(ev)
@@ -446,6 +453,7 @@ func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1Targ
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetPrimariesEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetPrimaries", "error", err)
 			return
 		}
 		fn(ev)
@@ -456,6 +464,7 @@ func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1Targ
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetLuminance, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetLuminanceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetLuminance", "error", err)
 			return
 		}
 		fn(ev)
@@ -466,6 +475,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetM
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxCll, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxCllEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetMaxCll", "error", err)
 			return
 		}
 		fn(ev)
@@ -476,6 +486,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1Target
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxFall, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxFallEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetMaxFall", "error", err)
 			return
 		}
 		fn(ev)

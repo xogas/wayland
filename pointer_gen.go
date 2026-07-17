@@ -411,6 +411,7 @@ func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 	o.proxy.RegisterEvent(PointerEventEnter, func(r *wire.Reader) {
 		var ev PointerEnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -421,6 +422,7 @@ func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 	o.proxy.RegisterEvent(PointerEventLeave, func(r *wire.Reader) {
 		var ev PointerLeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -431,6 +433,7 @@ func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 	o.proxy.RegisterEvent(PointerEventMotion, func(r *wire.Reader) {
 		var ev PointerMotionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
 			return
 		}
 		fn(ev)
@@ -441,6 +444,7 @@ func (o *Pointer) OnButton(fn PointerButtonFunc) {
 	o.proxy.RegisterEvent(PointerEventButton, func(r *wire.Reader) {
 		var ev PointerButtonEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
 			return
 		}
 		fn(ev)
@@ -451,6 +455,7 @@ func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 	o.proxy.RegisterEvent(PointerEventAxis, func(r *wire.Reader) {
 		var ev PointerAxisEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Axis", "error", err)
 			return
 		}
 		fn(ev)
@@ -461,6 +466,7 @@ func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 	o.proxy.RegisterEvent(PointerEventFrame, func(r *wire.Reader) {
 		var ev PointerFrameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
 		fn(ev)
@@ -471,6 +477,7 @@ func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisSource, func(r *wire.Reader) {
 		var ev PointerAxisSourceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisSource", "error", err)
 			return
 		}
 		fn(ev)
@@ -481,6 +488,7 @@ func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisStop, func(r *wire.Reader) {
 		var ev PointerAxisStopEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisStop", "error", err)
 			return
 		}
 		fn(ev)
@@ -491,6 +499,7 @@ func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisDiscrete, func(r *wire.Reader) {
 		var ev PointerAxisDiscreteEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisDiscrete", "error", err)
 			return
 		}
 		fn(ev)
@@ -501,6 +510,7 @@ func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 	o.proxy.RegisterEvent(PointerEventAxisValue120, func(r *wire.Reader) {
 		var ev PointerAxisValue120Event
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisValue120", "error", err)
 			return
 		}
 		fn(ev)
@@ -511,6 +521,7 @@ func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisRelativeDirection, func(r *wire.Reader) {
 		var ev PointerAxisRelativeDirectionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisRelativeDirection", "error", err)
 			return
 		}
 		fn(ev)

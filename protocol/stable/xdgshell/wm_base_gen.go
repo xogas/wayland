@@ -128,6 +128,7 @@ func (o *WmBase) OnPing(fn WmBasePingFunc) {
 	o.proxy.RegisterEvent(WmBaseEventPing, func(r *wire.Reader) {
 		var ev WmBasePingEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
 			return
 		}
 		fn(ev)

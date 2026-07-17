@@ -91,6 +91,7 @@ func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 	o.proxy.RegisterEvent(PresentationEventClockID, func(r *wire.Reader) {
 		var ev PresentationClockIDEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ClockID", "error", err)
 			return
 		}
 		fn(ev)

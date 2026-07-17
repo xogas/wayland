@@ -96,6 +96,7 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventToplevel, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1ToplevelEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Toplevel", "error", err)
 			return
 		}
 		fn(ev)
@@ -106,6 +107,7 @@ func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc)
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventFinished, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1FinishedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
 		fn(ev)

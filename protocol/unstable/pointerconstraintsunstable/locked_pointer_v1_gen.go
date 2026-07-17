@@ -110,6 +110,7 @@ func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventLocked, func(r *wire.Reader) {
 		var ev LockedPointerV1LockedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Locked", "error", err)
 			return
 		}
 		fn(ev)
@@ -120,6 +121,7 @@ func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventUnlocked, func(r *wire.Reader) {
 		var ev LockedPointerV1UnlockedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unlocked", "error", err)
 			return
 		}
 		fn(ev)

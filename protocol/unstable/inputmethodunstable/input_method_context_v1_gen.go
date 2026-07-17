@@ -504,6 +504,7 @@ func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1Surround
 	o.proxy.RegisterEvent(InputMethodContextV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodContextV1SurroundingTextEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SurroundingText", "error", err)
 			return
 		}
 		fn(ev)
@@ -514,6 +515,7 @@ func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventReset, func(r *wire.Reader) {
 		var ev InputMethodContextV1ResetEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Reset", "error", err)
 			return
 		}
 		fn(ev)
@@ -524,6 +526,7 @@ func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeF
 	o.proxy.RegisterEvent(InputMethodContextV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodContextV1ContentTypeEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ContentType", "error", err)
 			return
 		}
 		fn(ev)
@@ -534,6 +537,7 @@ func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActio
 	o.proxy.RegisterEvent(InputMethodContextV1EventInvokeAction, func(r *wire.Reader) {
 		var ev InputMethodContextV1InvokeActionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "InvokeAction", "error", err)
 			return
 		}
 		fn(ev)
@@ -544,6 +548,7 @@ func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateF
 	o.proxy.RegisterEvent(InputMethodContextV1EventCommitState, func(r *wire.Reader) {
 		var ev InputMethodContextV1CommitStateEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitState", "error", err)
 			return
 		}
 		fn(ev)
@@ -554,6 +559,7 @@ func (o *InputMethodContextV1) OnPreferredLanguage(fn InputMethodContextV1Prefer
 	o.proxy.RegisterEvent(InputMethodContextV1EventPreferredLanguage, func(r *wire.Reader) {
 		var ev InputMethodContextV1PreferredLanguageEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredLanguage", "error", err)
 			return
 		}
 		fn(ev)

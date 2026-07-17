@@ -152,6 +152,7 @@ func (o *LinuxDmabufV1) OnFormat(fn LinuxDmabufV1FormatFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufV1EventFormat, func(r *wire.Reader) {
 		var ev LinuxDmabufV1FormatEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Format", "error", err)
 			return
 		}
 		fn(ev)
@@ -162,6 +163,7 @@ func (o *LinuxDmabufV1) OnModifier(fn LinuxDmabufV1ModifierFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufV1EventModifier, func(r *wire.Reader) {
 		var ev LinuxDmabufV1ModifierEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modifier", "error", err)
 			return
 		}
 		fn(ev)

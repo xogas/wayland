@@ -249,6 +249,7 @@ func (o *Touch) OnDown(fn TouchDownFunc) {
 	o.proxy.RegisterEvent(TouchEventDown, func(r *wire.Reader) {
 		var ev TouchDownEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Down", "error", err)
 			return
 		}
 		fn(ev)
@@ -259,6 +260,7 @@ func (o *Touch) OnUp(fn TouchUpFunc) {
 	o.proxy.RegisterEvent(TouchEventUp, func(r *wire.Reader) {
 		var ev TouchUpEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Up", "error", err)
 			return
 		}
 		fn(ev)
@@ -269,6 +271,7 @@ func (o *Touch) OnMotion(fn TouchMotionFunc) {
 	o.proxy.RegisterEvent(TouchEventMotion, func(r *wire.Reader) {
 		var ev TouchMotionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
 			return
 		}
 		fn(ev)
@@ -279,6 +282,7 @@ func (o *Touch) OnFrame(fn TouchFrameFunc) {
 	o.proxy.RegisterEvent(TouchEventFrame, func(r *wire.Reader) {
 		var ev TouchFrameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
 		fn(ev)
@@ -289,6 +293,7 @@ func (o *Touch) OnCancel(fn TouchCancelFunc) {
 	o.proxy.RegisterEvent(TouchEventCancel, func(r *wire.Reader) {
 		var ev TouchCancelEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancel", "error", err)
 			return
 		}
 		fn(ev)
@@ -299,6 +304,7 @@ func (o *Touch) OnShape(fn TouchShapeFunc) {
 	o.proxy.RegisterEvent(TouchEventShape, func(r *wire.Reader) {
 		var ev TouchShapeEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Shape", "error", err)
 			return
 		}
 		fn(ev)
@@ -309,6 +315,7 @@ func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 	o.proxy.RegisterEvent(TouchEventOrientation, func(r *wire.Reader) {
 		var ev TouchOrientationEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Orientation", "error", err)
 			return
 		}
 		fn(ev)

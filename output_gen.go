@@ -248,6 +248,7 @@ func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 	o.proxy.RegisterEvent(OutputEventGeometry, func(r *wire.Reader) {
 		var ev OutputGeometryEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Geometry", "error", err)
 			return
 		}
 		fn(ev)
@@ -258,6 +259,7 @@ func (o *Output) OnMode(fn OutputModeFunc) {
 	o.proxy.RegisterEvent(OutputEventMode, func(r *wire.Reader) {
 		var ev OutputModeEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Mode", "error", err)
 			return
 		}
 		fn(ev)
@@ -268,6 +270,7 @@ func (o *Output) OnDone(fn OutputDoneFunc) {
 	o.proxy.RegisterEvent(OutputEventDone, func(r *wire.Reader) {
 		var ev OutputDoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -278,6 +281,7 @@ func (o *Output) OnScale(fn OutputScaleFunc) {
 	o.proxy.RegisterEvent(OutputEventScale, func(r *wire.Reader) {
 		var ev OutputScaleEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Scale", "error", err)
 			return
 		}
 		fn(ev)
@@ -288,6 +292,7 @@ func (o *Output) OnName(fn OutputNameFunc) {
 	o.proxy.RegisterEvent(OutputEventName, func(r *wire.Reader) {
 		var ev OutputNameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
 			return
 		}
 		fn(ev)
@@ -298,6 +303,7 @@ func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 	o.proxy.RegisterEvent(OutputEventDescription, func(r *wire.Reader) {
 		var ev OutputDescriptionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Description", "error", err)
 			return
 		}
 		fn(ev)

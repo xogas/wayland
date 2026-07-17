@@ -80,6 +80,7 @@ func (o *ImportedV2) OnDestroyed(fn ImportedV2DestroyedFunc) {
 	o.proxy.RegisterEvent(ImportedV2EventDestroyed, func(r *wire.Reader) {
 		var ev ImportedV2DestroyedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Destroyed", "error", err)
 			return
 		}
 		fn(ev)

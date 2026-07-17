@@ -112,6 +112,7 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1DataOfferEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
 			return
 		}
 		fn(ev)
@@ -122,6 +123,7 @@ func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1Select
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1SelectionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
 			return
 		}
 		fn(ev)

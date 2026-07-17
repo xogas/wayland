@@ -158,6 +158,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessi
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventEnter, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1EnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -168,6 +169,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessi
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventLeave, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1LeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -178,6 +180,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSe
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventPosition, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1PositionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
 			return
 		}
 		fn(ev)
@@ -188,6 +191,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSes
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventHotspot, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1HotspotEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Hotspot", "error", err)
 			return
 		}
 		fn(ev)

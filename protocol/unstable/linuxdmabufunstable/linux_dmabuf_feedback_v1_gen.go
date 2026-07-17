@@ -203,6 +203,7 @@ func (o *LinuxDmabufFeedbackV1) OnDone(fn LinuxDmabufFeedbackV1DoneFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventDone, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -213,6 +214,7 @@ func (o *LinuxDmabufFeedbackV1) OnFormatTable(fn LinuxDmabufFeedbackV1FormatTabl
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventFormatTable, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1FormatTableEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "FormatTable", "error", err)
 			return
 		}
 		fn(ev)
@@ -223,6 +225,7 @@ func (o *LinuxDmabufFeedbackV1) OnMainDevice(fn LinuxDmabufFeedbackV1MainDeviceF
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventMainDevice, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1MainDeviceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "MainDevice", "error", err)
 			return
 		}
 		fn(ev)
@@ -233,6 +236,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheDone(fn LinuxDmabufFeedbackV1TrancheDon
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheDone, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheDoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheDone", "error", err)
 			return
 		}
 		fn(ev)
@@ -243,6 +247,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheTargetDevice(fn LinuxDmabufFeedbackV1Tr
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheTargetDevice, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheTargetDeviceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheTargetDevice", "error", err)
 			return
 		}
 		fn(ev)
@@ -253,6 +258,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFormats(fn LinuxDmabufFeedbackV1Tranche
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheFormats, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheFormatsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheFormats", "error", err)
 			return
 		}
 		fn(ev)
@@ -263,6 +269,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFlags(fn LinuxDmabufFeedbackV1TrancheFl
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheFlags, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheFlagsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheFlags", "error", err)
 			return
 		}
 		fn(ev)

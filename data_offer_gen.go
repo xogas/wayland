@@ -184,6 +184,7 @@ func (o *DataOffer) OnOffer(fn DataOfferOfferFunc) {
 	o.proxy.RegisterEvent(DataOfferEventOffer, func(r *wire.Reader) {
 		var ev DataOfferOfferEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Offer", "error", err)
 			return
 		}
 		fn(ev)
@@ -194,6 +195,7 @@ func (o *DataOffer) OnSourceActions(fn DataOfferSourceActionsFunc) {
 	o.proxy.RegisterEvent(DataOfferEventSourceActions, func(r *wire.Reader) {
 		var ev DataOfferSourceActionsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SourceActions", "error", err)
 			return
 		}
 		fn(ev)
@@ -204,6 +206,7 @@ func (o *DataOffer) OnAction(fn DataOfferActionFunc) {
 	o.proxy.RegisterEvent(DataOfferEventAction, func(r *wire.Reader) {
 		var ev DataOfferActionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Action", "error", err)
 			return
 		}
 		fn(ev)

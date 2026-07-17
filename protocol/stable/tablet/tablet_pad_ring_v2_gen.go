@@ -144,6 +144,7 @@ func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadRingV2SourceEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Source", "error", err)
 			return
 		}
 		fn(ev)
@@ -154,6 +155,7 @@ func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventAngle, func(r *wire.Reader) {
 		var ev TabletPadRingV2AngleEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Angle", "error", err)
 			return
 		}
 		fn(ev)
@@ -164,6 +166,7 @@ func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadRingV2StopEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stop", "error", err)
 			return
 		}
 		fn(ev)
@@ -174,6 +177,7 @@ func (o *TabletPadRingV2) OnFrame(fn TabletPadRingV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadRingV2FrameEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
 		fn(ev)

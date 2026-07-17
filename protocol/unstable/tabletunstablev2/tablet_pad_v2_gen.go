@@ -253,6 +253,7 @@ func (o *TabletPadV2) OnGroup(fn TabletPadV2GroupFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventGroup, func(r *wire.Reader) {
 		var ev TabletPadV2GroupEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Group", "error", err)
 			return
 		}
 		fn(ev)
@@ -263,6 +264,7 @@ func (o *TabletPadV2) OnPath(fn TabletPadV2PathFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventPath, func(r *wire.Reader) {
 		var ev TabletPadV2PathEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Path", "error", err)
 			return
 		}
 		fn(ev)
@@ -273,6 +275,7 @@ func (o *TabletPadV2) OnButtons(fn TabletPadV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadV2ButtonsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Buttons", "error", err)
 			return
 		}
 		fn(ev)
@@ -283,6 +286,7 @@ func (o *TabletPadV2) OnDone(fn TabletPadV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadV2DoneEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
 		fn(ev)
@@ -293,6 +297,7 @@ func (o *TabletPadV2) OnButton(fn TabletPadV2ButtonFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventButton, func(r *wire.Reader) {
 		var ev TabletPadV2ButtonEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
 			return
 		}
 		fn(ev)
@@ -303,6 +308,7 @@ func (o *TabletPadV2) OnEnter(fn TabletPadV2EnterFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventEnter, func(r *wire.Reader) {
 		var ev TabletPadV2EnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -313,6 +319,7 @@ func (o *TabletPadV2) OnLeave(fn TabletPadV2LeaveFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventLeave, func(r *wire.Reader) {
 		var ev TabletPadV2LeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -323,6 +330,7 @@ func (o *TabletPadV2) OnRemoved(fn TabletPadV2RemovedFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventRemoved, func(r *wire.Reader) {
 		var ev TabletPadV2RemovedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
 			return
 		}
 		fn(ev)

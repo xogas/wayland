@@ -156,6 +156,7 @@ func (o *ZoneItemV1) OnFrameExtents(fn ZoneItemV1FrameExtentsFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventFrameExtents, func(r *wire.Reader) {
 		var ev ZoneItemV1FrameExtentsEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "FrameExtents", "error", err)
 			return
 		}
 		fn(ev)
@@ -166,6 +167,7 @@ func (o *ZoneItemV1) OnPosition(fn ZoneItemV1PositionFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPosition, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
 			return
 		}
 		fn(ev)
@@ -176,6 +178,7 @@ func (o *ZoneItemV1) OnPositionFailed(fn ZoneItemV1PositionFailedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPositionFailed, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionFailedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PositionFailed", "error", err)
 			return
 		}
 		fn(ev)
@@ -186,6 +189,7 @@ func (o *ZoneItemV1) OnClosed(fn ZoneItemV1ClosedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventClosed, func(r *wire.Reader) {
 		var ev ZoneItemV1ClosedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Closed", "error", err)
 			return
 		}
 		fn(ev)

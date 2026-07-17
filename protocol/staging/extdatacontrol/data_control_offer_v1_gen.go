@@ -84,6 +84,7 @@ func (o *DataControlOfferV1) OnOffer(fn DataControlOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(DataControlOfferV1EventOffer, func(r *wire.Reader) {
 		var ev DataControlOfferV1OfferEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Offer", "error", err)
 			return
 		}
 		fn(ev)

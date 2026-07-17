@@ -150,6 +150,7 @@ func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventFailed, func(r *wire.Reader) {
 		var ev ImageDescriptionV1FailedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
 			return
 		}
 		fn(ev)
@@ -160,6 +161,7 @@ func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady, func(r *wire.Reader) {
 		var ev ImageDescriptionV1ReadyEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
 			return
 		}
 		fn(ev)
@@ -170,6 +172,7 @@ func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady2, func(r *wire.Reader) {
 		var ev ImageDescriptionV1Ready2Event
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready2", "error", err)
 			return
 		}
 		fn(ev)

@@ -83,6 +83,7 @@ func (o *DrmLeaseV1) OnLeaseFd(fn DrmLeaseV1LeaseFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventLeaseFd, func(r *wire.Reader) {
 		var ev DrmLeaseV1LeaseFdEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "LeaseFd", "error", err)
 			return
 		}
 		fn(ev)
@@ -93,6 +94,7 @@ func (o *DrmLeaseV1) OnFinished(fn DrmLeaseV1FinishedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventFinished, func(r *wire.Reader) {
 		var ev DrmLeaseV1FinishedEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
 		fn(ev)

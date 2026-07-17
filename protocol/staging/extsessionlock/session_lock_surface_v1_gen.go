@@ -107,6 +107,7 @@ func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc)
 	o.proxy.RegisterEvent(SessionLockSurfaceV1EventConfigure, func(r *wire.Reader) {
 		var ev SessionLockSurfaceV1ConfigureEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
 		fn(ev)

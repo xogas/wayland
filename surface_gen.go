@@ -344,6 +344,7 @@ func (o *Surface) OnEnter(fn SurfaceEnterFunc) {
 	o.proxy.RegisterEvent(SurfaceEventEnter, func(r *wire.Reader) {
 		var ev SurfaceEnterEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
 		fn(ev)
@@ -354,6 +355,7 @@ func (o *Surface) OnLeave(fn SurfaceLeaveFunc) {
 	o.proxy.RegisterEvent(SurfaceEventLeave, func(r *wire.Reader) {
 		var ev SurfaceLeaveEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
 		fn(ev)
@@ -364,6 +366,7 @@ func (o *Surface) OnPreferredBufferScale(fn SurfacePreferredBufferScaleFunc) {
 	o.proxy.RegisterEvent(SurfaceEventPreferredBufferScale, func(r *wire.Reader) {
 		var ev SurfacePreferredBufferScaleEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredBufferScale", "error", err)
 			return
 		}
 		fn(ev)
@@ -374,6 +377,7 @@ func (o *Surface) OnPreferredBufferTransform(fn SurfacePreferredBufferTransformF
 	o.proxy.RegisterEvent(SurfaceEventPreferredBufferTransform, func(r *wire.Reader) {
 		var ev SurfacePreferredBufferTransformEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredBufferTransform", "error", err)
 			return
 		}
 		fn(ev)

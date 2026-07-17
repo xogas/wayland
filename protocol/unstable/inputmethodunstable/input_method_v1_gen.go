@@ -69,6 +69,7 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Activate", "error", err)
 			return
 		}
 		fn(ev)
@@ -79,6 +80,7 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
 		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Deactivate", "error", err)
 			return
 		}
 		fn(ev)
