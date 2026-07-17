@@ -1,6 +1,7 @@
 package wayland
 
 import (
+	"io"
 	"log/slog"
 	"net"
 	"sync"
@@ -33,7 +34,7 @@ func newConn(uc *net.UnixConn, wc *wire.Conn) *Conn {
 		uc:      uc,
 		objects: make(map[uint32]*Proxy),
 		zombies: make(map[uint32]map[uint16]int),
-		logger:  slog.Default(),
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 		done:    make(chan struct{}),
 	}
 }
