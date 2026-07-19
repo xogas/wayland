@@ -5,14 +5,11 @@ A Wayland client protocol library in pure Go. Zero dependencies beyond the stand
 - wayland version: 1.25.0
 - wayland-protocols version: 1.49
 
-## Features
+## Requirements
 
-- Complete wire protocol implementation: Unix socket I/O, `SCM_RIGHTS` fd passing
-- Core protocol (wayland.xml) bindings in the root `wayland` package — a single import
-- 65+ extension protocol bindings (xdg-shell, viewporter, presentation-time, and more), organized by stability tier under `protocol/`
-- Code generator `wayland-scanner`: produces type-safe Go bindings from protocol XML
-- Concurrency-safe event dispatch with proper object and fd lifecycle management
-- Generated comments: enum values, struct fields, and types carry the XML summaries inline
+- Linux
+- Go 1.26+
+- A running Wayland compositor (KWin, Mutter, Sway, Weston, etc.)
 
 ## Install
 
@@ -65,23 +62,6 @@ More runnable examples in [example/](./example/readme.md): window creation, shm 
 ```sh
 make gen
 ```
-
-## Requirements
-
-- Linux
-- Go 1.26+
-- A running Wayland compositor (KWin, Mutter, Sway, Weston, etc.)
-
-## Packages at a glance
-
-| Package | Content |
-| :--- | :--- |
-| `github.com/xogas/wayland` | Connection management, core protocol bindings, runtime engine |
-| `github.com/xogas/wayland/wire` | Low-level message encoding, fd control, reader/writer |
-| `github.com/xogas/wayland/protocol/stable/*` | Stable extension protocols (xdg-shell, viewporter, linux-dmabuf, ...) |
-| `github.com/xogas/wayland/protocol/staging/*` | Staging protocols (fractional-scale, cursor-shape, tearing-control, ...) |
-| `github.com/xogas/wayland/protocol/unstable/*` | Unstable protocols (pointer-constraints, relative-pointer, text-input, ...) |
-| `github.com/xogas/wayland/protocol/experimental/*` | Experimental protocols |
 
 ## License
 
