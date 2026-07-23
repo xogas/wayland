@@ -1,3 +1,5 @@
+version: "2"
+
 linters-settings:
   errcheck:
     exclude-functions:
@@ -11,9 +13,7 @@ linters:
     - govet
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
     - misspell
     - unconvert
     - nilerr
-    - predeclared
