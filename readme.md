@@ -53,7 +53,7 @@ func main() {
 }
 ```
 
-More runnable examples in [example/](./example/readme.md): window creation, shm rendering, input handling, sub-surfaces, and more.
+More runnable examples in [example/](./example/readme.md).
 
 ## Code generation
 
@@ -62,6 +62,10 @@ More runnable examples in [example/](./example/readme.md): window creation, shm 
 ```sh
 make gen
 ```
+
+No `// Deprecated:` Go annotations are emitted.
+All protocol elements (including deprecated ones) are generated and handled identically.
+Refer to the protocol protocol XML descriptions to determine deprecation status.
 
 ## License
 
