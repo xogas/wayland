@@ -12,9 +12,13 @@ import (
 // tiers are the wayland-protocols maturity levels, mirrored under protocol/.
 var tiers = []string{"stable", "staging", "unstable", "experimental"}
 
-// runBatch generates the core protocol into outBase and every extension
-// protocol into outBase/protocol/<tier>/<pkg>/.
+// runBatch generates the core and all extension protocols.
 func runBatch(rootDir, outBase string) error {
+	// Clean stale generated files before regenerating.
+	if err := cleanGenerated(outBase); err != nil {
+		return fmt.Errorf("clean generated: %w", err)
+	}
+
 	if err := genCore(rootDir, outBase); err != nil {
 		return err
 	}
@@ -26,7 +30,29 @@ func runBatch(rootDir, outBase string) error {
 	return nil
 }
 
-// genCore generates wayland.xml at the batch root into the root package.
+// cleanGenerated removes all *_gen.go files under outBase.
+func cleanGenerated(outBase string) error {
+	return filepath.WalkDir(outBase, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// Skip hidden directories (e.g. .git, .vscode).
+		if d.IsDir() && path != outBase {
+			if strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if strings.HasSuffix(path, "_gen.go") {
+			if err := os.Remove(path); err != nil {
+				return fmt.Errorf("remove %s: %w", path, err)
+			}
+		}
+		return nil
+	})
+}
+
+// genCore generates wayland.xml into the root package.
 func genCore(rootDir, outBase string) error {
 	coreXML := filepath.Join(rootDir, "wayland.xml")
 	if _, err := os.Stat(coreXML); os.IsNotExist(err) {
@@ -50,7 +76,7 @@ func genCore(rootDir, outBase string) error {
 	return nil
 }
 
-// genTier generates all protocols of one maturity tier.
+// genTier generates all protocols in one tier.
 func genTier(rootDir, outBase, tier string) error {
 	fmt.Printf("=== %s ===\n", tier)
 	baseDir := filepath.Join(rootDir, tier)
@@ -76,8 +102,8 @@ func genTier(rootDir, outBase, tier string) error {
 	return nil
 }
 
-// genProtocolDir generates all XML files of one protocol directory, resolving
-// package name collisions within the tier by re-appending the version suffix.
+// genProtocolDir generates all XML files of one protocol directory,
+// resolving package name collisions by re-appending the version suffix.
 func genProtocolDir(xmlFiles []string, outBase, tier string, usedPkgs map[string]bool) error {
 	resolved := map[string]string{}
 	for _, xf := range xmlFiles {
@@ -127,7 +153,7 @@ func genOne(xmlPath, outDir, pkg string) error {
 
 var reVerSuffix = regexp.MustCompile(`-v\d+$`)
 
-// pkgNameFromFile derives the Go package name from an XML file name:
+// pkgNameFromFile derives the Go package name from an XML file name.
 // "text-input-unstable-v3.xml" -> ("textinputunstable", "v3").
 func pkgNameFromFile(xmlPath string) (pkg string, verSuffix string) {
 	fname := strings.TrimSuffix(filepath.Base(xmlPath), ".xml")
