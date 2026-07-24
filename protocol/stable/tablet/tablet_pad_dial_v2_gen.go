@@ -130,7 +130,14 @@ func (o *TabletPadDialV2) SetFeedback(description string, serial uint32) error {
 }
 
 func (o *TabletPadDialV2) Destroy() error {
-	return o.proxy.SendRequest(TabletPadDialV2RequestDestroy, &TabletPadDialV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletPadDialV2RequestDestroy, &TabletPadDialV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletPadDialV2(b wayland.Binder, name uint32, version uint32) (*TabletPadDialV2, error) {

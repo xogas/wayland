@@ -79,7 +79,14 @@ func (o *ForeignToplevelImageCaptureSourceManagerV1) CreateSource(toplevelHandle
 }
 
 func (o *ForeignToplevelImageCaptureSourceManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ForeignToplevelImageCaptureSourceManagerV1RequestDestroy, &ForeignToplevelImageCaptureSourceManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ForeignToplevelImageCaptureSourceManagerV1RequestDestroy, &ForeignToplevelImageCaptureSourceManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindForeignToplevelImageCaptureSourceManagerV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelImageCaptureSourceManagerV1, error) {

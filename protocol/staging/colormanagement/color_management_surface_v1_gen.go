@@ -84,7 +84,14 @@ func (o *ColorManagementSurfaceV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ColorManagementSurfaceV1) Destroy() error {
-	return o.proxy.SendRequest(ColorManagementSurfaceV1RequestDestroy, &ColorManagementSurfaceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ColorManagementSurfaceV1RequestDestroy, &ColorManagementSurfaceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ColorManagementSurfaceV1) SetImageDescription(imageDescription wire.ObjectID, renderIntent uint32) error {

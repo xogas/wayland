@@ -567,7 +567,14 @@ func (o *InputMethodContextV1) OnPreferredLanguage(fn InputMethodContextV1Prefer
 }
 
 func (o *InputMethodContextV1) Destroy() error {
-	return o.proxy.SendRequest(InputMethodContextV1RequestDestroy, &InputMethodContextV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputMethodContextV1RequestDestroy, &InputMethodContextV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *InputMethodContextV1) CommitString(serial uint32, text string) error {

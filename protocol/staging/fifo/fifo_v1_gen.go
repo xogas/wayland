@@ -76,7 +76,14 @@ func (o *FifoV1) WaitBarrier() error {
 }
 
 func (o *FifoV1) Destroy() error {
-	return o.proxy.SendRequest(FifoV1RequestDestroy, &FifoV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FifoV1RequestDestroy, &FifoV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindFifoV1(b wayland.Binder, name uint32, version uint32) (*FifoV1, error) {

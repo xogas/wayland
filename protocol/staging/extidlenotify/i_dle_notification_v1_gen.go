@@ -91,7 +91,14 @@ func (o *IDleNotificationV1) OnResumed(fn IDleNotificationV1ResumedFunc) {
 }
 
 func (o *IDleNotificationV1) Destroy() error {
-	return o.proxy.SendRequest(IDleNotificationV1RequestDestroy, &IDleNotificationV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(IDleNotificationV1RequestDestroy, &IDleNotificationV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindIDleNotificationV1(b wayland.Binder, name uint32, version uint32) (*IDleNotificationV1, error) {

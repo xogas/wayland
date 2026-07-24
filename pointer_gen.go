@@ -538,7 +538,14 @@ func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32
 }
 
 func (o *Pointer) Release() error {
-	return o.proxy.SendRequest(PointerRequestRelease, &PointerReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerRequestRelease, &PointerReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPointer(b Binder, name uint32, version uint32) (*Pointer, error) {

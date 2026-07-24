@@ -68,7 +68,14 @@ func (o *TearingControlManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *TearingControlManagerV1) Destroy() error {
-	return o.proxy.SendRequest(TearingControlManagerV1RequestDestroy, &TearingControlManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TearingControlManagerV1RequestDestroy, &TearingControlManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*TearingControlV1, error) {

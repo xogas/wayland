@@ -40,7 +40,14 @@ func (o *ImageCaptureSourceV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ImageCaptureSourceV1) Destroy() error {
-	return o.proxy.SendRequest(ImageCaptureSourceV1RequestDestroy, &ImageCaptureSourceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageCaptureSourceV1RequestDestroy, &ImageCaptureSourceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindImageCaptureSourceV1(b wayland.Binder, name uint32, version uint32) (*ImageCaptureSourceV1, error) {

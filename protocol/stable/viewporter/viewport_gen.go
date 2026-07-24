@@ -95,7 +95,14 @@ func (o *Viewport) Proxy() *wayland.Proxy {
 }
 
 func (o *Viewport) Destroy() error {
-	return o.proxy.SendRequest(ViewportRequestDestroy, &ViewportDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ViewportRequestDestroy, &ViewportDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Viewport) SetSource(x wire.Fixed, y wire.Fixed, width wire.Fixed, height wire.Fixed) error {

@@ -281,7 +281,14 @@ func (o *ImageCopyCaptureSessionV1) CreateFrame() (*ImageCopyCaptureFrameV1, err
 }
 
 func (o *ImageCopyCaptureSessionV1) Destroy() error {
-	return o.proxy.SendRequest(ImageCopyCaptureSessionV1RequestDestroy, &ImageCopyCaptureSessionV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageCopyCaptureSessionV1RequestDestroy, &ImageCopyCaptureSessionV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindImageCopyCaptureSessionV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureSessionV1, error) {

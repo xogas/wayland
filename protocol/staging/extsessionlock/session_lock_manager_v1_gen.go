@@ -56,7 +56,14 @@ func (o *SessionLockManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SessionLockManagerV1) Destroy() error {
-	return o.proxy.SendRequest(SessionLockManagerV1RequestDestroy, &SessionLockManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionLockManagerV1RequestDestroy, &SessionLockManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {

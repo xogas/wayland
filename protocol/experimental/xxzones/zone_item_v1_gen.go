@@ -197,7 +197,14 @@ func (o *ZoneItemV1) OnClosed(fn ZoneItemV1ClosedFunc) {
 }
 
 func (o *ZoneItemV1) Destroy() error {
-	return o.proxy.SendRequest(ZoneItemV1RequestDestroy, &ZoneItemV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ZoneItemV1RequestDestroy, &ZoneItemV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ZoneItemV1) SetPosition(x int32, y int32) error {

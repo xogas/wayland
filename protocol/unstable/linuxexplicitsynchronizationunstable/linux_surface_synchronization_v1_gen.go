@@ -87,7 +87,14 @@ func (o *LinuxSurfaceSynchronizationV1) Proxy() *wayland.Proxy {
 }
 
 func (o *LinuxSurfaceSynchronizationV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxSurfaceSynchronizationV1RequestDestroy, &LinuxSurfaceSynchronizationV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxSurfaceSynchronizationV1RequestDestroy, &LinuxSurfaceSynchronizationV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LinuxSurfaceSynchronizationV1) SetAcquireFence(fd int) error {

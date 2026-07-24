@@ -164,7 +164,14 @@ func (o *SurfaceV6) OnConfigure(fn SurfaceV6ConfigureFunc) {
 }
 
 func (o *SurfaceV6) Destroy() error {
-	return o.proxy.SendRequest(SurfaceV6RequestDestroy, &SurfaceV6DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SurfaceV6RequestDestroy, &SurfaceV6DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SurfaceV6) GetToplevel() (*ToplevelV6, error) {

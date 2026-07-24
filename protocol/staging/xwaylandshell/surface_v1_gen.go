@@ -72,7 +72,14 @@ func (o *SurfaceV1) SetSerial(serialLo uint32, serialHi uint32) error {
 }
 
 func (o *SurfaceV1) Destroy() error {
-	return o.proxy.SendRequest(SurfaceV1RequestDestroy, &SurfaceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SurfaceV1RequestDestroy, &SurfaceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindSurfaceV1(b wayland.Binder, name uint32, version uint32) (*SurfaceV1, error) {

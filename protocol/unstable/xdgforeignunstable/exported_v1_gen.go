@@ -72,7 +72,14 @@ func (o *ExportedV1) OnHandle(fn ExportedV1HandleFunc) {
 }
 
 func (o *ExportedV1) Destroy() error {
-	return o.proxy.SendRequest(ExportedV1RequestDestroy, &ExportedV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ExportedV1RequestDestroy, &ExportedV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindExportedV1(b wayland.Binder, name uint32, version uint32) (*ExportedV1, error) {

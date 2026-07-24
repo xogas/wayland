@@ -321,7 +321,14 @@ func (o *DataDevice) SetSelection(source wire.ObjectID, serial uint32) error {
 }
 
 func (o *DataDevice) Release() error {
-	return o.proxy.SendRequest(DataDeviceRequestRelease, &DataDeviceReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataDeviceRequestRelease, &DataDeviceReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindDataDevice(b Binder, name uint32, version uint32) (*DataDevice, error) {

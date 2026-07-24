@@ -110,7 +110,14 @@ func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1C
 }
 
 func (o *BackgroundEffectManagerV1) Destroy() error {
-	return o.proxy.SendRequest(BackgroundEffectManagerV1RequestDestroy, &BackgroundEffectManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(BackgroundEffectManagerV1RequestDestroy, &BackgroundEffectManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (*BackgroundEffectSurfaceV1, error) {

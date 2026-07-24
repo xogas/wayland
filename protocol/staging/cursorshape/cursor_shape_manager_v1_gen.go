@@ -84,7 +84,14 @@ func (o *CursorShapeManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *CursorShapeManagerV1) Destroy() error {
-	return o.proxy.SendRequest(CursorShapeManagerV1RequestDestroy, &CursorShapeManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CursorShapeManagerV1RequestDestroy, &CursorShapeManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *CursorShapeManagerV1) GetPointer(pointer wire.ObjectID) (*CursorShapeDeviceV1, error) {

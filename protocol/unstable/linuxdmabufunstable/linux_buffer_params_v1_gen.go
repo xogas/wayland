@@ -216,7 +216,14 @@ func (o *LinuxBufferParamsV1) OnFailed(fn LinuxBufferParamsV1FailedFunc) {
 }
 
 func (o *LinuxBufferParamsV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxBufferParamsV1RequestDestroy, &LinuxBufferParamsV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxBufferParamsV1RequestDestroy, &LinuxBufferParamsV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LinuxBufferParamsV1) Add(fd int, planeIDx uint32, offset uint32, stride uint32, modifierHi uint32, modifierLo uint32) error {

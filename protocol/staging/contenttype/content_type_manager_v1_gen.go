@@ -68,7 +68,14 @@ func (o *ContentTypeManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ContentTypeManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ContentTypeManagerV1RequestDestroy, &ContentTypeManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ContentTypeManagerV1RequestDestroy, &ContentTypeManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*ContentTypeV1, error) {

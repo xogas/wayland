@@ -192,7 +192,14 @@ func (o *Popup) OnRepositioned(fn PopupRepositionedFunc) {
 }
 
 func (o *Popup) Destroy() error {
-	return o.proxy.SendRequest(PopupRequestDestroy, &PopupDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PopupRequestDestroy, &PopupDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Popup) Grab(seat wire.ObjectID, serial uint32) error {

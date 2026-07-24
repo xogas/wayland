@@ -60,7 +60,14 @@ func (o *TextInputManagerV3) Proxy() *wayland.Proxy {
 }
 
 func (o *TextInputManagerV3) Destroy() error {
-	return o.proxy.SendRequest(TextInputManagerV3RequestDestroy, &TextInputManagerV3DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TextInputManagerV3RequestDestroy, &TextInputManagerV3DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, error) {

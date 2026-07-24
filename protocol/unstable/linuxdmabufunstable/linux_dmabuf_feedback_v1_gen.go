@@ -277,7 +277,14 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFlags(fn LinuxDmabufFeedbackV1TrancheFl
 }
 
 func (o *LinuxDmabufFeedbackV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxDmabufFeedbackV1RequestDestroy, &LinuxDmabufFeedbackV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxDmabufFeedbackV1RequestDestroy, &LinuxDmabufFeedbackV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindLinuxDmabufFeedbackV1(b wayland.Binder, name uint32, version uint32) (*LinuxDmabufFeedbackV1, error) {

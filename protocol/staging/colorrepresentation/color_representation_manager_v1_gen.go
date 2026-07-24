@@ -170,7 +170,14 @@ func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1Don
 }
 
 func (o *ColorRepresentationManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ColorRepresentationManagerV1RequestDestroy, &ColorRepresentationManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ColorRepresentationManagerV1RequestDestroy, &ColorRepresentationManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ColorRepresentationManagerV1) GetSurface(surface wire.ObjectID) (*ColorRepresentationSurfaceV1, error) {

@@ -228,7 +228,14 @@ func (o *DataOffer) Receive(mimeType string, fd int) error {
 }
 
 func (o *DataOffer) Destroy() error {
-	return o.proxy.SendRequest(DataOfferRequestDestroy, &DataOfferDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataOfferRequestDestroy, &DataOfferDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *DataOffer) Finish() error {

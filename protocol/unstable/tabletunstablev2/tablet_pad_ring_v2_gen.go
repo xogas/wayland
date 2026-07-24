@@ -192,7 +192,14 @@ func (o *TabletPadRingV2) SetFeedback(description string, serial uint32) error {
 }
 
 func (o *TabletPadRingV2) Destroy() error {
-	return o.proxy.SendRequest(TabletPadRingV2RequestDestroy, &TabletPadRingV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletPadRingV2RequestDestroy, &TabletPadRingV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletPadRingV2(b wayland.Binder, name uint32, version uint32) (*TabletPadRingV2, error) {

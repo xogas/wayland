@@ -568,7 +568,14 @@ func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner w
 }
 
 func (o *InputMethodV1) Destroy() error {
-	return o.proxy.SendRequest(InputMethodV1RequestDestroy, &InputMethodV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputMethodV1RequestDestroy, &InputMethodV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindInputMethodV1(b wayland.Binder, name uint32, version uint32) (*InputMethodV1, error) {

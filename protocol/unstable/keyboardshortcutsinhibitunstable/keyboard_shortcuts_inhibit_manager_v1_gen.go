@@ -72,7 +72,14 @@ func (o *KeyboardShortcutsInhibitManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *KeyboardShortcutsInhibitManagerV1) Destroy() error {
-	return o.proxy.SendRequest(KeyboardShortcutsInhibitManagerV1RequestDestroy, &KeyboardShortcutsInhibitManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(KeyboardShortcutsInhibitManagerV1RequestDestroy, &KeyboardShortcutsInhibitManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *KeyboardShortcutsInhibitManagerV1) InhibitShortcuts(surface wire.ObjectID, seat wire.ObjectID) (*KeyboardShortcutsInhibitorV1, error) {

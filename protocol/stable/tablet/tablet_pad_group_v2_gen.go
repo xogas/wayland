@@ -264,7 +264,14 @@ func (o *TabletPadGroupV2) OnDial(fn TabletPadGroupV2DialFunc) {
 }
 
 func (o *TabletPadGroupV2) Destroy() error {
-	return o.proxy.SendRequest(TabletPadGroupV2RequestDestroy, &TabletPadGroupV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletPadGroupV2RequestDestroy, &TabletPadGroupV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletPadGroupV2(b wayland.Binder, name uint32, version uint32) (*TabletPadGroupV2, error) {

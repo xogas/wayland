@@ -138,7 +138,14 @@ func (o *PrimarySelectionDeviceV1) SetSelection(source wire.ObjectID, serial uin
 }
 
 func (o *PrimarySelectionDeviceV1) Destroy() error {
-	return o.proxy.SendRequest(PrimarySelectionDeviceV1RequestDestroy, &PrimarySelectionDeviceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PrimarySelectionDeviceV1RequestDestroy, &PrimarySelectionDeviceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPrimarySelectionDeviceV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionDeviceV1, error) {

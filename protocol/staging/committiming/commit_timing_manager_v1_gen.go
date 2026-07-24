@@ -68,7 +68,14 @@ func (o *CommitTimingManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *CommitTimingManagerV1) Destroy() error {
-	return o.proxy.SendRequest(CommitTimingManagerV1RequestDestroy, &CommitTimingManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CommitTimingManagerV1RequestDestroy, &CommitTimingManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *CommitTimingManagerV1) GetTimer(surface wire.ObjectID) (*CommitTimerV1, error) {

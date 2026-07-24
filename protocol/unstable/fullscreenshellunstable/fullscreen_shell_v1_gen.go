@@ -152,7 +152,14 @@ func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 }
 
 func (o *FullscreenShellV1) Release() error {
-	return o.proxy.SendRequest(FullscreenShellV1RequestRelease, &FullscreenShellV1ReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FullscreenShellV1RequestRelease, &FullscreenShellV1ReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method uint32, output wire.ObjectID) error {

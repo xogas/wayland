@@ -141,7 +141,14 @@ func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 }
 
 func (o *ToplevelIconManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelIconManagerV1RequestDestroy, &ToplevelIconManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelIconManagerV1RequestDestroy, &ToplevelIconManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {

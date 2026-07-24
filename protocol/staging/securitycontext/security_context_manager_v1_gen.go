@@ -73,7 +73,14 @@ func (o *SecurityContextManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SecurityContextManagerV1) Destroy() error {
-	return o.proxy.SendRequest(SecurityContextManagerV1RequestDestroy, &SecurityContextManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SecurityContextManagerV1RequestDestroy, &SecurityContextManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*SecurityContextV1, error) {

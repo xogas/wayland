@@ -102,7 +102,14 @@ func (o *DrmLeaseV1) OnFinished(fn DrmLeaseV1FinishedFunc) {
 }
 
 func (o *DrmLeaseV1) Destroy() error {
-	return o.proxy.SendRequest(DrmLeaseV1RequestDestroy, &DrmLeaseV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DrmLeaseV1RequestDestroy, &DrmLeaseV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindDrmLeaseV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseV1, error) {

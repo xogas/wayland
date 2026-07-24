@@ -68,7 +68,14 @@ func (o *FractionalScaleManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *FractionalScaleManagerV1) Destroy() error {
-	return o.proxy.SendRequest(FractionalScaleManagerV1RequestDestroy, &FractionalScaleManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FractionalScaleManagerV1RequestDestroy, &FractionalScaleManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *FractionalScaleManagerV1) GetFractionalScale(surface wire.ObjectID) (*FractionalScaleV1, error) {

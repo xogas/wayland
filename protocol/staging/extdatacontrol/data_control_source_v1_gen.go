@@ -136,7 +136,14 @@ func (o *DataControlSourceV1) Offer(mimeType string) error {
 }
 
 func (o *DataControlSourceV1) Destroy() error {
-	return o.proxy.SendRequest(DataControlSourceV1RequestDestroy, &DataControlSourceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataControlSourceV1RequestDestroy, &DataControlSourceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindDataControlSourceV1(b wayland.Binder, name uint32, version uint32) (*DataControlSourceV1, error) {

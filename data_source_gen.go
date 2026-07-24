@@ -264,7 +264,14 @@ func (o *DataSource) Offer(mimeType string) error {
 }
 
 func (o *DataSource) Destroy() error {
-	return o.proxy.SendRequest(DataSourceRequestDestroy, &DataSourceDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataSourceRequestDestroy, &DataSourceDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *DataSource) SetActions(dndActions uint32) error {

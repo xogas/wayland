@@ -323,7 +323,14 @@ func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 }
 
 func (o *Touch) Release() error {
-	return o.proxy.SendRequest(TouchRequestRelease, &TouchReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TouchRequestRelease, &TouchReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTouch(b Binder, name uint32, version uint32) (*Touch, error) {

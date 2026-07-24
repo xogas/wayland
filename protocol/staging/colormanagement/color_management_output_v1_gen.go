@@ -88,7 +88,14 @@ func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOu
 }
 
 func (o *ColorManagementOutputV1) Destroy() error {
-	return o.proxy.SendRequest(ColorManagementOutputV1RequestDestroy, &ColorManagementOutputV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ColorManagementOutputV1RequestDestroy, &ColorManagementOutputV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, error) {

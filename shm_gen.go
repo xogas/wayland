@@ -269,7 +269,14 @@ func (o *Shm) CreatePool(fd int, size int32) (*ShmPool, error) {
 }
 
 func (o *Shm) Release() error {
-	return o.proxy.SendRequest(ShmRequestRelease, &ShmReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ShmRequestRelease, &ShmReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindShm(b Binder, name uint32, version uint32) (*Shm, error) {

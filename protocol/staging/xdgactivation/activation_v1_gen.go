@@ -76,7 +76,14 @@ func (o *ActivationV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ActivationV1) Destroy() error {
-	return o.proxy.SendRequest(ActivationV1RequestDestroy, &ActivationV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ActivationV1RequestDestroy, &ActivationV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ActivationV1) GetActivationToken() (*ActivationTokenV1, error) {

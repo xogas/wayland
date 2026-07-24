@@ -93,7 +93,14 @@ func (o *Region) Proxy() *Proxy {
 }
 
 func (o *Region) Destroy() error {
-	return o.proxy.SendRequest(RegionRequestDestroy, &RegionDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(RegionRequestDestroy, &RegionDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Region) Add(x int32, y int32, width int32, height int32) error {

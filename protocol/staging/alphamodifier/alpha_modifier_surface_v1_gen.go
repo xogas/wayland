@@ -64,7 +64,14 @@ func (o *AlphaModifierSurfaceV1) Proxy() *wayland.Proxy {
 }
 
 func (o *AlphaModifierSurfaceV1) Destroy() error {
-	return o.proxy.SendRequest(AlphaModifierSurfaceV1RequestDestroy, &AlphaModifierSurfaceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(AlphaModifierSurfaceV1RequestDestroy, &AlphaModifierSurfaceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *AlphaModifierSurfaceV1) SetMultiplier(factor uint32) error {

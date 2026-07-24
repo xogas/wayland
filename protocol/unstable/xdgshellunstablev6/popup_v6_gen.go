@@ -141,7 +141,14 @@ func (o *PopupV6) OnPopupDone(fn PopupV6PopupDoneFunc) {
 }
 
 func (o *PopupV6) Destroy() error {
-	return o.proxy.SendRequest(PopupV6RequestDestroy, &PopupV6DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PopupV6RequestDestroy, &PopupV6DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *PopupV6) Grab(seat wire.ObjectID, serial uint32) error {

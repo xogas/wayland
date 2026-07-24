@@ -135,7 +135,14 @@ func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 }
 
 func (o *PointerGestureHoldV1) Destroy() error {
-	return o.proxy.SendRequest(PointerGestureHoldV1RequestDestroy, &PointerGestureHoldV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerGestureHoldV1RequestDestroy, &PointerGestureHoldV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPointerGestureHoldV1(b wayland.Binder, name uint32, version uint32) (*PointerGestureHoldV1, error) {

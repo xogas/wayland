@@ -64,7 +64,14 @@ func (o *BackgroundEffectSurfaceV1) Proxy() *wayland.Proxy {
 }
 
 func (o *BackgroundEffectSurfaceV1) Destroy() error {
-	return o.proxy.SendRequest(BackgroundEffectSurfaceV1RequestDestroy, &BackgroundEffectSurfaceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(BackgroundEffectSurfaceV1RequestDestroy, &BackgroundEffectSurfaceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *BackgroundEffectSurfaceV1) SetBlurRegion(region wire.ObjectID) error {

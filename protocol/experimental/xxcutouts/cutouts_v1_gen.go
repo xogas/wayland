@@ -209,7 +209,14 @@ func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 }
 
 func (o *CutoutsV1) Destroy() error {
-	return o.proxy.SendRequest(CutoutsV1RequestDestroy, &CutoutsV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CutoutsV1RequestDestroy, &CutoutsV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *CutoutsV1) SetUnhandled(unhandled []byte) error {

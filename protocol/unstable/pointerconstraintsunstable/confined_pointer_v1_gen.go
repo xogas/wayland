@@ -107,7 +107,14 @@ func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 }
 
 func (o *ConfinedPointerV1) Destroy() error {
-	return o.proxy.SendRequest(ConfinedPointerV1RequestDestroy, &ConfinedPointerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ConfinedPointerV1RequestDestroy, &ConfinedPointerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ConfinedPointerV1) SetRegion(region wire.ObjectID) error {

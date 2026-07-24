@@ -190,11 +190,25 @@ func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 }
 
 func (o *SessionV1) Destroy() error {
-	return o.proxy.SendRequest(SessionV1RequestDestroy, &SessionV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionV1RequestDestroy, &SessionV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionV1) Remove() error {
-	return o.proxy.SendRequest(SessionV1RequestRemove, &SessionV1RemoveRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionV1RequestRemove, &SessionV1RemoveRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelSessionV1, error) {

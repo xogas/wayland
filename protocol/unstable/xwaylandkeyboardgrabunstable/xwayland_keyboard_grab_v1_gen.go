@@ -40,7 +40,14 @@ func (o *XwaylandKeyboardGrabV1) Proxy() *wayland.Proxy {
 }
 
 func (o *XwaylandKeyboardGrabV1) Destroy() error {
-	return o.proxy.SendRequest(XwaylandKeyboardGrabV1RequestDestroy, &XwaylandKeyboardGrabV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(XwaylandKeyboardGrabV1RequestDestroy, &XwaylandKeyboardGrabV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindXwaylandKeyboardGrabV1(b wayland.Binder, name uint32, version uint32) (*XwaylandKeyboardGrabV1, error) {

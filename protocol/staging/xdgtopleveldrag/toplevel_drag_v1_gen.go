@@ -69,7 +69,14 @@ func (o *ToplevelDragV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ToplevelDragV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelDragV1RequestDestroy, &ToplevelDragV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelDragV1RequestDestroy, &ToplevelDragV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset int32, yOffset int32) error {

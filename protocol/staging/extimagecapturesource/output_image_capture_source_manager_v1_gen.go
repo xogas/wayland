@@ -79,7 +79,14 @@ func (o *OutputImageCaptureSourceManagerV1) CreateSource(output wire.ObjectID) (
 }
 
 func (o *OutputImageCaptureSourceManagerV1) Destroy() error {
-	return o.proxy.SendRequest(OutputImageCaptureSourceManagerV1RequestDestroy, &OutputImageCaptureSourceManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(OutputImageCaptureSourceManagerV1RequestDestroy, &OutputImageCaptureSourceManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindOutputImageCaptureSourceManagerV1(b wayland.Binder, name uint32, version uint32) (*OutputImageCaptureSourceManagerV1, error) {

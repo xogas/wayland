@@ -78,7 +78,14 @@ func (o *CommitTimerV1) SetTimestamp(tvSecHi uint32, tvSecLo uint32, tvNsec uint
 }
 
 func (o *CommitTimerV1) Destroy() error {
-	return o.proxy.SendRequest(CommitTimerV1RequestDestroy, &CommitTimerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CommitTimerV1RequestDestroy, &CommitTimerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindCommitTimerV1(b wayland.Binder, name uint32, version uint32) (*CommitTimerV1, error) {

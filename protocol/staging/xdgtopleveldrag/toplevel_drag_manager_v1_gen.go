@@ -68,7 +68,14 @@ func (o *ToplevelDragManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ToplevelDragManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelDragManagerV1RequestDestroy, &ToplevelDragManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelDragManagerV1RequestDestroy, &ToplevelDragManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelDragManagerV1) GetXdgToplevelDrag(dataSource wire.ObjectID) (*ToplevelDragV1, error) {

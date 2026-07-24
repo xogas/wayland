@@ -58,7 +58,14 @@ func (o *ImporterV2) Proxy() *wayland.Proxy {
 }
 
 func (o *ImporterV2) Destroy() error {
-	return o.proxy.SendRequest(ImporterV2RequestDestroy, &ImporterV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImporterV2RequestDestroy, &ImporterV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ImporterV2) ImportToplevel(handle string) (*ImportedV2, error) {

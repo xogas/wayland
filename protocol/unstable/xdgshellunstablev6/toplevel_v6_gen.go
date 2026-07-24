@@ -356,7 +356,14 @@ func (o *ToplevelV6) OnClose(fn ToplevelV6CloseFunc) {
 }
 
 func (o *ToplevelV6) Destroy() error {
-	return o.proxy.SendRequest(ToplevelV6RequestDestroy, &ToplevelV6DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelV6RequestDestroy, &ToplevelV6DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelV6) SetParent(parent wire.ObjectID) error {

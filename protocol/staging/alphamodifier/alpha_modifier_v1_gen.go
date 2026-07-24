@@ -64,7 +64,14 @@ func (o *AlphaModifierV1) Proxy() *wayland.Proxy {
 }
 
 func (o *AlphaModifierV1) Destroy() error {
-	return o.proxy.SendRequest(AlphaModifierV1RequestDestroy, &AlphaModifierV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(AlphaModifierV1RequestDestroy, &AlphaModifierV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfaceV1, error) {

@@ -119,7 +119,14 @@ func (o *Subsurface) Proxy() *Proxy {
 }
 
 func (o *Subsurface) Destroy() error {
-	return o.proxy.SendRequest(SubsurfaceRequestDestroy, &SubsurfaceDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SubsurfaceRequestDestroy, &SubsurfaceDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Subsurface) SetPosition(x int32, y int32) error {

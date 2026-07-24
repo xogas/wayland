@@ -138,7 +138,14 @@ func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGest
 }
 
 func (o *PointerGesturesV1) Release() error {
-	return o.proxy.SendRequest(PointerGesturesV1RequestRelease, &PointerGesturesV1ReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerGesturesV1RequestRelease, &PointerGesturesV1ReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *PointerGesturesV1) GetHoldGesture(pointer wire.ObjectID) (*PointerGestureHoldV1, error) {

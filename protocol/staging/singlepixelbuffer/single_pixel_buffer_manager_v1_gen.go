@@ -74,7 +74,14 @@ func (o *SinglePixelBufferManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SinglePixelBufferManagerV1) Destroy() error {
-	return o.proxy.SendRequest(SinglePixelBufferManagerV1RequestDestroy, &SinglePixelBufferManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SinglePixelBufferManagerV1RequestDestroy, &SinglePixelBufferManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b uint32, a uint32) (*wayland.Proxy, error) {

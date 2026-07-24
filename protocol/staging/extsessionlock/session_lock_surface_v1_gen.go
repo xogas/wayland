@@ -115,7 +115,14 @@ func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc)
 }
 
 func (o *SessionLockSurfaceV1) Destroy() error {
-	return o.proxy.SendRequest(SessionLockSurfaceV1RequestDestroy, &SessionLockSurfaceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionLockSurfaceV1RequestDestroy, &SessionLockSurfaceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionLockSurfaceV1) AckConfigure(serial uint32) error {

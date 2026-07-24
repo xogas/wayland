@@ -70,7 +70,14 @@ func (o *PointerWarpV1) Proxy() *wayland.Proxy {
 }
 
 func (o *PointerWarpV1) Destroy() error {
-	return o.proxy.SendRequest(PointerWarpV1RequestDestroy, &PointerWarpV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerWarpV1RequestDestroy, &PointerWarpV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *PointerWarpV1) WarpPointer(surface wire.ObjectID, pointer wire.ObjectID, x wire.Fixed, y wire.Fixed, serial uint32) error {

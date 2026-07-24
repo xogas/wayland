@@ -190,7 +190,14 @@ func (o *PointerGesturePinchV1) OnEnd(fn PointerGesturePinchV1EndFunc) {
 }
 
 func (o *PointerGesturePinchV1) Destroy() error {
-	return o.proxy.SendRequest(PointerGesturePinchV1RequestDestroy, &PointerGesturePinchV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerGesturePinchV1RequestDestroy, &PointerGesturePinchV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPointerGesturePinchV1(b wayland.Binder, name uint32, version uint32) (*PointerGesturePinchV1, error) {

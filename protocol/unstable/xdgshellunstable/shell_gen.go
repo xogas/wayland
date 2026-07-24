@@ -179,7 +179,14 @@ func (o *Shell) OnPing(fn ShellPingFunc) {
 }
 
 func (o *Shell) Destroy() error {
-	return o.proxy.SendRequest(ShellRequestDestroy, &ShellDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ShellRequestDestroy, &ShellDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Shell) UseUnstableVersion(version int32) error {

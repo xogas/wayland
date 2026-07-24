@@ -100,7 +100,14 @@ func (o *ZoneManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ZoneManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ZoneManagerV1RequestDestroy, &ZoneManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ZoneManagerV1RequestDestroy, &ZoneManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ZoneManagerV1) GetZoneItem(toplevel wire.ObjectID) (*ZoneItemV1, error) {

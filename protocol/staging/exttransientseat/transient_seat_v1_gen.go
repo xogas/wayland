@@ -97,7 +97,14 @@ func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 }
 
 func (o *TransientSeatV1) Destroy() error {
-	return o.proxy.SendRequest(TransientSeatV1RequestDestroy, &TransientSeatV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TransientSeatV1RequestDestroy, &TransientSeatV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTransientSeatV1(b wayland.Binder, name uint32, version uint32) (*TransientSeatV1, error) {

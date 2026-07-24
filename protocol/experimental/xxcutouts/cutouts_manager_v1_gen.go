@@ -65,7 +65,14 @@ func (o *CutoutsManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *CutoutsManagerV1) Destroy() error {
-	return o.proxy.SendRequest(CutoutsManagerV1RequestDestroy, &CutoutsManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CutoutsManagerV1RequestDestroy, &CutoutsManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error) {

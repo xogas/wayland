@@ -77,7 +77,14 @@ func (o *TabletManagerV2) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV2, erro
 }
 
 func (o *TabletManagerV2) Destroy() error {
-	return o.proxy.SendRequest(TabletManagerV2RequestDestroy, &TabletManagerV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletManagerV2RequestDestroy, &TabletManagerV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletManagerV2(b wayland.Binder, name uint32, version uint32) (*TabletManagerV2, error) {

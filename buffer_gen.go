@@ -65,7 +65,14 @@ func (o *Buffer) OnRelease(fn BufferReleaseFunc) {
 }
 
 func (o *Buffer) Destroy() error {
-	return o.proxy.SendRequest(BufferRequestDestroy, &BufferDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(BufferRequestDestroy, &BufferDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindBuffer(b Binder, name uint32, version uint32) (*Buffer, error) {

@@ -129,7 +129,14 @@ func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 }
 
 func (o *LockedPointerV1) Destroy() error {
-	return o.proxy.SendRequest(LockedPointerV1RequestDestroy, &LockedPointerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LockedPointerV1RequestDestroy, &LockedPointerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LockedPointerV1) SetCursorPositionHint(surfaceX wire.Fixed, surfaceY wire.Fixed) error {

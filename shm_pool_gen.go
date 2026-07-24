@@ -110,7 +110,14 @@ func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride i
 }
 
 func (o *ShmPool) Destroy() error {
-	return o.proxy.SendRequest(ShmPoolRequestDestroy, &ShmPoolDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ShmPoolRequestDestroy, &ShmPoolDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ShmPool) Resize(size int32) error {

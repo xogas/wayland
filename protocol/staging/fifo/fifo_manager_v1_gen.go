@@ -64,7 +64,14 @@ func (o *FifoManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *FifoManagerV1) Destroy() error {
-	return o.proxy.SendRequest(FifoManagerV1RequestDestroy, &FifoManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FifoManagerV1RequestDestroy, &FifoManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *FifoManagerV1) GetFifo(surface wire.ObjectID) (*FifoV1, error) {

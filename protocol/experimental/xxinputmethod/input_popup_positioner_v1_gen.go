@@ -198,7 +198,14 @@ func (o *InputPopupPositionerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *InputPopupPositionerV1) Destroy() error {
-	return o.proxy.SendRequest(InputPopupPositionerV1RequestDestroy, &InputPopupPositionerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputPopupPositionerV1RequestDestroy, &InputPopupPositionerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *InputPopupPositionerV1) SetSize(width uint32, height uint32) error {

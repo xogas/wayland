@@ -141,7 +141,14 @@ func (o *SessionLockV1) OnFinished(fn SessionLockV1FinishedFunc) {
 }
 
 func (o *SessionLockV1) Destroy() error {
-	return o.proxy.SendRequest(SessionLockV1RequestDestroy, &SessionLockV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionLockV1RequestDestroy, &SessionLockV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionLockV1) GetLockSurface(surface wire.ObjectID, output wire.ObjectID) (*SessionLockSurfaceV1, error) {
@@ -163,7 +170,14 @@ func (o *SessionLockV1) GetLockSurface(surface wire.ObjectID, output wire.Object
 }
 
 func (o *SessionLockV1) UnlockAndDestroy() error {
-	return o.proxy.SendRequest(SessionLockV1RequestUnlockAndDestroy, &SessionLockV1UnlockAndDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionLockV1RequestUnlockAndDestroy, &SessionLockV1UnlockAndDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindSessionLockV1(b wayland.Binder, name uint32, version uint32) (*SessionLockV1, error) {

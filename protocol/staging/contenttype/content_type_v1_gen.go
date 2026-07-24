@@ -65,7 +65,14 @@ func (o *ContentTypeV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ContentTypeV1) Destroy() error {
-	return o.proxy.SendRequest(ContentTypeV1RequestDestroy, &ContentTypeV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ContentTypeV1RequestDestroy, &ContentTypeV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ContentTypeV1) SetContentType(contentType uint32) error {

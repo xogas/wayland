@@ -265,7 +265,14 @@ func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 }
 
 func (o *ZoneV1) Destroy() error {
-	return o.proxy.SendRequest(ZoneV1RequestDestroy, &ZoneV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ZoneV1RequestDestroy, &ZoneV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ZoneV1) AddItem(item wire.ObjectID) error {

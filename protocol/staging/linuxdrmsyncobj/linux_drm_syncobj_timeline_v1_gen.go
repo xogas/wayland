@@ -40,7 +40,14 @@ func (o *LinuxDrmSyncobjTimelineV1) Proxy() *wayland.Proxy {
 }
 
 func (o *LinuxDrmSyncobjTimelineV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxDrmSyncobjTimelineV1RequestDestroy, &LinuxDrmSyncobjTimelineV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxDrmSyncobjTimelineV1RequestDestroy, &LinuxDrmSyncobjTimelineV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindLinuxDrmSyncobjTimelineV1(b wayland.Binder, name uint32, version uint32) (*LinuxDrmSyncobjTimelineV1, error) {

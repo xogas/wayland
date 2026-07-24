@@ -82,7 +82,14 @@ func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 }
 
 func (o *ToplevelSessionV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelSessionV1RequestDestroy, &ToplevelSessionV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelSessionV1RequestDestroy, &ToplevelSessionV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelSessionV1) Rename(name string) error {

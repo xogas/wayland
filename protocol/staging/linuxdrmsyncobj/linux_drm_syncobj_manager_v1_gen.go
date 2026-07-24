@@ -91,7 +91,14 @@ func (o *LinuxDrmSyncobjManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *LinuxDrmSyncobjManagerV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxDrmSyncobjManagerV1RequestDestroy, &LinuxDrmSyncobjManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxDrmSyncobjManagerV1RequestDestroy, &LinuxDrmSyncobjManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LinuxDrmSyncobjManagerV1) GetSurface(surface wire.ObjectID) (*LinuxDrmSyncobjSurfaceV1, error) {

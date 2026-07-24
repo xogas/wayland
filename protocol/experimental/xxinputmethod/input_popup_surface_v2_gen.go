@@ -202,7 +202,14 @@ func (o *InputPopupSurfaceV2) Reposition(positioner wire.ObjectID, token uint32)
 }
 
 func (o *InputPopupSurfaceV2) Destroy() error {
-	return o.proxy.SendRequest(InputPopupSurfaceV2RequestDestroy, &InputPopupSurfaceV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputPopupSurfaceV2RequestDestroy, &InputPopupSurfaceV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindInputPopupSurfaceV2(b wayland.Binder, name uint32, version uint32) (*InputPopupSurfaceV2, error) {

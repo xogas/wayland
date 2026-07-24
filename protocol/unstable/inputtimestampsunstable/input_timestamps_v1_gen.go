@@ -84,7 +84,14 @@ func (o *InputTimestampsV1) OnTimestamp(fn InputTimestampsV1TimestampFunc) {
 }
 
 func (o *InputTimestampsV1) Destroy() error {
-	return o.proxy.SendRequest(InputTimestampsV1RequestDestroy, &InputTimestampsV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputTimestampsV1RequestDestroy, &InputTimestampsV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindInputTimestampsV1(b wayland.Binder, name uint32, version uint32) (*InputTimestampsV1, error) {

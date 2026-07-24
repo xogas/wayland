@@ -190,7 +190,14 @@ func (o *ForeignToplevelHandleV1) OnIDentifier(fn ForeignToplevelHandleV1IDentif
 }
 
 func (o *ForeignToplevelHandleV1) Destroy() error {
-	return o.proxy.SendRequest(ForeignToplevelHandleV1RequestDestroy, &ForeignToplevelHandleV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ForeignToplevelHandleV1RequestDestroy, &ForeignToplevelHandleV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindForeignToplevelHandleV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelHandleV1, error) {

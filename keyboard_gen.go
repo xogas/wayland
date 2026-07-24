@@ -324,7 +324,14 @@ func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 }
 
 func (o *Keyboard) Release() error {
-	return o.proxy.SendRequest(KeyboardRequestRelease, &KeyboardReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(KeyboardRequestRelease, &KeyboardReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindKeyboard(b Binder, name uint32, version uint32) (*Keyboard, error) {

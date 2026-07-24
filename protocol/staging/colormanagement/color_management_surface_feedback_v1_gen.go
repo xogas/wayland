@@ -158,7 +158,14 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagemen
 }
 
 func (o *ColorManagementSurfaceFeedbackV1) Destroy() error {
-	return o.proxy.SendRequest(ColorManagementSurfaceFeedbackV1RequestDestroy, &ColorManagementSurfaceFeedbackV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ColorManagementSurfaceFeedbackV1RequestDestroy, &ColorManagementSurfaceFeedbackV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ColorManagementSurfaceFeedbackV1) GetPreferred() (*ImageDescriptionV1, error) {

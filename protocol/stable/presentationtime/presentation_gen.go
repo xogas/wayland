@@ -99,7 +99,14 @@ func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 }
 
 func (o *Presentation) Destroy() error {
-	return o.proxy.SendRequest(PresentationRequestDestroy, &PresentationDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PresentationRequestDestroy, &PresentationDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, error) {

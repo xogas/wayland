@@ -102,7 +102,14 @@ func (o *FractionalScaleV2) SetScaleFactor(scale824 uint32) error {
 }
 
 func (o *FractionalScaleV2) Destroy() error {
-	return o.proxy.SendRequest(FractionalScaleV2RequestDestroy, &FractionalScaleV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FractionalScaleV2RequestDestroy, &FractionalScaleV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindFractionalScaleV2(b wayland.Binder, name uint32, version uint32) (*FractionalScaleV2, error) {

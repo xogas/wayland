@@ -124,7 +124,14 @@ func (o *ToplevelDecorationV1) OnConfigure(fn ToplevelDecorationV1ConfigureFunc)
 }
 
 func (o *ToplevelDecorationV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelDecorationV1RequestDestroy, &ToplevelDecorationV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelDecorationV1RequestDestroy, &ToplevelDecorationV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelDecorationV1) SetMode(mode uint32) error {

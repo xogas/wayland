@@ -136,7 +136,14 @@ func (o *PrimarySelectionSourceV1) Offer(mimeType string) error {
 }
 
 func (o *PrimarySelectionSourceV1) Destroy() error {
-	return o.proxy.SendRequest(PrimarySelectionSourceV1RequestDestroy, &PrimarySelectionSourceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PrimarySelectionSourceV1RequestDestroy, &PrimarySelectionSourceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPrimarySelectionSourceV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionSourceV1, error) {

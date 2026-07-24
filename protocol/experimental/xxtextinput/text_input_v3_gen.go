@@ -537,7 +537,14 @@ func (o *TextInputV3) OnPerformAction(fn TextInputV3PerformActionFunc) {
 }
 
 func (o *TextInputV3) Destroy() error {
-	return o.proxy.SendRequest(TextInputV3RequestDestroy, &TextInputV3DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TextInputV3RequestDestroy, &TextInputV3DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *TextInputV3) Enable() error {

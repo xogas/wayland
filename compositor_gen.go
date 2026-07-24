@@ -101,7 +101,14 @@ func (o *Compositor) CreateRegion() (*Region, error) {
 }
 
 func (o *Compositor) Release() error {
-	return o.proxy.SendRequest(CompositorRequestRelease, &CompositorReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CompositorRequestRelease, &CompositorReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindCompositor(b Binder, name uint32, version uint32) (*Compositor, error) {

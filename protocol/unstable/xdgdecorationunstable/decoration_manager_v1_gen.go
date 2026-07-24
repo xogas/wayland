@@ -60,7 +60,14 @@ func (o *DecorationManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *DecorationManagerV1) Destroy() error {
-	return o.proxy.SendRequest(DecorationManagerV1RequestDestroy, &DecorationManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DecorationManagerV1RequestDestroy, &DecorationManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*ToplevelDecorationV1, error) {

@@ -140,7 +140,14 @@ func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source wire.Objec
 }
 
 func (o *ImageCopyCaptureManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ImageCopyCaptureManagerV1RequestDestroy, &ImageCopyCaptureManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageCopyCaptureManagerV1RequestDestroy, &ImageCopyCaptureManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindImageCopyCaptureManagerV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureManagerV1, error) {

@@ -96,7 +96,14 @@ func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard wire.ObjectID, inpu
 }
 
 func (o *KeyboardFilterManagerV1) Destroy() error {
-	return o.proxy.SendRequest(KeyboardFilterManagerV1RequestDestroy, &KeyboardFilterManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(KeyboardFilterManagerV1RequestDestroy, &KeyboardFilterManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindKeyboardFilterManagerV1(b wayland.Binder, name uint32, version uint32) (*KeyboardFilterManagerV1, error) {

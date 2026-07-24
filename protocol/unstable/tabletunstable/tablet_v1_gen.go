@@ -190,7 +190,14 @@ func (o *TabletV1) OnRemoved(fn TabletV1RemovedFunc) {
 }
 
 func (o *TabletV1) Destroy() error {
-	return o.proxy.SendRequest(TabletV1RequestDestroy, &TabletV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletV1RequestDestroy, &TabletV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletV1(b wayland.Binder, name uint32, version uint32) (*TabletV1, error) {

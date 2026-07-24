@@ -62,7 +62,14 @@ func (o *DialogV1) Proxy() *wayland.Proxy {
 }
 
 func (o *DialogV1) Destroy() error {
-	return o.proxy.SendRequest(DialogV1RequestDestroy, &DialogV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DialogV1RequestDestroy, &DialogV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *DialogV1) SetModal() error {

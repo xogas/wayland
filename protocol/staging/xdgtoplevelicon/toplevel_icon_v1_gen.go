@@ -82,7 +82,14 @@ func (o *ToplevelIconV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ToplevelIconV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelIconV1RequestDestroy, &ToplevelIconV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelIconV1RequestDestroy, &ToplevelIconV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelIconV1) SetName(iconName string) error {

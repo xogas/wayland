@@ -64,7 +64,14 @@ func (o *Viewporter) Proxy() *wayland.Proxy {
 }
 
 func (o *Viewporter) Destroy() error {
-	return o.proxy.SendRequest(ViewporterRequestDestroy, &ViewporterDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ViewporterRequestDestroy, &ViewporterDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {

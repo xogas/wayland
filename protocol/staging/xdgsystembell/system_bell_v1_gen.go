@@ -54,7 +54,14 @@ func (o *SystemBellV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SystemBellV1) Destroy() error {
-	return o.proxy.SendRequest(SystemBellV1RequestDestroy, &SystemBellV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SystemBellV1RequestDestroy, &SystemBellV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SystemBellV1) Ring(surface wire.ObjectID) error {

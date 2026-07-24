@@ -78,7 +78,14 @@ func (o *SessionManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SessionManagerV1) Destroy() error {
-	return o.proxy.SendRequest(SessionManagerV1RequestDestroy, &SessionManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SessionManagerV1RequestDestroy, &SessionManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SessionManagerV1) GetSession(reason uint32, sessionID string) (*SessionV1, error) {

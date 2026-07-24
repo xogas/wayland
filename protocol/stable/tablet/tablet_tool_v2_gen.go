@@ -734,7 +734,14 @@ func (o *TabletToolV2) SetCursor(serial uint32, surface wire.ObjectID, hotspotX 
 }
 
 func (o *TabletToolV2) Destroy() error {
-	return o.proxy.SendRequest(TabletToolV2RequestDestroy, &TabletToolV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletToolV2RequestDestroy, &TabletToolV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletToolV2(b wayland.Binder, name uint32, version uint32) (*TabletToolV2, error) {

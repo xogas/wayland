@@ -38,7 +38,14 @@ func (o *IDleInhibitorV1) Proxy() *wayland.Proxy {
 }
 
 func (o *IDleInhibitorV1) Destroy() error {
-	return o.proxy.SendRequest(IDleInhibitorV1RequestDestroy, &IDleInhibitorV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(IDleInhibitorV1RequestDestroy, &IDleInhibitorV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindIDleInhibitorV1(b wayland.Binder, name uint32, version uint32) (*IDleInhibitorV1, error) {

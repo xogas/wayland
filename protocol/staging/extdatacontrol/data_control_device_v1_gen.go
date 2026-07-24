@@ -209,7 +209,14 @@ func (o *DataControlDeviceV1) SetSelection(source wire.ObjectID) error {
 }
 
 func (o *DataControlDeviceV1) Destroy() error {
-	return o.proxy.SendRequest(DataControlDeviceV1RequestDestroy, &DataControlDeviceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataControlDeviceV1RequestDestroy, &DataControlDeviceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *DataControlDeviceV1) SetPrimarySelection(source wire.ObjectID) error {

@@ -74,7 +74,14 @@ func (o *FractionalScaleV1) OnPreferredScale(fn FractionalScaleV1PreferredScaleF
 }
 
 func (o *FractionalScaleV1) Destroy() error {
-	return o.proxy.SendRequest(FractionalScaleV1RequestDestroy, &FractionalScaleV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FractionalScaleV1RequestDestroy, &FractionalScaleV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindFractionalScaleV1(b wayland.Binder, name uint32, version uint32) (*FractionalScaleV1, error) {

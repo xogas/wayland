@@ -135,7 +135,14 @@ func (o *ShellV6) OnPing(fn ShellV6PingFunc) {
 }
 
 func (o *ShellV6) Destroy() error {
-	return o.proxy.SendRequest(ShellV6RequestDestroy, &ShellV6DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ShellV6RequestDestroy, &ShellV6DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ShellV6) CreatePositioner() (*PositionerV6, error) {

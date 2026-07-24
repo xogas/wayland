@@ -68,7 +68,14 @@ func (o *LinuxExplicitSynchronizationV1) Proxy() *wayland.Proxy {
 }
 
 func (o *LinuxExplicitSynchronizationV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxExplicitSynchronizationV1RequestDestroy, &LinuxExplicitSynchronizationV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxExplicitSynchronizationV1RequestDestroy, &LinuxExplicitSynchronizationV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LinuxExplicitSynchronizationV1) GetSynchronization(surface wire.ObjectID) (*LinuxSurfaceSynchronizationV1, error) {

@@ -180,7 +180,14 @@ func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 }
 
 func (o *ImageDescriptionV1) Destroy() error {
-	return o.proxy.SendRequest(ImageDescriptionV1RequestDestroy, &ImageDescriptionV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageDescriptionV1RequestDestroy, &ImageDescriptionV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ImageDescriptionV1) GetInformation() (*ImageDescriptionInfoV1, error) {

@@ -450,7 +450,14 @@ func (o *Toplevel) OnWmCapabilities(fn ToplevelWmCapabilitiesFunc) {
 }
 
 func (o *Toplevel) Destroy() error {
-	return o.proxy.SendRequest(ToplevelRequestDestroy, &ToplevelDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelRequestDestroy, &ToplevelDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Toplevel) SetParent(parent wire.ObjectID) error {

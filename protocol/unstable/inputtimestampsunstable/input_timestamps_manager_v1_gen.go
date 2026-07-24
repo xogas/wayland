@@ -106,7 +106,14 @@ func (o *InputTimestampsManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *InputTimestampsManagerV1) Destroy() error {
-	return o.proxy.SendRequest(InputTimestampsManagerV1RequestDestroy, &InputTimestampsManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputTimestampsManagerV1RequestDestroy, &InputTimestampsManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *InputTimestampsManagerV1) GetKeyboardTimestamps(keyboard wire.ObjectID) (*InputTimestampsV1, error) {

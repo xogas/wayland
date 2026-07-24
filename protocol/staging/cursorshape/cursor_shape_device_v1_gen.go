@@ -107,7 +107,14 @@ func (o *CursorShapeDeviceV1) Proxy() *wayland.Proxy {
 }
 
 func (o *CursorShapeDeviceV1) Destroy() error {
-	return o.proxy.SendRequest(CursorShapeDeviceV1RequestDestroy, &CursorShapeDeviceV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(CursorShapeDeviceV1RequestDestroy, &CursorShapeDeviceV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *CursorShapeDeviceV1) SetShape(serial uint32, shape uint32) error {

@@ -202,7 +202,14 @@ func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 }
 
 func (o *OutputV1) Destroy() error {
-	return o.proxy.SendRequest(OutputV1RequestDestroy, &OutputV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(OutputV1RequestDestroy, &OutputV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindOutputV1(b wayland.Binder, name uint32, version uint32) (*OutputV1, error) {

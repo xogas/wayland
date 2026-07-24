@@ -119,7 +119,14 @@ func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, erro
 }
 
 func (o *DataDeviceManager) Release() error {
-	return o.proxy.SendRequest(DataDeviceManagerRequestRelease, &DataDeviceManagerReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataDeviceManagerRequestRelease, &DataDeviceManagerReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindDataDeviceManager(b Binder, name uint32, version uint32) (*DataDeviceManager, error) {

@@ -171,7 +171,14 @@ func (o *LinuxDmabufV1) OnModifier(fn LinuxDmabufV1ModifierFunc) {
 }
 
 func (o *LinuxDmabufV1) Destroy() error {
-	return o.proxy.SendRequest(LinuxDmabufV1RequestDestroy, &LinuxDmabufV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(LinuxDmabufV1RequestDestroy, &LinuxDmabufV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *LinuxDmabufV1) CreateParams() (*LinuxBufferParamsV1, error) {

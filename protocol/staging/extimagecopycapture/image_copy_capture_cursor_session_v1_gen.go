@@ -199,7 +199,14 @@ func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSes
 }
 
 func (o *ImageCopyCaptureCursorSessionV1) Destroy() error {
-	return o.proxy.SendRequest(ImageCopyCaptureCursorSessionV1RequestDestroy, &ImageCopyCaptureCursorSessionV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageCopyCaptureCursorSessionV1RequestDestroy, &ImageCopyCaptureCursorSessionV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ImageCopyCaptureCursorSessionV1) GetCaptureSession() (*ImageCopyCaptureSessionV1, error) {

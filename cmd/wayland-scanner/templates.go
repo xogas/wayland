@@ -146,26 +146,39 @@ func (o *{{$.TypeName}}) On{{.Name}}(fn {{.FuncName}}) {
 {{if or .HasNewID .HasCrossNewID}}
 func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDType}}{{else}}*{{$.WaylandPkg}}Proxy{{end}}, error) {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
-		return nil, {{$.WaylandPkg}}ErrVersionMismatch
-	}
+        return nil, {{$.WaylandPkg}}ErrVersionMismatch
+    }
 {{end}}	conn := o.proxy.Conn()
-	p := {{$.WaylandPkg}}NewProxy(conn)
-	p.SetVersion(o.proxy.Version())
+    p := {{$.WaylandPkg}}NewProxy(conn)
+    p.SetVersion(o.proxy.Version())
 {{if .HasNewID}}	wrapped := New{{.NewIDType}}(p)
 {{end}}	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), {{.OpName}}, &{{.StructName}}{
+    err := conn.SendRequest(o.proxy.ID(), {{.OpName}}, &{{.StructName}}{
 {{range .Args}}{{if .IsNewID}}		{{.GoName}}: wire.NewID(p.ID()),
 {{else}}		{{.GoName}}: {{.ParamName}},
 {{end}}{{end}}	})
-	if err != nil {
-		conn.UnregisterProxy(p.ID())
-		return nil, err
-	}
-	return {{if .HasNewID}}wrapped{{else}}p{{end}}, nil
+    if err != nil {
+        conn.UnregisterProxy(p.ID())
+        return nil, err
+    }
+    return {{if .HasNewID}}wrapped{{else}}p{{end}}, nil
+}
+{{else if .IsDestructor}}
+func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
+    if o.proxy.Deleted() {
+        return nil
+    }
+    if err := o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
+{{range .Args}}		{{.GoName}}: {{.ParamName}},
+{{end}}	}); err != nil {
+        return err
+    }
+    o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+    return nil
 }
 {{else}}
 func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
-	return o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
+    return o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
 {{range .Args}}		{{.GoName}}: {{.ParamName}},
 {{end}}	})
 }

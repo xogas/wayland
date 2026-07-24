@@ -136,7 +136,14 @@ func (o *WmBase) OnPing(fn WmBasePingFunc) {
 }
 
 func (o *WmBase) Destroy() error {
-	return o.proxy.SendRequest(WmBaseRequestDestroy, &WmBaseDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(WmBaseRequestDestroy, &WmBaseDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *WmBase) CreatePositioner() (*Positioner, error) {

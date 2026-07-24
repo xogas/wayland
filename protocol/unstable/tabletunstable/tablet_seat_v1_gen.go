@@ -103,7 +103,14 @@ func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 }
 
 func (o *TabletSeatV1) Destroy() error {
-	return o.proxy.SendRequest(TabletSeatV1RequestDestroy, &TabletSeatV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletSeatV1RequestDestroy, &TabletSeatV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletSeatV1(b wayland.Binder, name uint32, version uint32) (*TabletSeatV1, error) {

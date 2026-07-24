@@ -66,7 +66,14 @@ func (o *XwaylandKeyboardGrabManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *XwaylandKeyboardGrabManagerV1) Destroy() error {
-	return o.proxy.SendRequest(XwaylandKeyboardGrabManagerV1RequestDestroy, &XwaylandKeyboardGrabManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(XwaylandKeyboardGrabManagerV1RequestDestroy, &XwaylandKeyboardGrabManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface wire.ObjectID, seat wire.ObjectID) (*XwaylandKeyboardGrabV1, error) {

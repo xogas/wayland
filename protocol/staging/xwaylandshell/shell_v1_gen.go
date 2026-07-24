@@ -64,7 +64,14 @@ func (o *ShellV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ShellV1) Destroy() error {
-	return o.proxy.SendRequest(ShellV1RequestDestroy, &ShellV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ShellV1RequestDestroy, &ShellV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ShellV1) GetXwaylandSurface(surface wire.ObjectID) (*SurfaceV1, error) {

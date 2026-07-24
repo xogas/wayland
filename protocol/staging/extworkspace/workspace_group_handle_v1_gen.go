@@ -265,7 +265,14 @@ func (o *WorkspaceGroupHandleV1) CreateWorkspace(workspace string) error {
 }
 
 func (o *WorkspaceGroupHandleV1) Destroy() error {
-	return o.proxy.SendRequest(WorkspaceGroupHandleV1RequestDestroy, &WorkspaceGroupHandleV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(WorkspaceGroupHandleV1RequestDestroy, &WorkspaceGroupHandleV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindWorkspaceGroupHandleV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceGroupHandleV1, error) {

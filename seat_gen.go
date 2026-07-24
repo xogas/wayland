@@ -212,7 +212,14 @@ func (o *Seat) GetTouch() (*Touch, error) {
 }
 
 func (o *Seat) Release() error {
-	return o.proxy.SendRequest(SeatRequestRelease, &SeatReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SeatRequestRelease, &SeatReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindSeat(b Binder, name uint32, version uint32) (*Seat, error) {

@@ -62,7 +62,14 @@ func (o *RelativePointerManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *RelativePointerManagerV1) Destroy() error {
-	return o.proxy.SendRequest(RelativePointerManagerV1RequestDestroy, &RelativePointerManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(RelativePointerManagerV1RequestDestroy, &RelativePointerManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*RelativePointerV1, error) {

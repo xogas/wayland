@@ -110,7 +110,14 @@ func (o *SecurityContextV1) Proxy() *wayland.Proxy {
 }
 
 func (o *SecurityContextV1) Destroy() error {
-	return o.proxy.SendRequest(SecurityContextV1RequestDestroy, &SecurityContextV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SecurityContextV1RequestDestroy, &SecurityContextV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *SecurityContextV1) SetSandboxEngine(name string) error {

@@ -68,7 +68,14 @@ func (o *Subcompositor) Proxy() *Proxy {
 }
 
 func (o *Subcompositor) Destroy() error {
-	return o.proxy.SendRequest(SubcompositorRequestDestroy, &SubcompositorDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SubcompositorRequestDestroy, &SubcompositorDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Subcompositor) GetSubsurface(surface wire.ObjectID, parent wire.ObjectID) (*Subsurface, error) {

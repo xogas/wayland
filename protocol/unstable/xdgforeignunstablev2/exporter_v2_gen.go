@@ -64,7 +64,14 @@ func (o *ExporterV2) Proxy() *wayland.Proxy {
 }
 
 func (o *ExporterV2) Destroy() error {
-	return o.proxy.SendRequest(ExporterV2RequestDestroy, &ExporterV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ExporterV2RequestDestroy, &ExporterV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ExporterV2) ExportToplevel(surface wire.ObjectID) (*ExportedV2, error) {

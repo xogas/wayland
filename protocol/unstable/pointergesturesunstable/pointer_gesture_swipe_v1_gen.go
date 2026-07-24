@@ -178,7 +178,14 @@ func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 }
 
 func (o *PointerGestureSwipeV1) Destroy() error {
-	return o.proxy.SendRequest(PointerGestureSwipeV1RequestDestroy, &PointerGestureSwipeV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerGestureSwipeV1RequestDestroy, &PointerGestureSwipeV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPointerGestureSwipeV1(b wayland.Binder, name uint32, version uint32) (*PointerGestureSwipeV1, error) {

@@ -66,7 +66,14 @@ func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 }
 
 func (o *Popup) Destroy() error {
-	return o.proxy.SendRequest(PopupRequestDestroy, &PopupDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PopupRequestDestroy, &PopupDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPopup(b wayland.Binder, name uint32, version uint32) (*Popup, error) {

@@ -84,7 +84,14 @@ func (o *ToplevelTagManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *ToplevelTagManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ToplevelTagManagerV1RequestDestroy, &ToplevelTagManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ToplevelTagManagerV1RequestDestroy, &ToplevelTagManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ToplevelTagManagerV1) SetToplevelTag(toplevel wire.ObjectID, tag string) error {

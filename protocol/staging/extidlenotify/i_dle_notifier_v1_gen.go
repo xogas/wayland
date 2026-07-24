@@ -90,7 +90,14 @@ func (o *IDleNotifierV1) Proxy() *wayland.Proxy {
 }
 
 func (o *IDleNotifierV1) Destroy() error {
-	return o.proxy.SendRequest(IDleNotifierV1RequestDestroy, &IDleNotifierV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(IDleNotifierV1RequestDestroy, &IDleNotifierV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *IDleNotifierV1) GetIDleNotification(timeout uint32, seat wire.ObjectID) (*IDleNotificationV1, error) {

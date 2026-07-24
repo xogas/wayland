@@ -36,6 +36,7 @@ type tplReq struct {
 	NewIDType     string // Go type created by this request
 	HasCrossNewID bool   // new_id arg without resolvable interface
 	MethodArgs    string // pre-computed method signature (new_id args filtered)
+	IsDestructor  bool   // True when type="destructor"
 }
 
 type tplEv struct {
@@ -124,11 +125,12 @@ func buildRequests(iface *Interface, tn string, cfg GenerateConfig, knownIface m
 		r := &iface.Requests[opcode]
 		reqName := pascal(r.Name)
 		rd := tplReq{
-			Name:       reqName,
-			OpName:     tn + "Request" + reqName,
-			StructName: tn + reqName + "Request",
-			Opcode:     opcode,
-			Since:      max(r.Since, 1),
+			Name:         reqName,
+			OpName:       tn + "Request" + reqName,
+			StructName:   tn + reqName + "Request",
+			Opcode:       opcode,
+			Since:        max(r.Since, 1),
+			IsDestructor: r.Type == "destructor",
 		}
 
 		for j := range r.Args {

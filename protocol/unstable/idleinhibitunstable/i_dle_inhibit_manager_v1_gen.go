@@ -62,7 +62,14 @@ func (o *IDleInhibitManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *IDleInhibitManagerV1) Destroy() error {
-	return o.proxy.SendRequest(IDleInhibitManagerV1RequestDestroy, &IDleInhibitManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(IDleInhibitManagerV1RequestDestroy, &IDleInhibitManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *IDleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IDleInhibitorV1, error) {

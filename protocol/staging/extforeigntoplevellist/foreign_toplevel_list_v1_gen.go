@@ -119,7 +119,14 @@ func (o *ForeignToplevelListV1) Stop() error {
 }
 
 func (o *ForeignToplevelListV1) Destroy() error {
-	return o.proxy.SendRequest(ForeignToplevelListV1RequestDestroy, &ForeignToplevelListV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ForeignToplevelListV1RequestDestroy, &ForeignToplevelListV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindForeignToplevelListV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelListV1, error) {

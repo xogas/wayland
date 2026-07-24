@@ -194,7 +194,14 @@ func (o *PositionerV6) Proxy() *wayland.Proxy {
 }
 
 func (o *PositionerV6) Destroy() error {
-	return o.proxy.SendRequest(PositionerV6RequestDestroy, &PositionerV6DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PositionerV6RequestDestroy, &PositionerV6DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *PositionerV6) SetSize(width int32, height int32) error {

@@ -346,7 +346,14 @@ func (o *TabletPadV2) SetFeedback(button uint32, description string, serial uint
 }
 
 func (o *TabletPadV2) Destroy() error {
-	return o.proxy.SendRequest(TabletPadV2RequestDestroy, &TabletPadV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletPadV2RequestDestroy, &TabletPadV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletPadV2(b wayland.Binder, name uint32, version uint32) (*TabletPadV2, error) {

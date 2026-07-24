@@ -366,7 +366,14 @@ func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 }
 
 func (o *Surface) Destroy() error {
-	return o.proxy.SendRequest(SurfaceRequestDestroy, &SurfaceDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(SurfaceRequestDestroy, &SurfaceDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Surface) SetParent(parent wire.ObjectID) error {

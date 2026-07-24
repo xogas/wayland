@@ -311,7 +311,14 @@ func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 }
 
 func (o *Output) Release() error {
-	return o.proxy.SendRequest(OutputRequestRelease, &OutputReleaseRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(OutputRequestRelease, &OutputReleaseRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindOutput(b Binder, name uint32, version uint32) (*Output, error) {

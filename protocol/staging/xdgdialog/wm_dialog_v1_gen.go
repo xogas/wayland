@@ -64,7 +64,14 @@ func (o *WmDialogV1) Proxy() *wayland.Proxy {
 }
 
 func (o *WmDialogV1) Destroy() error {
-	return o.proxy.SendRequest(WmDialogV1RequestDestroy, &WmDialogV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(WmDialogV1RequestDestroy, &WmDialogV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {

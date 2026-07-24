@@ -74,7 +74,14 @@ func (o *TransientSeatManagerV1) Create() (*TransientSeatV1, error) {
 }
 
 func (o *TransientSeatManagerV1) Destroy() error {
-	return o.proxy.SendRequest(TransientSeatManagerV1RequestDestroy, &TransientSeatManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TransientSeatManagerV1RequestDestroy, &TransientSeatManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTransientSeatManagerV1(b wayland.Binder, name uint32, version uint32) (*TransientSeatManagerV1, error) {

@@ -113,7 +113,14 @@ func (o *PrimarySelectionDeviceManagerV1) GetDevice(seat wire.ObjectID) (*Primar
 }
 
 func (o *PrimarySelectionDeviceManagerV1) Destroy() error {
-	return o.proxy.SendRequest(PrimarySelectionDeviceManagerV1RequestDestroy, &PrimarySelectionDeviceManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PrimarySelectionDeviceManagerV1RequestDestroy, &PrimarySelectionDeviceManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindPrimarySelectionDeviceManagerV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionDeviceManagerV1, error) {

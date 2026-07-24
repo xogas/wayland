@@ -167,7 +167,14 @@ func (o *ActivationTokenV1) Commit() error {
 }
 
 func (o *ActivationTokenV1) Destroy() error {
-	return o.proxy.SendRequest(ActivationTokenV1RequestDestroy, &ActivationTokenV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ActivationTokenV1RequestDestroy, &ActivationTokenV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindActivationTokenV1(b wayland.Binder, name uint32, version uint32) (*ActivationTokenV1, error) {

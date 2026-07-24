@@ -94,7 +94,14 @@ func (o *KeyboardFilterV1) Filter(serial uint32, action uint32) error {
 }
 
 func (o *KeyboardFilterV1) Destroy() error {
-	return o.proxy.SendRequest(KeyboardFilterV1RequestDestroy, &KeyboardFilterV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(KeyboardFilterV1RequestDestroy, &KeyboardFilterV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindKeyboardFilterV1(b wayland.Binder, name uint32, version uint32) (*KeyboardFilterV1, error) {

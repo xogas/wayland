@@ -231,7 +231,14 @@ func (o *TabletV2) OnBustype(fn TabletV2BustypeFunc) {
 }
 
 func (o *TabletV2) Destroy() error {
-	return o.proxy.SendRequest(TabletV2RequestDestroy, &TabletV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(TabletV2RequestDestroy, &TabletV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindTabletV2(b wayland.Binder, name uint32, version uint32) (*TabletV2, error) {

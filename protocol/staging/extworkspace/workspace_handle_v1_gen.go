@@ -294,7 +294,14 @@ func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 }
 
 func (o *WorkspaceHandleV1) Destroy() error {
-	return o.proxy.SendRequest(WorkspaceHandleV1RequestDestroy, &WorkspaceHandleV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(WorkspaceHandleV1RequestDestroy, &WorkspaceHandleV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *WorkspaceHandleV1) Activate() error {

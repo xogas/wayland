@@ -82,7 +82,14 @@ func (o *ImportedV1) OnDestroyed(fn ImportedV1DestroyedFunc) {
 }
 
 func (o *ImportedV1) Destroy() error {
-	return o.proxy.SendRequest(ImportedV1RequestDestroy, &ImportedV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImportedV1RequestDestroy, &ImportedV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ImportedV1) SetParentOf(surface wire.ObjectID) error {

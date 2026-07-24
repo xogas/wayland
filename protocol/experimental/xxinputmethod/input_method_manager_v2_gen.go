@@ -113,7 +113,14 @@ func (o *InputMethodManagerV2) GetPositioner() (*InputPopupPositionerV1, error) 
 }
 
 func (o *InputMethodManagerV2) Destroy() error {
-	return o.proxy.SendRequest(InputMethodManagerV2RequestDestroy, &InputMethodManagerV2DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(InputMethodManagerV2RequestDestroy, &InputMethodManagerV2DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindInputMethodManagerV2(b wayland.Binder, name uint32, version uint32) (*InputMethodManagerV2, error) {

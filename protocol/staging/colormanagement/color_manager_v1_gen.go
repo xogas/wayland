@@ -420,7 +420,14 @@ func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 }
 
 func (o *ColorManagerV1) Destroy() error {
-	return o.proxy.SendRequest(ColorManagerV1RequestDestroy, &ColorManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ColorManagerV1RequestDestroy, &ColorManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ColorManagerV1) GetOutput(output wire.ObjectID) (*ColorManagementOutputV1, error) {

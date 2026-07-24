@@ -113,7 +113,14 @@ func (o *DataControlManagerV1) GetDataDevice(seat wire.ObjectID) (*DataControlDe
 }
 
 func (o *DataControlManagerV1) Destroy() error {
-	return o.proxy.SendRequest(DataControlManagerV1RequestDestroy, &DataControlManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(DataControlManagerV1RequestDestroy, &DataControlManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindDataControlManagerV1(b wayland.Binder, name uint32, version uint32) (*DataControlManagerV1, error) {

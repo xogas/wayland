@@ -308,7 +308,14 @@ func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc)
 }
 
 func (o *ImageCopyCaptureFrameV1) Destroy() error {
-	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestDestroy, &ImageCopyCaptureFrameV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestDestroy, &ImageCopyCaptureFrameV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *ImageCopyCaptureFrameV1) AttachBuffer(buffer wire.ObjectID) error {

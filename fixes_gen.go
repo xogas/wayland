@@ -53,7 +53,14 @@ func (o *Fixes) Proxy() *Proxy {
 }
 
 func (o *Fixes) Destroy() error {
-	return o.proxy.SendRequest(FixesRequestDestroy, &FixesDestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(FixesRequestDestroy, &FixesDestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *Fixes) DestroyRegistry(registry wire.ObjectID) error {

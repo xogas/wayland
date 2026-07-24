@@ -121,7 +121,14 @@ func (o *PointerConstraintsV1) Proxy() *wayland.Proxy {
 }
 
 func (o *PointerConstraintsV1) Destroy() error {
-	return o.proxy.SendRequest(PointerConstraintsV1RequestDestroy, &PointerConstraintsV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(PointerConstraintsV1RequestDestroy, &PointerConstraintsV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime uint32) (*LockedPointerV1, error) {

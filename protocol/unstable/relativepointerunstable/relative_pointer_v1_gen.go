@@ -104,7 +104,14 @@ func (o *RelativePointerV1) OnRelativeMotion(fn RelativePointerV1RelativeMotionF
 }
 
 func (o *RelativePointerV1) Destroy() error {
-	return o.proxy.SendRequest(RelativePointerV1RequestDestroy, &RelativePointerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(RelativePointerV1RequestDestroy, &RelativePointerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindRelativePointerV1(b wayland.Binder, name uint32, version uint32) (*RelativePointerV1, error) {

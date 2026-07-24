@@ -60,7 +60,14 @@ func (o *OutputManagerV1) Proxy() *wayland.Proxy {
 }
 
 func (o *OutputManagerV1) Destroy() error {
-	return o.proxy.SendRequest(OutputManagerV1RequestDestroy, &OutputManagerV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(OutputManagerV1RequestDestroy, &OutputManagerV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) {

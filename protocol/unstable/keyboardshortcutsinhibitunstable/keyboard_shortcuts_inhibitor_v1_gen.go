@@ -97,7 +97,14 @@ func (o *KeyboardShortcutsInhibitorV1) OnInactive(fn KeyboardShortcutsInhibitorV
 }
 
 func (o *KeyboardShortcutsInhibitorV1) Destroy() error {
-	return o.proxy.SendRequest(KeyboardShortcutsInhibitorV1RequestDestroy, &KeyboardShortcutsInhibitorV1DestroyRequest{})
+	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest(KeyboardShortcutsInhibitorV1RequestDestroy, &KeyboardShortcutsInhibitorV1DestroyRequest{}); err != nil {
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 
 func BindKeyboardShortcutsInhibitorV1(b wayland.Binder, name uint32, version uint32) (*KeyboardShortcutsInhibitorV1, error) {
