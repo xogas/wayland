@@ -8,8 +8,6 @@ import (
 	"syscall"
 )
 
-var nativeEndian = binary.NativeEndian
-
 // Conn wraps a Unix domain socket connection for sending and receiving Wayland messages.
 type Conn struct {
 	conn  *net.UnixConn
@@ -55,13 +53,11 @@ func (c *Conn) Close() error {
 	return c.conn.Close()
 }
 
-// ErrMessageTooLarge is returned when a serialized message exceeds the maximum
-// Wayland message size (65535 bytes including header).
 var ErrMessageTooLarge = fmt.Errorf("wire: message size exceeds 65535 bytes")
 
 // SendMessage sends a Wayland message.
-// The frame format is [object_id:uint32][length<<16|opcode:uint32][payload...].
-// File descriptors from w.Fds() are sent as SCM_RIGHTS ancillary data.
+// Frame: [object_id:uint32][length<<16|opcode:uint32][payload...].
+// FDs from w.Fds() are sent as SCM_RIGHTS ancillary data.
 func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 	payload := w.Bytes()
 	length := 8 + len(payload)
@@ -71,8 +67,8 @@ func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 	pad := (4 - len(payload)%4) % 4
 
 	buf := make([]byte, 8+len(payload)+pad)
-	nativeEndian.PutUint32(buf[0:4], uint32(obj))
-	nativeEndian.PutUint32(buf[4:8], uint32(length)<<16|uint32(opcode))
+	binary.NativeEndian.PutUint32(buf[0:4], uint32(obj))
+	binary.NativeEndian.PutUint32(buf[4:8], uint32(length)<<16|uint32(opcode))
 	copy(buf[8:], payload)
 
 	if len(w.Fds()) == 0 {
@@ -86,15 +82,13 @@ func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 }
 
 // ReceiveMessage reads the next complete Wayland message.
-// It handles internal buffering and SCM_RIGHTS fd parsing.
-// Received file descriptors are added to a connection-level queue (matching libwayland
-// behavior); the caller must use TakeFDs to claim file descriptors for a specific
-// message and assign them to the Reader via SetFDs.
+// Received FDs are queued at the connection level (matching libwayland);
+// callers must use TakeFDs + Reader.SetFDs to assign them to a message.
 func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 	for {
 		if len(c.buf) >= 8 {
-			obj := ObjectID(nativeEndian.Uint32(c.buf[0:4]))
-			word2 := nativeEndian.Uint32(c.buf[4:8])
+			obj := ObjectID(binary.NativeEndian.Uint32(c.buf[0:4]))
+			word2 := binary.NativeEndian.Uint32(c.buf[4:8])
 			length := int(word2 >> 16)
 			opcode := uint16(word2 & 0xFFFF)
 

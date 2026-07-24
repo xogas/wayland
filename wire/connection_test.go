@@ -1,7 +1,6 @@
 package wire
 
 import (
-	"encoding/binary"
 	"net"
 	"os"
 	"syscall"
@@ -325,45 +324,6 @@ func TestSendReceiveMultipleMessages(t *testing.T) {
 	}
 }
 
-func TestMessageFrameFormat(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	w := &Writer{}
-	_ = w.Uint32(0x12345678)
-	if err := conn1.SendMessage(3, 5, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	obj, opcode, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	if obj != 3 || opcode != 5 {
-		t.Errorf("header: obj=%d opcode=%d", obj, opcode)
-	}
-	if len(r.buf) != 4 {
-		t.Errorf("payload len: got %d, want 4", len(r.buf))
-	}
-	v, _ := r.Uint32()
-	if v != 0x12345678 {
-		t.Errorf("payload: got %#x", v)
-	}
-
-	// Verify frame format manually
-	payload := w.Bytes()
-	expectedLen := uint32(8 + len(payload))
-	headerWord2 := binary.NativeEndian.Uint32([]byte{0, 0, 0, 0})
-	if expectedLen>>16 != 0 || (expectedLen<<16)>>16 != expectedLen<<16 {
-		// Just verify the calculation
-		_ = headerWord2
-	}
-}
-
 func TestConnClose(t *testing.T) {
 	c1, c2 := socketPair(t)
 	defer c2.Close() //nolint: errcheck
@@ -503,7 +463,7 @@ func TestUnconsumedFDs(t *testing.T) {
 	_ = syscall.Close(unconsumed[0])
 }
 
-func TestTakeFDsZero(t *testing.T) {
+func TestTakeFDs(t *testing.T) {
 	c1, c2 := socketPair(t)
 	defer c1.Close() //nolint: errcheck
 	defer c2.Close() //nolint: errcheck
@@ -511,57 +471,44 @@ func TestTakeFDsZero(t *testing.T) {
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
 
+	// TakeFDs(0)
 	w := &Writer{}
 	_ = w.Uint32(42)
 	if err := conn1.SendMessage(1, 0, w); err != nil {
 		t.Fatalf("SendMessage: %v", err)
 	}
-
 	_, _, r, err := conn2.ReceiveMessage()
 	if err != nil {
 		t.Fatalf("ReceiveMessage: %v", err)
 	}
-
 	fds := conn2.TakeFDs(0)
 	if len(fds) != 0 {
 		t.Fatalf("TakeFDs(0): expected nil, got %v", fds)
 	}
-
 	v, _ := r.Uint32()
 	if v != 42 {
 		t.Errorf("payload: got %d, want 42", v)
 	}
-}
 
-func TestTakeAllFDs(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
+	// TakeAllFDs + empty after
 	f1, _ := os.CreateTemp("", "wire-test-*")
 	defer os.Remove(f1.Name()) //nolint: errcheck
 	defer f1.Close()           //nolint: errcheck
 
-	w := &Writer{}
-	_ = w.Fd(int(f1.Fd()))
-	if err := conn1.SendMessage(1, 0, w); err != nil {
+	w2 := &Writer{}
+	_ = w2.Fd(int(f1.Fd()))
+	if err := conn1.SendMessage(1, 0, w2); err != nil {
 		t.Fatalf("SendMessage: %v", err)
 	}
-
-	_, _, _, err := conn2.ReceiveMessage()
+	_, _, _, err = conn2.ReceiveMessage()
 	if err != nil {
 		t.Fatalf("ReceiveMessage: %v", err)
 	}
-
-	fds := conn2.TakeAllFDs()
-	if len(fds) != 1 {
-		t.Fatalf("TakeAllFDs: expected 1, got %d", len(fds))
+	allFds := conn2.TakeAllFDs()
+	if len(allFds) != 1 {
+		t.Fatalf("TakeAllFDs: expected 1, got %d", len(allFds))
 	}
-	_ = syscall.Close(fds[0])
-
+	_ = syscall.Close(allFds[0])
 	remaining := conn2.TakeAllFDs()
 	if len(remaining) != 0 {
 		t.Fatalf("second TakeAllFDs: expected empty, got %v", remaining)

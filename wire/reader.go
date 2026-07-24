@@ -41,21 +41,13 @@ func (r *Reader) Clone() *Reader {
 	}
 }
 
-func (r *Reader) check(n int) error {
-	if r.pos+n > len(r.buf) {
-		return fmt.Errorf("wire: read past end of buffer (need %d, have %d)", n, len(r.buf)-r.pos)
-	}
-	return nil
-}
-
 // Int32 reads a signed 32-bit integer in host byte order.
 func (r *Reader) Int32() (int32, error) {
-	if err := r.check(4); err != nil {
+	v, err := r.Uint32()
+	if err != nil {
 		return 0, err
 	}
-	v := int32(binary.NativeEndian.Uint32(r.buf[r.pos:]))
-	r.pos += 4
-	return v, nil
+	return int32(v), nil
 }
 
 // Uint32 reads an unsigned 32-bit integer in host byte order.
@@ -97,11 +89,9 @@ func (r *Reader) String() (string, error) {
 		return "", fmt.Errorf("wire: missing NUL terminator in string")
 	}
 	r.pos++
-	pad := (4 - int(length)%4) % 4
-	if err := r.check(pad); err != nil {
-		return "", fmt.Errorf("wire: string padding truncated: %w", err)
+	if err = r.skipPad(int(length)); err != nil {
+		return "", err
 	}
-	r.pos += pad
 	return s, nil
 }
 
@@ -135,11 +125,10 @@ func (r *Reader) Array() ([]byte, error) {
 	v := make([]byte, length)
 	copy(v, r.buf[r.pos:r.pos+int(length)])
 	r.pos += int(length)
-	pad := (4 - int(length)%4) % 4
-	if err := r.check(pad); err != nil {
-		return nil, fmt.Errorf("wire: array padding truncated: %w", err)
+	if err = r.skipPad(int(length)); err != nil {
+		return nil, err
 	}
-	r.pos += pad
+
 	return v, nil
 }
 
@@ -151,4 +140,20 @@ func (r *Reader) Fd() (int, error) {
 	fd := r.fds[r.fdIdx]
 	r.fdIdx++
 	return fd, nil
+}
+
+func (r *Reader) check(n int) error {
+	if r.pos+n > len(r.buf) {
+		return fmt.Errorf("wire: read past end of buffer (need %d, have %d)", n, len(r.buf)-r.pos)
+	}
+	return nil
+}
+
+func (r *Reader) skipPad(length int) error {
+	pad := (4 - length%4) % 4
+	if err := r.check(pad); err != nil {
+		return fmt.Errorf("wire: padding truncated: %w", err)
+	}
+	r.pos += pad
+	return nil
 }

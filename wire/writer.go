@@ -13,12 +13,18 @@ type Writer struct {
 
 // Int32 writes a signed 32-bit integer in host byte order.
 func (w *Writer) Int32(v int32) error {
-	return binary.Write(&w.buf, binary.NativeEndian, v)
+	var b [4]byte
+	binary.NativeEndian.PutUint32(b[:], uint32(v))
+	_, err := w.buf.Write(b[:])
+	return err
 }
 
 // Uint32 writes an unsigned 32-bit integer in host byte order.
 func (w *Writer) Uint32(v uint32) error {
-	return binary.Write(&w.buf, binary.NativeEndian, v)
+	var b [4]byte
+	binary.NativeEndian.PutUint32(b[:], v)
+	_, err := w.buf.Write(b[:])
+	return err
 }
 
 // Fixed writes a 24.8 fixed-point number.
@@ -34,8 +40,8 @@ func (w *Writer) String(s string) error {
 	if s == "" {
 		return w.Uint32(0)
 	}
-	byteLen := len(s) + 1
-	if err := w.Uint32(uint32(byteLen)); err != nil {
+	n := len(s) + 1 // includes NUL
+	if err := w.Uint32(uint32(n)); err != nil {
 		return err
 	}
 	if _, err := w.buf.WriteString(s); err != nil {
@@ -44,8 +50,8 @@ func (w *Writer) String(s string) error {
 	if err := w.buf.WriteByte(0); err != nil {
 		return err
 	}
-	pad := (4 - byteLen%4) % 4
-	for i := 0; i < pad; i++ {
+	pad := (4 - n%4) % 4
+	for range pad {
 		if err := w.buf.WriteByte(0); err != nil {
 			return err
 		}
@@ -74,7 +80,7 @@ func (w *Writer) Array(v []byte) error {
 		return err
 	}
 	pad := (4 - len(v)%4) % 4
-	for i := 0; i < pad; i++ {
+	for range pad {
 		if err := w.buf.WriteByte(0); err != nil {
 			return err
 		}

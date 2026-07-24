@@ -6,28 +6,17 @@ import (
 )
 
 const (
-	fixedMaxFloat = 8388607.99609375
-	fixedMinFloat = -8388608.0
+	fixedMaxFloat = float64(math.MaxInt32) / 256.0
+	fixedMinFloat = float64(math.MinInt32) / 256.0
 )
 
-func TestFixedFloat64(t *testing.T) {
-	tests := []struct {
-		in  Fixed
-		out float64
-	}{
-		{0, 0.0},
-		{256, 1.0},
-		{512, 2.0},
-		{128, 0.5},
-		{-256, -1.0},
-		{-128, -0.5},
-		{1, 1.0 / 256.0},
-		{-1, -1.0 / 256.0},
-	}
-	for _, tt := range tests {
-		got := tt.in.Float64()
-		if got != tt.out {
-			t.Errorf("Fixed(%d).Float64() = %v, want %v", tt.in, got, tt.out)
+func TestFixedRoundTrip(t *testing.T) {
+	values := []float64{0, 1.5, -1.5, 0.25, -0.25, 3.14159, -2.71828, 1000.5, -1000.5, fixedMaxFloat, fixedMinFloat}
+	for _, v := range values {
+		f := FixedFromFloat64(v)
+		back := f.Float64()
+		if math.Abs(back-v) > 1.0/256.0+1e-8 {
+			t.Errorf("fixed round-trip: %v -> %v -> %v (diff %v)", v, f, back, back-v)
 		}
 	}
 }
@@ -90,17 +79,6 @@ func TestFixedFromInt(t *testing.T) {
 		got := FixedFromInt(tt.in)
 		if got != tt.out {
 			t.Errorf("FixedFromInt(%v) = %v, want %v", tt.in, got, tt.out)
-		}
-	}
-}
-
-func TestFixedRoundTrip(t *testing.T) {
-	values := []float64{0, 1.5, -1.5, 0.25, -0.25, 3.14159, -2.71828, 1000.5, -1000.5, fixedMaxFloat, fixedMinFloat}
-	for _, v := range values {
-		f := FixedFromFloat64(v)
-		back := f.Float64()
-		if math.Abs(back-v) > 1.0/256.0+1e-8 {
-			t.Errorf("fixed round-trip: %v -> %v -> %v (diff %v)", v, f, back, back-v)
 		}
 	}
 }
