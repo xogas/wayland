@@ -56,13 +56,10 @@ func capitalize(s string) string {
 }
 
 // typeName derives the Go type name for an interface name.
-func typeName(xmlName, prefix, suffix string) string {
+func typeName(xmlName, prefix string) string {
 	s := xmlName
 	if prefix != "" {
 		s = strings.TrimPrefix(s, prefix)
-	}
-	if suffix != "" {
-		s = strings.TrimSuffix(s, suffix)
 	}
 	return pascal(s)
 }

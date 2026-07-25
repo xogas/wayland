@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/xml"
+	"fmt"
+	"os"
 	"strconv"
 )
 
+// Protocol represents a parsed Wayland protocol XML file (<protocol>).
 type Protocol struct {
 	XMLName     xml.Name    `xml:"protocol"`
 	Name        string      `xml:"name,attr"`
@@ -13,11 +16,13 @@ type Protocol struct {
 	Interfaces  []Interface `xml:"interface"`
 }
 
+// Description holds the summary and text of a protocol description element.
 type Description struct {
 	Summary string `xml:"summary,attr"`
 	Text    string `xml:",chardata"`
 }
 
+// Interface represents a Wayland protocol interface (<interface>).
 type Interface struct {
 	Name        string      `xml:"name,attr"`
 	Version     int         `xml:"version,attr"`
@@ -28,6 +33,7 @@ type Interface struct {
 	Enums       []Enum      `xml:"enum"`
 }
 
+// Request represents a Wayland protocol request (<request>).
 type Request struct {
 	Name            string      `xml:"name,attr"`
 	Type            string      `xml:"type,attr"`
@@ -37,6 +43,7 @@ type Request struct {
 	Args            []Arg       `xml:"arg"`
 }
 
+// Event represents a Wayland protocol event (<event>).
 type Event struct {
 	Name            string      `xml:"name,attr"`
 	Type            string      `xml:"type,attr"`
@@ -46,6 +53,7 @@ type Event struct {
 	Args            []Arg       `xml:"arg"`
 }
 
+// Arg represents an argument of a request or event (<arg>).
 type Arg struct {
 	Name        string      `xml:"name,attr"`
 	Type        string      `xml:"type,attr"`
@@ -56,6 +64,7 @@ type Arg struct {
 	Description Description `xml:"description"`
 }
 
+// Enum represents an enumeration (<enum>).
 type Enum struct {
 	Name        string      `xml:"name,attr"`
 	Since       int         `xml:"since,attr"`
@@ -64,6 +73,7 @@ type Enum struct {
 	Entries     []Entry     `xml:"entry"`
 }
 
+// Entry represents an enum entry (<entry>).
 type Entry struct {
 	Name            string      `xml:"name,attr"`
 	Value           IntValue    `xml:"value,attr"`
@@ -84,4 +94,63 @@ func (v *IntValue) UnmarshalXMLAttr(attr xml.Attr) error {
 	}
 	*v = IntValue(parsed)
 	return nil
+}
+
+// validate checks that a parsed Protocol has all required fields populated.
+func validate(proto *Protocol) error {
+	if proto.Name == "" {
+		return fmt.Errorf("protocol name is empty")
+	}
+	for i := range proto.Interfaces {
+		iface := &proto.Interfaces[i]
+		if iface.Name == "" {
+			return fmt.Errorf("interface name is empty")
+		}
+		if iface.Version < 1 {
+			return fmt.Errorf("interface %q version is %d, must be >= 1", iface.Name, iface.Version)
+		}
+		for j := range iface.Requests {
+			req := &iface.Requests[j]
+			if req.Name == "" {
+				return fmt.Errorf("interface %q: request name is empty", iface.Name)
+			}
+			for k := range req.Args {
+				if req.Args[k].Name == "" {
+					return fmt.Errorf("interface %q request %q: arg name is empty", iface.Name, req.Name)
+				}
+			}
+		}
+		for j := range iface.Events {
+			ev := &iface.Events[j]
+			if ev.Name == "" {
+				return fmt.Errorf("interface %q: event name is empty", iface.Name)
+			}
+			for k := range ev.Args {
+				if ev.Args[k].Name == "" {
+					return fmt.Errorf("interface %q event %q: arg name is empty", iface.Name, ev.Name)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Parse reads and validates a Wayland protocol XML file.
+func Parse(xmlPath string) (*Protocol, error) {
+	f, err := os.Open(xmlPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close() //nolint: errcheck
+
+	// decodes and validates a Wayland protocol XML from a reader.
+	var proto Protocol
+	dec := xml.NewDecoder(f)
+	if err := dec.Decode(&proto); err != nil {
+		return nil, fmt.Errorf("decode xml: %w", err)
+	}
+	if err := validate(&proto); err != nil {
+		return nil, err
+	}
+	return &proto, nil
 }

@@ -1,7 +1,7 @@
 .PHONY: gen build test vet clean
 
 gen:
-	go run ./cmd/wayland-scanner -batch wayland-protocols -o .
+	go run ./cmd/wayland-scanner
 
 build:
 	go build -o bin/wayland-scanner ./cmd/wayland-scanner
