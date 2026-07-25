@@ -87,10 +87,12 @@ func (o *PrimarySelectionOfferV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionOfferV1) OnOffer(fn PrimarySelectionOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionOfferV1EventOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionOfferV1OfferEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Offer", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

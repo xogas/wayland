@@ -75,19 +75,10 @@ func (r *DataControlDeviceV1SetPrimarySelectionRequest) Marshal(w *wire.Writer) 
 func (r *DataControlDeviceV1SetPrimarySelectionRequest) Since() int { return 1 }
 
 type DataControlDeviceV1DataOfferEvent struct {
-	ID wire.NewID
+	ID *DataControlOfferV1
 }
 
 func (e *DataControlDeviceV1DataOfferEvent) Opcode() uint16 { return DataControlDeviceV1EventDataOffer }
-
-func (e *DataControlDeviceV1DataOfferEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
 
 func (e *DataControlDeviceV1DataOfferEvent) Since() int { return 1 }
 
@@ -161,10 +152,17 @@ func (o *DataControlDeviceV1) Proxy() *wayland.Proxy {
 func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev DataControlDeviceV1DataOfferEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewDataControlOfferV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -172,10 +170,12 @@ func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1SelectionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -183,10 +183,12 @@ func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventFinished, func(r *wire.Reader) {
 		var ev DataControlDeviceV1FinishedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -194,10 +196,12 @@ func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 func (o *DataControlDeviceV1) OnPrimarySelection(fn DataControlDeviceV1PrimarySelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventPrimarySelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1PrimarySelectionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PrimarySelection", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

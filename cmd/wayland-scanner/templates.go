@@ -78,26 +78,26 @@ func (r *{{.StructName}}) Marshal(w *wire.Writer) error {
 
 func (r *{{.StructName}}) Since() int { return {{.Since}} }
 {{end}}
-{{range .Events}}
-type {{.StructName}} struct {
-{{range .Args}}	{{.GoName}} {{.GoType}}
+{{range $ev := .Events}}
+type {{$ev.StructName}} struct {
+{{range $ev.Args}}	{{.GoName}} {{if .NewIDType}}*{{.NewIDType}}{{else}}{{.GoType}}{{end}}
 {{end}}}
 
-func (e *{{.StructName}}) Opcode() uint16 { return {{.OpName}} }
-
-func (e *{{.StructName}}) Unmarshal(r *wire.Reader) error {
-{{range .Args}}	{{.ParamName}}, err := {{.WireRead}}
+func (e *{{$ev.StructName}}) Opcode() uint16 { return {{$ev.OpName}} }
+{{if not $ev.HasNewID}}
+func (e *{{$ev.StructName}}) Unmarshal(r *wire.Reader) error {
+{{range $ev.Args}}	{{.ParamName}}, err := {{.WireRead}}
 	if err != nil {
 		return err
 	}
 	e.{{.GoName}} = {{.ParamName}}
 {{end}}	return nil
 }
-
-func (e *{{.StructName}}) Since() int { return {{.Since}} }
 {{end}}
-{{range .Events}}
-type {{.FuncName}} func(ev {{.StructName}})
+func (e *{{$ev.StructName}}) Since() int { return {{$ev.Since}} }
+{{end}}
+{{range $ev := .Events}}
+type {{$ev.FuncName}} func(ev {{$ev.StructName}})
 {{end}}
 type {{.TypeName}} struct {
 	proxy *{{.WaylandPkg}}Proxy
@@ -111,14 +111,35 @@ func New{{.TypeName}}(p *{{.WaylandPkg}}Proxy) *{{.TypeName}} {
 func (o *{{.TypeName}}) Proxy() *{{.WaylandPkg}}Proxy {
 	return o.proxy
 }
-{{range .Events}}
-func (o *{{$.TypeName}}) On{{.Name}}(fn {{.FuncName}}) {
-	o.proxy.RegisterEvent({{.OpName}}, func(r *wire.Reader) {
-		var ev {{.StructName}}
-		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{.Name}}", "error", err)
+{{range $ev := .Events}}
+func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
+	o.proxy.RegisterEvent({{$ev.OpName}}, func(r *wire.Reader) {
+		var ev {{$ev.StructName}}
+		{{if $ev.HasNewID}}
+		{{range $ev.Args}}{{if .IsNewID}}
+		rawID, err := r.NewID()
+		if err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
 			return
 		}
+		p := {{$.WaylandPkg}}NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.{{.GoName}} = New{{.NewIDType}}(p)
+		p.SetVersion(o.proxy.Version())
+		{{else}}
+		{{.ParamName}}, err := {{.WireRead}}
+		if err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
+			return
+		}
+		ev.{{.GoName}} = {{.ParamName}}
+		{{end}}{{end}}
+		{{else}}
+		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
+			return
+		}
+		{{end}}
 		fn(ev)
 	})
 }

@@ -121,10 +121,12 @@ func (o *ToplevelIconManagerV1) Proxy() *wayland.Proxy {
 func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventIconSize, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1IconSizeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IconSize", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -132,10 +134,12 @@ func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc)
 func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventDone, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

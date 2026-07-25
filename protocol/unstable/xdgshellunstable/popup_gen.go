@@ -57,10 +57,12 @@ func (o *Popup) Proxy() *wayland.Proxy {
 func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupEventPopupDone, func(r *wire.Reader) {
 		var ev PopupPopupDoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

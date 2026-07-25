@@ -624,10 +624,12 @@ func (o *TextInputV1) Proxy() *wayland.Proxy {
 func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventEnter, func(r *wire.Reader) {
 		var ev TextInputV1EnterEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -635,10 +637,12 @@ func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLeave, func(r *wire.Reader) {
 		var ev TextInputV1LeaveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -646,10 +650,12 @@ func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventModifiersMap, func(r *wire.Reader) {
 		var ev TextInputV1ModifiersMapEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModifiersMap", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -657,10 +663,12 @@ func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventInputPanelState, func(r *wire.Reader) {
 		var ev TextInputV1InputPanelStateEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "InputPanelState", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -668,10 +676,12 @@ func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStringEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditString", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -679,10 +689,12 @@ func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditStyling, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStylingEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditStyling", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -690,10 +702,12 @@ func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditCursor, func(r *wire.Reader) {
 		var ev TextInputV1PreeditCursorEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditCursor", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -701,10 +715,12 @@ func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV1CommitStringEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitString", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -712,10 +728,12 @@ func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCursorPosition, func(r *wire.Reader) {
 		var ev TextInputV1CursorPositionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CursorPosition", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -723,10 +741,12 @@ func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV1DeleteSurroundingTextEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteSurroundingText", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -734,10 +754,12 @@ func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTex
 func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventKeysym, func(r *wire.Reader) {
 		var ev TextInputV1KeysymEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Keysym", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -745,10 +767,12 @@ func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLanguage, func(r *wire.Reader) {
 		var ev TextInputV1LanguageEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Language", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -756,10 +780,12 @@ func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventTextDirection, func(r *wire.Reader) {
 		var ev TextInputV1TextDirectionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TextDirection", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

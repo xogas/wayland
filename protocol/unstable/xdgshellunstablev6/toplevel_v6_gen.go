@@ -336,10 +336,12 @@ func (o *ToplevelV6) Proxy() *wayland.Proxy {
 func (o *ToplevelV6) OnConfigure(fn ToplevelV6ConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelV6EventConfigure, func(r *wire.Reader) {
 		var ev ToplevelV6ConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -347,10 +349,12 @@ func (o *ToplevelV6) OnConfigure(fn ToplevelV6ConfigureFunc) {
 func (o *ToplevelV6) OnClose(fn ToplevelV6CloseFunc) {
 	o.proxy.RegisterEvent(ToplevelV6EventClose, func(r *wire.Reader) {
 		var ev ToplevelV6CloseEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Close", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

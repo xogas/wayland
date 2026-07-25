@@ -196,10 +196,12 @@ func (o *LinuxBufferParamsV1) Proxy() *wayland.Proxy {
 func (o *LinuxBufferParamsV1) OnCreated(fn LinuxBufferParamsV1CreatedFunc) {
 	o.proxy.RegisterEvent(LinuxBufferParamsV1EventCreated, func(r *wire.Reader) {
 		var ev LinuxBufferParamsV1CreatedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Created", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -207,10 +209,12 @@ func (o *LinuxBufferParamsV1) OnCreated(fn LinuxBufferParamsV1CreatedFunc) {
 func (o *LinuxBufferParamsV1) OnFailed(fn LinuxBufferParamsV1FailedFunc) {
 	o.proxy.RegisterEvent(LinuxBufferParamsV1EventFailed, func(r *wire.Reader) {
 		var ev LinuxBufferParamsV1FailedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

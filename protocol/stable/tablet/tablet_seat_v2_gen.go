@@ -32,53 +32,26 @@ func (r *TabletSeatV2DestroyRequest) Marshal(w *wire.Writer) error {
 func (r *TabletSeatV2DestroyRequest) Since() int { return 1 }
 
 type TabletSeatV2TabletAddedEvent struct {
-	ID wire.NewID
+	ID *TabletV2
 }
 
 func (e *TabletSeatV2TabletAddedEvent) Opcode() uint16 { return TabletSeatV2EventTabletAdded }
 
-func (e *TabletSeatV2TabletAddedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
-
 func (e *TabletSeatV2TabletAddedEvent) Since() int { return 1 }
 
 type TabletSeatV2ToolAddedEvent struct {
-	ID wire.NewID
+	ID *TabletToolV2
 }
 
 func (e *TabletSeatV2ToolAddedEvent) Opcode() uint16 { return TabletSeatV2EventToolAdded }
 
-func (e *TabletSeatV2ToolAddedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
-
 func (e *TabletSeatV2ToolAddedEvent) Since() int { return 1 }
 
 type TabletSeatV2PadAddedEvent struct {
-	ID wire.NewID
+	ID *TabletPadV2
 }
 
 func (e *TabletSeatV2PadAddedEvent) Opcode() uint16 { return TabletSeatV2EventPadAdded }
-
-func (e *TabletSeatV2PadAddedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
 
 func (e *TabletSeatV2PadAddedEvent) Since() int { return 1 }
 
@@ -103,10 +76,17 @@ func (o *TabletSeatV2) Proxy() *wayland.Proxy {
 func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2TabletAddedEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TabletAdded", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewTabletV2(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -114,10 +94,17 @@ func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2ToolAddedEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ToolAdded", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewTabletToolV2(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -125,10 +112,17 @@ func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 func (o *TabletSeatV2) OnPadAdded(fn TabletSeatV2PadAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventPadAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2PadAddedEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PadAdded", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewTabletPadV2(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }

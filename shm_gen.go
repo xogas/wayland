@@ -242,10 +242,12 @@ func (o *Shm) Proxy() *Proxy {
 func (o *Shm) OnFormat(fn ShmFormatFunc) {
 	o.proxy.RegisterEvent(ShmEventFormat, func(r *wire.Reader) {
 		var ev ShmFormatEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Format", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

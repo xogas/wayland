@@ -178,10 +178,12 @@ func (o *CutoutsV1) Proxy() *wayland.Proxy {
 func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutBox, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutBoxEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CutoutBox", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -189,10 +191,12 @@ func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutCorner, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutCornerEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CutoutCorner", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -200,10 +204,12 @@ func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventConfigure, func(r *wire.Reader) {
 		var ev CutoutsV1ConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

@@ -399,10 +399,12 @@ func (o *InputMethodV1) Proxy() *wayland.Proxy {
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Activate", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -410,10 +412,12 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Deactivate", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -421,10 +425,12 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodV1SurroundingTextEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SurroundingText", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -432,10 +438,12 @@ func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventTextChangeCause, func(r *wire.Reader) {
 		var ev InputMethodV1TextChangeCauseEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TextChangeCause", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -443,10 +451,12 @@ func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodV1ContentTypeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ContentType", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -454,10 +464,12 @@ func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableActionsFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSetAvailableActions, func(r *wire.Reader) {
 		var ev InputMethodV1SetAvailableActionsEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SetAvailableActions", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -465,10 +477,12 @@ func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableAction
 func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupportedFeaturesFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceSupportedFeatures, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceSupportedFeaturesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AnnounceSupportedFeatures", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -476,10 +490,12 @@ func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupp
 func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtocolCompatFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceProtocolCompat, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceProtocolCompatEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AnnounceProtocolCompat", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -487,10 +503,12 @@ func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtoco
 func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDone, func(r *wire.Reader) {
 		var ev InputMethodV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -498,10 +516,12 @@ func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventUnavailable, func(r *wire.Reader) {
 		var ev InputMethodV1UnavailableEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unavailable", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

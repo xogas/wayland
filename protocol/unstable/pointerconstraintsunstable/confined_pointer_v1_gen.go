@@ -87,10 +87,12 @@ func (o *ConfinedPointerV1) Proxy() *wayland.Proxy {
 func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventConfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1ConfinedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Confined", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -98,10 +100,12 @@ func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventUnconfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1UnconfinedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unconfined", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

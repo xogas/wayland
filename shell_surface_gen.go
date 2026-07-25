@@ -333,10 +333,12 @@ func (o *ShellSurface) Proxy() *Proxy {
 func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPing, func(r *wire.Reader) {
 		var ev ShellSurfacePingEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -344,10 +346,12 @@ func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventConfigure, func(r *wire.Reader) {
 		var ev ShellSurfaceConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -355,10 +359,12 @@ func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 func (o *ShellSurface) OnPopupDone(fn ShellSurfacePopupDoneFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPopupDone, func(r *wire.Reader) {
 		var ev ShellSurfacePopupDoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

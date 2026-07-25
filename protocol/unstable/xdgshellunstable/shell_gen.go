@@ -170,10 +170,12 @@ func (o *Shell) Proxy() *wayland.Proxy {
 func (o *Shell) OnPing(fn ShellPingFunc) {
 	o.proxy.RegisterEvent(ShellEventPing, func(r *wire.Reader) {
 		var ev ShellPingEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

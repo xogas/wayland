@@ -45,20 +45,11 @@ func (r *ForeignToplevelListV1DestroyRequest) Marshal(w *wire.Writer) error {
 func (r *ForeignToplevelListV1DestroyRequest) Since() int { return 1 }
 
 type ForeignToplevelListV1ToplevelEvent struct {
-	Toplevel wire.NewID
+	Toplevel *ForeignToplevelHandleV1
 }
 
 func (e *ForeignToplevelListV1ToplevelEvent) Opcode() uint16 {
 	return ForeignToplevelListV1EventToplevel
-}
-
-func (e *ForeignToplevelListV1ToplevelEvent) Unmarshal(r *wire.Reader) error {
-	toplevel, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.Toplevel = toplevel
-	return nil
 }
 
 func (e *ForeignToplevelListV1ToplevelEvent) Since() int { return 1 }
@@ -95,10 +86,17 @@ func (o *ForeignToplevelListV1) Proxy() *wayland.Proxy {
 func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventToplevel, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1ToplevelEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Toplevel", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.Toplevel = NewForeignToplevelHandleV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -106,10 +104,12 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventFinished, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1FinishedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

@@ -31,36 +31,18 @@ func (r *TabletSeatV1DestroyRequest) Marshal(w *wire.Writer) error {
 func (r *TabletSeatV1DestroyRequest) Since() int { return 1 }
 
 type TabletSeatV1TabletAddedEvent struct {
-	ID wire.NewID
+	ID *TabletV1
 }
 
 func (e *TabletSeatV1TabletAddedEvent) Opcode() uint16 { return TabletSeatV1EventTabletAdded }
 
-func (e *TabletSeatV1TabletAddedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
-
 func (e *TabletSeatV1TabletAddedEvent) Since() int { return 1 }
 
 type TabletSeatV1ToolAddedEvent struct {
-	ID wire.NewID
+	ID *TabletToolV1
 }
 
 func (e *TabletSeatV1ToolAddedEvent) Opcode() uint16 { return TabletSeatV1EventToolAdded }
-
-func (e *TabletSeatV1ToolAddedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
 
 func (e *TabletSeatV1ToolAddedEvent) Since() int { return 1 }
 
@@ -83,10 +65,17 @@ func (o *TabletSeatV1) Proxy() *wayland.Proxy {
 func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1TabletAddedEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TabletAdded", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewTabletV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -94,10 +83,17 @@ func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1ToolAddedEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ToolAdded", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewTabletToolV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }

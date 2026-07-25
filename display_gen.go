@@ -123,10 +123,12 @@ func (o *Display) Proxy() *Proxy {
 func (o *Display) OnError(fn DisplayErrorFunc) {
 	o.proxy.RegisterEvent(DisplayEventError, func(r *wire.Reader) {
 		var ev DisplayErrorEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Error", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -134,10 +136,12 @@ func (o *Display) OnError(fn DisplayErrorFunc) {
 func (o *Display) OnDeleteID(fn DisplayDeleteIDFunc) {
 	o.proxy.RegisterEvent(DisplayEventDeleteID, func(r *wire.Reader) {
 		var ev DisplayDeleteIDEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteID", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

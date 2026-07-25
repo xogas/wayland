@@ -103,10 +103,12 @@ func (o *TabletPadDialV2) Proxy() *wayland.Proxy {
 func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventDelta, func(r *wire.Reader) {
 		var ev TabletPadDialV2DeltaEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Delta", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -114,10 +116,12 @@ func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 func (o *TabletPadDialV2) OnFrame(fn TabletPadDialV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadDialV2FrameEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

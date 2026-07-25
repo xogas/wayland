@@ -137,10 +137,12 @@ func (o *ForeignToplevelHandleV1) Proxy() *wayland.Proxy {
 func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventClosed, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1ClosedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Closed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -148,10 +150,12 @@ func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc)
 func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventDone, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -159,10 +163,12 @@ func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventTitle, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1TitleEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Title", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -170,10 +176,12 @@ func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventAppID, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1AppIDEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AppID", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -181,10 +189,12 @@ func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 func (o *ForeignToplevelHandleV1) OnIDentifier(fn ForeignToplevelHandleV1IDentifierFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventIDentifier, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1IDentifierEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IDentifier", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

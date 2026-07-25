@@ -135,10 +135,12 @@ func (o *ActivationTokenV1) Proxy() *wayland.Proxy {
 func (o *ActivationTokenV1) OnDone(fn ActivationTokenV1DoneFunc) {
 	o.proxy.RegisterEvent(ActivationTokenV1EventDone, func(r *wire.Reader) {
 		var ev ActivationTokenV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

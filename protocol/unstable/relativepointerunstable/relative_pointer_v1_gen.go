@@ -95,10 +95,12 @@ func (o *RelativePointerV1) Proxy() *wayland.Proxy {
 func (o *RelativePointerV1) OnRelativeMotion(fn RelativePointerV1RelativeMotionFunc) {
 	o.proxy.RegisterEvent(RelativePointerV1EventRelativeMotion, func(r *wire.Reader) {
 		var ev RelativePointerV1RelativeMotionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "RelativeMotion", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

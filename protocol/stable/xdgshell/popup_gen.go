@@ -161,10 +161,12 @@ func (o *Popup) Proxy() *wayland.Proxy {
 func (o *Popup) OnConfigure(fn PopupConfigureFunc) {
 	o.proxy.RegisterEvent(PopupEventConfigure, func(r *wire.Reader) {
 		var ev PopupConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -172,10 +174,12 @@ func (o *Popup) OnConfigure(fn PopupConfigureFunc) {
 func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupEventPopupDone, func(r *wire.Reader) {
 		var ev PopupPopupDoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -183,10 +187,12 @@ func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 func (o *Popup) OnRepositioned(fn PopupRepositionedFunc) {
 	o.proxy.RegisterEvent(PopupEventRepositioned, func(r *wire.Reader) {
 		var ev PopupRepositionedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Repositioned", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

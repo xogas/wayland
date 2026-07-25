@@ -47,10 +47,12 @@ func (o *Callback) Proxy() *Proxy {
 func (o *Callback) OnDone(fn CallbackDoneFunc) {
 	o.proxy.RegisterEvent(CallbackEventDone, func(r *wire.Reader) {
 		var ev CallbackDoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

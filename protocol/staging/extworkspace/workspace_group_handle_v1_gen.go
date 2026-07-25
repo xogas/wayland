@@ -195,10 +195,12 @@ func (o *WorkspaceGroupHandleV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1CapabilitiesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -206,10 +208,12 @@ func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1Capabil
 func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputEnterEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "OutputEnter", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -217,10 +221,12 @@ func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEn
 func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputLeaveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "OutputLeave", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -228,10 +234,12 @@ func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLe
 func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1WorkspaceEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceEnterEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceEnter", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -239,10 +247,12 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1Works
 func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1WorkspaceLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceLeaveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceLeave", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -250,10 +260,12 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1Works
 func (o *WorkspaceGroupHandleV1) OnRemoved(fn WorkspaceGroupHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1RemovedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

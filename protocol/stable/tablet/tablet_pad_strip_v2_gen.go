@@ -145,10 +145,12 @@ func (o *TabletPadStripV2) Proxy() *wayland.Proxy {
 func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadStripV2SourceEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Source", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -156,10 +158,12 @@ func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventPosition, func(r *wire.Reader) {
 		var ev TabletPadStripV2PositionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -167,10 +171,12 @@ func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadStripV2StopEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stop", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -178,10 +184,12 @@ func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 func (o *TabletPadStripV2) OnFrame(fn TabletPadStripV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadStripV2FrameEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

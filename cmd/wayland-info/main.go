@@ -299,11 +299,7 @@ func main() {
 				_ = syscall.Close(ev.Fd)
 			})
 			leaseDev.OnConnector(func(ev drmlease.DrmLeaseDeviceV1ConnectorEvent) {
-				rawID := uint32(ev.ID)
-				conn := leaseDev.Proxy().Conn()
-				p := wayland.NewProxyWithID(conn, rawID)
-				wrapped := drmlease.NewDrmLeaseConnectorV1(p)
-				conn.RegisterProxy(p)
+				wrapped := ev.ID
 				ci := connectorInfo{}
 				wrapped.OnName(func(ev drmlease.DrmLeaseConnectorV1NameEvent) {
 					ci.name = ev.Name

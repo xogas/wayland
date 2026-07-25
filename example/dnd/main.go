@@ -339,8 +339,6 @@ func main() {
 	var clipboardSource *wayland.DataSource
 	var activeOfferID uint32
 
-	conn := dpy.Conn()
-
 	kb.OnEnter(func(ev wayland.KeyboardEnterEvent) {
 		kbSerial = ev.Serial
 		fmt.Printf("keyboard: enter serial=%d\n", ev.Serial)
@@ -477,14 +475,9 @@ func main() {
 	})
 
 	dd.OnDataOffer(func(ev wayland.DataDeviceDataOfferEvent) {
-		id := uint32(ev.ID)
+		offer := ev.ID
+		id := offer.Proxy().ID()
 		fmt.Printf("data_device: data_offer id=%d\n", id)
-		p := wayland.NewProxyWithID(conn, id)
-		if ddmVersion >= 3 {
-			p.SetVersion(ddmVersion)
-		}
-		conn.RegisterProxy(p)
-		offer := wayland.NewDataOffer(p)
 		offerMap[id] = offer
 		offerMimes[id] = nil
 		offer.OnOffer(func(ev wayland.DataOfferOfferEvent) {

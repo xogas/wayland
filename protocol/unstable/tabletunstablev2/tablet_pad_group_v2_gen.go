@@ -52,36 +52,18 @@ func (e *TabletPadGroupV2ButtonsEvent) Unmarshal(r *wire.Reader) error {
 func (e *TabletPadGroupV2ButtonsEvent) Since() int { return 1 }
 
 type TabletPadGroupV2RingEvent struct {
-	Ring wire.NewID
+	Ring *TabletPadRingV2
 }
 
 func (e *TabletPadGroupV2RingEvent) Opcode() uint16 { return TabletPadGroupV2EventRing }
 
-func (e *TabletPadGroupV2RingEvent) Unmarshal(r *wire.Reader) error {
-	ring, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.Ring = ring
-	return nil
-}
-
 func (e *TabletPadGroupV2RingEvent) Since() int { return 1 }
 
 type TabletPadGroupV2StripEvent struct {
-	Strip wire.NewID
+	Strip *TabletPadStripV2
 }
 
 func (e *TabletPadGroupV2StripEvent) Opcode() uint16 { return TabletPadGroupV2EventStrip }
-
-func (e *TabletPadGroupV2StripEvent) Unmarshal(r *wire.Reader) error {
-	strip, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.Strip = strip
-	return nil
-}
 
 func (e *TabletPadGroupV2StripEvent) Since() int { return 1 }
 
@@ -169,10 +151,12 @@ func (o *TabletPadGroupV2) Proxy() *wayland.Proxy {
 func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ButtonsEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Buttons", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -180,10 +164,17 @@ func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventRing, func(r *wire.Reader) {
 		var ev TabletPadGroupV2RingEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ring", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.Ring = NewTabletPadRingV2(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -191,10 +182,17 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventStrip, func(r *wire.Reader) {
 		var ev TabletPadGroupV2StripEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Strip", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.Strip = NewTabletPadStripV2(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -202,10 +200,12 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModes, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modes", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -213,10 +213,12 @@ func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadGroupV2DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -224,10 +226,12 @@ func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModeSwitch, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModeSwitchEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModeSwitch", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

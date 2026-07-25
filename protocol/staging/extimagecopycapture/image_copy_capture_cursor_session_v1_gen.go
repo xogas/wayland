@@ -157,10 +157,12 @@ func (o *ImageCopyCaptureCursorSessionV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessionV1EnterFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventEnter, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1EnterEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -168,10 +170,12 @@ func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessi
 func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessionV1LeaveFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventLeave, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1LeaveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -179,10 +183,12 @@ func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessi
 func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSessionV1PositionFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventPosition, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1PositionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -190,10 +196,12 @@ func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSe
 func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSessionV1HotspotFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventHotspot, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1HotspotEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Hotspot", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

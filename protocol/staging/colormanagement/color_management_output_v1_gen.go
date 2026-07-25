@@ -79,10 +79,12 @@ func (o *ColorManagementOutputV1) Proxy() *wayland.Proxy {
 func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOutputV1ImageDescriptionChangedFunc) {
 	o.proxy.RegisterEvent(ColorManagementOutputV1EventImageDescriptionChanged, func(r *wire.Reader) {
 		var ev ColorManagementOutputV1ImageDescriptionChangedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ImageDescriptionChanged", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

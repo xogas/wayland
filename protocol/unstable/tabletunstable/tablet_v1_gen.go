@@ -137,10 +137,12 @@ func (o *TabletV1) Proxy() *wayland.Proxy {
 func (o *TabletV1) OnName(fn TabletV1NameFunc) {
 	o.proxy.RegisterEvent(TabletV1EventName, func(r *wire.Reader) {
 		var ev TabletV1NameEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -148,10 +150,12 @@ func (o *TabletV1) OnName(fn TabletV1NameFunc) {
 func (o *TabletV1) OnID(fn TabletV1IDFunc) {
 	o.proxy.RegisterEvent(TabletV1EventID, func(r *wire.Reader) {
 		var ev TabletV1IDEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ID", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -159,10 +163,12 @@ func (o *TabletV1) OnID(fn TabletV1IDFunc) {
 func (o *TabletV1) OnPath(fn TabletV1PathFunc) {
 	o.proxy.RegisterEvent(TabletV1EventPath, func(r *wire.Reader) {
 		var ev TabletV1PathEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Path", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -170,10 +176,12 @@ func (o *TabletV1) OnPath(fn TabletV1PathFunc) {
 func (o *TabletV1) OnDone(fn TabletV1DoneFunc) {
 	o.proxy.RegisterEvent(TabletV1EventDone, func(r *wire.Reader) {
 		var ev TabletV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -181,10 +189,12 @@ func (o *TabletV1) OnDone(fn TabletV1DoneFunc) {
 func (o *TabletV1) OnRemoved(fn TabletV1RemovedFunc) {
 	o.proxy.RegisterEvent(TabletV1EventRemoved, func(r *wire.Reader) {
 		var ev TabletV1RemovedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

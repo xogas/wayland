@@ -55,20 +55,11 @@ func (r *PrimarySelectionDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 func (r *PrimarySelectionDeviceV1DestroyRequest) Since() int { return 1 }
 
 type PrimarySelectionDeviceV1DataOfferEvent struct {
-	Offer wire.NewID
+	Offer *PrimarySelectionOfferV1
 }
 
 func (e *PrimarySelectionDeviceV1DataOfferEvent) Opcode() uint16 {
 	return PrimarySelectionDeviceV1EventDataOffer
-}
-
-func (e *PrimarySelectionDeviceV1DataOfferEvent) Unmarshal(r *wire.Reader) error {
-	offer, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.Offer = offer
-	return nil
 }
 
 func (e *PrimarySelectionDeviceV1DataOfferEvent) Since() int { return 1 }
@@ -111,10 +102,17 @@ func (o *PrimarySelectionDeviceV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1DataOfferEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.Offer = NewPrimarySelectionOfferV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -122,10 +120,12 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1SelectionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

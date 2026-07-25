@@ -87,10 +87,12 @@ func (o *FractionalScaleV2) Proxy() *wayland.Proxy {
 func (o *FractionalScaleV2) OnScaleFactor(fn FractionalScaleV2ScaleFactorFunc) {
 	o.proxy.RegisterEvent(FractionalScaleV2EventScaleFactor, func(r *wire.Reader) {
 		var ev FractionalScaleV2ScaleFactorEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ScaleFactor", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

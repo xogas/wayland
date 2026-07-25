@@ -89,19 +89,10 @@ func (r *DataDeviceReleaseRequest) Marshal(w *wire.Writer) error {
 func (r *DataDeviceReleaseRequest) Since() int { return 2 }
 
 type DataDeviceDataOfferEvent struct {
-	ID wire.NewID
+	ID *DataOffer
 }
 
 func (e *DataDeviceDataOfferEvent) Opcode() uint16 { return DataDeviceEventDataOffer }
-
-func (e *DataDeviceDataOfferEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
 
 func (e *DataDeviceDataOfferEvent) Since() int { return 1 }
 
@@ -241,10 +232,17 @@ func (o *DataDevice) Proxy() *Proxy {
 func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDataOffer, func(r *wire.Reader) {
 		var ev DataDeviceDataOfferEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
 			return
 		}
+		p := NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewDataOffer(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -252,10 +250,12 @@ func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventEnter, func(r *wire.Reader) {
 		var ev DataDeviceEnterEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -263,10 +263,12 @@ func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventLeave, func(r *wire.Reader) {
 		var ev DataDeviceLeaveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -274,10 +276,12 @@ func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventMotion, func(r *wire.Reader) {
 		var ev DataDeviceMotionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -285,10 +289,12 @@ func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDrop, func(r *wire.Reader) {
 		var ev DataDeviceDropEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Drop", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -296,10 +302,12 @@ func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventSelection, func(r *wire.Reader) {
 		var ev DataDeviceSelectionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

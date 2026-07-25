@@ -47,6 +47,9 @@ type GoEvent struct {
 	Opcode     int
 	Since      int
 	Args       []GoArg
+	HasNewID   bool   // event has a new_id arg with resolvable interface
+	NewIDType  string // Go type created for the new_id
+	HasFD      bool
 }
 
 // GoArg is the Go-specific view of an argument.
@@ -57,6 +60,7 @@ type GoArg struct {
 	WireRead  string
 	WriteFn   string
 	IsNewID   bool
+	NewIDType string // set when new_id has resolvable interface
 }
 
 // GoEnum is the Go-specific view of an enum.
@@ -89,7 +93,7 @@ func convertInterface(iface *Interface, pkg, prefix string, knownIface map[strin
 
 	g.Enums = buildEnums(iface, tn)
 	g.Requests = buildRequests(iface, tn, prefix, knownIface)
-	g.Events, g.EventFDCounts, g.HasFDEvent = buildEvents(iface, tn)
+	g.Events, g.EventFDCounts, g.HasFDEvent = buildEvents(iface, tn, prefix, knownIface)
 
 	hasWire := len(g.Requests) > 0 || len(g.Events) > 0
 	g.Imports = buildImports(hasWire, isRoot)
@@ -161,7 +165,7 @@ func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bo
 }
 
 // buildEvents converts Interface events to GoEvents and returns fd count info.
-func buildEvents(iface *Interface, tn string) ([]GoEvent, map[uint16]int, bool) {
+func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool) ([]GoEvent, map[uint16]int, bool) {
 	var events []GoEvent
 	var fdCounts map[uint16]int
 	hasFD := false
@@ -179,9 +183,16 @@ func buildEvents(iface *Interface, tn string) ([]GoEvent, map[uint16]int, bool) 
 		fdCount := 0
 		for j := range e.Args {
 			ga := buildArg(&e.Args[j])
+			// Detect new_id with resolvable interface
+			if ga.IsNewID && e.Args[j].Interface != "" && knownIface[e.Args[j].Interface] {
+				ga.NewIDType = typeName(e.Args[j].Interface, prefix)
+				ed.HasNewID = true
+				ed.NewIDType = ga.NewIDType
+			}
 			ed.Args = append(ed.Args, ga)
 			if e.Args[j].Type == "fd" {
 				fdCount++
+				ed.HasFD = true
 			}
 		}
 		if fdCount > 0 {

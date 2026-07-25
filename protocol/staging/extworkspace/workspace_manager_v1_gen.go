@@ -45,38 +45,20 @@ func (r *WorkspaceManagerV1StopRequest) Marshal(w *wire.Writer) error {
 func (r *WorkspaceManagerV1StopRequest) Since() int { return 1 }
 
 type WorkspaceManagerV1WorkspaceGroupEvent struct {
-	WorkspaceGroup wire.NewID
+	WorkspaceGroup *WorkspaceGroupHandleV1
 }
 
 func (e *WorkspaceManagerV1WorkspaceGroupEvent) Opcode() uint16 {
 	return WorkspaceManagerV1EventWorkspaceGroup
 }
 
-func (e *WorkspaceManagerV1WorkspaceGroupEvent) Unmarshal(r *wire.Reader) error {
-	workspaceGroup, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.WorkspaceGroup = workspaceGroup
-	return nil
-}
-
 func (e *WorkspaceManagerV1WorkspaceGroupEvent) Since() int { return 1 }
 
 type WorkspaceManagerV1WorkspaceEvent struct {
-	Workspace wire.NewID
+	Workspace *WorkspaceHandleV1
 }
 
 func (e *WorkspaceManagerV1WorkspaceEvent) Opcode() uint16 { return WorkspaceManagerV1EventWorkspace }
-
-func (e *WorkspaceManagerV1WorkspaceEvent) Unmarshal(r *wire.Reader) error {
-	workspace, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.Workspace = workspace
-	return nil
-}
 
 func (e *WorkspaceManagerV1WorkspaceEvent) Since() int { return 1 }
 
@@ -125,10 +107,17 @@ func (o *WorkspaceManagerV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGroupFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspaceGroup, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceGroupEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceGroup", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.WorkspaceGroup = NewWorkspaceGroupHandleV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -136,10 +125,17 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspace, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Workspace", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.Workspace = NewWorkspaceHandleV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -147,10 +143,12 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventDone, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -158,10 +156,12 @@ func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventFinished, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1FinishedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

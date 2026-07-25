@@ -346,10 +346,12 @@ func (o *Surface) Proxy() *wayland.Proxy {
 func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(SurfaceEventConfigure, func(r *wire.Reader) {
 		var ev SurfaceConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -357,10 +359,12 @@ func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 	o.proxy.RegisterEvent(SurfaceEventClose, func(r *wire.Reader) {
 		var ev SurfaceCloseEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Close", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

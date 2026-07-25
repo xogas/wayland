@@ -101,10 +101,12 @@ func (o *BackgroundEffectManagerV1) Proxy() *wayland.Proxy {
 func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(BackgroundEffectManagerV1EventCapabilities, func(r *wire.Reader) {
 		var ev BackgroundEffectManagerV1CapabilitiesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

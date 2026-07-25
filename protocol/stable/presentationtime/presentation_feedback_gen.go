@@ -133,10 +133,12 @@ func (o *PresentationFeedback) Proxy() *wayland.Proxy {
 func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventSyncOutput, func(r *wire.Reader) {
 		var ev PresentationFeedbackSyncOutputEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SyncOutput", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -144,10 +146,12 @@ func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFun
 func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventPresented, func(r *wire.Reader) {
 		var ev PresentationFeedbackPresentedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Presented", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -155,10 +159,12 @@ func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc)
 func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventDiscarded, func(r *wire.Reader) {
 		var ev PresentationFeedbackDiscardedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Discarded", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

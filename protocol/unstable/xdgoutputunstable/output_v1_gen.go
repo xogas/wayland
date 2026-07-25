@@ -149,10 +149,12 @@ func (o *OutputV1) Proxy() *wayland.Proxy {
 func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalPosition, func(r *wire.Reader) {
 		var ev OutputV1LogicalPositionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "LogicalPosition", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -160,10 +162,12 @@ func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalSize, func(r *wire.Reader) {
 		var ev OutputV1LogicalSizeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "LogicalSize", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -171,10 +175,12 @@ func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDone, func(r *wire.Reader) {
 		var ev OutputV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -182,10 +188,12 @@ func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 	o.proxy.RegisterEvent(OutputV1EventName, func(r *wire.Reader) {
 		var ev OutputV1NameEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -193,10 +201,12 @@ func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDescription, func(r *wire.Reader) {
 		var ev OutputV1DescriptionEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Description", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

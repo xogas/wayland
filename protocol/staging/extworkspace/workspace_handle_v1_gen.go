@@ -230,10 +230,12 @@ func (o *WorkspaceHandleV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventID, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1IDEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ID", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -241,10 +243,12 @@ func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventName, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1NameEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -252,10 +256,12 @@ func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCoordinates, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CoordinatesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Coordinates", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -263,10 +269,12 @@ func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventState, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1StateEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "State", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -274,10 +282,12 @@ func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CapabilitiesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -285,10 +295,12 @@ func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc)
 func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1RemovedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

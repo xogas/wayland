@@ -115,10 +115,12 @@ func (o *PointerGestureHoldV1) Proxy() *wayland.Proxy {
 func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1BeginEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Begin", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -126,10 +128,12 @@ func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1EndEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "End", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

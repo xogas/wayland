@@ -139,10 +139,12 @@ func (o *ColorRepresentationManagerV1) Proxy() *wayland.Proxy {
 func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentationManagerV1SupportedAlphaModeFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedAlphaMode, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedAlphaModeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedAlphaMode", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -150,10 +152,12 @@ func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentati
 func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn ColorRepresentationManagerV1SupportedCoefficientsAndRangesFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedCoefficientsAndRanges, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedCoefficientsAndRanges", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -161,10 +165,12 @@ func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn Color
 func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

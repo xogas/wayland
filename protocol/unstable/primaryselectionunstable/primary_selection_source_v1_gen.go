@@ -110,10 +110,12 @@ func (o *PrimarySelectionSourceV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventSend, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1SendEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Send", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -121,10 +123,12 @@ func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 func (o *PrimarySelectionSourceV1) OnCancelled(fn PrimarySelectionSourceV1CancelledFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventCancelled, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1CancelledEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancelled", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

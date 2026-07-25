@@ -255,10 +255,12 @@ func (o *ImageCopyCaptureFrameV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1TransformFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventTransform, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1TransformEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Transform", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -266,10 +268,12 @@ func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1Transfor
 func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventDamage, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1DamageEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Damage", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -277,10 +281,12 @@ func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc)
 func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1PresentationTimeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventPresentationTime, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1PresentationTimeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PresentationTime", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -288,10 +294,12 @@ func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1P
 func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventReady, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1ReadyEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -299,10 +307,12 @@ func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventFailed, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1FailedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

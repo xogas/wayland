@@ -16,19 +16,10 @@ const (
 )
 
 type InputMethodV1ActivateEvent struct {
-	ID wire.NewID
+	ID *InputMethodContextV1
 }
 
 func (e *InputMethodV1ActivateEvent) Opcode() uint16 { return InputMethodV1EventActivate }
-
-func (e *InputMethodV1ActivateEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.NewID()
-	if err != nil {
-		return err
-	}
-	e.ID = iD
-	return nil
-}
 
 func (e *InputMethodV1ActivateEvent) Since() int { return 1 }
 
@@ -68,10 +59,17 @@ func (o *InputMethodV1) Proxy() *wayland.Proxy {
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
-		if err := ev.Unmarshal(r); err != nil {
+
+		rawID, err := r.NewID()
+		if err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Activate", "error", err)
 			return
 		}
+		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
+		o.proxy.Conn().RegisterProxy(p)
+		ev.ID = NewInputMethodContextV1(p)
+		p.SetVersion(o.proxy.Version())
+
 		fn(ev)
 	})
 }
@@ -79,10 +77,12 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Deactivate", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

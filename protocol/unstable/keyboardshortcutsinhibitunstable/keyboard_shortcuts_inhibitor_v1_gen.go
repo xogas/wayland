@@ -77,10 +77,12 @@ func (o *KeyboardShortcutsInhibitorV1) Proxy() *wayland.Proxy {
 func (o *KeyboardShortcutsInhibitorV1) OnActive(fn KeyboardShortcutsInhibitorV1ActiveFunc) {
 	o.proxy.RegisterEvent(KeyboardShortcutsInhibitorV1EventActive, func(r *wire.Reader) {
 		var ev KeyboardShortcutsInhibitorV1ActiveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Active", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -88,10 +90,12 @@ func (o *KeyboardShortcutsInhibitorV1) OnActive(fn KeyboardShortcutsInhibitorV1A
 func (o *KeyboardShortcutsInhibitorV1) OnInactive(fn KeyboardShortcutsInhibitorV1InactiveFunc) {
 	o.proxy.RegisterEvent(KeyboardShortcutsInhibitorV1EventInactive, func(r *wire.Reader) {
 		var ev KeyboardShortcutsInhibitorV1InactiveEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Inactive", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

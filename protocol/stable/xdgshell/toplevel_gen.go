@@ -408,10 +408,12 @@ func (o *Toplevel) Proxy() *wayland.Proxy {
 func (o *Toplevel) OnConfigure(fn ToplevelConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelEventConfigure, func(r *wire.Reader) {
 		var ev ToplevelConfigureEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -419,10 +421,12 @@ func (o *Toplevel) OnConfigure(fn ToplevelConfigureFunc) {
 func (o *Toplevel) OnClose(fn ToplevelCloseFunc) {
 	o.proxy.RegisterEvent(ToplevelEventClose, func(r *wire.Reader) {
 		var ev ToplevelCloseEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Close", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -430,10 +434,12 @@ func (o *Toplevel) OnClose(fn ToplevelCloseFunc) {
 func (o *Toplevel) OnConfigureBounds(fn ToplevelConfigureBoundsFunc) {
 	o.proxy.RegisterEvent(ToplevelEventConfigureBounds, func(r *wire.Reader) {
 		var ev ToplevelConfigureBoundsEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ConfigureBounds", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -441,10 +447,12 @@ func (o *Toplevel) OnConfigureBounds(fn ToplevelConfigureBoundsFunc) {
 func (o *Toplevel) OnWmCapabilities(fn ToplevelWmCapabilitiesFunc) {
 	o.proxy.RegisterEvent(ToplevelEventWmCapabilities, func(r *wire.Reader) {
 		var ev ToplevelWmCapabilitiesEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WmCapabilities", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }

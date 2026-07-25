@@ -201,10 +201,12 @@ func (o *ImageCopyCaptureSessionV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1BufferSizeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventBufferSize, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1BufferSizeEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "BufferSize", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -212,10 +214,12 @@ func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1Buf
 func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventShmFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1ShmFormatEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ShmFormat", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -223,10 +227,12 @@ func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmF
 func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1DmabufDeviceFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufDevice, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufDeviceEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DmabufDevice", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -234,10 +240,12 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1D
 func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1DmabufFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufFormatEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DmabufFormat", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -245,10 +253,12 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1D
 func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDone, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DoneEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
@@ -256,10 +266,12 @@ func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc)
 func (o *ImageCopyCaptureSessionV1) OnStopped(fn ImageCopyCaptureSessionV1StoppedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventStopped, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1StoppedEvent
+
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stopped", "error", err)
 			return
 		}
+
 		fn(ev)
 	})
 }
