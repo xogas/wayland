@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"syscall"
@@ -22,10 +21,8 @@ import (
 )
 
 type modeInfo struct {
-	width   int32
-	height  int32
-	refresh int32
-	flags   uint32
+	width, height, refresh int32
+	flags                  uint32
 }
 
 type trancheInfo struct {
@@ -35,9 +32,8 @@ type trancheInfo struct {
 }
 
 type connectorInfo struct {
-	name        string
-	description string
-	connectorID uint32
+	name, description string
+	connectorID       uint32
 }
 
 type dmabufInfo struct {
@@ -46,37 +42,23 @@ type dmabufInfo struct {
 }
 
 type seatData struct {
-	name         string
-	capabilities uint32
-	repeatRate   int32
-	repeatDelay  int32
+	name                    string
+	capabilities            uint32
+	repeatRate, repeatDelay int32
 }
 
 type xdgOutputInfo struct {
-	wlOutputName uint32
-	name         string
-	description  string
-	logX, logY   int32
-	logW, logH   int32
+	wlOutputName           uint32
+	name, description      string
+	logX, logY, logW, logH int32
 }
 
 type outputData struct {
-	name        string
-	description string
-	x, y        int32
-	physW       int32
-	physH       int32
-	subpixel    int32
-	make        string
-	model       string
-	transform   int32
-	scale       int32
-	modes       []modeInfo
-}
-
-type coeffRange struct {
-	coefficients uint32
-	rangeVal     uint32
+	name, description      string
+	x, y, physW, physH     int32
+	subpixel, make_, model string
+	transform, scale       int32
+	modes                  []modeInfo
 }
 
 type collectedData struct {
@@ -92,14 +74,17 @@ type collectedData struct {
 	cmPrimaries      []uint32
 	crAlphaModes     []uint32
 	crCoeffAndRanges []coeffRange
+	outputs          map[uint32]*outputData
+	xdgOutputs       []*xdgOutputInfo
+	seats            map[uint32]*seatData
+}
 
-	outputs    map[uint32]*outputData
-	xdgOutputs []*xdgOutputInfo
-	seats      map[uint32]*seatData
+type coeffRange struct {
+	coefficients, rangeVal uint32
 }
 
 func main() {
-	ifaceFilter := flag.String("i", "", "only show information for the specified interface")
+	ifaceFilter := flag.String("i", "", "only show info for the specified interface")
 	flag.Parse()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -107,14 +92,14 @@ func main() {
 
 	dpy, err := wayland.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "wayland-info: connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
 
 	reg, err := dpy.GetRegistry()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "wayland-info: get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -122,9 +107,8 @@ func main() {
 	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
 		globals = append(globals, ev)
 	})
-
 	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -132,7 +116,6 @@ func main() {
 		outputs: make(map[uint32]*outputData),
 		seats:   make(map[uint32]*seatData),
 	}
-
 	outputBindings := make(map[uint32]*wayland.Output)
 	var xdgManager *xdgoutputunstable.OutputManagerV1
 
@@ -140,7 +123,6 @@ func main() {
 		if *ifaceFilter != "" && g.Interface != *ifaceFilter {
 			continue
 		}
-
 		switch g.Interface {
 		case wayland.InterfaceOutput:
 			bv := min(g.Version, wayland.VersionOutput)
@@ -156,17 +138,15 @@ func main() {
 				od.y = ev.Y
 				od.physW = ev.PhysicalWidth
 				od.physH = ev.PhysicalHeight
-				od.subpixel = ev.Subpixel
-				od.make = ev.Make
+				od.subpixel = subpixelName(ev.Subpixel)
+				od.make_ = ev.Make
 				od.model = ev.Model
 				od.transform = ev.Transform
 			})
 			out.OnMode(func(ev wayland.OutputModeEvent) {
 				od.modes = append(od.modes, modeInfo{
-					width:   ev.Width,
-					height:  ev.Height,
-					refresh: ev.Refresh,
-					flags:   ev.Flags,
+					width: ev.Width, height: ev.Height,
+					refresh: ev.Refresh, flags: ev.Flags,
 				})
 			})
 			out.OnScale(func(ev wayland.OutputScaleEvent) {
@@ -245,10 +225,7 @@ func main() {
 					di.mainDevice = append([]byte{}, ev.Device...)
 				})
 				fb.OnTrancheTargetDevice(func(ev linuxdmabuf.LinuxDmabufFeedbackV1TrancheTargetDeviceEvent) {
-					ti := trancheInfo{
-						targetDevice: append([]byte{}, ev.Device...),
-					}
-					di.tranches = append(di.tranches, ti)
+					di.tranches = append(di.tranches, trancheInfo{targetDevice: append([]byte{}, ev.Device...)})
 				})
 				fb.OnTrancheFlags(func(ev linuxdmabuf.LinuxDmabufFeedbackV1TrancheFlagsEvent) {
 					if len(di.tranches) > 0 {
@@ -271,7 +248,7 @@ func main() {
 						entry := formatTable[entryOff : entryOff+16]
 						format := binary.LittleEndian.Uint32(entry[0:4])
 						modifier := binary.LittleEndian.Uint64(entry[8:16])
-						sb.WriteString(fmt.Sprintf("\t\t0x%08x = '%s'; 0x%016x = %s\n", format, fourccStr(format), modifier, modifierName(modifier)))
+						fmt.Fprintf(&sb, "    0x%08x %s mod=0x%016x\n", format, fourccStr(format), modifier)
 					}
 					ti.formats = sb.String()
 				})
@@ -378,7 +355,7 @@ func main() {
 	}
 
 	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -409,96 +386,54 @@ func main() {
 			}
 		}
 	}
-
 	if needSecondRoundtrip {
 		if err := dpy.Roundtrip(ctx); err != nil {
-			fmt.Fprintf(os.Stderr, "wayland-info: roundtrip: %v\n", err)
+			fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	printAll(os.Stdout, globals, cd, *ifaceFilter)
-}
-
-func printAll(w io.Writer, globals []wayland.RegistryGlobalEvent, cd *collectedData, filter string) {
-	maxNameLen := 0
+	var b strings.Builder
 	for _, g := range globals {
-		if filter != "" && g.Interface != filter {
+		if *ifaceFilter != "" && g.Interface != *ifaceFilter {
 			continue
 		}
-		n := len(g.Interface)
-		if n > maxNameLen {
-			maxNameLen = n
-		}
+		fmt.Fprintf(&b, "  %s v%d\n", g.Interface, g.Version)
+		printDetail(&b, g, cd)
 	}
-	paddedWidth := maxNameLen + len("interface: '") + len("',")
-
-	for _, g := range globals {
-		if filter != "" && g.Interface != filter {
-			continue
-		}
-		padded := fmt.Sprintf("interface: '%s',", g.Interface)
-		padSpaces := paddedWidth - len(padded)
-		if padSpaces < 0 {
-			padSpaces = 0
-		}
-		fmt.Fprintf(w, "%s%*s version: %2d, name: %2d\n", padded, padSpaces, "", g.Version, g.Name)
-
-		printDetail(w, g, cd)
-	}
+	fmt.Print(b.String())
 }
 
-func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) {
+func printDetail(b *strings.Builder, g wayland.RegistryGlobalEvent, cd *collectedData) {
 	switch g.Interface {
 	case wayland.InterfaceShm:
-		if len(cd.shmFormats) > 0 {
-			fmt.Fprintf(w, "\tformats (fourcc):\n")
-			for _, f := range cd.shmFormats {
-				switch f {
-				case 0:
-					fmt.Fprintf(w, "\t%10d = '%s'\n", 0, "AR24")
-				case 1:
-					fmt.Fprintf(w, "\t%10d = '%s'\n", 1, "XR24")
-				default:
-					fmt.Fprintf(w, "\t0x%08x = '%s'\n", f, fourccStr(f))
-				}
+		for _, f := range cd.shmFormats {
+			line := fmt.Sprintf("    format 0x%08x", f)
+			switch f {
+			case 0:
+				line = "    format AR24 (0)"
+			case 1:
+				line = "    format XR24 (1)"
 			}
+			fmt.Fprintln(b, line)
 		}
+
 	case wayland.InterfaceOutput:
 		od, ok := cd.outputs[g.Name]
 		if !ok {
 			return
 		}
 		if od.name != "" {
-			fmt.Fprintf(w, "\tname: %s\n", od.name)
+			fmt.Fprintf(b, "    name: %s\n", od.name)
 		}
-		if od.description != "" {
-			fmt.Fprintf(w, "\tdescription: %s\n", od.description)
-		}
-		fmt.Fprintf(w, "\tx: %d, y: %d, scale: %d,\n", od.x, od.y, od.scale)
-		fmt.Fprintf(w, "\tphysical_width: %d mm, physical_height: %d mm,\n", od.physW, od.physH)
-		fmt.Fprintf(w, "\tmake: '%s', model: '%s',\n", od.make, od.model)
-		fmt.Fprintf(w, "\tsubpixel_orientation: %s, output_transform: %s,\n",
-			subpixelName(od.subpixel), transformName(od.transform))
+		fmt.Fprintf(b, "    %dx%d+%d+%d scale=%d\n", od.physW, od.physH, od.x, od.y, od.scale)
 		for _, m := range od.modes {
-			fmt.Fprintf(w, "\tmode:\n")
-			fmt.Fprintf(w, "\t\twidth: %d px, height: %d px, refresh: %.3f Hz,\n",
-				m.width, m.height, float64(m.refresh)/1000.0)
-			fmt.Fprintf(w, "\t\tflags: %s\n", modeFlagString(m.flags))
-		}
-
-	case xdgoutputunstable.InterfaceOutputManagerV1:
-		for _, xi := range cd.xdgOutputs {
-			fmt.Fprintf(w, "\txdg_output_v1\n")
-			fmt.Fprintf(w, "\t\toutput: %d\n", xi.wlOutputName)
-			if xi.name != "" {
-				fmt.Fprintf(w, "\t\tname: '%s'\n", xi.name)
+			hz := float64(m.refresh) / 1000.0
+			cur := ""
+			if m.flags&uint32(wayland.OutputModeCurrent) != 0 {
+				cur = " *"
 			}
-			if xi.description != "" {
-				fmt.Fprintf(w, "\t\tdescription: '%s'\n", xi.description)
-			}
-			fmt.Fprintf(w, "\t\tlogical_x: %d, logical_y: %d\n", xi.logX, xi.logY)
-			fmt.Fprintf(w, "\t\tlogical_width: %d, logical_height: %d\n", xi.logW, xi.logH)
+			fmt.Fprintf(b, "    mode %dx%d %.2fHz%s\n", m.width, m.height, hz, cur)
 		}
 
 	case wayland.InterfaceSeat:
@@ -507,94 +442,84 @@ func printDetail(w io.Writer, g wayland.RegistryGlobalEvent, cd *collectedData) 
 			return
 		}
 		if sd.name != "" {
-			fmt.Fprintf(w, "\tname: %s\n", sd.name)
+			fmt.Fprintf(b, "    name: %s\n", sd.name)
 		}
-		fmt.Fprintf(w, "\tcapabilities: %s\n", capabilitiesString(sd.capabilities))
-		if sd.capabilities&uint32(wayland.SeatCapabilityKeyboard) != 0 {
-			fmt.Fprintf(w, "\tkeyboard repeat rate: %d\n", sd.repeatRate)
-			fmt.Fprintf(w, "\tkeyboard repeat delay: %d\n", sd.repeatDelay)
+		fmt.Fprintf(b, "    caps: %s\n", capsString(sd.capabilities))
+		if sd.repeatRate > 0 {
+			fmt.Fprintf(b, "    repeat rate=%d delay=%d\n", sd.repeatRate, sd.repeatDelay)
 		}
+
 	case linuxdmabuf.InterfaceLinuxDmabufV1:
 		if cd.dmabuf == nil {
 			return
 		}
 		if len(cd.dmabuf.mainDevice) >= 8 {
 			dev := binary.LittleEndian.Uint64(cd.dmabuf.mainDevice[:8])
-			fmt.Fprintf(w, "\tmain device: 0x%X", dev)
-			if p := devPath(dev); p != "" {
-				fmt.Fprintf(w, " (%s)", p)
-			}
-			fmt.Fprintln(w)
+			fmt.Fprintf(b, "    main device: 0x%X\n", dev)
 		}
 		for _, t := range cd.dmabuf.tranches {
-			fmt.Fprintf(w, "\ttranche\n")
 			if len(t.targetDevice) >= 8 {
 				dev := binary.LittleEndian.Uint64(t.targetDevice[:8])
-				fmt.Fprintf(w, "\t\ttarget device: 0x%X", dev)
-				if p := devPath(dev); p != "" {
-					fmt.Fprintf(w, " (%s)", p)
-				}
-				fmt.Fprintln(w)
+				fmt.Fprintf(b, "    target device: 0x%X\n", dev)
 			}
-			fmt.Fprintf(w, "\t\tflags: %s\n", dmabufTrancheFlags(t.flags))
-			fmt.Fprintf(w, "\t\tformats (fourcc) and modifiers (names):\n%s", t.formats)
+			b.WriteString(t.formats)
 		}
+
 	case presentationtime.InterfacePresentation:
-		clkName := "CLOCK_REALTIME"
-		if cd.presClockID == 1 {
-			clkName = "CLOCK_MONOTONIC"
-		}
-		fmt.Fprintf(w, "\tpresentation clock id: %d (%s)\n", cd.presClockID, clkName)
+		fmt.Fprintf(b, "    clock: %d\n", cd.presClockID)
+
 	case drmlease.InterfaceDrmLeaseDeviceV1:
-		if cd.drmLeaseFd > 0 {
-			fmt.Fprintf(w, "\tpath: %s\n", cd.drmLeasePath)
+		if cd.drmLeasePath != "" {
+			fmt.Fprintf(b, "    path: %s\n", cd.drmLeasePath)
 		}
 		for _, c := range cd.drmLeaseConn {
-			fmt.Fprintf(w, "\tconnector: %s\n", c.name)
-			if c.description != "" {
-				fmt.Fprintf(w, "\t\tdescription: %s\n", c.description)
-			}
-			fmt.Fprintf(w, "\t\tconnector id: %d\n", c.connectorID)
+			fmt.Fprintf(b, "    connector: %s (id=%d)\n", c.name, c.connectorID)
 		}
+
 	case colormanagement.InterfaceColorManagerV1:
-		if len(cd.cmIntents) > 0 {
-			fmt.Fprintf(w, "\tsupported rendering intents:\n")
-			for _, v := range cd.cmIntents {
-				fmt.Fprintf(w, "\t\t%s\n", renderIntentName(v))
+		for _, v := range cd.cmIntents {
+			if n := intentName(v); n != "" {
+				fmt.Fprintf(b, "    intent: %s\n", n)
 			}
 		}
-		if len(cd.cmFeatures) > 0 {
-			fmt.Fprintf(w, "\tsupported features:\n")
-			for _, v := range cd.cmFeatures {
-				fmt.Fprintf(w, "\t\t%s\n", cmFeatureName(v))
+		for _, v := range cd.cmFeatures {
+			if n := cmFeatureName(v); n != "" {
+				fmt.Fprintf(b, "    feature: %s\n", n)
 			}
 		}
-		if len(cd.cmTf) > 0 {
-			fmt.Fprintf(w, "\tsupported transfer functions:\n")
-			for _, v := range cd.cmTf {
-				fmt.Fprintf(w, "\t\t%s\n", tfName(v))
+		for _, v := range cd.cmTf {
+			if n := tfName(v); n != "" {
+				fmt.Fprintf(b, "    tf: %s\n", n)
 			}
 		}
-		if len(cd.cmPrimaries) > 0 {
-			fmt.Fprintf(w, "\tsupported primaries:\n")
-			for _, v := range cd.cmPrimaries {
-				fmt.Fprintf(w, "\t\t%s\n", primariesName(v))
+		for _, v := range cd.cmPrimaries {
+			if n := primariesName(v); n != "" {
+				fmt.Fprintf(b, "    primaries: %s\n", n)
 			}
 		}
+
 	case colorrepresentation.InterfaceColorRepresentationManagerV1:
-		if len(cd.crAlphaModes) > 0 {
-			fmt.Fprintf(w, "\tsupported alpha modes:\n")
-			for _, v := range cd.crAlphaModes {
-				fmt.Fprintf(w, "\t\t%d\n", v)
-			}
-		}
-		if len(cd.crCoeffAndRanges) > 0 {
-			fmt.Fprintf(w, "\tsupported matrix coefficients and ranges:\n")
-			for _, cr := range cd.crCoeffAndRanges {
-				fmt.Fprintf(w, "\t\tcoefficients: %d, range: %d\n", cr.coefficients, cr.rangeVal)
-			}
+		for _, cr := range cd.crCoeffAndRanges {
+			fmt.Fprintf(b, "    coeff=%d range=%d\n", cr.coefficients, cr.rangeVal)
 		}
 	}
+}
+
+func capsString(caps uint32) string {
+	var parts []string
+	if caps&uint32(wayland.SeatCapabilityPointer) != 0 {
+		parts = append(parts, "pointer")
+	}
+	if caps&uint32(wayland.SeatCapabilityKeyboard) != 0 {
+		parts = append(parts, "keyboard")
+	}
+	if caps&uint32(wayland.SeatCapabilityTouch) != 0 {
+		parts = append(parts, "touch")
+	}
+	if len(parts) == 0 {
+		return "none"
+	}
+	return strings.Join(parts, " ")
 }
 
 func fourccStr(v uint32) string {
@@ -611,18 +536,22 @@ func fourccStr(v uint32) string {
 	return string(b[:])
 }
 
-func modifierName(m uint64) string {
-	switch m {
-	case 0:
-		return "LINEAR"
-	case 0x0100000000000001:
-		return "INTEL_X_TILED"
-	case 0x0100000000000002:
-		return "INTEL_Y_TILED"
-	case 0x0100000000000004:
-		return "INTEL_Y_TILED_CCS"
+func subpixelName(s int32) string {
+	switch wayland.OutputSubpixel(s) {
+	case wayland.OutputSubpixelUnknown:
+		return "unknown"
+	case wayland.OutputSubpixelNone:
+		return "none"
+	case wayland.OutputSubpixelHorizontalRgb:
+		return "horizontal_rgb"
+	case wayland.OutputSubpixelHorizontalBgr:
+		return "horizontal_bgr"
+	case wayland.OutputSubpixelVerticalRgb:
+		return "vertical_rgb"
+	case wayland.OutputSubpixelVerticalBgr:
+		return "vertical_bgr"
 	default:
-		return "UNKNOWN"
+		return ""
 	}
 }
 
@@ -661,94 +590,7 @@ func drmFdPath(fd int) string {
 	return p
 }
 
-func dmabufTrancheFlags(flags uint32) string {
-	var parts []string
-	if flags&uint32(linuxdmabuf.LinuxDmabufFeedbackV1TrancheFlagsScanout) != 0 {
-		parts = append(parts, "scanout")
-	}
-	if flags&uint32(linuxdmabuf.LinuxDmabufFeedbackV1TrancheFlagsSampling) != 0 {
-		parts = append(parts, "sampling")
-	}
-	if len(parts) == 0 {
-		return "none"
-	}
-	return strings.Join(parts, " | ")
-}
-
-func capabilitiesString(caps uint32) string {
-	var parts []string
-	if caps&uint32(wayland.SeatCapabilityPointer) != 0 {
-		parts = append(parts, "pointer")
-	}
-	if caps&uint32(wayland.SeatCapabilityKeyboard) != 0 {
-		parts = append(parts, "keyboard")
-	}
-	if caps&uint32(wayland.SeatCapabilityTouch) != 0 {
-		parts = append(parts, "touch")
-	}
-	if len(parts) == 0 {
-		return "none"
-	}
-	return strings.Join(parts, " ")
-}
-
-func subpixelName(s int32) string {
-	switch wayland.OutputSubpixel(s) {
-	case wayland.OutputSubpixelUnknown:
-		return "unknown"
-	case wayland.OutputSubpixelNone:
-		return "none"
-	case wayland.OutputSubpixelHorizontalRgb:
-		return "horizontal_rgb"
-	case wayland.OutputSubpixelHorizontalBgr:
-		return "horizontal_bgr"
-	case wayland.OutputSubpixelVerticalRgb:
-		return "vertical_rgb"
-	case wayland.OutputSubpixelVerticalBgr:
-		return "vertical_bgr"
-	default:
-		return fmt.Sprintf("unknown(%d)", s)
-	}
-}
-
-func transformName(t int32) string {
-	switch wayland.OutputTransform(t) {
-	case wayland.OutputTransformNormal:
-		return "normal"
-	case wayland.OutputTransform90:
-		return "90"
-	case wayland.OutputTransform180:
-		return "180"
-	case wayland.OutputTransform270:
-		return "270"
-	case wayland.OutputTransformFlipped:
-		return "flipped"
-	case wayland.OutputTransformFlipped90:
-		return "flipped_90"
-	case wayland.OutputTransformFlipped180:
-		return "flipped_180"
-	case wayland.OutputTransformFlipped270:
-		return "flipped_270"
-	default:
-		return fmt.Sprintf("unknown(%d)", t)
-	}
-}
-
-func modeFlagString(flags uint32) string {
-	var parts []string
-	if flags&uint32(wayland.OutputModeCurrent) != 0 {
-		parts = append(parts, "current")
-	}
-	if flags&uint32(wayland.OutputModePreferred) != 0 {
-		parts = append(parts, "preferred")
-	}
-	if len(parts) == 0 {
-		return "none"
-	}
-	return strings.Join(parts, " | ")
-}
-
-func renderIntentName(v uint32) string {
+func intentName(v uint32) string {
 	switch colormanagement.ColorManagerV1RenderIntent(v) {
 	case colormanagement.ColorManagerV1RenderIntentPerceptual:
 		return "perceptual"
@@ -763,7 +605,7 @@ func renderIntentName(v uint32) string {
 	case colormanagement.ColorManagerV1RenderIntentAbsoluteNoAdaptation:
 		return "absolute_no_adaptation"
 	default:
-		return fmt.Sprintf("unknown(%d)", v)
+		return ""
 	}
 }
 
@@ -788,7 +630,7 @@ func cmFeatureName(v uint32) string {
 	case colormanagement.ColorManagerV1FeatureWindowsBt2100:
 		return "windows_bt2100"
 	default:
-		return fmt.Sprintf("unknown(%d)", v)
+		return ""
 	}
 }
 
@@ -823,7 +665,7 @@ func tfName(v uint32) string {
 	case colormanagement.ColorManagerV1TransferFunctionCompoundPower24:
 		return "compound_power_24"
 	default:
-		return fmt.Sprintf("unknown(%d)", v)
+		return ""
 	}
 }
 
@@ -850,6 +692,6 @@ func primariesName(v uint32) string {
 	case colormanagement.ColorManagerV1PrimariesAdobeRgb:
 		return "adobe_rgb"
 	default:
-		return fmt.Sprintf("unknown(%d)", v)
+		return ""
 	}
 }
