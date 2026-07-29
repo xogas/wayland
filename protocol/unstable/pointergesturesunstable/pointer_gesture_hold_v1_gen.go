@@ -30,7 +30,7 @@ func (r *PointerGestureHoldV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerGestureHoldV1DestroyRequest) Since() int { return 3 }
+func (r *PointerGestureHoldV1DestroyRequest) Since() uint32 { return 3 }
 
 type PointerGestureHoldV1BeginEvent struct {
 	Serial  uint32
@@ -65,7 +65,7 @@ func (e *PointerGestureHoldV1BeginEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerGestureHoldV1BeginEvent) Since() int { return 3 }
+func (e *PointerGestureHoldV1BeginEvent) Since() uint32 { return 3 }
 
 type PointerGestureHoldV1EndEvent struct {
 	Serial    uint32
@@ -94,7 +94,7 @@ func (e *PointerGestureHoldV1EndEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerGestureHoldV1EndEvent) Since() int { return 3 }
+func (e *PointerGestureHoldV1EndEvent) Since() uint32 { return 3 }
 
 type PointerGestureHoldV1BeginFunc func(ev PointerGestureHoldV1BeginEvent)
 

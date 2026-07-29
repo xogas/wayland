@@ -31,7 +31,7 @@ func (r *LinuxDmabufV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDmabufV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxDmabufV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxDmabufV1CreateParamsRequest struct {
 	ParamsID wire.NewID
@@ -46,7 +46,7 @@ func (r *LinuxDmabufV1CreateParamsRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDmabufV1CreateParamsRequest) Since() int { return 1 }
+func (r *LinuxDmabufV1CreateParamsRequest) Since() uint32 { return 1 }
 
 type LinuxDmabufV1GetDefaultFeedbackRequest struct {
 	ID wire.NewID
@@ -63,7 +63,7 @@ func (r *LinuxDmabufV1GetDefaultFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDmabufV1GetDefaultFeedbackRequest) Since() int { return 4 }
+func (r *LinuxDmabufV1GetDefaultFeedbackRequest) Since() uint32 { return 4 }
 
 type LinuxDmabufV1GetSurfaceFeedbackRequest struct {
 	ID      wire.NewID
@@ -84,7 +84,7 @@ func (r *LinuxDmabufV1GetSurfaceFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDmabufV1GetSurfaceFeedbackRequest) Since() int { return 4 }
+func (r *LinuxDmabufV1GetSurfaceFeedbackRequest) Since() uint32 { return 4 }
 
 type LinuxDmabufV1FormatEvent struct {
 	Format uint32
@@ -101,7 +101,7 @@ func (e *LinuxDmabufV1FormatEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxDmabufV1FormatEvent) Since() int { return 1 }
+func (e *LinuxDmabufV1FormatEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufV1ModifierEvent struct {
 	Format     uint32
@@ -130,7 +130,7 @@ func (e *LinuxDmabufV1ModifierEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxDmabufV1ModifierEvent) Since() int { return 3 }
+func (e *LinuxDmabufV1ModifierEvent) Since() uint32 { return 3 }
 
 type LinuxDmabufV1FormatFunc func(ev LinuxDmabufV1FormatEvent)
 

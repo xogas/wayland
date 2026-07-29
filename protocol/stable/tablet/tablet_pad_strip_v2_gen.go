@@ -47,7 +47,7 @@ func (r *TabletPadStripV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadStripV2SetFeedbackRequest) Since() int { return 1 }
+func (r *TabletPadStripV2SetFeedbackRequest) Since() uint32 { return 1 }
 
 type TabletPadStripV2DestroyRequest struct {
 }
@@ -58,10 +58,10 @@ func (r *TabletPadStripV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadStripV2DestroyRequest) Since() int { return 1 }
+func (r *TabletPadStripV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletPadStripV2SourceEvent struct {
-	Source uint32
+	Source TabletPadStripV2Source
 }
 
 func (e *TabletPadStripV2SourceEvent) Opcode() uint16 { return TabletPadStripV2EventSource }
@@ -71,11 +71,11 @@ func (e *TabletPadStripV2SourceEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Source = source
+	e.Source = TabletPadStripV2Source(source)
 	return nil
 }
 
-func (e *TabletPadStripV2SourceEvent) Since() int { return 1 }
+func (e *TabletPadStripV2SourceEvent) Since() uint32 { return 1 }
 
 type TabletPadStripV2PositionEvent struct {
 	Position uint32
@@ -92,7 +92,7 @@ func (e *TabletPadStripV2PositionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadStripV2PositionEvent) Since() int { return 1 }
+func (e *TabletPadStripV2PositionEvent) Since() uint32 { return 1 }
 
 type TabletPadStripV2StopEvent struct {
 }
@@ -103,7 +103,7 @@ func (e *TabletPadStripV2StopEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadStripV2StopEvent) Since() int { return 1 }
+func (e *TabletPadStripV2StopEvent) Since() uint32 { return 1 }
 
 type TabletPadStripV2FrameEvent struct {
 	Time uint32
@@ -120,7 +120,7 @@ func (e *TabletPadStripV2FrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadStripV2FrameEvent) Since() int { return 1 }
+func (e *TabletPadStripV2FrameEvent) Since() uint32 { return 1 }
 
 type TabletPadStripV2SourceFunc func(ev TabletPadStripV2SourceEvent)
 

@@ -48,7 +48,7 @@ func (r *DataSourceOfferRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataSourceOfferRequest) Since() int { return 1 }
+func (r *DataSourceOfferRequest) Since() uint32 { return 1 }
 
 type DataSourceDestroyRequest struct {
 }
@@ -59,25 +59,25 @@ func (r *DataSourceDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataSourceDestroyRequest) Since() int { return 1 }
+func (r *DataSourceDestroyRequest) Since() uint32 { return 1 }
 
 type DataSourceSetActionsRequest struct {
-	DndActions uint32
+	DndActions DataDeviceManagerDndAction
 }
 
 func (r *DataSourceSetActionsRequest) Opcode() uint16 { return DataSourceRequestSetActions }
 
 func (r *DataSourceSetActionsRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.DndActions); err != nil {
+	if err := w.Uint32(uint32(r.DndActions)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *DataSourceSetActionsRequest) Since() int { return 3 }
+func (r *DataSourceSetActionsRequest) Since() uint32 { return 3 }
 
 type DataSourceTargetEvent struct {
-	MimeType string
+	MimeType string // nullable
 }
 
 func (e *DataSourceTargetEvent) Opcode() uint16 { return DataSourceEventTarget }
@@ -91,7 +91,7 @@ func (e *DataSourceTargetEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataSourceTargetEvent) Since() int { return 1 }
+func (e *DataSourceTargetEvent) Since() uint32 { return 1 }
 
 type DataSourceSendEvent struct {
 	MimeType string
@@ -114,7 +114,7 @@ func (e *DataSourceSendEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataSourceSendEvent) Since() int { return 1 }
+func (e *DataSourceSendEvent) Since() uint32 { return 1 }
 
 type DataSourceCancelledEvent struct {
 }
@@ -125,7 +125,7 @@ func (e *DataSourceCancelledEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataSourceCancelledEvent) Since() int { return 1 }
+func (e *DataSourceCancelledEvent) Since() uint32 { return 1 }
 
 type DataSourceDndDropPerformedEvent struct {
 }
@@ -136,7 +136,7 @@ func (e *DataSourceDndDropPerformedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataSourceDndDropPerformedEvent) Since() int { return 3 }
+func (e *DataSourceDndDropPerformedEvent) Since() uint32 { return 3 }
 
 type DataSourceDndFinishedEvent struct {
 }
@@ -147,10 +147,10 @@ func (e *DataSourceDndFinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataSourceDndFinishedEvent) Since() int { return 3 }
+func (e *DataSourceDndFinishedEvent) Since() uint32 { return 3 }
 
 type DataSourceActionEvent struct {
-	DndAction uint32
+	DndAction DataDeviceManagerDndAction
 }
 
 func (e *DataSourceActionEvent) Opcode() uint16 { return DataSourceEventAction }
@@ -160,11 +160,11 @@ func (e *DataSourceActionEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.DndAction = dndAction
+	e.DndAction = DataDeviceManagerDndAction(dndAction)
 	return nil
 }
 
-func (e *DataSourceActionEvent) Since() int { return 3 }
+func (e *DataSourceActionEvent) Since() uint32 { return 3 }
 
 type DataSourceTargetFunc func(ev DataSourceTargetEvent)
 
@@ -286,7 +286,7 @@ func (o *DataSource) Destroy() error {
 	return nil
 }
 
-func (o *DataSource) SetActions(dndActions uint32) error {
+func (o *DataSource) SetActions(dndActions DataDeviceManagerDndAction) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch
 	}

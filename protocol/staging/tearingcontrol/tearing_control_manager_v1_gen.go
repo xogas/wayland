@@ -32,7 +32,7 @@ func (r *TearingControlManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TearingControlManagerV1DestroyRequest) Since() int { return 1 }
+func (r *TearingControlManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type TearingControlManagerV1GetTearingControlRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *TearingControlManagerV1GetTearingControlRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *TearingControlManagerV1GetTearingControlRequest) Since() int { return 1 }
+func (r *TearingControlManagerV1GetTearingControlRequest) Since() uint32 { return 1 }
 
 type TearingControlManagerV1 struct {
 	proxy *wayland.Proxy

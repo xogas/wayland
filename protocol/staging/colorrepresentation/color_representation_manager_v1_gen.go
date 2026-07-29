@@ -38,7 +38,7 @@ func (r *ColorRepresentationManagerV1DestroyRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *ColorRepresentationManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ColorRepresentationManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationManagerV1GetSurfaceRequest struct {
 	ID      wire.NewID
@@ -59,10 +59,10 @@ func (r *ColorRepresentationManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *ColorRepresentationManagerV1GetSurfaceRequest) Since() int { return 1 }
+func (r *ColorRepresentationManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationManagerV1SupportedAlphaModeEvent struct {
-	AlphaMode uint32
+	AlphaMode ColorRepresentationSurfaceV1AlphaMode
 }
 
 func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Opcode() uint16 {
@@ -74,15 +74,15 @@ func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Unmarshal(r *wire.
 	if err != nil {
 		return err
 	}
-	e.AlphaMode = alphaMode
+	e.AlphaMode = ColorRepresentationSurfaceV1AlphaMode(alphaMode)
 	return nil
 }
 
-func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Since() int { return 1 }
+func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Since() uint32 { return 1 }
 
 type ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent struct {
-	Coefficients uint32
-	Range        uint32
+	Coefficients ColorRepresentationSurfaceV1Coefficients
+	Range        ColorRepresentationSurfaceV1Range
 }
 
 func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Opcode() uint16 {
@@ -94,16 +94,16 @@ func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Unmars
 	if err != nil {
 		return err
 	}
-	e.Coefficients = coefficients
+	e.Coefficients = ColorRepresentationSurfaceV1Coefficients(coefficients)
 	range_, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.Range = range_
+	e.Range = ColorRepresentationSurfaceV1Range(range_)
 	return nil
 }
 
-func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Since() int { return 1 }
+func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Since() uint32 { return 1 }
 
 type ColorRepresentationManagerV1DoneEvent struct {
 }
@@ -116,7 +116,7 @@ func (e *ColorRepresentationManagerV1DoneEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *ColorRepresentationManagerV1DoneEvent) Since() int { return 1 }
+func (e *ColorRepresentationManagerV1DoneEvent) Since() uint32 { return 1 }
 
 type ColorRepresentationManagerV1SupportedAlphaModeFunc func(ev ColorRepresentationManagerV1SupportedAlphaModeEvent)
 

@@ -32,10 +32,10 @@ func (r *BackgroundEffectSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *BackgroundEffectSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *BackgroundEffectSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type BackgroundEffectSurfaceV1SetBlurRegionRequest struct {
-	Region wire.ObjectID
+	Region wire.ObjectID // nullable
 }
 
 func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Opcode() uint16 {
@@ -49,7 +49,7 @@ func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Since() int { return 1 }
+func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Since() uint32 { return 1 }
 
 type BackgroundEffectSurfaceV1 struct {
 	proxy *wayland.Proxy

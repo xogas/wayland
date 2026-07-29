@@ -34,7 +34,7 @@ func (r *TabletManagerV2GetTabletSeatRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletManagerV2GetTabletSeatRequest) Since() int { return 1 }
+func (r *TabletManagerV2GetTabletSeatRequest) Since() uint32 { return 1 }
 
 type TabletManagerV2DestroyRequest struct {
 }
@@ -45,7 +45,7 @@ func (r *TabletManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletManagerV2DestroyRequest) Since() int { return 1 }
+func (r *TabletManagerV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletManagerV2 struct {
 	proxy *wayland.Proxy

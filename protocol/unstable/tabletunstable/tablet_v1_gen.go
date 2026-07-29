@@ -31,7 +31,7 @@ func (r *TabletV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletV1DestroyRequest) Since() int { return 1 }
+func (r *TabletV1DestroyRequest) Since() uint32 { return 1 }
 
 type TabletV1NameEvent struct {
 	Name string
@@ -48,7 +48,7 @@ func (e *TabletV1NameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV1NameEvent) Since() int { return 1 }
+func (e *TabletV1NameEvent) Since() uint32 { return 1 }
 
 type TabletV1IDEvent struct {
 	Vid uint32
@@ -71,7 +71,7 @@ func (e *TabletV1IDEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV1IDEvent) Since() int { return 1 }
+func (e *TabletV1IDEvent) Since() uint32 { return 1 }
 
 type TabletV1PathEvent struct {
 	Path string
@@ -88,7 +88,7 @@ func (e *TabletV1PathEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV1PathEvent) Since() int { return 1 }
+func (e *TabletV1PathEvent) Since() uint32 { return 1 }
 
 type TabletV1DoneEvent struct {
 }
@@ -99,7 +99,7 @@ func (e *TabletV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV1DoneEvent) Since() int { return 1 }
+func (e *TabletV1DoneEvent) Since() uint32 { return 1 }
 
 type TabletV1RemovedEvent struct {
 }
@@ -110,7 +110,7 @@ func (e *TabletV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV1RemovedEvent) Since() int { return 1 }
+func (e *TabletV1RemovedEvent) Since() uint32 { return 1 }
 
 type TabletV1NameFunc func(ev TabletV1NameEvent)
 

@@ -37,7 +37,7 @@ func (r *TabletPadDialV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadDialV2SetFeedbackRequest) Since() int { return 1 }
+func (r *TabletPadDialV2SetFeedbackRequest) Since() uint32 { return 1 }
 
 type TabletPadDialV2DestroyRequest struct {
 }
@@ -48,7 +48,7 @@ func (r *TabletPadDialV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadDialV2DestroyRequest) Since() int { return 1 }
+func (r *TabletPadDialV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletPadDialV2DeltaEvent struct {
 	Value120 int32
@@ -65,7 +65,7 @@ func (e *TabletPadDialV2DeltaEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadDialV2DeltaEvent) Since() int { return 1 }
+func (e *TabletPadDialV2DeltaEvent) Since() uint32 { return 1 }
 
 type TabletPadDialV2FrameEvent struct {
 	Time uint32
@@ -82,7 +82,7 @@ func (e *TabletPadDialV2FrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadDialV2FrameEvent) Since() int { return 1 }
+func (e *TabletPadDialV2FrameEvent) Since() uint32 { return 1 }
 
 type TabletPadDialV2DeltaFunc func(ev TabletPadDialV2DeltaEvent)
 

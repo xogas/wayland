@@ -21,7 +21,7 @@ const (
 )
 
 type PrimarySelectionDeviceV1SetSelectionRequest struct {
-	Source wire.ObjectID
+	Source wire.ObjectID // nullable
 	Serial uint32
 }
 
@@ -39,7 +39,7 @@ func (r *PrimarySelectionDeviceV1SetSelectionRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *PrimarySelectionDeviceV1SetSelectionRequest) Since() int { return 1 }
+func (r *PrimarySelectionDeviceV1SetSelectionRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceV1DestroyRequest struct {
 }
@@ -52,7 +52,7 @@ func (r *PrimarySelectionDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PrimarySelectionDeviceV1DestroyRequest) Since() int { return 1 }
+func (r *PrimarySelectionDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceV1DataOfferEvent struct {
 	Offer *PrimarySelectionOfferV1
@@ -62,10 +62,10 @@ func (e *PrimarySelectionDeviceV1DataOfferEvent) Opcode() uint16 {
 	return PrimarySelectionDeviceV1EventDataOffer
 }
 
-func (e *PrimarySelectionDeviceV1DataOfferEvent) Since() int { return 1 }
+func (e *PrimarySelectionDeviceV1DataOfferEvent) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceV1SelectionEvent struct {
-	ID wire.ObjectID
+	ID wire.ObjectID // nullable
 }
 
 func (e *PrimarySelectionDeviceV1SelectionEvent) Opcode() uint16 {
@@ -73,15 +73,15 @@ func (e *PrimarySelectionDeviceV1SelectionEvent) Opcode() uint16 {
 }
 
 func (e *PrimarySelectionDeviceV1SelectionEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Object()
+	id, err := r.Object()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *PrimarySelectionDeviceV1SelectionEvent) Since() int { return 1 }
+func (e *PrimarySelectionDeviceV1SelectionEvent) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceV1DataOfferFunc func(ev PrimarySelectionDeviceV1DataOfferEvent)
 

@@ -25,7 +25,7 @@ func (r *ImageDescriptionReferenceV1DestroyRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *ImageDescriptionReferenceV1DestroyRequest) Since() int { return 1 }
+func (r *ImageDescriptionReferenceV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionReferenceV1 struct {
 	proxy *wayland.Proxy

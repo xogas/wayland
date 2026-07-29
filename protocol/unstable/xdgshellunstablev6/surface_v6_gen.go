@@ -39,7 +39,7 @@ func (r *SurfaceV6DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV6DestroyRequest) Since() int { return 1 }
+func (r *SurfaceV6DestroyRequest) Since() uint32 { return 1 }
 
 type SurfaceV6GetToplevelRequest struct {
 	ID wire.NewID
@@ -54,7 +54,7 @@ func (r *SurfaceV6GetToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV6GetToplevelRequest) Since() int { return 1 }
+func (r *SurfaceV6GetToplevelRequest) Since() uint32 { return 1 }
 
 type SurfaceV6GetPopupRequest struct {
 	ID         wire.NewID
@@ -77,7 +77,7 @@ func (r *SurfaceV6GetPopupRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV6GetPopupRequest) Since() int { return 1 }
+func (r *SurfaceV6GetPopupRequest) Since() uint32 { return 1 }
 
 type SurfaceV6SetWindowGeometryRequest struct {
 	X      int32
@@ -104,7 +104,7 @@ func (r *SurfaceV6SetWindowGeometryRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV6SetWindowGeometryRequest) Since() int { return 1 }
+func (r *SurfaceV6SetWindowGeometryRequest) Since() uint32 { return 1 }
 
 type SurfaceV6AckConfigureRequest struct {
 	Serial uint32
@@ -119,7 +119,7 @@ func (r *SurfaceV6AckConfigureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV6AckConfigureRequest) Since() int { return 1 }
+func (r *SurfaceV6AckConfigureRequest) Since() uint32 { return 1 }
 
 type SurfaceV6ConfigureEvent struct {
 	Serial uint32
@@ -136,7 +136,7 @@ func (e *SurfaceV6ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfaceV6ConfigureEvent) Since() int { return 1 }
+func (e *SurfaceV6ConfigureEvent) Since() uint32 { return 1 }
 
 type SurfaceV6ConfigureFunc func(ev SurfaceV6ConfigureEvent)
 

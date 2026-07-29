@@ -33,7 +33,7 @@ func (r *SubsurfaceDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfaceDestroyRequest) Since() int { return 1 }
+func (r *SubsurfaceDestroyRequest) Since() uint32 { return 1 }
 
 type SubsurfaceSetPositionRequest struct {
 	X int32
@@ -52,7 +52,7 @@ func (r *SubsurfaceSetPositionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfaceSetPositionRequest) Since() int { return 1 }
+func (r *SubsurfaceSetPositionRequest) Since() uint32 { return 1 }
 
 type SubsurfacePlaceAboveRequest struct {
 	Sibling wire.ObjectID
@@ -67,7 +67,7 @@ func (r *SubsurfacePlaceAboveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfacePlaceAboveRequest) Since() int { return 1 }
+func (r *SubsurfacePlaceAboveRequest) Since() uint32 { return 1 }
 
 type SubsurfacePlaceBelowRequest struct {
 	Sibling wire.ObjectID
@@ -82,7 +82,7 @@ func (r *SubsurfacePlaceBelowRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfacePlaceBelowRequest) Since() int { return 1 }
+func (r *SubsurfacePlaceBelowRequest) Since() uint32 { return 1 }
 
 type SubsurfaceSetSyncRequest struct {
 }
@@ -93,7 +93,7 @@ func (r *SubsurfaceSetSyncRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfaceSetSyncRequest) Since() int { return 1 }
+func (r *SubsurfaceSetSyncRequest) Since() uint32 { return 1 }
 
 type SubsurfaceSetDesyncRequest struct {
 }
@@ -104,7 +104,7 @@ func (r *SubsurfaceSetDesyncRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubsurfaceSetDesyncRequest) Since() int { return 1 }
+func (r *SubsurfaceSetDesyncRequest) Since() uint32 { return 1 }
 
 type Subsurface struct {
 	proxy *Proxy

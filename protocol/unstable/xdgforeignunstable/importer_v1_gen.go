@@ -24,7 +24,7 @@ func (r *ImporterV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImporterV1DestroyRequest) Since() int { return 1 }
+func (r *ImporterV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImporterV1ImportRequest struct {
 	ID     wire.NewID
@@ -43,7 +43,7 @@ func (r *ImporterV1ImportRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImporterV1ImportRequest) Since() int { return 1 }
+func (r *ImporterV1ImportRequest) Since() uint32 { return 1 }
 
 type ImporterV1 struct {
 	proxy *wayland.Proxy

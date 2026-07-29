@@ -30,7 +30,7 @@ func (r *ExporterV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ExporterV2DestroyRequest) Since() int { return 1 }
+func (r *ExporterV2DestroyRequest) Since() uint32 { return 1 }
 
 type ExporterV2ExportToplevelRequest struct {
 	ID      wire.NewID
@@ -49,7 +49,7 @@ func (r *ExporterV2ExportToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ExporterV2ExportToplevelRequest) Since() int { return 1 }
+func (r *ExporterV2ExportToplevelRequest) Since() uint32 { return 1 }
 
 type ExporterV2 struct {
 	proxy *wayland.Proxy

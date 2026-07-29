@@ -152,7 +152,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var caps uint32
+	var caps wayland.SeatCapability
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
@@ -160,7 +160,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "roundtrip caps: %v\n", err)
 		os.Exit(1)
 	}
-	if caps&uint32(wayland.SeatCapabilityPointer) == 0 {
+	if caps&wayland.SeatCapabilityPointer == 0 {
 		fmt.Fprintln(os.Stderr, "seat has no pointer capability")
 		os.Exit(1)
 	}
@@ -255,7 +255,7 @@ func main() {
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	buf, err := pool.CreateBuffer(0, int32(winW), int32(winH), int32(stride), uint32(wayland.ShmFormatXrgb8888))
+	buf, err := pool.CreateBuffer(0, int32(winW), int32(winH), int32(stride), wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 		os.Exit(1)
@@ -306,13 +306,13 @@ func main() {
 		}
 	})
 	pointer.OnButton(func(ev wayland.PointerButtonEvent) {
-		if ev.Button == 273 && ev.State == uint32(wayland.PointerButtonStatePressed) && !ps.active {
+		if ev.Button == 273 && ev.State == wayland.PointerButtonStatePressed && !ps.active {
 			rightClickPending = true
 			rightClickSerial = ev.Serial
 			rightClickX = cursorX
 			rightClickY = cursorY
 		}
-		if ev.Button == 272 && ev.State == uint32(wayland.PointerButtonStatePressed) && ps.active && ptrOnPopup {
+		if ev.Button == 272 && ev.State == wayland.PointerButtonStatePressed && ps.active && ptrOnPopup {
 			popupClickPending = true
 			popupClickItemY = popupCursorY
 		}
@@ -402,9 +402,9 @@ func createPopup(comp *wayland.Compositor, wmBase *xdgshell.WmBase,
 
 	_ = positioner.SetSize(160, 100)
 	_ = positioner.SetAnchorRect(x, y, 1, 1)
-	_ = positioner.SetAnchor(uint32(xdgshell.PositionerAnchorBottomRight))
-	_ = positioner.SetGravity(uint32(xdgshell.PositionerGravityBottomRight))
-	_ = positioner.SetConstraintAdjustment(uint32(xdgshell.PositionerConstraintAdjustmentSlideX | xdgshell.PositionerConstraintAdjustmentSlideY))
+	_ = positioner.SetAnchor(xdgshell.PositionerAnchorBottomRight)
+	_ = positioner.SetGravity(xdgshell.PositionerGravityBottomRight)
+	_ = positioner.SetConstraintAdjustment(xdgshell.PositionerConstraintAdjustmentSlideX | xdgshell.PositionerConstraintAdjustmentSlideY)
 
 	popupSurface, err := comp.CreateSurface()
 	if err != nil {
@@ -524,7 +524,7 @@ func renderPopup(shm *wayland.Shm, ps *popupState) {
 		return
 	}
 
-	buf, err := pool.CreateBuffer(0, pw, ph, int32(stride), uint32(wayland.ShmFormatXrgb8888))
+	buf, err := pool.CreateBuffer(0, pw, ph, int32(stride), wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "popup create_buffer: %v\n", err)
 		_ = pool.Destroy()

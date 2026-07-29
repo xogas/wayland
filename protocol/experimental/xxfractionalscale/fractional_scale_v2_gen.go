@@ -40,7 +40,7 @@ func (r *FractionalScaleV2SetScaleFactorRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FractionalScaleV2SetScaleFactorRequest) Since() int { return 1 }
+func (r *FractionalScaleV2SetScaleFactorRequest) Since() uint32 { return 1 }
 
 type FractionalScaleV2DestroyRequest struct {
 }
@@ -51,7 +51,7 @@ func (r *FractionalScaleV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FractionalScaleV2DestroyRequest) Since() int { return 1 }
+func (r *FractionalScaleV2DestroyRequest) Since() uint32 { return 1 }
 
 type FractionalScaleV2ScaleFactorEvent struct {
 	Scale824 uint32
@@ -68,7 +68,7 @@ func (e *FractionalScaleV2ScaleFactorEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *FractionalScaleV2ScaleFactorEvent) Since() int { return 1 }
+func (e *FractionalScaleV2ScaleFactorEvent) Since() uint32 { return 1 }
 
 type FractionalScaleV2ScaleFactorFunc func(ev FractionalScaleV2ScaleFactorEvent)
 

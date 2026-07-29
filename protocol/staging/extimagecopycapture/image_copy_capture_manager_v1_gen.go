@@ -22,6 +22,7 @@ const (
 	ImageCopyCaptureManagerV1ErrorInvalidOption ImageCopyCaptureManagerV1Error = 1
 )
 
+// ImageCopyCaptureManagerV1Options is a bitfield of flags.
 type ImageCopyCaptureManagerV1Options uint32
 
 const (
@@ -31,7 +32,7 @@ const (
 type ImageCopyCaptureManagerV1CreateSessionRequest struct {
 	Session wire.NewID
 	Source  wire.ObjectID
-	Options uint32
+	Options ImageCopyCaptureManagerV1Options
 }
 
 func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Opcode() uint16 {
@@ -45,13 +46,13 @@ func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Marshal(w *wire.Writer) 
 	if err := w.Object(r.Source); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Options); err != nil {
+	if err := w.Uint32(uint32(r.Options)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest struct {
 	Session wire.NewID
@@ -76,7 +77,7 @@ func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Marshal(w *
 	return nil
 }
 
-func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureManagerV1DestroyRequest struct {
 }
@@ -89,7 +90,7 @@ func (r *ImageCopyCaptureManagerV1DestroyRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *ImageCopyCaptureManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureManagerV1 struct {
 	proxy *wayland.Proxy
@@ -103,7 +104,7 @@ func (o *ImageCopyCaptureManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
-func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options uint32) (*ImageCopyCaptureSessionV1, error) {
+func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options ImageCopyCaptureManagerV1Options) (*ImageCopyCaptureSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())

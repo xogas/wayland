@@ -24,7 +24,7 @@ func (r *RegionDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RegionDestroyRequest) Since() int { return 1 }
+func (r *RegionDestroyRequest) Since() uint32 { return 1 }
 
 type RegionAddRequest struct {
 	X      int32
@@ -51,7 +51,7 @@ func (r *RegionAddRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RegionAddRequest) Since() int { return 1 }
+func (r *RegionAddRequest) Since() uint32 { return 1 }
 
 type RegionSubtractRequest struct {
 	X      int32
@@ -78,7 +78,7 @@ func (r *RegionSubtractRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RegionSubtractRequest) Since() int { return 1 }
+func (r *RegionSubtractRequest) Since() uint32 { return 1 }
 
 type Region struct {
 	proxy *Proxy

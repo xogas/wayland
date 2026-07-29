@@ -28,7 +28,7 @@ func (r *InputTimestampsManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputTimestampsManagerV1DestroyRequest) Since() int { return 1 }
+func (r *InputTimestampsManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type InputTimestampsManagerV1GetKeyboardTimestampsRequest struct {
 	ID       wire.NewID
@@ -49,7 +49,7 @@ func (r *InputTimestampsManagerV1GetKeyboardTimestampsRequest) Marshal(w *wire.W
 	return nil
 }
 
-func (r *InputTimestampsManagerV1GetKeyboardTimestampsRequest) Since() int { return 1 }
+func (r *InputTimestampsManagerV1GetKeyboardTimestampsRequest) Since() uint32 { return 1 }
 
 type InputTimestampsManagerV1GetPointerTimestampsRequest struct {
 	ID      wire.NewID
@@ -70,7 +70,7 @@ func (r *InputTimestampsManagerV1GetPointerTimestampsRequest) Marshal(w *wire.Wr
 	return nil
 }
 
-func (r *InputTimestampsManagerV1GetPointerTimestampsRequest) Since() int { return 1 }
+func (r *InputTimestampsManagerV1GetPointerTimestampsRequest) Since() uint32 { return 1 }
 
 type InputTimestampsManagerV1GetTouchTimestampsRequest struct {
 	ID    wire.NewID
@@ -91,7 +91,7 @@ func (r *InputTimestampsManagerV1GetTouchTimestampsRequest) Marshal(w *wire.Writ
 	return nil
 }
 
-func (r *InputTimestampsManagerV1GetTouchTimestampsRequest) Since() int { return 1 }
+func (r *InputTimestampsManagerV1GetTouchTimestampsRequest) Since() uint32 { return 1 }
 
 type InputTimestampsManagerV1 struct {
 	proxy *wayland.Proxy

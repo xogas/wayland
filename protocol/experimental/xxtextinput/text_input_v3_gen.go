@@ -41,6 +41,7 @@ const (
 	TextInputV3ChangeCauseOther       TextInputV3ChangeCause = 1
 )
 
+// TextInputV3ContentHint is a bitfield of flags.
 type TextInputV3ContentHint uint32
 
 const (
@@ -83,6 +84,7 @@ const (
 	TextInputV3ActionFinish TextInputV3Action = 0
 )
 
+// TextInputV3SupportedFeatures is a bitfield of flags.
 type TextInputV3SupportedFeatures uint32
 
 const (
@@ -99,7 +101,7 @@ func (r *TextInputV3DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3DestroyRequest) Since() int { return 1 }
+func (r *TextInputV3DestroyRequest) Since() uint32 { return 1 }
 
 type TextInputV3EnableRequest struct {
 }
@@ -110,7 +112,7 @@ func (r *TextInputV3EnableRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3EnableRequest) Since() int { return 1 }
+func (r *TextInputV3EnableRequest) Since() uint32 { return 1 }
 
 type TextInputV3DisableRequest struct {
 }
@@ -121,7 +123,7 @@ func (r *TextInputV3DisableRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3DisableRequest) Since() int { return 1 }
+func (r *TextInputV3DisableRequest) Since() uint32 { return 1 }
 
 type TextInputV3SetSurroundingTextRequest struct {
 	Text   string
@@ -146,10 +148,10 @@ func (r *TextInputV3SetSurroundingTextRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3SetSurroundingTextRequest) Since() int { return 1 }
+func (r *TextInputV3SetSurroundingTextRequest) Since() uint32 { return 1 }
 
 type TextInputV3SetTextChangeCauseRequest struct {
-	Cause uint32
+	Cause TextInputV3ChangeCause
 }
 
 func (r *TextInputV3SetTextChangeCauseRequest) Opcode() uint16 {
@@ -157,32 +159,32 @@ func (r *TextInputV3SetTextChangeCauseRequest) Opcode() uint16 {
 }
 
 func (r *TextInputV3SetTextChangeCauseRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Cause); err != nil {
+	if err := w.Uint32(uint32(r.Cause)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TextInputV3SetTextChangeCauseRequest) Since() int { return 1 }
+func (r *TextInputV3SetTextChangeCauseRequest) Since() uint32 { return 1 }
 
 type TextInputV3SetContentTypeRequest struct {
-	Hint    uint32
-	Purpose uint32
+	Hint    TextInputV3ContentHint
+	Purpose TextInputV3ContentPurpose
 }
 
 func (r *TextInputV3SetContentTypeRequest) Opcode() uint16 { return TextInputV3RequestSetContentType }
 
 func (r *TextInputV3SetContentTypeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Hint); err != nil {
+	if err := w.Uint32(uint32(r.Hint)); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Purpose); err != nil {
+	if err := w.Uint32(uint32(r.Purpose)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TextInputV3SetContentTypeRequest) Since() int { return 1 }
+func (r *TextInputV3SetContentTypeRequest) Since() uint32 { return 1 }
 
 type TextInputV3SetCursorRectangleRequest struct {
 	X      int32
@@ -211,7 +213,7 @@ func (r *TextInputV3SetCursorRectangleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3SetCursorRectangleRequest) Since() int { return 1 }
+func (r *TextInputV3SetCursorRectangleRequest) Since() uint32 { return 1 }
 
 type TextInputV3CommitRequest struct {
 }
@@ -222,7 +224,7 @@ func (r *TextInputV3CommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3CommitRequest) Since() int { return 1 }
+func (r *TextInputV3CommitRequest) Since() uint32 { return 1 }
 
 type TextInputV3SetAvailableActionsRequest struct {
 	AvailableActions []byte
@@ -239,10 +241,10 @@ func (r *TextInputV3SetAvailableActionsRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV3SetAvailableActionsRequest) Since() int { return 2 }
+func (r *TextInputV3SetAvailableActionsRequest) Since() uint32 { return 2 }
 
 type TextInputV3AnnounceSupportedFeaturesRequest struct {
-	Features uint32
+	Features TextInputV3SupportedFeatures
 }
 
 func (r *TextInputV3AnnounceSupportedFeaturesRequest) Opcode() uint16 {
@@ -250,13 +252,13 @@ func (r *TextInputV3AnnounceSupportedFeaturesRequest) Opcode() uint16 {
 }
 
 func (r *TextInputV3AnnounceSupportedFeaturesRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Features); err != nil {
+	if err := w.Uint32(uint32(r.Features)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TextInputV3AnnounceSupportedFeaturesRequest) Since() int { return 2 }
+func (r *TextInputV3AnnounceSupportedFeaturesRequest) Since() uint32 { return 2 }
 
 type TextInputV3EnterEvent struct {
 	Surface wire.ObjectID
@@ -273,7 +275,7 @@ func (e *TextInputV3EnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3EnterEvent) Since() int { return 1 }
+func (e *TextInputV3EnterEvent) Since() uint32 { return 1 }
 
 type TextInputV3LeaveEvent struct {
 	Surface wire.ObjectID
@@ -290,10 +292,10 @@ func (e *TextInputV3LeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3LeaveEvent) Since() int { return 1 }
+func (e *TextInputV3LeaveEvent) Since() uint32 { return 1 }
 
 type TextInputV3PreeditStringEvent struct {
-	Text        string
+	Text        string // nullable
 	CursorBegin int32
 	CursorEnd   int32
 }
@@ -319,10 +321,10 @@ func (e *TextInputV3PreeditStringEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3PreeditStringEvent) Since() int { return 1 }
+func (e *TextInputV3PreeditStringEvent) Since() uint32 { return 1 }
 
 type TextInputV3CommitStringEvent struct {
-	Text string
+	Text string // nullable
 }
 
 func (e *TextInputV3CommitStringEvent) Opcode() uint16 { return TextInputV3EventCommitString }
@@ -336,7 +338,7 @@ func (e *TextInputV3CommitStringEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3CommitStringEvent) Since() int { return 1 }
+func (e *TextInputV3CommitStringEvent) Since() uint32 { return 1 }
 
 type TextInputV3DeleteSurroundingTextEvent struct {
 	BeforeLength uint32
@@ -361,7 +363,7 @@ func (e *TextInputV3DeleteSurroundingTextEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *TextInputV3DeleteSurroundingTextEvent) Since() int { return 1 }
+func (e *TextInputV3DeleteSurroundingTextEvent) Since() uint32 { return 1 }
 
 type TextInputV3MoveCursorEvent struct {
 	Cursor int32
@@ -384,7 +386,7 @@ func (e *TextInputV3MoveCursorEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3MoveCursorEvent) Since() int { return 2 }
+func (e *TextInputV3MoveCursorEvent) Since() uint32 { return 2 }
 
 type TextInputV3DoneEvent struct {
 	Serial uint32
@@ -401,10 +403,10 @@ func (e *TextInputV3DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV3DoneEvent) Since() int { return 1 }
+func (e *TextInputV3DoneEvent) Since() uint32 { return 1 }
 
 type TextInputV3PerformActionEvent struct {
-	Action uint32
+	Action TextInputV3Action
 }
 
 func (e *TextInputV3PerformActionEvent) Opcode() uint16 { return TextInputV3EventPerformAction }
@@ -414,11 +416,11 @@ func (e *TextInputV3PerformActionEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Action = action
+	e.Action = TextInputV3Action(action)
 	return nil
 }
 
-func (e *TextInputV3PerformActionEvent) Since() int { return 2 }
+func (e *TextInputV3PerformActionEvent) Since() uint32 { return 2 }
 
 type TextInputV3EnterFunc func(ev TextInputV3EnterEvent)
 
@@ -579,13 +581,13 @@ func (o *TextInputV3) SetSurroundingText(text string, cursor int32, anchor int32
 	})
 }
 
-func (o *TextInputV3) SetTextChangeCause(cause uint32) error {
+func (o *TextInputV3) SetTextChangeCause(cause TextInputV3ChangeCause) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetTextChangeCause, &TextInputV3SetTextChangeCauseRequest{
 		Cause: cause,
 	})
 }
 
-func (o *TextInputV3) SetContentType(hint uint32, purpose uint32) error {
+func (o *TextInputV3) SetContentType(hint TextInputV3ContentHint, purpose TextInputV3ContentPurpose) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetContentType, &TextInputV3SetContentTypeRequest{
 		Hint:    hint,
 		Purpose: purpose,
@@ -614,7 +616,7 @@ func (o *TextInputV3) SetAvailableActions(availableActions []byte) error {
 	})
 }
 
-func (o *TextInputV3) AnnounceSupportedFeatures(features uint32) error {
+func (o *TextInputV3) AnnounceSupportedFeatures(features TextInputV3SupportedFeatures) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return wayland.ErrVersionMismatch
 	}

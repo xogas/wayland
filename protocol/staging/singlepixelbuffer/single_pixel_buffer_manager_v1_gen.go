@@ -26,7 +26,7 @@ func (r *SinglePixelBufferManagerV1DestroyRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *SinglePixelBufferManagerV1DestroyRequest) Since() int { return 1 }
+func (r *SinglePixelBufferManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type SinglePixelBufferManagerV1CreateU32RgbaBufferRequest struct {
 	ID wire.NewID
@@ -59,7 +59,7 @@ func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Marshal(w *wire.W
 	return nil
 }
 
-func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Since() int { return 1 }
+func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Since() uint32 { return 1 }
 
 type SinglePixelBufferManagerV1 struct {
 	proxy *wayland.Proxy

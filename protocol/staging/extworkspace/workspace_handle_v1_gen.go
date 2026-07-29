@@ -27,6 +27,7 @@ const (
 	WorkspaceHandleV1EventRemoved      uint16 = 5
 )
 
+// WorkspaceHandleV1State is a bitfield of flags.
 type WorkspaceHandleV1State uint32
 
 const (
@@ -35,6 +36,7 @@ const (
 	WorkspaceHandleV1StateHidden WorkspaceHandleV1State = 4
 )
 
+// WorkspaceHandleV1WorkspaceCapabilities is a bitfield of flags.
 type WorkspaceHandleV1WorkspaceCapabilities uint32
 
 const (
@@ -53,7 +55,7 @@ func (r *WorkspaceHandleV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceHandleV1DestroyRequest) Since() int { return 1 }
+func (r *WorkspaceHandleV1DestroyRequest) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1ActivateRequest struct {
 }
@@ -64,7 +66,7 @@ func (r *WorkspaceHandleV1ActivateRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceHandleV1ActivateRequest) Since() int { return 1 }
+func (r *WorkspaceHandleV1ActivateRequest) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1DeactivateRequest struct {
 }
@@ -77,7 +79,7 @@ func (r *WorkspaceHandleV1DeactivateRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceHandleV1DeactivateRequest) Since() int { return 1 }
+func (r *WorkspaceHandleV1DeactivateRequest) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1AssignRequest struct {
 	WorkspaceGroup wire.ObjectID
@@ -92,7 +94,7 @@ func (r *WorkspaceHandleV1AssignRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceHandleV1AssignRequest) Since() int { return 1 }
+func (r *WorkspaceHandleV1AssignRequest) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1RemoveRequest struct {
 }
@@ -103,7 +105,7 @@ func (r *WorkspaceHandleV1RemoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceHandleV1RemoveRequest) Since() int { return 1 }
+func (r *WorkspaceHandleV1RemoveRequest) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1IDEvent struct {
 	ID string
@@ -112,15 +114,15 @@ type WorkspaceHandleV1IDEvent struct {
 func (e *WorkspaceHandleV1IDEvent) Opcode() uint16 { return WorkspaceHandleV1EventID }
 
 func (e *WorkspaceHandleV1IDEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.String()
+	id, err := r.String()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *WorkspaceHandleV1IDEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1IDEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1NameEvent struct {
 	Name string
@@ -137,7 +139,7 @@ func (e *WorkspaceHandleV1NameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WorkspaceHandleV1NameEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1NameEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1CoordinatesEvent struct {
 	Coordinates []byte
@@ -154,10 +156,10 @@ func (e *WorkspaceHandleV1CoordinatesEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WorkspaceHandleV1CoordinatesEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1CoordinatesEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1StateEvent struct {
-	State uint32
+	State WorkspaceHandleV1State
 }
 
 func (e *WorkspaceHandleV1StateEvent) Opcode() uint16 { return WorkspaceHandleV1EventState }
@@ -167,14 +169,14 @@ func (e *WorkspaceHandleV1StateEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.State = state
+	e.State = WorkspaceHandleV1State(state)
 	return nil
 }
 
-func (e *WorkspaceHandleV1StateEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1StateEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1CapabilitiesEvent struct {
-	Capabilities uint32
+	Capabilities WorkspaceHandleV1WorkspaceCapabilities
 }
 
 func (e *WorkspaceHandleV1CapabilitiesEvent) Opcode() uint16 {
@@ -186,11 +188,11 @@ func (e *WorkspaceHandleV1CapabilitiesEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Capabilities = capabilities
+	e.Capabilities = WorkspaceHandleV1WorkspaceCapabilities(capabilities)
 	return nil
 }
 
-func (e *WorkspaceHandleV1CapabilitiesEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1CapabilitiesEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1RemovedEvent struct {
 }
@@ -201,7 +203,7 @@ func (e *WorkspaceHandleV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WorkspaceHandleV1RemovedEvent) Since() int { return 1 }
+func (e *WorkspaceHandleV1RemovedEvent) Since() uint32 { return 1 }
 
 type WorkspaceHandleV1IDFunc func(ev WorkspaceHandleV1IDEvent)
 

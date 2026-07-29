@@ -31,7 +31,7 @@ func (r *ToplevelDragV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDragV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelDragV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelDragV1AttachRequest struct {
 	Toplevel wire.ObjectID
@@ -54,7 +54,7 @@ func (r *ToplevelDragV1AttachRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDragV1AttachRequest) Since() int { return 1 }
+func (r *ToplevelDragV1AttachRequest) Since() uint32 { return 1 }
 
 type ToplevelDragV1 struct {
 	proxy *wayland.Proxy

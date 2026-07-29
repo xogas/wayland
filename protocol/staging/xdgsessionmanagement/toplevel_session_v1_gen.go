@@ -28,7 +28,7 @@ func (r *ToplevelSessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSessionV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelSessionV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RenameRequest struct {
 	Name string
@@ -43,7 +43,7 @@ func (r *ToplevelSessionV1RenameRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSessionV1RenameRequest) Since() int { return 1 }
+func (r *ToplevelSessionV1RenameRequest) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RestoredEvent struct {
 }
@@ -54,7 +54,7 @@ func (e *ToplevelSessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelSessionV1RestoredEvent) Since() int { return 1 }
+func (e *ToplevelSessionV1RestoredEvent) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RestoredFunc func(ev ToplevelSessionV1RestoredEvent)
 

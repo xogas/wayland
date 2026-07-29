@@ -46,6 +46,7 @@ const (
 	OutputTransformFlipped270 OutputTransform = 7
 )
 
+// OutputMode is a bitfield of flags.
 type OutputMode uint32
 
 const (
@@ -62,7 +63,7 @@ func (r *OutputReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *OutputReleaseRequest) Since() int { return 3 }
+func (r *OutputReleaseRequest) Since() uint32 { return 3 }
 
 type OutputGeometryEvent struct {
 	X              int32
@@ -121,10 +122,10 @@ func (e *OutputGeometryEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputGeometryEvent) Since() int { return 1 }
+func (e *OutputGeometryEvent) Since() uint32 { return 1 }
 
 type OutputModeEvent struct {
-	Flags   uint32
+	Flags   OutputMode
 	Width   int32
 	Height  int32
 	Refresh int32
@@ -137,7 +138,7 @@ func (e *OutputModeEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Flags = flags
+	e.Flags = OutputMode(flags)
 	width, err := r.Int32()
 	if err != nil {
 		return err
@@ -156,7 +157,7 @@ func (e *OutputModeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputModeEvent) Since() int { return 1 }
+func (e *OutputModeEvent) Since() uint32 { return 1 }
 
 type OutputDoneEvent struct {
 }
@@ -167,7 +168,7 @@ func (e *OutputDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputDoneEvent) Since() int { return 2 }
+func (e *OutputDoneEvent) Since() uint32 { return 2 }
 
 type OutputScaleEvent struct {
 	Factor int32
@@ -184,7 +185,7 @@ func (e *OutputScaleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputScaleEvent) Since() int { return 2 }
+func (e *OutputScaleEvent) Since() uint32 { return 2 }
 
 type OutputNameEvent struct {
 	Name string
@@ -201,7 +202,7 @@ func (e *OutputNameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputNameEvent) Since() int { return 4 }
+func (e *OutputNameEvent) Since() uint32 { return 4 }
 
 type OutputDescriptionEvent struct {
 	Description string
@@ -218,7 +219,7 @@ func (e *OutputDescriptionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputDescriptionEvent) Since() int { return 4 }
+func (e *OutputDescriptionEvent) Since() uint32 { return 4 }
 
 type OutputGeometryFunc func(ev OutputGeometryEvent)
 

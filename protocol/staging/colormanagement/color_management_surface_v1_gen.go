@@ -35,11 +35,11 @@ func (r *ColorManagementSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagementSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceV1SetImageDescriptionRequest struct {
 	ImageDescription wire.ObjectID
-	RenderIntent     uint32
+	RenderIntent     ColorManagerV1RenderIntent
 }
 
 func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Opcode() uint16 {
@@ -50,13 +50,13 @@ func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Marshal(w *wire.Wri
 	if err := w.Object(r.ImageDescription); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.RenderIntent); err != nil {
+	if err := w.Uint32(uint32(r.RenderIntent)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceV1UnsetImageDescriptionRequest struct {
 }
@@ -69,7 +69,7 @@ func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Marshal(w *wire.W
 	return nil
 }
 
-func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceV1 struct {
 	proxy *wayland.Proxy
@@ -94,7 +94,7 @@ func (o *ColorManagementSurfaceV1) Destroy() error {
 	return nil
 }
 
-func (o *ColorManagementSurfaceV1) SetImageDescription(imageDescription wire.ObjectID, renderIntent uint32) error {
+func (o *ColorManagementSurfaceV1) SetImageDescription(imageDescription wire.ObjectID, renderIntent ColorManagerV1RenderIntent) error {
 	return o.proxy.SendRequest(ColorManagementSurfaceV1RequestSetImageDescription, &ColorManagementSurfaceV1SetImageDescriptionRequest{
 		ImageDescription: imageDescription,
 		RenderIntent:     renderIntent,

@@ -76,7 +76,7 @@ const (
 
 type TabletToolV1SetCursorRequest struct {
 	Serial   uint32
-	Surface  wire.ObjectID
+	Surface  wire.ObjectID // nullable
 	HotspotX int32
 	HotspotY int32
 }
@@ -99,7 +99,7 @@ func (r *TabletToolV1SetCursorRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletToolV1SetCursorRequest) Since() int { return 1 }
+func (r *TabletToolV1SetCursorRequest) Since() uint32 { return 1 }
 
 type TabletToolV1DestroyRequest struct {
 }
@@ -110,10 +110,10 @@ func (r *TabletToolV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletToolV1DestroyRequest) Since() int { return 1 }
+func (r *TabletToolV1DestroyRequest) Since() uint32 { return 1 }
 
 type TabletToolV1TypeEvent struct {
-	ToolType uint32
+	ToolType TabletToolV1Type
 }
 
 func (e *TabletToolV1TypeEvent) Opcode() uint16 { return TabletToolV1EventType }
@@ -123,11 +123,11 @@ func (e *TabletToolV1TypeEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.ToolType = toolType
+	e.ToolType = TabletToolV1Type(toolType)
 	return nil
 }
 
-func (e *TabletToolV1TypeEvent) Since() int { return 1 }
+func (e *TabletToolV1TypeEvent) Since() uint32 { return 1 }
 
 type TabletToolV1HardwareSerialEvent struct {
 	HardwareSerialHi uint32
@@ -150,7 +150,7 @@ func (e *TabletToolV1HardwareSerialEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1HardwareSerialEvent) Since() int { return 1 }
+func (e *TabletToolV1HardwareSerialEvent) Since() uint32 { return 1 }
 
 type TabletToolV1HardwareIDWacomEvent struct {
 	HardwareIDHi uint32
@@ -173,10 +173,10 @@ func (e *TabletToolV1HardwareIDWacomEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1HardwareIDWacomEvent) Since() int { return 1 }
+func (e *TabletToolV1HardwareIDWacomEvent) Since() uint32 { return 1 }
 
 type TabletToolV1CapabilityEvent struct {
-	Capability uint32
+	Capability TabletToolV1Capability
 }
 
 func (e *TabletToolV1CapabilityEvent) Opcode() uint16 { return TabletToolV1EventCapability }
@@ -186,11 +186,11 @@ func (e *TabletToolV1CapabilityEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Capability = capability
+	e.Capability = TabletToolV1Capability(capability)
 	return nil
 }
 
-func (e *TabletToolV1CapabilityEvent) Since() int { return 1 }
+func (e *TabletToolV1CapabilityEvent) Since() uint32 { return 1 }
 
 type TabletToolV1DoneEvent struct {
 }
@@ -201,7 +201,7 @@ func (e *TabletToolV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1DoneEvent) Since() int { return 1 }
+func (e *TabletToolV1DoneEvent) Since() uint32 { return 1 }
 
 type TabletToolV1RemovedEvent struct {
 }
@@ -212,7 +212,7 @@ func (e *TabletToolV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1RemovedEvent) Since() int { return 1 }
+func (e *TabletToolV1RemovedEvent) Since() uint32 { return 1 }
 
 type TabletToolV1ProximityInEvent struct {
 	Serial  uint32
@@ -241,7 +241,7 @@ func (e *TabletToolV1ProximityInEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1ProximityInEvent) Since() int { return 1 }
+func (e *TabletToolV1ProximityInEvent) Since() uint32 { return 1 }
 
 type TabletToolV1ProximityOutEvent struct {
 }
@@ -252,7 +252,7 @@ func (e *TabletToolV1ProximityOutEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1ProximityOutEvent) Since() int { return 1 }
+func (e *TabletToolV1ProximityOutEvent) Since() uint32 { return 1 }
 
 type TabletToolV1DownEvent struct {
 	Serial uint32
@@ -269,7 +269,7 @@ func (e *TabletToolV1DownEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1DownEvent) Since() int { return 1 }
+func (e *TabletToolV1DownEvent) Since() uint32 { return 1 }
 
 type TabletToolV1UpEvent struct {
 }
@@ -280,7 +280,7 @@ func (e *TabletToolV1UpEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1UpEvent) Since() int { return 1 }
+func (e *TabletToolV1UpEvent) Since() uint32 { return 1 }
 
 type TabletToolV1MotionEvent struct {
 	X wire.Fixed
@@ -303,7 +303,7 @@ func (e *TabletToolV1MotionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1MotionEvent) Since() int { return 1 }
+func (e *TabletToolV1MotionEvent) Since() uint32 { return 1 }
 
 type TabletToolV1PressureEvent struct {
 	Pressure uint32
@@ -320,7 +320,7 @@ func (e *TabletToolV1PressureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1PressureEvent) Since() int { return 1 }
+func (e *TabletToolV1PressureEvent) Since() uint32 { return 1 }
 
 type TabletToolV1DistanceEvent struct {
 	Distance uint32
@@ -337,7 +337,7 @@ func (e *TabletToolV1DistanceEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1DistanceEvent) Since() int { return 1 }
+func (e *TabletToolV1DistanceEvent) Since() uint32 { return 1 }
 
 type TabletToolV1TiltEvent struct {
 	TiltX int32
@@ -360,7 +360,7 @@ func (e *TabletToolV1TiltEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1TiltEvent) Since() int { return 1 }
+func (e *TabletToolV1TiltEvent) Since() uint32 { return 1 }
 
 type TabletToolV1RotationEvent struct {
 	Degrees int32
@@ -377,7 +377,7 @@ func (e *TabletToolV1RotationEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1RotationEvent) Since() int { return 1 }
+func (e *TabletToolV1RotationEvent) Since() uint32 { return 1 }
 
 type TabletToolV1SliderEvent struct {
 	Position int32
@@ -394,7 +394,7 @@ func (e *TabletToolV1SliderEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1SliderEvent) Since() int { return 1 }
+func (e *TabletToolV1SliderEvent) Since() uint32 { return 1 }
 
 type TabletToolV1WheelEvent struct {
 	Degrees int32
@@ -417,12 +417,12 @@ func (e *TabletToolV1WheelEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1WheelEvent) Since() int { return 1 }
+func (e *TabletToolV1WheelEvent) Since() uint32 { return 1 }
 
 type TabletToolV1ButtonEvent struct {
 	Serial uint32
 	Button uint32
-	State  uint32
+	State  TabletToolV1ButtonState
 }
 
 func (e *TabletToolV1ButtonEvent) Opcode() uint16 { return TabletToolV1EventButton }
@@ -442,11 +442,11 @@ func (e *TabletToolV1ButtonEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.State = state
+	e.State = TabletToolV1ButtonState(state)
 	return nil
 }
 
-func (e *TabletToolV1ButtonEvent) Since() int { return 1 }
+func (e *TabletToolV1ButtonEvent) Since() uint32 { return 1 }
 
 type TabletToolV1FrameEvent struct {
 	Time uint32
@@ -463,7 +463,7 @@ func (e *TabletToolV1FrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletToolV1FrameEvent) Since() int { return 1 }
+func (e *TabletToolV1FrameEvent) Since() uint32 { return 1 }
 
 type TabletToolV1TypeFunc func(ev TabletToolV1TypeEvent)
 

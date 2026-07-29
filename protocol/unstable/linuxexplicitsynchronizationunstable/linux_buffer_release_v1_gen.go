@@ -36,7 +36,7 @@ func (e *LinuxBufferReleaseV1FencedReleaseEvent) Unmarshal(r *wire.Reader) error
 	return nil
 }
 
-func (e *LinuxBufferReleaseV1FencedReleaseEvent) Since() int { return 1 }
+func (e *LinuxBufferReleaseV1FencedReleaseEvent) Since() uint32 { return 1 }
 
 type LinuxBufferReleaseV1ImmediateReleaseEvent struct {
 }
@@ -49,7 +49,7 @@ func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Unmarshal(r *wire.Reader) er
 	return nil
 }
 
-func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Since() int { return 1 }
+func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Since() uint32 { return 1 }
 
 type LinuxBufferReleaseV1FencedReleaseFunc func(ev LinuxBufferReleaseV1FencedReleaseEvent)
 

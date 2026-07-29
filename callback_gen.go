@@ -28,7 +28,7 @@ func (e *CallbackDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *CallbackDoneEvent) Since() int { return 1 }
+func (e *CallbackDoneEvent) Since() uint32 { return 1 }
 
 type CallbackDoneFunc func(ev CallbackDoneEvent)
 

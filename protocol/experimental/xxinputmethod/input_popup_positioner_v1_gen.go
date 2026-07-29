@@ -54,6 +54,7 @@ const (
 	InputPopupPositionerV1GravityBottomRight InputPopupPositionerV1Gravity = 8
 )
 
+// InputPopupPositionerV1ConstraintAdjustment is a bitfield of flags.
 type InputPopupPositionerV1ConstraintAdjustment uint32
 
 const (
@@ -77,7 +78,7 @@ func (r *InputPopupPositionerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupPositionerV1DestroyRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1DestroyRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetSizeRequest struct {
 	Width  uint32
@@ -98,10 +99,10 @@ func (r *InputPopupPositionerV1SetSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetSizeRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetSizeRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetAnchorRequest struct {
-	Anchor uint32
+	Anchor InputPopupPositionerV1Anchor
 }
 
 func (r *InputPopupPositionerV1SetAnchorRequest) Opcode() uint16 {
@@ -109,16 +110,16 @@ func (r *InputPopupPositionerV1SetAnchorRequest) Opcode() uint16 {
 }
 
 func (r *InputPopupPositionerV1SetAnchorRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Anchor); err != nil {
+	if err := w.Uint32(uint32(r.Anchor)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetAnchorRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetAnchorRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetGravityRequest struct {
-	Gravity uint32
+	Gravity InputPopupPositionerV1Gravity
 }
 
 func (r *InputPopupPositionerV1SetGravityRequest) Opcode() uint16 {
@@ -126,16 +127,16 @@ func (r *InputPopupPositionerV1SetGravityRequest) Opcode() uint16 {
 }
 
 func (r *InputPopupPositionerV1SetGravityRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Gravity); err != nil {
+	if err := w.Uint32(uint32(r.Gravity)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetGravityRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetGravityRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetConstraintAdjustmentRequest struct {
-	ConstraintAdjustment uint32
+	ConstraintAdjustment InputPopupPositionerV1ConstraintAdjustment
 }
 
 func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Opcode() uint16 {
@@ -143,13 +144,13 @@ func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Opcode() uint16 {
 }
 
 func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.ConstraintAdjustment); err != nil {
+	if err := w.Uint32(uint32(r.ConstraintAdjustment)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetOffsetRequest struct {
 	X int32
@@ -170,7 +171,7 @@ func (r *InputPopupPositionerV1SetOffsetRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetOffsetRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetOffsetRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1SetReactiveRequest struct {
 }
@@ -183,7 +184,7 @@ func (r *InputPopupPositionerV1SetReactiveRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputPopupPositionerV1SetReactiveRequest) Since() int { return 1 }
+func (r *InputPopupPositionerV1SetReactiveRequest) Since() uint32 { return 1 }
 
 type InputPopupPositionerV1 struct {
 	proxy *wayland.Proxy
@@ -215,19 +216,19 @@ func (o *InputPopupPositionerV1) SetSize(width uint32, height uint32) error {
 	})
 }
 
-func (o *InputPopupPositionerV1) SetAnchor(anchor uint32) error {
+func (o *InputPopupPositionerV1) SetAnchor(anchor InputPopupPositionerV1Anchor) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetAnchor, &InputPopupPositionerV1SetAnchorRequest{
 		Anchor: anchor,
 	})
 }
 
-func (o *InputPopupPositionerV1) SetGravity(gravity uint32) error {
+func (o *InputPopupPositionerV1) SetGravity(gravity InputPopupPositionerV1Gravity) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetGravity, &InputPopupPositionerV1SetGravityRequest{
 		Gravity: gravity,
 	})
 }
 
-func (o *InputPopupPositionerV1) SetConstraintAdjustment(constraintAdjustment uint32) error {
+func (o *InputPopupPositionerV1) SetConstraintAdjustment(constraintAdjustment InputPopupPositionerV1ConstraintAdjustment) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetConstraintAdjustment, &InputPopupPositionerV1SetConstraintAdjustmentRequest{
 		ConstraintAdjustment: constraintAdjustment,
 	})

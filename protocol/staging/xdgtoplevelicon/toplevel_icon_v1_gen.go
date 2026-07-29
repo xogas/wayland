@@ -33,7 +33,7 @@ func (r *ToplevelIconV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelIconV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelIconV1SetNameRequest struct {
 	IconName string
@@ -48,7 +48,7 @@ func (r *ToplevelIconV1SetNameRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconV1SetNameRequest) Since() int { return 1 }
+func (r *ToplevelIconV1SetNameRequest) Since() uint32 { return 1 }
 
 type ToplevelIconV1AddBufferRequest struct {
 	Buffer wire.ObjectID
@@ -67,7 +67,7 @@ func (r *ToplevelIconV1AddBufferRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconV1AddBufferRequest) Since() int { return 1 }
+func (r *ToplevelIconV1AddBufferRequest) Since() uint32 { return 1 }
 
 type ToplevelIconV1 struct {
 	proxy *wayland.Proxy

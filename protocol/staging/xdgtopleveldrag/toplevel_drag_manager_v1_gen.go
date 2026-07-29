@@ -32,7 +32,7 @@ func (r *ToplevelDragManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDragManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelDragManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelDragManagerV1GetXdgToplevelDragRequest struct {
 	ID         wire.NewID
@@ -53,7 +53,7 @@ func (r *ToplevelDragManagerV1GetXdgToplevelDragRequest) Marshal(w *wire.Writer)
 	return nil
 }
 
-func (r *ToplevelDragManagerV1GetXdgToplevelDragRequest) Since() int { return 1 }
+func (r *ToplevelDragManagerV1GetXdgToplevelDragRequest) Since() uint32 { return 1 }
 
 type ToplevelDragManagerV1 struct {
 	proxy *wayland.Proxy

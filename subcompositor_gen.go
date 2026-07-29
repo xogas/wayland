@@ -30,7 +30,7 @@ func (r *SubcompositorDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubcompositorDestroyRequest) Since() int { return 1 }
+func (r *SubcompositorDestroyRequest) Since() uint32 { return 1 }
 
 type SubcompositorGetSubsurfaceRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *SubcompositorGetSubsurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SubcompositorGetSubsurfaceRequest) Since() int { return 1 }
+func (r *SubcompositorGetSubsurfaceRequest) Since() uint32 { return 1 }
 
 type Subcompositor struct {
 	proxy *Proxy

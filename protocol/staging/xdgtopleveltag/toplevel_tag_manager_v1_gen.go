@@ -27,7 +27,7 @@ func (r *ToplevelTagManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelTagManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelTagManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelTagManagerV1SetToplevelTagRequest struct {
 	Toplevel wire.ObjectID
@@ -48,7 +48,7 @@ func (r *ToplevelTagManagerV1SetToplevelTagRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *ToplevelTagManagerV1SetToplevelTagRequest) Since() int { return 1 }
+func (r *ToplevelTagManagerV1SetToplevelTagRequest) Since() uint32 { return 1 }
 
 type ToplevelTagManagerV1SetToplevelDescriptionRequest struct {
 	Toplevel    wire.ObjectID
@@ -69,7 +69,7 @@ func (r *ToplevelTagManagerV1SetToplevelDescriptionRequest) Marshal(w *wire.Writ
 	return nil
 }
 
-func (r *ToplevelTagManagerV1SetToplevelDescriptionRequest) Since() int { return 1 }
+func (r *ToplevelTagManagerV1SetToplevelDescriptionRequest) Since() uint32 { return 1 }
 
 type ToplevelTagManagerV1 struct {
 	proxy *wayland.Proxy

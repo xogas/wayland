@@ -23,7 +23,7 @@ const (
 )
 
 type TearingControlV1SetPresentationHintRequest struct {
-	Hint uint32
+	Hint TearingControlV1PresentationHint
 }
 
 func (r *TearingControlV1SetPresentationHintRequest) Opcode() uint16 {
@@ -31,13 +31,13 @@ func (r *TearingControlV1SetPresentationHintRequest) Opcode() uint16 {
 }
 
 func (r *TearingControlV1SetPresentationHintRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Hint); err != nil {
+	if err := w.Uint32(uint32(r.Hint)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TearingControlV1SetPresentationHintRequest) Since() int { return 1 }
+func (r *TearingControlV1SetPresentationHintRequest) Since() uint32 { return 1 }
 
 type TearingControlV1DestroyRequest struct {
 }
@@ -48,7 +48,7 @@ func (r *TearingControlV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TearingControlV1DestroyRequest) Since() int { return 1 }
+func (r *TearingControlV1DestroyRequest) Since() uint32 { return 1 }
 
 type TearingControlV1 struct {
 	proxy *wayland.Proxy
@@ -62,7 +62,7 @@ func (o *TearingControlV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
-func (o *TearingControlV1) SetPresentationHint(hint uint32) error {
+func (o *TearingControlV1) SetPresentationHint(hint TearingControlV1PresentationHint) error {
 	return o.proxy.SendRequest(TearingControlV1RequestSetPresentationHint, &TearingControlV1SetPresentationHintRequest{
 		Hint: hint,
 	})

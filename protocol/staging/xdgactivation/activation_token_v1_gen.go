@@ -45,7 +45,7 @@ func (r *ActivationTokenV1SetSerialRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ActivationTokenV1SetSerialRequest) Since() int { return 1 }
+func (r *ActivationTokenV1SetSerialRequest) Since() uint32 { return 1 }
 
 type ActivationTokenV1SetAppIDRequest struct {
 	AppID string
@@ -60,7 +60,7 @@ func (r *ActivationTokenV1SetAppIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ActivationTokenV1SetAppIDRequest) Since() int { return 1 }
+func (r *ActivationTokenV1SetAppIDRequest) Since() uint32 { return 1 }
 
 type ActivationTokenV1SetSurfaceRequest struct {
 	Surface wire.ObjectID
@@ -77,7 +77,7 @@ func (r *ActivationTokenV1SetSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ActivationTokenV1SetSurfaceRequest) Since() int { return 1 }
+func (r *ActivationTokenV1SetSurfaceRequest) Since() uint32 { return 1 }
 
 type ActivationTokenV1CommitRequest struct {
 }
@@ -88,7 +88,7 @@ func (r *ActivationTokenV1CommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ActivationTokenV1CommitRequest) Since() int { return 1 }
+func (r *ActivationTokenV1CommitRequest) Since() uint32 { return 1 }
 
 type ActivationTokenV1DestroyRequest struct {
 }
@@ -99,7 +99,7 @@ func (r *ActivationTokenV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ActivationTokenV1DestroyRequest) Since() int { return 1 }
+func (r *ActivationTokenV1DestroyRequest) Since() uint32 { return 1 }
 
 type ActivationTokenV1DoneEvent struct {
 	Token string
@@ -116,7 +116,7 @@ func (e *ActivationTokenV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ActivationTokenV1DoneEvent) Since() int { return 1 }
+func (e *ActivationTokenV1DoneEvent) Since() uint32 { return 1 }
 
 type ActivationTokenV1DoneFunc func(ev ActivationTokenV1DoneEvent)
 

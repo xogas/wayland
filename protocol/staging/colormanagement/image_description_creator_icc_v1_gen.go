@@ -40,7 +40,7 @@ func (r *ImageDescriptionCreatorIccV1CreateRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *ImageDescriptionCreatorIccV1CreateRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorIccV1CreateRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorIccV1SetIccFileRequest struct {
 	IccProfile int
@@ -65,7 +65,7 @@ func (r *ImageDescriptionCreatorIccV1SetIccFileRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *ImageDescriptionCreatorIccV1SetIccFileRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorIccV1SetIccFileRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorIccV1 struct {
 	proxy *wayland.Proxy

@@ -28,7 +28,7 @@ func (r *TransientSeatV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TransientSeatV1DestroyRequest) Since() int { return 1 }
+func (r *TransientSeatV1DestroyRequest) Since() uint32 { return 1 }
 
 type TransientSeatV1ReadyEvent struct {
 	GlobalName uint32
@@ -45,7 +45,7 @@ func (e *TransientSeatV1ReadyEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TransientSeatV1ReadyEvent) Since() int { return 1 }
+func (e *TransientSeatV1ReadyEvent) Since() uint32 { return 1 }
 
 type TransientSeatV1DeniedEvent struct {
 }
@@ -56,7 +56,7 @@ func (e *TransientSeatV1DeniedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TransientSeatV1DeniedEvent) Since() int { return 1 }
+func (e *TransientSeatV1DeniedEvent) Since() uint32 { return 1 }
 
 type TransientSeatV1ReadyFunc func(ev TransientSeatV1ReadyEvent)
 

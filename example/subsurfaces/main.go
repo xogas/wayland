@@ -198,7 +198,7 @@ func main() {
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	mainBuf, err := pool.CreateBuffer(0, mainW, mainH, mainStride, uint32(wayland.ShmFormatXrgb8888))
+	mainBuf, err := pool.CreateBuffer(0, mainW, mainH, mainStride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_buffer main: %v\n", err)
 		os.Exit(1)
@@ -233,7 +233,7 @@ func main() {
 		case 1:
 			off = subBufOff1
 		}
-		wlBuf, err := pool.CreateBuffer(off, subW, subH, subStride, uint32(wayland.ShmFormatXrgb8888))
+		wlBuf, err := pool.CreateBuffer(off, subW, subH, subStride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer sub %d: %v\n", i, err)
 			os.Exit(1)
@@ -264,7 +264,7 @@ func main() {
 		os.Exit(1)
 	}
 	kbd.OnKey(func(ev wayland.KeyboardKeyEvent) {
-		if ev.State != uint32(wayland.KeyboardKeyStatePressed) {
+		if ev.State != wayland.KeyboardKeyStatePressed {
 			return
 		}
 		switch ev.Key {

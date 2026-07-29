@@ -114,10 +114,11 @@ func Generate(proto *Protocol, outDir, pkg, prefix string) error {
 	for i := range proto.Interfaces {
 		knownIface[proto.Interfaces[i].Name] = true
 	}
+	em := buildEnumMap(proto.Interfaces, prefix)
 
 	for i := range proto.Interfaces {
 		iface := &proto.Interfaces[i]
-		g := convertInterface(iface, pkg, prefix, knownIface)
+		g := convertInterface(iface, pkg, prefix, knownIface, em)
 
 		var buf bytes.Buffer
 		for _, tmpl := range fileTemplates {

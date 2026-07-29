@@ -29,7 +29,7 @@ func (r *TabletSeatV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletSeatV2DestroyRequest) Since() int { return 1 }
+func (r *TabletSeatV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletSeatV2TabletAddedEvent struct {
 	ID *TabletV2
@@ -37,7 +37,7 @@ type TabletSeatV2TabletAddedEvent struct {
 
 func (e *TabletSeatV2TabletAddedEvent) Opcode() uint16 { return TabletSeatV2EventTabletAdded }
 
-func (e *TabletSeatV2TabletAddedEvent) Since() int { return 1 }
+func (e *TabletSeatV2TabletAddedEvent) Since() uint32 { return 1 }
 
 type TabletSeatV2ToolAddedEvent struct {
 	ID *TabletToolV2
@@ -45,7 +45,7 @@ type TabletSeatV2ToolAddedEvent struct {
 
 func (e *TabletSeatV2ToolAddedEvent) Opcode() uint16 { return TabletSeatV2EventToolAdded }
 
-func (e *TabletSeatV2ToolAddedEvent) Since() int { return 1 }
+func (e *TabletSeatV2ToolAddedEvent) Since() uint32 { return 1 }
 
 type TabletSeatV2PadAddedEvent struct {
 	ID *TabletPadV2
@@ -53,7 +53,7 @@ type TabletSeatV2PadAddedEvent struct {
 
 func (e *TabletSeatV2PadAddedEvent) Opcode() uint16 { return TabletSeatV2EventPadAdded }
 
-func (e *TabletSeatV2PadAddedEvent) Since() int { return 1 }
+func (e *TabletSeatV2PadAddedEvent) Since() uint32 { return 1 }
 
 type TabletSeatV2TabletAddedFunc func(ev TabletSeatV2TabletAddedEvent)
 

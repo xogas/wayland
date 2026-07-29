@@ -39,7 +39,7 @@ func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Marshal(w *wire.Writer)
 	return nil
 }
 
-func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceFeedbackV1GetPreferredRequest struct {
 	ImageDescription wire.NewID
@@ -56,7 +56,7 @@ func (r *ColorManagementSurfaceFeedbackV1GetPreferredRequest) Marshal(w *wire.Wr
 	return nil
 }
 
-func (r *ColorManagementSurfaceFeedbackV1GetPreferredRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceFeedbackV1GetPreferredRequest) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest struct {
 	ImageDescription wire.NewID
@@ -73,10 +73,11 @@ func (r *ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest) Marshal(
 	return nil
 }
 
-func (r *ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest) Since() int { return 1 }
+func (r *ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest) Since() uint32 { return 1 }
 
+// Deprecated: since version 2.
 type ColorManagementSurfaceFeedbackV1PreferredChangedEvent struct {
-	IDentity uint32
+	Identity uint32
 }
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Opcode() uint16 {
@@ -84,19 +85,19 @@ func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Opcode() uint16 
 }
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Unmarshal(r *wire.Reader) error {
-	iDentity, err := r.Uint32()
+	identity, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentity = iDentity
+	e.Identity = identity
 	return nil
 }
 
-func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Since() int { return 1 }
+func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Since() uint32 { return 1 }
 
 type ColorManagementSurfaceFeedbackV1PreferredChanged2Event struct {
-	IDentityHi uint32
-	IDentityLo uint32
+	IdentityHi uint32
+	IdentityLo uint32
 }
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Opcode() uint16 {
@@ -104,20 +105,20 @@ func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Opcode() uint16
 }
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Unmarshal(r *wire.Reader) error {
-	iDentityHi, err := r.Uint32()
+	identityHi, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentityHi = iDentityHi
-	iDentityLo, err := r.Uint32()
+	e.IdentityHi = identityHi
+	identityLo, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentityLo = iDentityLo
+	e.IdentityLo = identityLo
 	return nil
 }
 
-func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Since() int { return 2 }
+func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Since() uint32 { return 2 }
 
 type ColorManagementSurfaceFeedbackV1PreferredChangedFunc func(ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent)
 

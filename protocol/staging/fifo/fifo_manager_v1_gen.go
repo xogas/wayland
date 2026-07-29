@@ -30,7 +30,7 @@ func (r *FifoManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FifoManagerV1DestroyRequest) Since() int { return 1 }
+func (r *FifoManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type FifoManagerV1GetFifoRequest struct {
 	ID      wire.NewID
@@ -49,7 +49,7 @@ func (r *FifoManagerV1GetFifoRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FifoManagerV1GetFifoRequest) Since() int { return 1 }
+func (r *FifoManagerV1GetFifoRequest) Since() uint32 { return 1 }
 
 type FifoManagerV1 struct {
 	proxy *wayland.Proxy

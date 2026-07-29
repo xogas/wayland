@@ -29,10 +29,10 @@ func (r *ConfinedPointerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ConfinedPointerV1DestroyRequest) Since() int { return 1 }
+func (r *ConfinedPointerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ConfinedPointerV1SetRegionRequest struct {
-	Region wire.ObjectID
+	Region wire.ObjectID // nullable
 }
 
 func (r *ConfinedPointerV1SetRegionRequest) Opcode() uint16 { return ConfinedPointerV1RequestSetRegion }
@@ -44,7 +44,7 @@ func (r *ConfinedPointerV1SetRegionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ConfinedPointerV1SetRegionRequest) Since() int { return 1 }
+func (r *ConfinedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 
 type ConfinedPointerV1ConfinedEvent struct {
 }
@@ -55,7 +55,7 @@ func (e *ConfinedPointerV1ConfinedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ConfinedPointerV1ConfinedEvent) Since() int { return 1 }
+func (e *ConfinedPointerV1ConfinedEvent) Since() uint32 { return 1 }
 
 type ConfinedPointerV1UnconfinedEvent struct {
 }
@@ -66,7 +66,7 @@ func (e *ConfinedPointerV1UnconfinedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ConfinedPointerV1UnconfinedEvent) Since() int { return 1 }
+func (e *ConfinedPointerV1UnconfinedEvent) Since() uint32 { return 1 }
 
 type ConfinedPointerV1ConfinedFunc func(ev ConfinedPointerV1ConfinedEvent)
 

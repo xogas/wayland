@@ -195,7 +195,7 @@ func (r *ShmCreatePoolRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShmCreatePoolRequest) Since() int { return 1 }
+func (r *ShmCreatePoolRequest) Since() uint32 { return 1 }
 
 type ShmReleaseRequest struct {
 }
@@ -206,10 +206,10 @@ func (r *ShmReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShmReleaseRequest) Since() int { return 2 }
+func (r *ShmReleaseRequest) Since() uint32 { return 2 }
 
 type ShmFormatEvent struct {
-	Format uint32
+	Format ShmFormat
 }
 
 func (e *ShmFormatEvent) Opcode() uint16 { return ShmEventFormat }
@@ -219,11 +219,11 @@ func (e *ShmFormatEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Format = format
+	e.Format = ShmFormat(format)
 	return nil
 }
 
-func (e *ShmFormatEvent) Since() int { return 1 }
+func (e *ShmFormatEvent) Since() uint32 { return 1 }
 
 type ShmFormatFunc func(ev ShmFormatEvent)
 

@@ -25,7 +25,7 @@ func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjTimelineV1 struct {
 	proxy *wayland.Proxy

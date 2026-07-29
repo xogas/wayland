@@ -31,7 +31,7 @@ func (r *OutputV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *OutputV1DestroyRequest) Since() int { return 1 }
+func (r *OutputV1DestroyRequest) Since() uint32 { return 1 }
 
 type OutputV1LogicalPositionEvent struct {
 	X int32
@@ -54,7 +54,7 @@ func (e *OutputV1LogicalPositionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputV1LogicalPositionEvent) Since() int { return 1 }
+func (e *OutputV1LogicalPositionEvent) Since() uint32 { return 1 }
 
 type OutputV1LogicalSizeEvent struct {
 	Width  int32
@@ -77,8 +77,9 @@ func (e *OutputV1LogicalSizeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputV1LogicalSizeEvent) Since() int { return 1 }
+func (e *OutputV1LogicalSizeEvent) Since() uint32 { return 1 }
 
+// Deprecated: since version 3.
 type OutputV1DoneEvent struct {
 }
 
@@ -88,7 +89,7 @@ func (e *OutputV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputV1DoneEvent) Since() int { return 1 }
+func (e *OutputV1DoneEvent) Since() uint32 { return 1 }
 
 type OutputV1NameEvent struct {
 	Name string
@@ -105,7 +106,7 @@ func (e *OutputV1NameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputV1NameEvent) Since() int { return 2 }
+func (e *OutputV1NameEvent) Since() uint32 { return 2 }
 
 type OutputV1DescriptionEvent struct {
 	Description string
@@ -122,7 +123,7 @@ func (e *OutputV1DescriptionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *OutputV1DescriptionEvent) Since() int { return 2 }
+func (e *OutputV1DescriptionEvent) Since() uint32 { return 2 }
 
 type OutputV1LogicalPositionFunc func(ev OutputV1LogicalPositionEvent)
 

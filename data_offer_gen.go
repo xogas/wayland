@@ -34,7 +34,7 @@ const (
 
 type DataOfferAcceptRequest struct {
 	Serial   uint32
-	MimeType string
+	MimeType string // nullable
 }
 
 func (r *DataOfferAcceptRequest) Opcode() uint16 { return DataOfferRequestAccept }
@@ -49,7 +49,7 @@ func (r *DataOfferAcceptRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataOfferAcceptRequest) Since() int { return 1 }
+func (r *DataOfferAcceptRequest) Since() uint32 { return 1 }
 
 type DataOfferReceiveRequest struct {
 	MimeType string
@@ -68,7 +68,7 @@ func (r *DataOfferReceiveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataOfferReceiveRequest) Since() int { return 1 }
+func (r *DataOfferReceiveRequest) Since() uint32 { return 1 }
 
 type DataOfferDestroyRequest struct {
 }
@@ -79,7 +79,7 @@ func (r *DataOfferDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataOfferDestroyRequest) Since() int { return 1 }
+func (r *DataOfferDestroyRequest) Since() uint32 { return 1 }
 
 type DataOfferFinishRequest struct {
 }
@@ -90,26 +90,26 @@ func (r *DataOfferFinishRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataOfferFinishRequest) Since() int { return 3 }
+func (r *DataOfferFinishRequest) Since() uint32 { return 3 }
 
 type DataOfferSetActionsRequest struct {
-	DndActions      uint32
-	PreferredAction uint32
+	DndActions      DataDeviceManagerDndAction
+	PreferredAction DataDeviceManagerDndAction
 }
 
 func (r *DataOfferSetActionsRequest) Opcode() uint16 { return DataOfferRequestSetActions }
 
 func (r *DataOfferSetActionsRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.DndActions); err != nil {
+	if err := w.Uint32(uint32(r.DndActions)); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.PreferredAction); err != nil {
+	if err := w.Uint32(uint32(r.PreferredAction)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *DataOfferSetActionsRequest) Since() int { return 3 }
+func (r *DataOfferSetActionsRequest) Since() uint32 { return 3 }
 
 type DataOfferOfferEvent struct {
 	MimeType string
@@ -126,10 +126,10 @@ func (e *DataOfferOfferEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataOfferOfferEvent) Since() int { return 1 }
+func (e *DataOfferOfferEvent) Since() uint32 { return 1 }
 
 type DataOfferSourceActionsEvent struct {
-	SourceActions uint32
+	SourceActions DataDeviceManagerDndAction
 }
 
 func (e *DataOfferSourceActionsEvent) Opcode() uint16 { return DataOfferEventSourceActions }
@@ -139,14 +139,14 @@ func (e *DataOfferSourceActionsEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.SourceActions = sourceActions
+	e.SourceActions = DataDeviceManagerDndAction(sourceActions)
 	return nil
 }
 
-func (e *DataOfferSourceActionsEvent) Since() int { return 3 }
+func (e *DataOfferSourceActionsEvent) Since() uint32 { return 3 }
 
 type DataOfferActionEvent struct {
-	DndAction uint32
+	DndAction DataDeviceManagerDndAction
 }
 
 func (e *DataOfferActionEvent) Opcode() uint16 { return DataOfferEventAction }
@@ -156,11 +156,11 @@ func (e *DataOfferActionEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.DndAction = dndAction
+	e.DndAction = DataDeviceManagerDndAction(dndAction)
 	return nil
 }
 
-func (e *DataOfferActionEvent) Since() int { return 3 }
+func (e *DataOfferActionEvent) Since() uint32 { return 3 }
 
 type DataOfferOfferFunc func(ev DataOfferOfferEvent)
 
@@ -251,7 +251,7 @@ func (o *DataOffer) Finish() error {
 	return o.proxy.SendRequest(DataOfferRequestFinish, &DataOfferFinishRequest{})
 }
 
-func (o *DataOffer) SetActions(dndActions uint32, preferredAction uint32) error {
+func (o *DataOffer) SetActions(dndActions DataDeviceManagerDndAction, preferredAction DataDeviceManagerDndAction) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch
 	}

@@ -44,7 +44,7 @@ func (r *CommitTimerV1SetTimestampRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CommitTimerV1SetTimestampRequest) Since() int { return 1 }
+func (r *CommitTimerV1SetTimestampRequest) Since() uint32 { return 1 }
 
 type CommitTimerV1DestroyRequest struct {
 }
@@ -55,7 +55,7 @@ func (r *CommitTimerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CommitTimerV1DestroyRequest) Since() int { return 1 }
+func (r *CommitTimerV1DestroyRequest) Since() uint32 { return 1 }
 
 type CommitTimerV1 struct {
 	proxy *wayland.Proxy

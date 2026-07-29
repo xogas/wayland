@@ -26,7 +26,7 @@ func (r *RelativePointerManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RelativePointerManagerV1DestroyRequest) Since() int { return 1 }
+func (r *RelativePointerManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type RelativePointerManagerV1GetRelativePointerRequest struct {
 	ID      wire.NewID
@@ -47,7 +47,7 @@ func (r *RelativePointerManagerV1GetRelativePointerRequest) Marshal(w *wire.Writ
 	return nil
 }
 
-func (r *RelativePointerManagerV1GetRelativePointerRequest) Since() int { return 1 }
+func (r *RelativePointerManagerV1GetRelativePointerRequest) Since() uint32 { return 1 }
 
 type RelativePointerManagerV1 struct {
 	proxy *wayland.Proxy

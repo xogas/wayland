@@ -32,7 +32,7 @@ func (r *ContentTypeManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ContentTypeManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ContentTypeManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ContentTypeManagerV1GetSurfaceContentTypeRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *ContentTypeManagerV1GetSurfaceContentTypeRequest) Marshal(w *wire.Write
 	return nil
 }
 
-func (r *ContentTypeManagerV1GetSurfaceContentTypeRequest) Since() int { return 1 }
+func (r *ContentTypeManagerV1GetSurfaceContentTypeRequest) Since() uint32 { return 1 }
 
 type ContentTypeManagerV1 struct {
 	proxy *wayland.Proxy

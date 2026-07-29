@@ -30,7 +30,7 @@ func (r *ShellV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV1DestroyRequest) Since() int { return 1 }
+func (r *ShellV1DestroyRequest) Since() uint32 { return 1 }
 
 type ShellV1GetXwaylandSurfaceRequest struct {
 	ID      wire.NewID
@@ -49,7 +49,7 @@ func (r *ShellV1GetXwaylandSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV1GetXwaylandSurfaceRequest) Since() int { return 1 }
+func (r *ShellV1GetXwaylandSurfaceRequest) Since() uint32 { return 1 }
 
 type ShellV1 struct {
 	proxy *wayland.Proxy

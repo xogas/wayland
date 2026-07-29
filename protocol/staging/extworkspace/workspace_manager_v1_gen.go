@@ -31,7 +31,7 @@ func (r *WorkspaceManagerV1CommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceManagerV1CommitRequest) Since() int { return 1 }
+func (r *WorkspaceManagerV1CommitRequest) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1StopRequest struct {
 }
@@ -42,7 +42,7 @@ func (r *WorkspaceManagerV1StopRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WorkspaceManagerV1StopRequest) Since() int { return 1 }
+func (r *WorkspaceManagerV1StopRequest) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1WorkspaceGroupEvent struct {
 	WorkspaceGroup *WorkspaceGroupHandleV1
@@ -52,7 +52,7 @@ func (e *WorkspaceManagerV1WorkspaceGroupEvent) Opcode() uint16 {
 	return WorkspaceManagerV1EventWorkspaceGroup
 }
 
-func (e *WorkspaceManagerV1WorkspaceGroupEvent) Since() int { return 1 }
+func (e *WorkspaceManagerV1WorkspaceGroupEvent) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1WorkspaceEvent struct {
 	Workspace *WorkspaceHandleV1
@@ -60,7 +60,7 @@ type WorkspaceManagerV1WorkspaceEvent struct {
 
 func (e *WorkspaceManagerV1WorkspaceEvent) Opcode() uint16 { return WorkspaceManagerV1EventWorkspace }
 
-func (e *WorkspaceManagerV1WorkspaceEvent) Since() int { return 1 }
+func (e *WorkspaceManagerV1WorkspaceEvent) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1DoneEvent struct {
 }
@@ -71,7 +71,7 @@ func (e *WorkspaceManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WorkspaceManagerV1DoneEvent) Since() int { return 1 }
+func (e *WorkspaceManagerV1DoneEvent) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1FinishedEvent struct {
 }
@@ -82,7 +82,7 @@ func (e *WorkspaceManagerV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WorkspaceManagerV1FinishedEvent) Since() int { return 1 }
+func (e *WorkspaceManagerV1FinishedEvent) Since() uint32 { return 1 }
 
 type WorkspaceManagerV1WorkspaceGroupFunc func(ev WorkspaceManagerV1WorkspaceGroupEvent)
 

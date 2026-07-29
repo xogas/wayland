@@ -43,7 +43,7 @@ func (r *DataControlSourceV1OfferRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataControlSourceV1OfferRequest) Since() int { return 1 }
+func (r *DataControlSourceV1OfferRequest) Since() uint32 { return 1 }
 
 type DataControlSourceV1DestroyRequest struct {
 }
@@ -54,7 +54,7 @@ func (r *DataControlSourceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataControlSourceV1DestroyRequest) Since() int { return 1 }
+func (r *DataControlSourceV1DestroyRequest) Since() uint32 { return 1 }
 
 type DataControlSourceV1SendEvent struct {
 	MimeType string
@@ -77,7 +77,7 @@ func (e *DataControlSourceV1SendEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataControlSourceV1SendEvent) Since() int { return 1 }
+func (e *DataControlSourceV1SendEvent) Since() uint32 { return 1 }
 
 type DataControlSourceV1CancelledEvent struct {
 }
@@ -88,7 +88,7 @@ func (e *DataControlSourceV1CancelledEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataControlSourceV1CancelledEvent) Since() int { return 1 }
+func (e *DataControlSourceV1CancelledEvent) Since() uint32 { return 1 }
 
 type DataControlSourceV1SendFunc func(ev DataControlSourceV1SendEvent)
 

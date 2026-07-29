@@ -32,7 +32,7 @@ func (r *TabletPadGroupV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadGroupV2DestroyRequest) Since() int { return 1 }
+func (r *TabletPadGroupV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletPadGroupV2ButtonsEvent struct {
 	Buttons []byte
@@ -49,7 +49,7 @@ func (e *TabletPadGroupV2ButtonsEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadGroupV2ButtonsEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2ButtonsEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2RingEvent struct {
 	Ring *TabletPadRingV2
@@ -57,7 +57,7 @@ type TabletPadGroupV2RingEvent struct {
 
 func (e *TabletPadGroupV2RingEvent) Opcode() uint16 { return TabletPadGroupV2EventRing }
 
-func (e *TabletPadGroupV2RingEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2RingEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2StripEvent struct {
 	Strip *TabletPadStripV2
@@ -65,7 +65,7 @@ type TabletPadGroupV2StripEvent struct {
 
 func (e *TabletPadGroupV2StripEvent) Opcode() uint16 { return TabletPadGroupV2EventStrip }
 
-func (e *TabletPadGroupV2StripEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2StripEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2ModesEvent struct {
 	Modes uint32
@@ -82,7 +82,7 @@ func (e *TabletPadGroupV2ModesEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadGroupV2ModesEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2ModesEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2DoneEvent struct {
 }
@@ -93,7 +93,7 @@ func (e *TabletPadGroupV2DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadGroupV2DoneEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2DoneEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2ModeSwitchEvent struct {
 	Time   uint32
@@ -122,7 +122,7 @@ func (e *TabletPadGroupV2ModeSwitchEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadGroupV2ModeSwitchEvent) Since() int { return 1 }
+func (e *TabletPadGroupV2ModeSwitchEvent) Since() uint32 { return 1 }
 
 type TabletPadGroupV2ButtonsFunc func(ev TabletPadGroupV2ButtonsEvent)
 

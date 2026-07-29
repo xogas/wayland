@@ -32,7 +32,7 @@ func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Since() int { return 1 }
+func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest struct {
 	ID      wire.NewID
@@ -57,7 +57,7 @@ func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Marshal(w *wi
 	return nil
 }
 
-func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Since() int { return 1 }
+func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Since() uint32 { return 1 }
 
 type KeyboardShortcutsInhibitManagerV1 struct {
 	proxy *wayland.Proxy

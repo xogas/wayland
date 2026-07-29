@@ -40,12 +40,12 @@ func (r *SessionManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionManagerV1DestroyRequest) Since() int { return 1 }
+func (r *SessionManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type SessionManagerV1GetSessionRequest struct {
 	ID        wire.NewID
-	Reason    uint32
-	SessionID string
+	Reason    SessionManagerV1Reason
+	SessionID string // nullable
 }
 
 func (r *SessionManagerV1GetSessionRequest) Opcode() uint16 { return SessionManagerV1RequestGetSession }
@@ -54,7 +54,7 @@ func (r *SessionManagerV1GetSessionRequest) Marshal(w *wire.Writer) error {
 	if err := w.NewID(r.ID); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Reason); err != nil {
+	if err := w.Uint32(uint32(r.Reason)); err != nil {
 		return err
 	}
 	if err := w.String(r.SessionID); err != nil {
@@ -63,7 +63,7 @@ func (r *SessionManagerV1GetSessionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionManagerV1GetSessionRequest) Since() int { return 1 }
+func (r *SessionManagerV1GetSessionRequest) Since() uint32 { return 1 }
 
 type SessionManagerV1 struct {
 	proxy *wayland.Proxy
@@ -88,7 +88,7 @@ func (o *SessionManagerV1) Destroy() error {
 	return nil
 }
 
-func (o *SessionManagerV1) GetSession(reason uint32, sessionID string) (*SessionV1, error) {
+func (o *SessionManagerV1) GetSession(reason SessionManagerV1Reason, sessionID string) (*SessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())

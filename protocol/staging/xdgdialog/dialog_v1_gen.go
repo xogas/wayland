@@ -25,7 +25,7 @@ func (r *DialogV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DialogV1DestroyRequest) Since() int { return 1 }
+func (r *DialogV1DestroyRequest) Since() uint32 { return 1 }
 
 type DialogV1SetModalRequest struct {
 }
@@ -36,7 +36,7 @@ func (r *DialogV1SetModalRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DialogV1SetModalRequest) Since() int { return 1 }
+func (r *DialogV1SetModalRequest) Since() uint32 { return 1 }
 
 type DialogV1UnsetModalRequest struct {
 }
@@ -47,7 +47,7 @@ func (r *DialogV1UnsetModalRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DialogV1UnsetModalRequest) Since() int { return 1 }
+func (r *DialogV1UnsetModalRequest) Since() uint32 { return 1 }
 
 type DialogV1 struct {
 	proxy *wayland.Proxy

@@ -27,7 +27,7 @@ func (r *CursorShapeManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CursorShapeManagerV1DestroyRequest) Since() int { return 1 }
+func (r *CursorShapeManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type CursorShapeManagerV1GetPointerRequest struct {
 	CursorShapeDevice wire.NewID
@@ -48,7 +48,7 @@ func (r *CursorShapeManagerV1GetPointerRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CursorShapeManagerV1GetPointerRequest) Since() int { return 1 }
+func (r *CursorShapeManagerV1GetPointerRequest) Since() uint32 { return 1 }
 
 type CursorShapeManagerV1GetTabletToolV2Request struct {
 	CursorShapeDevice wire.NewID
@@ -69,7 +69,7 @@ func (r *CursorShapeManagerV1GetTabletToolV2Request) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *CursorShapeManagerV1GetTabletToolV2Request) Since() int { return 1 }
+func (r *CursorShapeManagerV1GetTabletToolV2Request) Since() uint32 { return 1 }
 
 type CursorShapeManagerV1 struct {
 	proxy *wayland.Proxy

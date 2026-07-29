@@ -28,7 +28,7 @@ func (r *ImportedV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImportedV1DestroyRequest) Since() int { return 1 }
+func (r *ImportedV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImportedV1SetParentOfRequest struct {
 	Surface wire.ObjectID
@@ -43,7 +43,7 @@ func (r *ImportedV1SetParentOfRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImportedV1SetParentOfRequest) Since() int { return 1 }
+func (r *ImportedV1SetParentOfRequest) Since() uint32 { return 1 }
 
 type ImportedV1DestroyedEvent struct {
 }
@@ -54,7 +54,7 @@ func (e *ImportedV1DestroyedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImportedV1DestroyedEvent) Since() int { return 1 }
+func (e *ImportedV1DestroyedEvent) Since() uint32 { return 1 }
 
 type ImportedV1DestroyedFunc func(ev ImportedV1DestroyedEvent)
 

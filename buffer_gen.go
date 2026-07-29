@@ -26,7 +26,7 @@ func (r *BufferDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *BufferDestroyRequest) Since() int { return 1 }
+func (r *BufferDestroyRequest) Since() uint32 { return 1 }
 
 type BufferReleaseEvent struct {
 }
@@ -37,7 +37,7 @@ func (e *BufferReleaseEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *BufferReleaseEvent) Since() int { return 1 }
+func (e *BufferReleaseEvent) Since() uint32 { return 1 }
 
 type BufferReleaseFunc func(ev BufferReleaseEvent)
 

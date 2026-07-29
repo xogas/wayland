@@ -29,7 +29,7 @@ func (r *ForeignToplevelListV1StopRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ForeignToplevelListV1StopRequest) Since() int { return 1 }
+func (r *ForeignToplevelListV1StopRequest) Since() uint32 { return 1 }
 
 type ForeignToplevelListV1DestroyRequest struct {
 }
@@ -42,7 +42,7 @@ func (r *ForeignToplevelListV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ForeignToplevelListV1DestroyRequest) Since() int { return 1 }
+func (r *ForeignToplevelListV1DestroyRequest) Since() uint32 { return 1 }
 
 type ForeignToplevelListV1ToplevelEvent struct {
 	Toplevel *ForeignToplevelHandleV1
@@ -52,7 +52,7 @@ func (e *ForeignToplevelListV1ToplevelEvent) Opcode() uint16 {
 	return ForeignToplevelListV1EventToplevel
 }
 
-func (e *ForeignToplevelListV1ToplevelEvent) Since() int { return 1 }
+func (e *ForeignToplevelListV1ToplevelEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelListV1FinishedEvent struct {
 }
@@ -65,7 +65,7 @@ func (e *ForeignToplevelListV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ForeignToplevelListV1FinishedEvent) Since() int { return 1 }
+func (e *ForeignToplevelListV1FinishedEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelListV1ToplevelFunc func(ev ForeignToplevelListV1ToplevelEvent)
 

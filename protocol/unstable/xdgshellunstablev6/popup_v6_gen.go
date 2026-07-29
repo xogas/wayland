@@ -35,7 +35,7 @@ func (r *PopupV6DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupV6DestroyRequest) Since() int { return 1 }
+func (r *PopupV6DestroyRequest) Since() uint32 { return 1 }
 
 type PopupV6GrabRequest struct {
 	Seat   wire.ObjectID
@@ -54,7 +54,7 @@ func (r *PopupV6GrabRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupV6GrabRequest) Since() int { return 1 }
+func (r *PopupV6GrabRequest) Since() uint32 { return 1 }
 
 type PopupV6ConfigureEvent struct {
 	X      int32
@@ -89,7 +89,7 @@ func (e *PopupV6ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupV6ConfigureEvent) Since() int { return 1 }
+func (e *PopupV6ConfigureEvent) Since() uint32 { return 1 }
 
 type PopupV6PopupDoneEvent struct {
 }
@@ -100,7 +100,7 @@ func (e *PopupV6PopupDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupV6PopupDoneEvent) Since() int { return 1 }
+func (e *PopupV6PopupDoneEvent) Since() uint32 { return 1 }
 
 type PopupV6ConfigureFunc func(ev PopupV6ConfigureEvent)
 

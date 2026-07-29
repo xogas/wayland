@@ -28,7 +28,7 @@ func (r *ToplevelSessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSessionV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelSessionV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RemoveRequest struct {
 }
@@ -39,7 +39,7 @@ func (r *ToplevelSessionV1RemoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSessionV1RemoveRequest) Since() int { return 1 }
+func (r *ToplevelSessionV1RemoveRequest) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RestoredEvent struct {
 	Surface wire.ObjectID
@@ -56,7 +56,7 @@ func (e *ToplevelSessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelSessionV1RestoredEvent) Since() int { return 1 }
+func (e *ToplevelSessionV1RestoredEvent) Since() uint32 { return 1 }
 
 type ToplevelSessionV1RestoredFunc func(ev ToplevelSessionV1RestoredEvent)
 

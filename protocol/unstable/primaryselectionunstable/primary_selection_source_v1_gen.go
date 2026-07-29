@@ -39,7 +39,7 @@ func (r *PrimarySelectionSourceV1OfferRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PrimarySelectionSourceV1OfferRequest) Since() int { return 1 }
+func (r *PrimarySelectionSourceV1OfferRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionSourceV1DestroyRequest struct {
 }
@@ -52,7 +52,7 @@ func (r *PrimarySelectionSourceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PrimarySelectionSourceV1DestroyRequest) Since() int { return 1 }
+func (r *PrimarySelectionSourceV1DestroyRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionSourceV1SendEvent struct {
 	MimeType string
@@ -75,7 +75,7 @@ func (e *PrimarySelectionSourceV1SendEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PrimarySelectionSourceV1SendEvent) Since() int { return 1 }
+func (e *PrimarySelectionSourceV1SendEvent) Since() uint32 { return 1 }
 
 type PrimarySelectionSourceV1CancelledEvent struct {
 }
@@ -88,7 +88,7 @@ func (e *PrimarySelectionSourceV1CancelledEvent) Unmarshal(r *wire.Reader) error
 	return nil
 }
 
-func (e *PrimarySelectionSourceV1CancelledEvent) Since() int { return 1 }
+func (e *PrimarySelectionSourceV1CancelledEvent) Since() uint32 { return 1 }
 
 type PrimarySelectionSourceV1SendFunc func(ev PrimarySelectionSourceV1SendEvent)
 

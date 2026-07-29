@@ -15,6 +15,7 @@ const (
 	DataDeviceManagerRequestRelease          uint16 = 2
 )
 
+// DataDeviceManagerDndAction is a bitfield of flags.
 type DataDeviceManagerDndAction uint32
 
 const (
@@ -39,7 +40,7 @@ func (r *DataDeviceManagerCreateDataSourceRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *DataDeviceManagerCreateDataSourceRequest) Since() int { return 1 }
+func (r *DataDeviceManagerCreateDataSourceRequest) Since() uint32 { return 1 }
 
 type DataDeviceManagerGetDataDeviceRequest struct {
 	ID   wire.NewID
@@ -60,7 +61,7 @@ func (r *DataDeviceManagerGetDataDeviceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataDeviceManagerGetDataDeviceRequest) Since() int { return 1 }
+func (r *DataDeviceManagerGetDataDeviceRequest) Since() uint32 { return 1 }
 
 type DataDeviceManagerReleaseRequest struct {
 }
@@ -71,7 +72,7 @@ func (r *DataDeviceManagerReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataDeviceManagerReleaseRequest) Since() int { return 4 }
+func (r *DataDeviceManagerReleaseRequest) Since() uint32 { return 4 }
 
 type DataDeviceManager struct {
 	proxy *Proxy

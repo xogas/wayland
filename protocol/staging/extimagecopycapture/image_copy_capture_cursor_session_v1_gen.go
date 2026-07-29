@@ -39,7 +39,7 @@ func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest struct {
 	Session wire.NewID
@@ -56,7 +56,7 @@ func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Marshal(w *wir
 	return nil
 }
 
-func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1EnterEvent struct {
 }
@@ -69,7 +69,7 @@ func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Unmarshal(r *wire.Reader) er
 	return nil
 }
 
-func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1LeaveEvent struct {
 }
@@ -82,7 +82,7 @@ func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Unmarshal(r *wire.Reader) er
 	return nil
 }
 
-func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1PositionEvent struct {
 	X int32
@@ -107,7 +107,7 @@ func (e *ImageCopyCaptureCursorSessionV1PositionEvent) Unmarshal(r *wire.Reader)
 	return nil
 }
 
-func (e *ImageCopyCaptureCursorSessionV1PositionEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureCursorSessionV1PositionEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1HotspotEvent struct {
 	X int32
@@ -132,7 +132,7 @@ func (e *ImageCopyCaptureCursorSessionV1HotspotEvent) Unmarshal(r *wire.Reader) 
 	return nil
 }
 
-func (e *ImageCopyCaptureCursorSessionV1HotspotEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureCursorSessionV1HotspotEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureCursorSessionV1EnterFunc func(ev ImageCopyCaptureCursorSessionV1EnterEvent)
 

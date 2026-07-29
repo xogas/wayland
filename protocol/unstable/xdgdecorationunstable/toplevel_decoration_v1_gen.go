@@ -47,10 +47,10 @@ func (r *ToplevelDecorationV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDecorationV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelDecorationV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelDecorationV1SetModeRequest struct {
-	Mode uint32
+	Mode ToplevelDecorationV1Mode
 }
 
 func (r *ToplevelDecorationV1SetModeRequest) Opcode() uint16 {
@@ -58,13 +58,13 @@ func (r *ToplevelDecorationV1SetModeRequest) Opcode() uint16 {
 }
 
 func (r *ToplevelDecorationV1SetModeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Mode); err != nil {
+	if err := w.Uint32(uint32(r.Mode)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ToplevelDecorationV1SetModeRequest) Since() int { return 1 }
+func (r *ToplevelDecorationV1SetModeRequest) Since() uint32 { return 1 }
 
 type ToplevelDecorationV1UnsetModeRequest struct {
 }
@@ -77,10 +77,10 @@ func (r *ToplevelDecorationV1UnsetModeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDecorationV1UnsetModeRequest) Since() int { return 1 }
+func (r *ToplevelDecorationV1UnsetModeRequest) Since() uint32 { return 1 }
 
 type ToplevelDecorationV1ConfigureEvent struct {
-	Mode uint32
+	Mode ToplevelDecorationV1Mode
 }
 
 func (e *ToplevelDecorationV1ConfigureEvent) Opcode() uint16 {
@@ -92,11 +92,11 @@ func (e *ToplevelDecorationV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Mode = mode
+	e.Mode = ToplevelDecorationV1Mode(mode)
 	return nil
 }
 
-func (e *ToplevelDecorationV1ConfigureEvent) Since() int { return 1 }
+func (e *ToplevelDecorationV1ConfigureEvent) Since() uint32 { return 1 }
 
 type ToplevelDecorationV1ConfigureFunc func(ev ToplevelDecorationV1ConfigureEvent)
 
@@ -136,7 +136,7 @@ func (o *ToplevelDecorationV1) Destroy() error {
 	return nil
 }
 
-func (o *ToplevelDecorationV1) SetMode(mode uint32) error {
+func (o *ToplevelDecorationV1) SetMode(mode ToplevelDecorationV1Mode) error {
 	return o.proxy.SendRequest(ToplevelDecorationV1RequestSetMode, &ToplevelDecorationV1SetModeRequest{
 		Mode: mode,
 	})

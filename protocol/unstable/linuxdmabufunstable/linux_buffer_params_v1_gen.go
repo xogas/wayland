@@ -26,7 +26,7 @@ type LinuxBufferParamsV1Error uint32
 
 const (
 	LinuxBufferParamsV1ErrorAlreadyUsed       LinuxBufferParamsV1Error = 0
-	LinuxBufferParamsV1ErrorPlaneIDx          LinuxBufferParamsV1Error = 1
+	LinuxBufferParamsV1ErrorPlaneIdx          LinuxBufferParamsV1Error = 1
 	LinuxBufferParamsV1ErrorPlaneSet          LinuxBufferParamsV1Error = 2
 	LinuxBufferParamsV1ErrorIncomplete        LinuxBufferParamsV1Error = 3
 	LinuxBufferParamsV1ErrorInvalidFormat     LinuxBufferParamsV1Error = 4
@@ -35,6 +35,7 @@ const (
 	LinuxBufferParamsV1ErrorInvalidWlBuffer   LinuxBufferParamsV1Error = 7
 )
 
+// LinuxBufferParamsV1Flags is a bitfield of flags.
 type LinuxBufferParamsV1Flags uint32
 
 const (
@@ -52,11 +53,11 @@ func (r *LinuxBufferParamsV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxBufferParamsV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxBufferParamsV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxBufferParamsV1AddRequest struct {
 	Fd         int
-	PlaneIDx   uint32
+	PlaneIdx   uint32
 	Offset     uint32
 	Stride     uint32
 	ModifierHi uint32
@@ -69,7 +70,7 @@ func (r *LinuxBufferParamsV1AddRequest) Marshal(w *wire.Writer) error {
 	if err := w.Fd(r.Fd); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.PlaneIDx); err != nil {
+	if err := w.Uint32(r.PlaneIdx); err != nil {
 		return err
 	}
 	if err := w.Uint32(r.Offset); err != nil {
@@ -87,13 +88,13 @@ func (r *LinuxBufferParamsV1AddRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxBufferParamsV1AddRequest) Since() int { return 1 }
+func (r *LinuxBufferParamsV1AddRequest) Since() uint32 { return 1 }
 
 type LinuxBufferParamsV1CreateRequest struct {
 	Width  int32
 	Height int32
 	Format uint32
-	Flags  uint32
+	Flags  LinuxBufferParamsV1Flags
 }
 
 func (r *LinuxBufferParamsV1CreateRequest) Opcode() uint16 { return LinuxBufferParamsV1RequestCreate }
@@ -108,20 +109,20 @@ func (r *LinuxBufferParamsV1CreateRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Format); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Flags); err != nil {
+	if err := w.Uint32(uint32(r.Flags)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *LinuxBufferParamsV1CreateRequest) Since() int { return 1 }
+func (r *LinuxBufferParamsV1CreateRequest) Since() uint32 { return 1 }
 
 type LinuxBufferParamsV1CreateImmedRequest struct {
 	BufferID wire.NewID
 	Width    int32
 	Height   int32
 	Format   uint32
-	Flags    uint32
+	Flags    LinuxBufferParamsV1Flags
 }
 
 func (r *LinuxBufferParamsV1CreateImmedRequest) Opcode() uint16 {
@@ -141,13 +142,13 @@ func (r *LinuxBufferParamsV1CreateImmedRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Format); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Flags); err != nil {
+	if err := w.Uint32(uint32(r.Flags)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *LinuxBufferParamsV1CreateImmedRequest) Since() int { return 2 }
+func (r *LinuxBufferParamsV1CreateImmedRequest) Since() uint32 { return 2 }
 
 type LinuxBufferParamsV1CreatedEvent struct {
 	Buffer wire.NewID
@@ -164,7 +165,7 @@ func (e *LinuxBufferParamsV1CreatedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxBufferParamsV1CreatedEvent) Since() int { return 1 }
+func (e *LinuxBufferParamsV1CreatedEvent) Since() uint32 { return 1 }
 
 type LinuxBufferParamsV1FailedEvent struct {
 }
@@ -175,7 +176,7 @@ func (e *LinuxBufferParamsV1FailedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxBufferParamsV1FailedEvent) Since() int { return 1 }
+func (e *LinuxBufferParamsV1FailedEvent) Since() uint32 { return 1 }
 
 type LinuxBufferParamsV1CreatedFunc func(ev LinuxBufferParamsV1CreatedEvent)
 
@@ -230,10 +231,10 @@ func (o *LinuxBufferParamsV1) Destroy() error {
 	return nil
 }
 
-func (o *LinuxBufferParamsV1) Add(fd int, planeIDx uint32, offset uint32, stride uint32, modifierHi uint32, modifierLo uint32) error {
+func (o *LinuxBufferParamsV1) Add(fd int, planeIdx uint32, offset uint32, stride uint32, modifierHi uint32, modifierLo uint32) error {
 	return o.proxy.SendRequest(LinuxBufferParamsV1RequestAdd, &LinuxBufferParamsV1AddRequest{
 		Fd:         fd,
-		PlaneIDx:   planeIDx,
+		PlaneIdx:   planeIdx,
 		Offset:     offset,
 		Stride:     stride,
 		ModifierHi: modifierHi,
@@ -241,7 +242,7 @@ func (o *LinuxBufferParamsV1) Add(fd int, planeIDx uint32, offset uint32, stride
 	})
 }
 
-func (o *LinuxBufferParamsV1) Create(width int32, height int32, format uint32, flags uint32) error {
+func (o *LinuxBufferParamsV1) Create(width int32, height int32, format uint32, flags LinuxBufferParamsV1Flags) error {
 	return o.proxy.SendRequest(LinuxBufferParamsV1RequestCreate, &LinuxBufferParamsV1CreateRequest{
 		Width:  width,
 		Height: height,
@@ -250,7 +251,7 @@ func (o *LinuxBufferParamsV1) Create(width int32, height int32, format uint32, f
 	})
 }
 
-func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint32, flags uint32) (*wayland.Proxy, error) {
+func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint32, flags LinuxBufferParamsV1Flags) (*wayland.Proxy, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch
 	}

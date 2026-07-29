@@ -32,7 +32,7 @@ func (r *CommitTimingManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CommitTimingManagerV1DestroyRequest) Since() int { return 1 }
+func (r *CommitTimingManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type CommitTimingManagerV1GetTimerRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *CommitTimingManagerV1GetTimerRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CommitTimingManagerV1GetTimerRequest) Since() int { return 1 }
+func (r *CommitTimingManagerV1GetTimerRequest) Since() uint32 { return 1 }
 
 type CommitTimingManagerV1 struct {
 	proxy *wayland.Proxy

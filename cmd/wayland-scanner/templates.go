@@ -8,7 +8,11 @@ import (
 func joinArgs(args []GoArg, sep string) string {
 	var parts []string
 	for _, a := range args {
-		parts = append(parts, a.ParamName+" "+a.GoType)
+		t := a.GoType
+		if a.EnumType != "" {
+			t = a.EnumType
+		}
+		parts = append(parts, a.ParamName+" "+t)
 	}
 	return strings.Join(parts, sep)
 }
@@ -56,7 +60,8 @@ var {{lower .TypeName}}EventFDCounts = map[uint16]int{
 
 // wrapperTmpl: enum types, message structs, high-level wrapper API.
 var wrapperTmpl = mustTmpl("wrapper", `{{range $e := .Enums}}
-type {{$e.Type}} uint32
+{{if $e.IsBitField}}// {{$e.Type}} is a bitfield of flags.
+{{end}}type {{$e.Type}} uint32
 
 const (
 {{range $e.Entries}}	{{.Const}} {{$e.Type}} = {{.Val}}
@@ -64,23 +69,25 @@ const (
 {{end}}
 {{range .Requests}}
 type {{.StructName}} struct {
-{{range .Args}}	{{.GoName}} {{.GoType}}
+{{range .Args}}	{{.GoName}} {{if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
 {{end}}}
 
 func (r *{{.StructName}}) Opcode() uint16 { return {{.OpName}} }
 
 func (r *{{.StructName}}) Marshal(w *wire.Writer) error {
-{{range .Args}}	if err := w.{{.WriteFn}}(r.{{.GoName}}); err != nil {
+{{range .Args}}	if err := w.{{.WriteFn}}({{if .EnumType}}{{.GoType}}({{end}}r.{{.GoName}}{{if .EnumType}}){{end}}); err != nil {
 		return err
 	}
 {{end}}	return nil
 }
 
-func (r *{{.StructName}}) Since() int { return {{.Since}} }
+func (r *{{.StructName}}) Since() uint32 { return {{.Since}} }
 {{end}}
 {{range $ev := .Events}}
-type {{$ev.StructName}} struct {
-{{range $ev.Args}}	{{.GoName}} {{if .NewIDType}}*{{.NewIDType}}{{else}}{{.GoType}}{{end}}
+{{if gt $ev.DeprecatedSince 0}}
+// Deprecated: since version {{$ev.DeprecatedSince}}.
+{{end}}type {{$ev.StructName}} struct {
+{{range $ev.Args}}	{{.GoName}} {{if .NewIDType}}*{{.NewIDType}}{{else if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
 {{end}}}
 
 func (e *{{$ev.StructName}}) Opcode() uint16 { return {{$ev.OpName}} }
@@ -90,11 +97,11 @@ func (e *{{$ev.StructName}}) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.{{.GoName}} = {{.ParamName}}
+	e.{{.GoName}} = {{if .EnumType}}{{.EnumType}}({{end}}{{.ParamName}}{{if .EnumType}}){{end}}
 {{end}}	return nil
 }
 {{end}}
-func (e *{{$ev.StructName}}) Since() int { return {{$ev.Since}} }
+func (e *{{$ev.StructName}}) Since() uint32 { return {{$ev.Since}} }
 {{end}}
 {{range $ev := .Events}}
 type {{$ev.FuncName}} func(ev {{$ev.StructName}})
@@ -132,7 +139,7 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
 			return
 		}
-		ev.{{.GoName}} = {{.ParamName}}
+		ev.{{.GoName}} = {{if .EnumType}}{{.EnumType}}({{end}}{{.ParamName}}{{if .EnumType}}){{end}}
 		{{end}}{{end}}
 		{{else}}
 		if err := ev.Unmarshal(r); err != nil {
@@ -146,7 +153,9 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 {{end}}
 {{range .Requests}}
 {{if or .HasNewID .HasCrossNewID}}
-func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDType}}{{else}}*{{$.WaylandPkg}}Proxy{{end}}, error) {
+{{if gt .DeprecatedSince 0}}
+// Deprecated: since version {{.DeprecatedSince}}.
+{{end}}func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDType}}{{else}}*{{$.WaylandPkg}}Proxy{{end}}, error) {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
         return nil, {{$.WaylandPkg}}ErrVersionMismatch
     }
@@ -166,7 +175,9 @@ func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDTy
     return {{if .HasNewID}}wrapped{{else}}p{{end}}, nil
 }
 {{else if .IsDestructor}}
-func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
+{{if gt .DeprecatedSince 0}}
+// Deprecated: since version {{.DeprecatedSince}}.
+{{end}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
 		return {{$.WaylandPkg}}ErrVersionMismatch
 	}
@@ -182,7 +193,9 @@ func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
 	return nil
 }
 {{else}}
-func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
+{{if gt .DeprecatedSince 0}}
+// Deprecated: since version {{.DeprecatedSince}}.
+{{end}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
 		return {{$.WaylandPkg}}ErrVersionMismatch
 	}

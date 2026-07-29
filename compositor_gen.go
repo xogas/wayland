@@ -28,7 +28,7 @@ func (r *CompositorCreateSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CompositorCreateSurfaceRequest) Since() int { return 1 }
+func (r *CompositorCreateSurfaceRequest) Since() uint32 { return 1 }
 
 type CompositorCreateRegionRequest struct {
 	ID wire.NewID
@@ -43,7 +43,7 @@ func (r *CompositorCreateRegionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CompositorCreateRegionRequest) Since() int { return 1 }
+func (r *CompositorCreateRegionRequest) Since() uint32 { return 1 }
 
 type CompositorReleaseRequest struct {
 }
@@ -54,7 +54,7 @@ func (r *CompositorReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CompositorReleaseRequest) Since() int { return 7 }
+func (r *CompositorReleaseRequest) Since() uint32 { return 7 }
 
 type Compositor struct {
 	proxy *Proxy

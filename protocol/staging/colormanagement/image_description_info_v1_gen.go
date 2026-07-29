@@ -37,7 +37,7 @@ func (e *ImageDescriptionInfoV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1DoneEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1DoneEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1IccFileEvent struct {
 	Icc     int
@@ -62,7 +62,7 @@ func (e *ImageDescriptionInfoV1IccFileEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1IccFileEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1IccFileEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1PrimariesEvent struct {
 	RX int32
@@ -123,10 +123,10 @@ func (e *ImageDescriptionInfoV1PrimariesEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1PrimariesEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1PrimariesEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1PrimariesNamedEvent struct {
-	Primaries uint32
+	Primaries ColorManagerV1Primaries
 }
 
 func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Opcode() uint16 {
@@ -138,11 +138,11 @@ func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Unmarshal(r *wire.Reader) er
 	if err != nil {
 		return err
 	}
-	e.Primaries = primaries
+	e.Primaries = ColorManagerV1Primaries(primaries)
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TfPowerEvent struct {
 	Eexp uint32
@@ -161,10 +161,10 @@ func (e *ImageDescriptionInfoV1TfPowerEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TfPowerEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TfPowerEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TfNamedEvent struct {
-	Tf uint32
+	Tf ColorManagerV1TransferFunction
 }
 
 func (e *ImageDescriptionInfoV1TfNamedEvent) Opcode() uint16 {
@@ -176,11 +176,11 @@ func (e *ImageDescriptionInfoV1TfNamedEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Tf = tf
+	e.Tf = ColorManagerV1TransferFunction(tf)
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TfNamedEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TfNamedEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1LuminancesEvent struct {
 	MinLum       uint32
@@ -211,7 +211,7 @@ func (e *ImageDescriptionInfoV1LuminancesEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1LuminancesEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1LuminancesEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TargetPrimariesEvent struct {
 	RX int32
@@ -272,7 +272,7 @@ func (e *ImageDescriptionInfoV1TargetPrimariesEvent) Unmarshal(r *wire.Reader) e
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TargetPrimariesEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TargetPrimariesEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TargetLuminanceEvent struct {
 	MinLum uint32
@@ -297,7 +297,7 @@ func (e *ImageDescriptionInfoV1TargetLuminanceEvent) Unmarshal(r *wire.Reader) e
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TargetLuminanceEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TargetLuminanceEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TargetMaxCllEvent struct {
 	MaxCll uint32
@@ -316,7 +316,7 @@ func (e *ImageDescriptionInfoV1TargetMaxCllEvent) Unmarshal(r *wire.Reader) erro
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TargetMaxCllEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TargetMaxCllEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1TargetMaxFallEvent struct {
 	MaxFall uint32
@@ -335,7 +335,7 @@ func (e *ImageDescriptionInfoV1TargetMaxFallEvent) Unmarshal(r *wire.Reader) err
 	return nil
 }
 
-func (e *ImageDescriptionInfoV1TargetMaxFallEvent) Since() int { return 1 }
+func (e *ImageDescriptionInfoV1TargetMaxFallEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionInfoV1DoneFunc func(ev ImageDescriptionInfoV1DoneEvent)
 

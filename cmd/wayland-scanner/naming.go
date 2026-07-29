@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-// pascal converts a snake_case XML name to PascalCase, normalizing "Id" to "ID".
+// pascal converts a snake_case XML name to PascalCase, normalizing "id" to "ID".
 func pascal(s string) string {
 	parts := strings.Split(s, "_")
 	for i, p := range parts {
@@ -14,7 +14,7 @@ func pascal(s string) string {
 			parts[i] = capitalize(p)
 		}
 	}
-	return strings.ReplaceAll(strings.Join(parts, ""), "Id", "ID")
+	return strings.Join(parts, "")
 }
 
 // camel converts a snake_case XML name to camelCase, escaping Go keywords.
@@ -23,8 +23,14 @@ func camel(s string) string {
 	if p == "" {
 		return p
 	}
-	r, n := utf8.DecodeRuneInString(p)
-	result := string(unicode.ToLower(r)) + p[n:]
+	// Decapitalize: "ID" -> "id", "IDFoo" -> "idFoo", "FooBar" -> "fooBar".
+	var result string
+	if strings.HasPrefix(p, "ID") && (len(p) == 2 || isUpper(rune(p[2]))) {
+		result = "id" + p[2:]
+	} else {
+		r, n := utf8.DecodeRuneInString(p)
+		result = string(unicode.ToLower(r)) + p[n:]
+	}
 	if goKeywords[result] {
 		return result + "_"
 	}
@@ -51,8 +57,15 @@ func capitalize(s string) string {
 	if s == "" {
 		return s
 	}
+	if s == "id" {
+		return "ID"
+	}
 	r, n := utf8.DecodeRuneInString(s)
 	return string(unicode.ToUpper(r)) + s[n:]
+}
+
+func isUpper(r rune) bool {
+	return r >= 'A' && r <= 'Z'
 }
 
 // typeName derives the Go type name for an interface name.

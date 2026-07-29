@@ -31,7 +31,7 @@ func (r *DataControlManagerV1CreateDataSourceRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *DataControlManagerV1CreateDataSourceRequest) Since() int { return 1 }
+func (r *DataControlManagerV1CreateDataSourceRequest) Since() uint32 { return 1 }
 
 type DataControlManagerV1GetDataDeviceRequest struct {
 	ID   wire.NewID
@@ -52,7 +52,7 @@ func (r *DataControlManagerV1GetDataDeviceRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *DataControlManagerV1GetDataDeviceRequest) Since() int { return 1 }
+func (r *DataControlManagerV1GetDataDeviceRequest) Since() uint32 { return 1 }
 
 type DataControlManagerV1DestroyRequest struct {
 }
@@ -65,7 +65,7 @@ func (r *DataControlManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataControlManagerV1DestroyRequest) Since() int { return 1 }
+func (r *DataControlManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type DataControlManagerV1 struct {
 	proxy *wayland.Proxy

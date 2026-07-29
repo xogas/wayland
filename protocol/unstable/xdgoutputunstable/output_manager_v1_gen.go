@@ -24,7 +24,7 @@ func (r *OutputManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *OutputManagerV1DestroyRequest) Since() int { return 1 }
+func (r *OutputManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type OutputManagerV1GetXdgOutputRequest struct {
 	ID     wire.NewID
@@ -45,7 +45,7 @@ func (r *OutputManagerV1GetXdgOutputRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *OutputManagerV1GetXdgOutputRequest) Since() int { return 1 }
+func (r *OutputManagerV1GetXdgOutputRequest) Since() uint32 { return 1 }
 
 type OutputManagerV1 struct {
 	proxy *wayland.Proxy

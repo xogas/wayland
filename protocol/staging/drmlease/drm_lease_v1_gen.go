@@ -32,7 +32,7 @@ func (r *DrmLeaseV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DrmLeaseV1DestroyRequest) Since() int { return 1 }
+func (r *DrmLeaseV1DestroyRequest) Since() uint32 { return 1 }
 
 type DrmLeaseV1LeaseFdEvent struct {
 	LeasedFd int
@@ -49,7 +49,7 @@ func (e *DrmLeaseV1LeaseFdEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DrmLeaseV1LeaseFdEvent) Since() int { return 1 }
+func (e *DrmLeaseV1LeaseFdEvent) Since() uint32 { return 1 }
 
 type DrmLeaseV1FinishedEvent struct {
 }
@@ -60,7 +60,7 @@ func (e *DrmLeaseV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DrmLeaseV1FinishedEvent) Since() int { return 1 }
+func (e *DrmLeaseV1FinishedEvent) Since() uint32 { return 1 }
 
 type DrmLeaseV1LeaseFdFunc func(ev DrmLeaseV1LeaseFdEvent)
 

@@ -49,7 +49,7 @@ func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Since() int { return 1 }
+func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Since() uint32 { return 1 }
 
 type KeyboardFilterManagerV1DestroyRequest struct {
 }
@@ -62,7 +62,7 @@ func (r *KeyboardFilterManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *KeyboardFilterManagerV1DestroyRequest) Since() int { return 1 }
+func (r *KeyboardFilterManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type KeyboardFilterManagerV1 struct {
 	proxy *wayland.Proxy

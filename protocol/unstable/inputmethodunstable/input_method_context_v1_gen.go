@@ -47,7 +47,7 @@ func (r *InputMethodContextV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodContextV1DestroyRequest) Since() int { return 1 }
+func (r *InputMethodContextV1DestroyRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1CommitStringRequest struct {
 	Serial uint32
@@ -68,7 +68,7 @@ func (r *InputMethodContextV1CommitStringRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *InputMethodContextV1CommitStringRequest) Since() int { return 1 }
+func (r *InputMethodContextV1CommitStringRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1PreeditStringRequest struct {
 	Serial uint32
@@ -93,7 +93,7 @@ func (r *InputMethodContextV1PreeditStringRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputMethodContextV1PreeditStringRequest) Since() int { return 1 }
+func (r *InputMethodContextV1PreeditStringRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1PreeditStylingRequest struct {
 	Index  uint32
@@ -118,7 +118,7 @@ func (r *InputMethodContextV1PreeditStylingRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *InputMethodContextV1PreeditStylingRequest) Since() int { return 1 }
+func (r *InputMethodContextV1PreeditStylingRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1PreeditCursorRequest struct {
 	Index int32
@@ -135,7 +135,7 @@ func (r *InputMethodContextV1PreeditCursorRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputMethodContextV1PreeditCursorRequest) Since() int { return 1 }
+func (r *InputMethodContextV1PreeditCursorRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1DeleteSurroundingTextRequest struct {
 	Index  int32
@@ -156,7 +156,7 @@ func (r *InputMethodContextV1DeleteSurroundingTextRequest) Marshal(w *wire.Write
 	return nil
 }
 
-func (r *InputMethodContextV1DeleteSurroundingTextRequest) Since() int { return 1 }
+func (r *InputMethodContextV1DeleteSurroundingTextRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1CursorPositionRequest struct {
 	Index  int32
@@ -177,7 +177,7 @@ func (r *InputMethodContextV1CursorPositionRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *InputMethodContextV1CursorPositionRequest) Since() int { return 1 }
+func (r *InputMethodContextV1CursorPositionRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1ModifiersMapRequest struct {
 	Map []byte
@@ -194,7 +194,7 @@ func (r *InputMethodContextV1ModifiersMapRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *InputMethodContextV1ModifiersMapRequest) Since() int { return 1 }
+func (r *InputMethodContextV1ModifiersMapRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1KeysymRequest struct {
 	Serial    uint32
@@ -225,7 +225,7 @@ func (r *InputMethodContextV1KeysymRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodContextV1KeysymRequest) Since() int { return 1 }
+func (r *InputMethodContextV1KeysymRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1GrabKeyboardRequest struct {
 	Keyboard wire.NewID
@@ -242,7 +242,7 @@ func (r *InputMethodContextV1GrabKeyboardRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *InputMethodContextV1GrabKeyboardRequest) Since() int { return 1 }
+func (r *InputMethodContextV1GrabKeyboardRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1KeyRequest struct {
 	Serial uint32
@@ -269,7 +269,7 @@ func (r *InputMethodContextV1KeyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodContextV1KeyRequest) Since() int { return 1 }
+func (r *InputMethodContextV1KeyRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1ModifiersRequest struct {
 	Serial        uint32
@@ -302,7 +302,7 @@ func (r *InputMethodContextV1ModifiersRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodContextV1ModifiersRequest) Since() int { return 1 }
+func (r *InputMethodContextV1ModifiersRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1LanguageRequest struct {
 	Serial   uint32
@@ -323,7 +323,7 @@ func (r *InputMethodContextV1LanguageRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodContextV1LanguageRequest) Since() int { return 1 }
+func (r *InputMethodContextV1LanguageRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1TextDirectionRequest struct {
 	Serial    uint32
@@ -344,7 +344,7 @@ func (r *InputMethodContextV1TextDirectionRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputMethodContextV1TextDirectionRequest) Since() int { return 1 }
+func (r *InputMethodContextV1TextDirectionRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1SurroundingTextEvent struct {
 	Text   string
@@ -375,7 +375,7 @@ func (e *InputMethodContextV1SurroundingTextEvent) Unmarshal(r *wire.Reader) err
 	return nil
 }
 
-func (e *InputMethodContextV1SurroundingTextEvent) Since() int { return 1 }
+func (e *InputMethodContextV1SurroundingTextEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1ResetEvent struct {
 }
@@ -386,7 +386,7 @@ func (e *InputMethodContextV1ResetEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodContextV1ResetEvent) Since() int { return 1 }
+func (e *InputMethodContextV1ResetEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1ContentTypeEvent struct {
 	Hint    uint32
@@ -411,7 +411,7 @@ func (e *InputMethodContextV1ContentTypeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodContextV1ContentTypeEvent) Since() int { return 1 }
+func (e *InputMethodContextV1ContentTypeEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1InvokeActionEvent struct {
 	Button uint32
@@ -436,7 +436,7 @@ func (e *InputMethodContextV1InvokeActionEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *InputMethodContextV1InvokeActionEvent) Since() int { return 1 }
+func (e *InputMethodContextV1InvokeActionEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1CommitStateEvent struct {
 	Serial uint32
@@ -455,7 +455,7 @@ func (e *InputMethodContextV1CommitStateEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodContextV1CommitStateEvent) Since() int { return 1 }
+func (e *InputMethodContextV1CommitStateEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1PreferredLanguageEvent struct {
 	Language string
@@ -474,7 +474,7 @@ func (e *InputMethodContextV1PreferredLanguageEvent) Unmarshal(r *wire.Reader) e
 	return nil
 }
 
-func (e *InputMethodContextV1PreferredLanguageEvent) Since() int { return 1 }
+func (e *InputMethodContextV1PreferredLanguageEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1SurroundingTextFunc func(ev InputMethodContextV1SurroundingTextEvent)
 

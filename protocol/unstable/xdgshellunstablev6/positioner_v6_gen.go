@@ -26,6 +26,7 @@ const (
 	PositionerV6ErrorInvalidInput PositionerV6Error = 0
 )
 
+// PositionerV6Anchor is a bitfield of flags.
 type PositionerV6Anchor uint32
 
 const (
@@ -36,6 +37,7 @@ const (
 	PositionerV6AnchorRight  PositionerV6Anchor = 8
 )
 
+// PositionerV6Gravity is a bitfield of flags.
 type PositionerV6Gravity uint32
 
 const (
@@ -46,6 +48,7 @@ const (
 	PositionerV6GravityRight  PositionerV6Gravity = 8
 )
 
+// PositionerV6ConstraintAdjustment is a bitfield of flags.
 type PositionerV6ConstraintAdjustment uint32
 
 const (
@@ -67,7 +70,7 @@ func (r *PositionerV6DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerV6DestroyRequest) Since() int { return 1 }
+func (r *PositionerV6DestroyRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetSizeRequest struct {
 	Width  int32
@@ -86,7 +89,7 @@ func (r *PositionerV6SetSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerV6SetSizeRequest) Since() int { return 1 }
+func (r *PositionerV6SetSizeRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetAnchorRectRequest struct {
 	X      int32
@@ -113,37 +116,37 @@ func (r *PositionerV6SetAnchorRectRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerV6SetAnchorRectRequest) Since() int { return 1 }
+func (r *PositionerV6SetAnchorRectRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetAnchorRequest struct {
-	Anchor uint32
+	Anchor PositionerV6Anchor
 }
 
 func (r *PositionerV6SetAnchorRequest) Opcode() uint16 { return PositionerV6RequestSetAnchor }
 
 func (r *PositionerV6SetAnchorRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Anchor); err != nil {
+	if err := w.Uint32(uint32(r.Anchor)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PositionerV6SetAnchorRequest) Since() int { return 1 }
+func (r *PositionerV6SetAnchorRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetGravityRequest struct {
-	Gravity uint32
+	Gravity PositionerV6Gravity
 }
 
 func (r *PositionerV6SetGravityRequest) Opcode() uint16 { return PositionerV6RequestSetGravity }
 
 func (r *PositionerV6SetGravityRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Gravity); err != nil {
+	if err := w.Uint32(uint32(r.Gravity)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PositionerV6SetGravityRequest) Since() int { return 1 }
+func (r *PositionerV6SetGravityRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetConstraintAdjustmentRequest struct {
 	ConstraintAdjustment uint32
@@ -160,7 +163,7 @@ func (r *PositionerV6SetConstraintAdjustmentRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *PositionerV6SetConstraintAdjustmentRequest) Since() int { return 1 }
+func (r *PositionerV6SetConstraintAdjustmentRequest) Since() uint32 { return 1 }
 
 type PositionerV6SetOffsetRequest struct {
 	X int32
@@ -179,7 +182,7 @@ func (r *PositionerV6SetOffsetRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerV6SetOffsetRequest) Since() int { return 1 }
+func (r *PositionerV6SetOffsetRequest) Since() uint32 { return 1 }
 
 type PositionerV6 struct {
 	proxy *wayland.Proxy
@@ -220,13 +223,13 @@ func (o *PositionerV6) SetAnchorRect(x int32, y int32, width int32, height int32
 	})
 }
 
-func (o *PositionerV6) SetAnchor(anchor uint32) error {
+func (o *PositionerV6) SetAnchor(anchor PositionerV6Anchor) error {
 	return o.proxy.SendRequest(PositionerV6RequestSetAnchor, &PositionerV6SetAnchorRequest{
 		Anchor: anchor,
 	})
 }
 
-func (o *PositionerV6) SetGravity(gravity uint32) error {
+func (o *PositionerV6) SetGravity(gravity PositionerV6Gravity) error {
 	return o.proxy.SendRequest(PositionerV6RequestSetGravity, &PositionerV6SetGravityRequest{
 		Gravity: gravity,
 	})

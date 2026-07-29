@@ -38,7 +38,7 @@ func (r *DrmLeaseRequestV1RequestConnectorRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *DrmLeaseRequestV1RequestConnectorRequest) Since() int { return 1 }
+func (r *DrmLeaseRequestV1RequestConnectorRequest) Since() uint32 { return 1 }
 
 type DrmLeaseRequestV1SubmitRequest struct {
 	ID wire.NewID
@@ -53,7 +53,7 @@ func (r *DrmLeaseRequestV1SubmitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DrmLeaseRequestV1SubmitRequest) Since() int { return 1 }
+func (r *DrmLeaseRequestV1SubmitRequest) Since() uint32 { return 1 }
 
 type DrmLeaseRequestV1 struct {
 	proxy *wayland.Proxy

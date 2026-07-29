@@ -57,6 +57,7 @@ const (
 	PositionerGravityBottomRight PositionerGravity = 8
 )
 
+// PositionerConstraintAdjustment is a bitfield of flags.
 type PositionerConstraintAdjustment uint32
 
 const (
@@ -78,7 +79,7 @@ func (r *PositionerDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerDestroyRequest) Since() int { return 1 }
+func (r *PositionerDestroyRequest) Since() uint32 { return 1 }
 
 type PositionerSetSizeRequest struct {
 	Width  int32
@@ -97,7 +98,7 @@ func (r *PositionerSetSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetSizeRequest) Since() int { return 1 }
+func (r *PositionerSetSizeRequest) Since() uint32 { return 1 }
 
 type PositionerSetAnchorRectRequest struct {
 	X      int32
@@ -124,40 +125,40 @@ func (r *PositionerSetAnchorRectRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetAnchorRectRequest) Since() int { return 1 }
+func (r *PositionerSetAnchorRectRequest) Since() uint32 { return 1 }
 
 type PositionerSetAnchorRequest struct {
-	Anchor uint32
+	Anchor PositionerAnchor
 }
 
 func (r *PositionerSetAnchorRequest) Opcode() uint16 { return PositionerRequestSetAnchor }
 
 func (r *PositionerSetAnchorRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Anchor); err != nil {
+	if err := w.Uint32(uint32(r.Anchor)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PositionerSetAnchorRequest) Since() int { return 1 }
+func (r *PositionerSetAnchorRequest) Since() uint32 { return 1 }
 
 type PositionerSetGravityRequest struct {
-	Gravity uint32
+	Gravity PositionerGravity
 }
 
 func (r *PositionerSetGravityRequest) Opcode() uint16 { return PositionerRequestSetGravity }
 
 func (r *PositionerSetGravityRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Gravity); err != nil {
+	if err := w.Uint32(uint32(r.Gravity)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PositionerSetGravityRequest) Since() int { return 1 }
+func (r *PositionerSetGravityRequest) Since() uint32 { return 1 }
 
 type PositionerSetConstraintAdjustmentRequest struct {
-	ConstraintAdjustment uint32
+	ConstraintAdjustment PositionerConstraintAdjustment
 }
 
 func (r *PositionerSetConstraintAdjustmentRequest) Opcode() uint16 {
@@ -165,13 +166,13 @@ func (r *PositionerSetConstraintAdjustmentRequest) Opcode() uint16 {
 }
 
 func (r *PositionerSetConstraintAdjustmentRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.ConstraintAdjustment); err != nil {
+	if err := w.Uint32(uint32(r.ConstraintAdjustment)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PositionerSetConstraintAdjustmentRequest) Since() int { return 1 }
+func (r *PositionerSetConstraintAdjustmentRequest) Since() uint32 { return 1 }
 
 type PositionerSetOffsetRequest struct {
 	X int32
@@ -190,7 +191,7 @@ func (r *PositionerSetOffsetRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetOffsetRequest) Since() int { return 1 }
+func (r *PositionerSetOffsetRequest) Since() uint32 { return 1 }
 
 type PositionerSetReactiveRequest struct {
 }
@@ -201,7 +202,7 @@ func (r *PositionerSetReactiveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetReactiveRequest) Since() int { return 3 }
+func (r *PositionerSetReactiveRequest) Since() uint32 { return 3 }
 
 type PositionerSetParentSizeRequest struct {
 	ParentWidth  int32
@@ -220,7 +221,7 @@ func (r *PositionerSetParentSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetParentSizeRequest) Since() int { return 3 }
+func (r *PositionerSetParentSizeRequest) Since() uint32 { return 3 }
 
 type PositionerSetParentConfigureRequest struct {
 	Serial uint32
@@ -237,7 +238,7 @@ func (r *PositionerSetParentConfigureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PositionerSetParentConfigureRequest) Since() int { return 3 }
+func (r *PositionerSetParentConfigureRequest) Since() uint32 { return 3 }
 
 type Positioner struct {
 	proxy *wayland.Proxy
@@ -278,19 +279,19 @@ func (o *Positioner) SetAnchorRect(x int32, y int32, width int32, height int32) 
 	})
 }
 
-func (o *Positioner) SetAnchor(anchor uint32) error {
+func (o *Positioner) SetAnchor(anchor PositionerAnchor) error {
 	return o.proxy.SendRequest(PositionerRequestSetAnchor, &PositionerSetAnchorRequest{
 		Anchor: anchor,
 	})
 }
 
-func (o *Positioner) SetGravity(gravity uint32) error {
+func (o *Positioner) SetGravity(gravity PositionerGravity) error {
 	return o.proxy.SendRequest(PositionerRequestSetGravity, &PositionerSetGravityRequest{
 		Gravity: gravity,
 	})
 }
 
-func (o *Positioner) SetConstraintAdjustment(constraintAdjustment uint32) error {
+func (o *Positioner) SetConstraintAdjustment(constraintAdjustment PositionerConstraintAdjustment) error {
 	return o.proxy.SendRequest(PositionerRequestSetConstraintAdjustment, &PositionerSetConstraintAdjustmentRequest{
 		ConstraintAdjustment: constraintAdjustment,
 	})

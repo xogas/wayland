@@ -36,7 +36,7 @@ func (r *ShellGetShellSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellGetShellSurfaceRequest) Since() int { return 1 }
+func (r *ShellGetShellSurfaceRequest) Since() uint32 { return 1 }
 
 type Shell struct {
 	proxy *Proxy

@@ -179,7 +179,7 @@ func main() {
 	bufs := [2]bufSlot{}
 	for i := range 2 {
 		off := int32(i) * int32(oneSize)
-		wlBuf, err := pool.CreateBuffer(off, int32(winWidth), bufH, stride, uint32(wayland.ShmFormatXrgb8888))
+		wlBuf, err := pool.CreateBuffer(off, int32(winWidth), bufH, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer %d: %v\n", i, err)
 			os.Exit(1)

@@ -105,7 +105,7 @@ func (r *ColorManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ColorManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1GetOutputRequest struct {
 	ID     wire.NewID
@@ -124,7 +124,7 @@ func (r *ColorManagerV1GetOutputRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagerV1GetOutputRequest) Since() int { return 1 }
+func (r *ColorManagerV1GetOutputRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1GetSurfaceRequest struct {
 	ID      wire.NewID
@@ -143,7 +143,7 @@ func (r *ColorManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagerV1GetSurfaceRequest) Since() int { return 1 }
+func (r *ColorManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1GetSurfaceFeedbackRequest struct {
 	ID      wire.NewID
@@ -164,7 +164,7 @@ func (r *ColorManagerV1GetSurfaceFeedbackRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *ColorManagerV1GetSurfaceFeedbackRequest) Since() int { return 1 }
+func (r *ColorManagerV1GetSurfaceFeedbackRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1CreateIccCreatorRequest struct {
 	Obj wire.NewID
@@ -181,7 +181,7 @@ func (r *ColorManagerV1CreateIccCreatorRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagerV1CreateIccCreatorRequest) Since() int { return 1 }
+func (r *ColorManagerV1CreateIccCreatorRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1CreateParametricCreatorRequest struct {
 	Obj wire.NewID
@@ -198,7 +198,7 @@ func (r *ColorManagerV1CreateParametricCreatorRequest) Marshal(w *wire.Writer) e
 	return nil
 }
 
-func (r *ColorManagerV1CreateParametricCreatorRequest) Since() int { return 1 }
+func (r *ColorManagerV1CreateParametricCreatorRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1CreateWindowsScrgbRequest struct {
 	ImageDescription wire.NewID
@@ -215,7 +215,7 @@ func (r *ColorManagerV1CreateWindowsScrgbRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *ColorManagerV1CreateWindowsScrgbRequest) Since() int { return 1 }
+func (r *ColorManagerV1CreateWindowsScrgbRequest) Since() uint32 { return 1 }
 
 type ColorManagerV1GetImageDescriptionRequest struct {
 	ImageDescription wire.NewID
@@ -236,7 +236,7 @@ func (r *ColorManagerV1GetImageDescriptionRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *ColorManagerV1GetImageDescriptionRequest) Since() int { return 2 }
+func (r *ColorManagerV1GetImageDescriptionRequest) Since() uint32 { return 2 }
 
 type ColorManagerV1CreateWindowsBt2100Request struct {
 	ImageDescription wire.NewID
@@ -253,10 +253,10 @@ func (r *ColorManagerV1CreateWindowsBt2100Request) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *ColorManagerV1CreateWindowsBt2100Request) Since() int { return 3 }
+func (r *ColorManagerV1CreateWindowsBt2100Request) Since() uint32 { return 3 }
 
 type ColorManagerV1SupportedIntentEvent struct {
-	RenderIntent uint32
+	RenderIntent ColorManagerV1RenderIntent
 }
 
 func (e *ColorManagerV1SupportedIntentEvent) Opcode() uint16 {
@@ -268,14 +268,14 @@ func (e *ColorManagerV1SupportedIntentEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.RenderIntent = renderIntent
+	e.RenderIntent = ColorManagerV1RenderIntent(renderIntent)
 	return nil
 }
 
-func (e *ColorManagerV1SupportedIntentEvent) Since() int { return 1 }
+func (e *ColorManagerV1SupportedIntentEvent) Since() uint32 { return 1 }
 
 type ColorManagerV1SupportedFeatureEvent struct {
-	Feature uint32
+	Feature ColorManagerV1Feature
 }
 
 func (e *ColorManagerV1SupportedFeatureEvent) Opcode() uint16 {
@@ -287,14 +287,14 @@ func (e *ColorManagerV1SupportedFeatureEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Feature = feature
+	e.Feature = ColorManagerV1Feature(feature)
 	return nil
 }
 
-func (e *ColorManagerV1SupportedFeatureEvent) Since() int { return 1 }
+func (e *ColorManagerV1SupportedFeatureEvent) Since() uint32 { return 1 }
 
 type ColorManagerV1SupportedTfNamedEvent struct {
-	Tf uint32
+	Tf ColorManagerV1TransferFunction
 }
 
 func (e *ColorManagerV1SupportedTfNamedEvent) Opcode() uint16 {
@@ -306,14 +306,14 @@ func (e *ColorManagerV1SupportedTfNamedEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Tf = tf
+	e.Tf = ColorManagerV1TransferFunction(tf)
 	return nil
 }
 
-func (e *ColorManagerV1SupportedTfNamedEvent) Since() int { return 1 }
+func (e *ColorManagerV1SupportedTfNamedEvent) Since() uint32 { return 1 }
 
 type ColorManagerV1SupportedPrimariesNamedEvent struct {
-	Primaries uint32
+	Primaries ColorManagerV1Primaries
 }
 
 func (e *ColorManagerV1SupportedPrimariesNamedEvent) Opcode() uint16 {
@@ -325,11 +325,11 @@ func (e *ColorManagerV1SupportedPrimariesNamedEvent) Unmarshal(r *wire.Reader) e
 	if err != nil {
 		return err
 	}
-	e.Primaries = primaries
+	e.Primaries = ColorManagerV1Primaries(primaries)
 	return nil
 }
 
-func (e *ColorManagerV1SupportedPrimariesNamedEvent) Since() int { return 1 }
+func (e *ColorManagerV1SupportedPrimariesNamedEvent) Since() uint32 { return 1 }
 
 type ColorManagerV1DoneEvent struct {
 }
@@ -340,7 +340,7 @@ func (e *ColorManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ColorManagerV1DoneEvent) Since() int { return 1 }
+func (e *ColorManagerV1DoneEvent) Since() uint32 { return 1 }
 
 type ColorManagerV1SupportedIntentFunc func(ev ColorManagerV1SupportedIntentEvent)
 

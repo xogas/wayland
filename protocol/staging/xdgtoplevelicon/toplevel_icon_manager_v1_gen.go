@@ -32,7 +32,7 @@ func (r *ToplevelIconManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ToplevelIconManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelIconManagerV1CreateIconRequest struct {
 	ID wire.NewID
@@ -49,11 +49,11 @@ func (r *ToplevelIconManagerV1CreateIconRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconManagerV1CreateIconRequest) Since() int { return 1 }
+func (r *ToplevelIconManagerV1CreateIconRequest) Since() uint32 { return 1 }
 
 type ToplevelIconManagerV1SetIconRequest struct {
 	Toplevel wire.ObjectID
-	Icon     wire.ObjectID
+	Icon     wire.ObjectID // nullable
 }
 
 func (r *ToplevelIconManagerV1SetIconRequest) Opcode() uint16 {
@@ -70,7 +70,7 @@ func (r *ToplevelIconManagerV1SetIconRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelIconManagerV1SetIconRequest) Since() int { return 1 }
+func (r *ToplevelIconManagerV1SetIconRequest) Since() uint32 { return 1 }
 
 type ToplevelIconManagerV1IconSizeEvent struct {
 	Size int32
@@ -89,7 +89,7 @@ func (e *ToplevelIconManagerV1IconSizeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelIconManagerV1IconSizeEvent) Since() int { return 1 }
+func (e *ToplevelIconManagerV1IconSizeEvent) Since() uint32 { return 1 }
 
 type ToplevelIconManagerV1DoneEvent struct {
 }
@@ -100,7 +100,7 @@ func (e *ToplevelIconManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelIconManagerV1DoneEvent) Since() int { return 1 }
+func (e *ToplevelIconManagerV1DoneEvent) Since() uint32 { return 1 }
 
 type ToplevelIconManagerV1IconSizeFunc func(ev ToplevelIconManagerV1IconSizeEvent)
 

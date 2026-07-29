@@ -41,7 +41,7 @@ func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Since() int { return 1 }
+func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1ReleaseRequest struct {
 }
@@ -52,7 +52,7 @@ func (r *DrmLeaseDeviceV1ReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DrmLeaseDeviceV1ReleaseRequest) Since() int { return 1 }
+func (r *DrmLeaseDeviceV1ReleaseRequest) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1DrmFdEvent struct {
 	Fd int
@@ -69,7 +69,7 @@ func (e *DrmLeaseDeviceV1DrmFdEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DrmLeaseDeviceV1DrmFdEvent) Since() int { return 1 }
+func (e *DrmLeaseDeviceV1DrmFdEvent) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1ConnectorEvent struct {
 	ID *DrmLeaseConnectorV1
@@ -77,7 +77,7 @@ type DrmLeaseDeviceV1ConnectorEvent struct {
 
 func (e *DrmLeaseDeviceV1ConnectorEvent) Opcode() uint16 { return DrmLeaseDeviceV1EventConnector }
 
-func (e *DrmLeaseDeviceV1ConnectorEvent) Since() int { return 1 }
+func (e *DrmLeaseDeviceV1ConnectorEvent) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1DoneEvent struct {
 }
@@ -88,7 +88,7 @@ func (e *DrmLeaseDeviceV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DrmLeaseDeviceV1DoneEvent) Since() int { return 1 }
+func (e *DrmLeaseDeviceV1DoneEvent) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1ReleasedEvent struct {
 }
@@ -99,7 +99,7 @@ func (e *DrmLeaseDeviceV1ReleasedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DrmLeaseDeviceV1ReleasedEvent) Since() int { return 1 }
+func (e *DrmLeaseDeviceV1ReleasedEvent) Since() uint32 { return 1 }
 
 type DrmLeaseDeviceV1DrmFdFunc func(ev DrmLeaseDeviceV1DrmFdEvent)
 

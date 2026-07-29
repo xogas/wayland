@@ -31,7 +31,7 @@ func (r *CutoutsManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CutoutsManagerV1DestroyRequest) Since() int { return 1 }
+func (r *CutoutsManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type CutoutsManagerV1GetCutoutsRequest struct {
 	ID      wire.NewID
@@ -50,7 +50,7 @@ func (r *CutoutsManagerV1GetCutoutsRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CutoutsManagerV1GetCutoutsRequest) Since() int { return 1 }
+func (r *CutoutsManagerV1GetCutoutsRequest) Since() uint32 { return 1 }
 
 type CutoutsManagerV1 struct {
 	proxy *wayland.Proxy

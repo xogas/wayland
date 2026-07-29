@@ -24,10 +24,10 @@ func (r *SystemBellV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SystemBellV1DestroyRequest) Since() int { return 1 }
+func (r *SystemBellV1DestroyRequest) Since() uint32 { return 1 }
 
 type SystemBellV1RingRequest struct {
-	Surface wire.ObjectID
+	Surface wire.ObjectID // nullable
 }
 
 func (r *SystemBellV1RingRequest) Opcode() uint16 { return SystemBellV1RequestRing }
@@ -39,7 +39,7 @@ func (r *SystemBellV1RingRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SystemBellV1RingRequest) Since() int { return 1 }
+func (r *SystemBellV1RingRequest) Since() uint32 { return 1 }
 
 type SystemBellV1 struct {
 	proxy *wayland.Proxy

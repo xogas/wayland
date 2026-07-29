@@ -27,7 +27,7 @@ func (r *RelativePointerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RelativePointerV1DestroyRequest) Since() int { return 1 }
+func (r *RelativePointerV1DestroyRequest) Since() uint32 { return 1 }
 
 type RelativePointerV1RelativeMotionEvent struct {
 	UtimeHi   uint32
@@ -76,7 +76,7 @@ func (e *RelativePointerV1RelativeMotionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *RelativePointerV1RelativeMotionEvent) Since() int { return 1 }
+func (e *RelativePointerV1RelativeMotionEvent) Since() uint32 { return 1 }
 
 type RelativePointerV1RelativeMotionFunc func(ev RelativePointerV1RelativeMotionEvent)
 

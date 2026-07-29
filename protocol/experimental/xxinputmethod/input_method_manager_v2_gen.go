@@ -35,7 +35,7 @@ func (r *InputMethodManagerV2GetInputMethodRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *InputMethodManagerV2GetInputMethodRequest) Since() int { return 1 }
+func (r *InputMethodManagerV2GetInputMethodRequest) Since() uint32 { return 1 }
 
 type InputMethodManagerV2GetPositionerRequest struct {
 	ID wire.NewID
@@ -52,7 +52,7 @@ func (r *InputMethodManagerV2GetPositionerRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputMethodManagerV2GetPositionerRequest) Since() int { return 1 }
+func (r *InputMethodManagerV2GetPositionerRequest) Since() uint32 { return 1 }
 
 type InputMethodManagerV2DestroyRequest struct {
 }
@@ -65,7 +65,7 @@ func (r *InputMethodManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodManagerV2DestroyRequest) Since() int { return 1 }
+func (r *InputMethodManagerV2DestroyRequest) Since() uint32 { return 1 }
 
 type InputMethodManagerV2 struct {
 	proxy *wayland.Proxy

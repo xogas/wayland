@@ -23,7 +23,7 @@ func (r *FixesDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FixesDestroyRequest) Since() int { return 1 }
+func (r *FixesDestroyRequest) Since() uint32 { return 1 }
 
 type FixesDestroyRegistryRequest struct {
 	Registry wire.ObjectID
@@ -38,7 +38,7 @@ func (r *FixesDestroyRegistryRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FixesDestroyRegistryRequest) Since() int { return 1 }
+func (r *FixesDestroyRegistryRequest) Since() uint32 { return 1 }
 
 type Fixes struct {
 	proxy *Proxy

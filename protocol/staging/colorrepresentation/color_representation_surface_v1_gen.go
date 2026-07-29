@@ -38,7 +38,7 @@ const (
 type ColorRepresentationSurfaceV1Coefficients uint32
 
 const (
-	ColorRepresentationSurfaceV1CoefficientsIDentity ColorRepresentationSurfaceV1Coefficients = 1
+	ColorRepresentationSurfaceV1CoefficientsIdentity ColorRepresentationSurfaceV1Coefficients = 1
 	ColorRepresentationSurfaceV1CoefficientsBt709    ColorRepresentationSurfaceV1Coefficients = 2
 	ColorRepresentationSurfaceV1CoefficientsFcc      ColorRepresentationSurfaceV1Coefficients = 3
 	ColorRepresentationSurfaceV1CoefficientsBt601    ColorRepresentationSurfaceV1Coefficients = 4
@@ -77,10 +77,10 @@ func (r *ColorRepresentationSurfaceV1DestroyRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *ColorRepresentationSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *ColorRepresentationSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationSurfaceV1SetAlphaModeRequest struct {
-	AlphaMode uint32
+	AlphaMode ColorRepresentationSurfaceV1AlphaMode
 }
 
 func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Opcode() uint16 {
@@ -88,17 +88,17 @@ func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Opcode() uint16 {
 }
 
 func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.AlphaMode); err != nil {
+	if err := w.Uint32(uint32(r.AlphaMode)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Since() int { return 1 }
+func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest struct {
-	Coefficients uint32
-	Range        uint32
+	Coefficients ColorRepresentationSurfaceV1Coefficients
+	Range        ColorRepresentationSurfaceV1Range
 }
 
 func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Opcode() uint16 {
@@ -106,19 +106,19 @@ func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Opcode() ui
 }
 
 func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Coefficients); err != nil {
+	if err := w.Uint32(uint32(r.Coefficients)); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Range); err != nil {
+	if err := w.Uint32(uint32(r.Range)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Since() int { return 1 }
+func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationSurfaceV1SetChromaLocationRequest struct {
-	ChromaLocation uint32
+	ChromaLocation ColorRepresentationSurfaceV1ChromaLocation
 }
 
 func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Opcode() uint16 {
@@ -126,13 +126,13 @@ func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Opcode() uint16 {
 }
 
 func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.ChromaLocation); err != nil {
+	if err := w.Uint32(uint32(r.ChromaLocation)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Since() int { return 1 }
+func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Since() uint32 { return 1 }
 
 type ColorRepresentationSurfaceV1 struct {
 	proxy *wayland.Proxy
@@ -157,20 +157,20 @@ func (o *ColorRepresentationSurfaceV1) Destroy() error {
 	return nil
 }
 
-func (o *ColorRepresentationSurfaceV1) SetAlphaMode(alphaMode uint32) error {
+func (o *ColorRepresentationSurfaceV1) SetAlphaMode(alphaMode ColorRepresentationSurfaceV1AlphaMode) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetAlphaMode, &ColorRepresentationSurfaceV1SetAlphaModeRequest{
 		AlphaMode: alphaMode,
 	})
 }
 
-func (o *ColorRepresentationSurfaceV1) SetCoefficientsAndRange(coefficients uint32, range_ uint32) error {
+func (o *ColorRepresentationSurfaceV1) SetCoefficientsAndRange(coefficients ColorRepresentationSurfaceV1Coefficients, range_ ColorRepresentationSurfaceV1Range) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetCoefficientsAndRange, &ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest{
 		Coefficients: coefficients,
 		Range:        range_,
 	})
 }
 
-func (o *ColorRepresentationSurfaceV1) SetChromaLocation(chromaLocation uint32) error {
+func (o *ColorRepresentationSurfaceV1) SetChromaLocation(chromaLocation ColorRepresentationSurfaceV1ChromaLocation) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetChromaLocation, &ColorRepresentationSurfaceV1SetChromaLocationRequest{
 		ChromaLocation: chromaLocation,
 	})

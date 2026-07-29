@@ -31,7 +31,7 @@ func (r *ZoneItemV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneItemV1DestroyRequest) Since() int { return 1 }
+func (r *ZoneItemV1DestroyRequest) Since() uint32 { return 1 }
 
 type ZoneItemV1SetPositionRequest struct {
 	X int32
@@ -50,7 +50,7 @@ func (r *ZoneItemV1SetPositionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneItemV1SetPositionRequest) Since() int { return 1 }
+func (r *ZoneItemV1SetPositionRequest) Since() uint32 { return 1 }
 
 type ZoneItemV1FrameExtentsEvent struct {
 	Top    int32
@@ -85,7 +85,7 @@ func (e *ZoneItemV1FrameExtentsEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneItemV1FrameExtentsEvent) Since() int { return 1 }
+func (e *ZoneItemV1FrameExtentsEvent) Since() uint32 { return 1 }
 
 type ZoneItemV1PositionEvent struct {
 	X int32
@@ -108,7 +108,7 @@ func (e *ZoneItemV1PositionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneItemV1PositionEvent) Since() int { return 1 }
+func (e *ZoneItemV1PositionEvent) Since() uint32 { return 1 }
 
 type ZoneItemV1PositionFailedEvent struct {
 }
@@ -119,7 +119,7 @@ func (e *ZoneItemV1PositionFailedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneItemV1PositionFailedEvent) Since() int { return 1 }
+func (e *ZoneItemV1PositionFailedEvent) Since() uint32 { return 1 }
 
 type ZoneItemV1ClosedEvent struct {
 }
@@ -130,7 +130,7 @@ func (e *ZoneItemV1ClosedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneItemV1ClosedEvent) Since() int { return 1 }
+func (e *ZoneItemV1ClosedEvent) Since() uint32 { return 1 }
 
 type ZoneItemV1FrameExtentsFunc func(ev ZoneItemV1FrameExtentsEvent)
 

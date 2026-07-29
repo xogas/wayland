@@ -39,7 +39,7 @@ func (r *SurfaceV1SetSerialRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV1SetSerialRequest) Since() int { return 1 }
+func (r *SurfaceV1SetSerialRequest) Since() uint32 { return 1 }
 
 type SurfaceV1DestroyRequest struct {
 }
@@ -50,7 +50,7 @@ func (r *SurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *SurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type SurfaceV1 struct {
 	proxy *wayland.Proxy

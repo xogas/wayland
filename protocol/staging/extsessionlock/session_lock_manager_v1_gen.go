@@ -26,7 +26,7 @@ func (r *SessionLockManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockManagerV1DestroyRequest) Since() int { return 1 }
+func (r *SessionLockManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type SessionLockManagerV1LockRequest struct {
 	ID wire.NewID
@@ -41,7 +41,7 @@ func (r *SessionLockManagerV1LockRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockManagerV1LockRequest) Since() int { return 1 }
+func (r *SessionLockManagerV1LockRequest) Since() uint32 { return 1 }
 
 type SessionLockManagerV1 struct {
 	proxy *wayland.Proxy

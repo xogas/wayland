@@ -32,9 +32,9 @@ const (
 )
 
 type DataDeviceStartDragRequest struct {
-	Source wire.ObjectID
+	Source wire.ObjectID // nullable
 	Origin wire.ObjectID
-	Icon   wire.ObjectID
+	Icon   wire.ObjectID // nullable
 	Serial uint32
 }
 
@@ -56,10 +56,10 @@ func (r *DataDeviceStartDragRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataDeviceStartDragRequest) Since() int { return 1 }
+func (r *DataDeviceStartDragRequest) Since() uint32 { return 1 }
 
 type DataDeviceSetSelectionRequest struct {
-	Source wire.ObjectID
+	Source wire.ObjectID // nullable
 	Serial uint32
 }
 
@@ -75,7 +75,7 @@ func (r *DataDeviceSetSelectionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataDeviceSetSelectionRequest) Since() int { return 1 }
+func (r *DataDeviceSetSelectionRequest) Since() uint32 { return 1 }
 
 type DataDeviceReleaseRequest struct {
 }
@@ -86,7 +86,7 @@ func (r *DataDeviceReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataDeviceReleaseRequest) Since() int { return 2 }
+func (r *DataDeviceReleaseRequest) Since() uint32 { return 2 }
 
 type DataDeviceDataOfferEvent struct {
 	ID *DataOffer
@@ -94,14 +94,14 @@ type DataDeviceDataOfferEvent struct {
 
 func (e *DataDeviceDataOfferEvent) Opcode() uint16 { return DataDeviceEventDataOffer }
 
-func (e *DataDeviceDataOfferEvent) Since() int { return 1 }
+func (e *DataDeviceDataOfferEvent) Since() uint32 { return 1 }
 
 type DataDeviceEnterEvent struct {
 	Serial  uint32
 	Surface wire.ObjectID
 	X       wire.Fixed
 	Y       wire.Fixed
-	ID      wire.ObjectID
+	ID      wire.ObjectID // nullable
 }
 
 func (e *DataDeviceEnterEvent) Opcode() uint16 { return DataDeviceEventEnter }
@@ -127,15 +127,15 @@ func (e *DataDeviceEnterEvent) Unmarshal(r *wire.Reader) error {
 		return err
 	}
 	e.Y = y
-	iD, err := r.Object()
+	id, err := r.Object()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *DataDeviceEnterEvent) Since() int { return 1 }
+func (e *DataDeviceEnterEvent) Since() uint32 { return 1 }
 
 type DataDeviceLeaveEvent struct {
 }
@@ -146,7 +146,7 @@ func (e *DataDeviceLeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataDeviceLeaveEvent) Since() int { return 1 }
+func (e *DataDeviceLeaveEvent) Since() uint32 { return 1 }
 
 type DataDeviceMotionEvent struct {
 	Time uint32
@@ -175,7 +175,7 @@ func (e *DataDeviceMotionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataDeviceMotionEvent) Since() int { return 1 }
+func (e *DataDeviceMotionEvent) Since() uint32 { return 1 }
 
 type DataDeviceDropEvent struct {
 }
@@ -186,24 +186,24 @@ func (e *DataDeviceDropEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataDeviceDropEvent) Since() int { return 1 }
+func (e *DataDeviceDropEvent) Since() uint32 { return 1 }
 
 type DataDeviceSelectionEvent struct {
-	ID wire.ObjectID
+	ID wire.ObjectID // nullable
 }
 
 func (e *DataDeviceSelectionEvent) Opcode() uint16 { return DataDeviceEventSelection }
 
 func (e *DataDeviceSelectionEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Object()
+	id, err := r.Object()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *DataDeviceSelectionEvent) Since() int { return 1 }
+func (e *DataDeviceSelectionEvent) Since() uint32 { return 1 }
 
 type DataDeviceDataOfferFunc func(ev DataDeviceDataOfferEvent)
 

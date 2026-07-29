@@ -31,7 +31,7 @@ func (r *PrimarySelectionDeviceManagerV1CreateSourceRequest) Marshal(w *wire.Wri
 	return nil
 }
 
-func (r *PrimarySelectionDeviceManagerV1CreateSourceRequest) Since() int { return 1 }
+func (r *PrimarySelectionDeviceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceManagerV1GetDeviceRequest struct {
 	ID   wire.NewID
@@ -52,7 +52,7 @@ func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Since() int { return 1 }
+func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceManagerV1DestroyRequest struct {
 }
@@ -65,7 +65,7 @@ func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Since() int { return 1 }
+func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type PrimarySelectionDeviceManagerV1 struct {
 	proxy *wayland.Proxy

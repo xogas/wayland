@@ -39,7 +39,7 @@ func (r *SessionLockSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *SessionLockSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type SessionLockSurfaceV1AckConfigureRequest struct {
 	Serial uint32
@@ -56,7 +56,7 @@ func (r *SessionLockSurfaceV1AckConfigureRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *SessionLockSurfaceV1AckConfigureRequest) Since() int { return 1 }
+func (r *SessionLockSurfaceV1AckConfigureRequest) Since() uint32 { return 1 }
 
 type SessionLockSurfaceV1ConfigureEvent struct {
 	Serial uint32
@@ -87,7 +87,7 @@ func (e *SessionLockSurfaceV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SessionLockSurfaceV1ConfigureEvent) Since() int { return 1 }
+func (e *SessionLockSurfaceV1ConfigureEvent) Since() uint32 { return 1 }
 
 type SessionLockSurfaceV1ConfigureFunc func(ev SessionLockSurfaceV1ConfigureEvent)
 

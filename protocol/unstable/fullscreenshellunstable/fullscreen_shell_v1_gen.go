@@ -53,12 +53,12 @@ func (r *FullscreenShellV1ReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FullscreenShellV1ReleaseRequest) Since() int { return 1 }
+func (r *FullscreenShellV1ReleaseRequest) Since() uint32 { return 1 }
 
 type FullscreenShellV1PresentSurfaceRequest struct {
-	Surface wire.ObjectID
-	Method  uint32
-	Output  wire.ObjectID
+	Surface wire.ObjectID // nullable
+	Method  FullscreenShellV1PresentMethod
+	Output  wire.ObjectID // nullable
 }
 
 func (r *FullscreenShellV1PresentSurfaceRequest) Opcode() uint16 {
@@ -69,7 +69,7 @@ func (r *FullscreenShellV1PresentSurfaceRequest) Marshal(w *wire.Writer) error {
 	if err := w.Object(r.Surface); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Method); err != nil {
+	if err := w.Uint32(uint32(r.Method)); err != nil {
 		return err
 	}
 	if err := w.Object(r.Output); err != nil {
@@ -78,7 +78,7 @@ func (r *FullscreenShellV1PresentSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FullscreenShellV1PresentSurfaceRequest) Since() int { return 1 }
+func (r *FullscreenShellV1PresentSurfaceRequest) Since() uint32 { return 1 }
 
 type FullscreenShellV1PresentSurfaceForModeRequest struct {
 	Surface   wire.ObjectID
@@ -107,10 +107,10 @@ func (r *FullscreenShellV1PresentSurfaceForModeRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *FullscreenShellV1PresentSurfaceForModeRequest) Since() int { return 1 }
+func (r *FullscreenShellV1PresentSurfaceForModeRequest) Since() uint32 { return 1 }
 
 type FullscreenShellV1CapabilityEvent struct {
-	Capability uint32
+	Capability FullscreenShellV1Capability
 }
 
 func (e *FullscreenShellV1CapabilityEvent) Opcode() uint16 { return FullscreenShellV1EventCapability }
@@ -120,11 +120,11 @@ func (e *FullscreenShellV1CapabilityEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Capability = capability
+	e.Capability = FullscreenShellV1Capability(capability)
 	return nil
 }
 
-func (e *FullscreenShellV1CapabilityEvent) Since() int { return 1 }
+func (e *FullscreenShellV1CapabilityEvent) Since() uint32 { return 1 }
 
 type FullscreenShellV1CapabilityFunc func(ev FullscreenShellV1CapabilityEvent)
 
@@ -164,7 +164,7 @@ func (o *FullscreenShellV1) Release() error {
 	return nil
 }
 
-func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method uint32, output wire.ObjectID) error {
+func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method FullscreenShellV1PresentMethod, output wire.ObjectID) error {
 	return o.proxy.SendRequest(FullscreenShellV1RequestPresentSurface, &FullscreenShellV1PresentSurfaceRequest{
 		Surface: surface,
 		Method:  method,

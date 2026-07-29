@@ -32,7 +32,7 @@ func (r *LinuxExplicitSynchronizationV1DestroyRequest) Marshal(w *wire.Writer) e
 	return nil
 }
 
-func (r *LinuxExplicitSynchronizationV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxExplicitSynchronizationV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxExplicitSynchronizationV1GetSynchronizationRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *LinuxExplicitSynchronizationV1GetSynchronizationRequest) Marshal(w *wir
 	return nil
 }
 
-func (r *LinuxExplicitSynchronizationV1GetSynchronizationRequest) Since() int { return 1 }
+func (r *LinuxExplicitSynchronizationV1GetSynchronizationRequest) Since() uint32 { return 1 }
 
 type LinuxExplicitSynchronizationV1 struct {
 	proxy *wayland.Proxy

@@ -27,7 +27,7 @@ func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Unmarshal(r *wire.Rea
 	return nil
 }
 
-func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Since() int { return 1 }
+func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Since() uint32 { return 1 }
 
 type FullscreenShellModeFeedbackV1ModeFailedEvent struct {
 }
@@ -40,7 +40,7 @@ func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Unmarshal(r *wire.Reader)
 	return nil
 }
 
-func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Since() int { return 1 }
+func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Since() uint32 { return 1 }
 
 type FullscreenShellModeFeedbackV1PresentCancelledEvent struct {
 }
@@ -53,7 +53,7 @@ func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Unmarshal(r *wire.R
 	return nil
 }
 
-func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Since() int { return 1 }
+func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Since() uint32 { return 1 }
 
 type FullscreenShellModeFeedbackV1ModeSuccessfulFunc func(ev FullscreenShellModeFeedbackV1ModeSuccessfulEvent)
 

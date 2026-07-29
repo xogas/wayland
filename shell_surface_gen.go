@@ -28,6 +28,7 @@ const (
 	ShellSurfaceEventPopupDone uint16 = 2
 )
 
+// ShellSurfaceResize is a bitfield of flags.
 type ShellSurfaceResize uint32
 
 const (
@@ -42,6 +43,7 @@ const (
 	ShellSurfaceResizeBottomRight ShellSurfaceResize = 10
 )
 
+// ShellSurfaceTransient is a bitfield of flags.
 type ShellSurfaceTransient uint32
 
 const (
@@ -70,7 +72,7 @@ func (r *ShellSurfacePongRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfacePongRequest) Since() int { return 1 }
+func (r *ShellSurfacePongRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceMoveRequest struct {
 	Seat   wire.ObjectID
@@ -89,12 +91,12 @@ func (r *ShellSurfaceMoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceMoveRequest) Since() int { return 1 }
+func (r *ShellSurfaceMoveRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceResizeRequest struct {
 	Seat   wire.ObjectID
 	Serial uint32
-	Edges  uint32
+	Edges  ShellSurfaceResize
 }
 
 func (r *ShellSurfaceResizeRequest) Opcode() uint16 { return ShellSurfaceRequestResize }
@@ -106,13 +108,13 @@ func (r *ShellSurfaceResizeRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Serial); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Edges); err != nil {
+	if err := w.Uint32(uint32(r.Edges)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ShellSurfaceResizeRequest) Since() int { return 1 }
+func (r *ShellSurfaceResizeRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetToplevelRequest struct {
 }
@@ -123,13 +125,13 @@ func (r *ShellSurfaceSetToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceSetToplevelRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetToplevelRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetTransientRequest struct {
 	Parent wire.ObjectID
 	X      int32
 	Y      int32
-	Flags  uint32
+	Flags  ShellSurfaceTransient
 }
 
 func (r *ShellSurfaceSetTransientRequest) Opcode() uint16 { return ShellSurfaceRequestSetTransient }
@@ -144,24 +146,24 @@ func (r *ShellSurfaceSetTransientRequest) Marshal(w *wire.Writer) error {
 	if err := w.Int32(r.Y); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Flags); err != nil {
+	if err := w.Uint32(uint32(r.Flags)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ShellSurfaceSetTransientRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetTransientRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetFullscreenRequest struct {
-	Method    uint32
+	Method    ShellSurfaceFullscreenMethod
 	Framerate uint32
-	Output    wire.ObjectID
+	Output    wire.ObjectID // nullable
 }
 
 func (r *ShellSurfaceSetFullscreenRequest) Opcode() uint16 { return ShellSurfaceRequestSetFullscreen }
 
 func (r *ShellSurfaceSetFullscreenRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Method); err != nil {
+	if err := w.Uint32(uint32(r.Method)); err != nil {
 		return err
 	}
 	if err := w.Uint32(r.Framerate); err != nil {
@@ -173,7 +175,7 @@ func (r *ShellSurfaceSetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceSetFullscreenRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetFullscreenRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetPopupRequest struct {
 	Seat   wire.ObjectID
@@ -181,7 +183,7 @@ type ShellSurfaceSetPopupRequest struct {
 	Parent wire.ObjectID
 	X      int32
 	Y      int32
-	Flags  uint32
+	Flags  ShellSurfaceTransient
 }
 
 func (r *ShellSurfaceSetPopupRequest) Opcode() uint16 { return ShellSurfaceRequestSetPopup }
@@ -202,16 +204,16 @@ func (r *ShellSurfaceSetPopupRequest) Marshal(w *wire.Writer) error {
 	if err := w.Int32(r.Y); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Flags); err != nil {
+	if err := w.Uint32(uint32(r.Flags)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ShellSurfaceSetPopupRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetPopupRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetMaximizedRequest struct {
-	Output wire.ObjectID
+	Output wire.ObjectID // nullable
 }
 
 func (r *ShellSurfaceSetMaximizedRequest) Opcode() uint16 { return ShellSurfaceRequestSetMaximized }
@@ -223,7 +225,7 @@ func (r *ShellSurfaceSetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceSetMaximizedRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetMaximizedRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetTitleRequest struct {
 	Title string
@@ -238,7 +240,7 @@ func (r *ShellSurfaceSetTitleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceSetTitleRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetTitleRequest) Since() uint32 { return 1 }
 
 type ShellSurfaceSetClassRequest struct {
 	Class string
@@ -253,7 +255,7 @@ func (r *ShellSurfaceSetClassRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellSurfaceSetClassRequest) Since() int { return 1 }
+func (r *ShellSurfaceSetClassRequest) Since() uint32 { return 1 }
 
 type ShellSurfacePingEvent struct {
 	Serial uint32
@@ -270,10 +272,10 @@ func (e *ShellSurfacePingEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ShellSurfacePingEvent) Since() int { return 1 }
+func (e *ShellSurfacePingEvent) Since() uint32 { return 1 }
 
 type ShellSurfaceConfigureEvent struct {
-	Edges  uint32
+	Edges  ShellSurfaceResize
 	Width  int32
 	Height int32
 }
@@ -285,7 +287,7 @@ func (e *ShellSurfaceConfigureEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Edges = edges
+	e.Edges = ShellSurfaceResize(edges)
 	width, err := r.Int32()
 	if err != nil {
 		return err
@@ -299,7 +301,7 @@ func (e *ShellSurfaceConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ShellSurfaceConfigureEvent) Since() int { return 1 }
+func (e *ShellSurfaceConfigureEvent) Since() uint32 { return 1 }
 
 type ShellSurfacePopupDoneEvent struct {
 }
@@ -310,7 +312,7 @@ func (e *ShellSurfacePopupDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ShellSurfacePopupDoneEvent) Since() int { return 1 }
+func (e *ShellSurfacePopupDoneEvent) Since() uint32 { return 1 }
 
 type ShellSurfacePingFunc func(ev ShellSurfacePingEvent)
 
@@ -382,7 +384,7 @@ func (o *ShellSurface) Move(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
-func (o *ShellSurface) Resize(seat wire.ObjectID, serial uint32, edges uint32) error {
+func (o *ShellSurface) Resize(seat wire.ObjectID, serial uint32, edges ShellSurfaceResize) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestResize, &ShellSurfaceResizeRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -394,7 +396,7 @@ func (o *ShellSurface) SetToplevel() error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetToplevel, &ShellSurfaceSetToplevelRequest{})
 }
 
-func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flags uint32) error {
+func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetTransient, &ShellSurfaceSetTransientRequest{
 		Parent: parent,
 		X:      x,
@@ -403,7 +405,7 @@ func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flag
 	})
 }
 
-func (o *ShellSurface) SetFullscreen(method uint32, framerate uint32, output wire.ObjectID) error {
+func (o *ShellSurface) SetFullscreen(method ShellSurfaceFullscreenMethod, framerate uint32, output wire.ObjectID) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetFullscreen, &ShellSurfaceSetFullscreenRequest{
 		Method:    method,
 		Framerate: framerate,
@@ -411,7 +413,7 @@ func (o *ShellSurface) SetFullscreen(method uint32, framerate uint32, output wir
 	})
 }
 
-func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.ObjectID, x int32, y int32, flags uint32) error {
+func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetPopup, &ShellSurfaceSetPopupRequest{
 		Seat:   seat,
 		Serial: serial,

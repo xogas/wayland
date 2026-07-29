@@ -30,7 +30,7 @@ func (r *AlphaModifierV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *AlphaModifierV1DestroyRequest) Since() int { return 1 }
+func (r *AlphaModifierV1DestroyRequest) Since() uint32 { return 1 }
 
 type AlphaModifierV1GetSurfaceRequest struct {
 	ID      wire.NewID
@@ -49,7 +49,7 @@ func (r *AlphaModifierV1GetSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *AlphaModifierV1GetSurfaceRequest) Since() int { return 1 }
+func (r *AlphaModifierV1GetSurfaceRequest) Since() uint32 { return 1 }
 
 type AlphaModifierV1 struct {
 	proxy *wayland.Proxy

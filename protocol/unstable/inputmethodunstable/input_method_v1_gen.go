@@ -21,7 +21,7 @@ type InputMethodV1ActivateEvent struct {
 
 func (e *InputMethodV1ActivateEvent) Opcode() uint16 { return InputMethodV1EventActivate }
 
-func (e *InputMethodV1ActivateEvent) Since() int { return 1 }
+func (e *InputMethodV1ActivateEvent) Since() uint32 { return 1 }
 
 type InputMethodV1DeactivateEvent struct {
 	Context wire.ObjectID
@@ -38,7 +38,7 @@ func (e *InputMethodV1DeactivateEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1DeactivateEvent) Since() int { return 1 }
+func (e *InputMethodV1DeactivateEvent) Since() uint32 { return 1 }
 
 type InputMethodV1ActivateFunc func(ev InputMethodV1ActivateEvent)
 

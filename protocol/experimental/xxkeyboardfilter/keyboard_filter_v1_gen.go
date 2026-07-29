@@ -38,11 +38,11 @@ func (r *KeyboardFilterV1UnbindRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *KeyboardFilterV1UnbindRequest) Since() int { return 1 }
+func (r *KeyboardFilterV1UnbindRequest) Since() uint32 { return 1 }
 
 type KeyboardFilterV1FilterRequest struct {
 	Serial uint32
-	Action uint32
+	Action KeyboardFilterV1FilterAction
 }
 
 func (r *KeyboardFilterV1FilterRequest) Opcode() uint16 { return KeyboardFilterV1RequestFilter }
@@ -51,13 +51,13 @@ func (r *KeyboardFilterV1FilterRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Serial); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Action); err != nil {
+	if err := w.Uint32(uint32(r.Action)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *KeyboardFilterV1FilterRequest) Since() int { return 1 }
+func (r *KeyboardFilterV1FilterRequest) Since() uint32 { return 1 }
 
 type KeyboardFilterV1DestroyRequest struct {
 }
@@ -68,7 +68,7 @@ func (r *KeyboardFilterV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *KeyboardFilterV1DestroyRequest) Since() int { return 1 }
+func (r *KeyboardFilterV1DestroyRequest) Since() uint32 { return 1 }
 
 type KeyboardFilterV1 struct {
 	proxy *wayland.Proxy
@@ -86,7 +86,7 @@ func (o *KeyboardFilterV1) Unbind() error {
 	return o.proxy.SendRequest(KeyboardFilterV1RequestUnbind, &KeyboardFilterV1UnbindRequest{})
 }
 
-func (o *KeyboardFilterV1) Filter(serial uint32, action uint32) error {
+func (o *KeyboardFilterV1) Filter(serial uint32, action KeyboardFilterV1FilterAction) error {
 	return o.proxy.SendRequest(KeyboardFilterV1RequestFilter, &KeyboardFilterV1FilterRequest{
 		Serial: serial,
 		Action: action,

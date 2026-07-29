@@ -60,13 +60,13 @@ const (
 type PointerAxisRelativeDirection uint32
 
 const (
-	PointerAxisRelativeDirectionIDentical PointerAxisRelativeDirection = 0
+	PointerAxisRelativeDirectionIdentical PointerAxisRelativeDirection = 0
 	PointerAxisRelativeDirectionInverted  PointerAxisRelativeDirection = 1
 )
 
 type PointerSetCursorRequest struct {
 	Serial   uint32
-	Surface  wire.ObjectID
+	Surface  wire.ObjectID // nullable
 	HotspotX int32
 	HotspotY int32
 }
@@ -89,7 +89,7 @@ func (r *PointerSetCursorRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerSetCursorRequest) Since() int { return 1 }
+func (r *PointerSetCursorRequest) Since() uint32 { return 1 }
 
 type PointerReleaseRequest struct {
 }
@@ -100,7 +100,7 @@ func (r *PointerReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerReleaseRequest) Since() int { return 3 }
+func (r *PointerReleaseRequest) Since() uint32 { return 3 }
 
 type PointerEnterEvent struct {
 	Serial   uint32
@@ -135,7 +135,7 @@ func (e *PointerEnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerEnterEvent) Since() int { return 1 }
+func (e *PointerEnterEvent) Since() uint32 { return 1 }
 
 type PointerLeaveEvent struct {
 	Serial  uint32
@@ -158,7 +158,7 @@ func (e *PointerLeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerLeaveEvent) Since() int { return 1 }
+func (e *PointerLeaveEvent) Since() uint32 { return 1 }
 
 type PointerMotionEvent struct {
 	Time     uint32
@@ -187,13 +187,13 @@ func (e *PointerMotionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerMotionEvent) Since() int { return 1 }
+func (e *PointerMotionEvent) Since() uint32 { return 1 }
 
 type PointerButtonEvent struct {
 	Serial uint32
 	Time   uint32
 	Button uint32
-	State  uint32
+	State  PointerButtonState
 }
 
 func (e *PointerButtonEvent) Opcode() uint16 { return PointerEventButton }
@@ -218,15 +218,15 @@ func (e *PointerButtonEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.State = state
+	e.State = PointerButtonState(state)
 	return nil
 }
 
-func (e *PointerButtonEvent) Since() int { return 1 }
+func (e *PointerButtonEvent) Since() uint32 { return 1 }
 
 type PointerAxisEvent struct {
 	Time  uint32
-	Axis  uint32
+	Axis  PointerAxis
 	Value wire.Fixed
 }
 
@@ -242,7 +242,7 @@ func (e *PointerAxisEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Axis = axis
+	e.Axis = PointerAxis(axis)
 	value, err := r.Fixed()
 	if err != nil {
 		return err
@@ -251,7 +251,7 @@ func (e *PointerAxisEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerAxisEvent) Since() int { return 1 }
+func (e *PointerAxisEvent) Since() uint32 { return 1 }
 
 type PointerFrameEvent struct {
 }
@@ -262,10 +262,10 @@ func (e *PointerFrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerFrameEvent) Since() int { return 5 }
+func (e *PointerFrameEvent) Since() uint32 { return 5 }
 
 type PointerAxisSourceEvent struct {
-	AxisSource uint32
+	AxisSource PointerAxisSource
 }
 
 func (e *PointerAxisSourceEvent) Opcode() uint16 { return PointerEventAxisSource }
@@ -275,15 +275,15 @@ func (e *PointerAxisSourceEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.AxisSource = axisSource
+	e.AxisSource = PointerAxisSource(axisSource)
 	return nil
 }
 
-func (e *PointerAxisSourceEvent) Since() int { return 5 }
+func (e *PointerAxisSourceEvent) Since() uint32 { return 5 }
 
 type PointerAxisStopEvent struct {
 	Time uint32
-	Axis uint32
+	Axis PointerAxis
 }
 
 func (e *PointerAxisStopEvent) Opcode() uint16 { return PointerEventAxisStop }
@@ -298,14 +298,15 @@ func (e *PointerAxisStopEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Axis = axis
+	e.Axis = PointerAxis(axis)
 	return nil
 }
 
-func (e *PointerAxisStopEvent) Since() int { return 5 }
+func (e *PointerAxisStopEvent) Since() uint32 { return 5 }
 
+// Deprecated: since version 8.
 type PointerAxisDiscreteEvent struct {
-	Axis     uint32
+	Axis     PointerAxis
 	Discrete int32
 }
 
@@ -316,7 +317,7 @@ func (e *PointerAxisDiscreteEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Axis = axis
+	e.Axis = PointerAxis(axis)
 	discrete, err := r.Int32()
 	if err != nil {
 		return err
@@ -325,10 +326,10 @@ func (e *PointerAxisDiscreteEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerAxisDiscreteEvent) Since() int { return 5 }
+func (e *PointerAxisDiscreteEvent) Since() uint32 { return 5 }
 
 type PointerAxisValue120Event struct {
-	Axis     uint32
+	Axis     PointerAxis
 	Value120 int32
 }
 
@@ -339,7 +340,7 @@ func (e *PointerAxisValue120Event) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Axis = axis
+	e.Axis = PointerAxis(axis)
 	value120, err := r.Int32()
 	if err != nil {
 		return err
@@ -348,11 +349,11 @@ func (e *PointerAxisValue120Event) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PointerAxisValue120Event) Since() int { return 8 }
+func (e *PointerAxisValue120Event) Since() uint32 { return 8 }
 
 type PointerAxisRelativeDirectionEvent struct {
-	Axis      uint32
-	Direction uint32
+	Axis      PointerAxis
+	Direction PointerAxisRelativeDirection
 }
 
 func (e *PointerAxisRelativeDirectionEvent) Opcode() uint16 { return PointerEventAxisRelativeDirection }
@@ -362,16 +363,16 @@ func (e *PointerAxisRelativeDirectionEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Axis = axis
+	e.Axis = PointerAxis(axis)
 	direction, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.Direction = direction
+	e.Direction = PointerAxisRelativeDirection(direction)
 	return nil
 }
 
-func (e *PointerAxisRelativeDirectionEvent) Since() int { return 9 }
+func (e *PointerAxisRelativeDirectionEvent) Since() uint32 { return 9 }
 
 type PointerEnterFunc func(ev PointerEnterEvent)
 

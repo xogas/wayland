@@ -30,7 +30,7 @@ func (r *ViewporterDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ViewporterDestroyRequest) Since() int { return 1 }
+func (r *ViewporterDestroyRequest) Since() uint32 { return 1 }
 
 type ViewporterGetViewportRequest struct {
 	ID      wire.NewID
@@ -49,7 +49,7 @@ func (r *ViewporterGetViewportRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ViewporterGetViewportRequest) Since() int { return 1 }
+func (r *ViewporterGetViewportRequest) Since() uint32 { return 1 }
 
 type Viewporter struct {
 	proxy *wayland.Proxy

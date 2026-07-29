@@ -61,7 +61,7 @@ func (a *app) applyCursor() {
 	if a.mode == modeCustom {
 		_ = a.pointer.SetCursor(a.lastSerial, wire.ObjectID(a.cursorSurface.Proxy().ID()), hotspot, hotspot)
 	} else if a.mode == modeShape && a.csDevice != nil {
-		_ = a.csDevice.SetShape(a.lastSerial, uint32(shapeCycle[a.shapeIdx]))
+		_ = a.csDevice.SetShape(a.lastSerial, cursorshape.CursorShapeDeviceV1Shape(shapeCycle[a.shapeIdx]))
 	}
 }
 
@@ -218,7 +218,7 @@ func main() {
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	winBuf, err := pool.CreateBuffer(0, winW, winH, stride, uint32(wayland.ShmFormatXrgb8888))
+	winBuf, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 		os.Exit(1)
@@ -278,7 +278,7 @@ func main() {
 	}
 	defer cursorPool.Destroy() //nolint: errcheck
 
-	cursorBuf, err := cursorPool.CreateBuffer(0, cursorSize, cursorSize, cursorStride, uint32(wayland.ShmFormatArgb8888))
+	cursorBuf, err := cursorPool.CreateBuffer(0, cursorSize, cursorSize, cursorStride, wayland.ShmFormatArgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cursor create_buffer: %v\n", err)
 		os.Exit(1)
@@ -329,7 +329,7 @@ func main() {
 		os.Exit(1)
 	}
 	keyboard.OnKey(func(ev wayland.KeyboardKeyEvent) {
-		if ev.State != uint32(wayland.KeyboardKeyStatePressed) {
+		if ev.State != wayland.KeyboardKeyStatePressed {
 			return
 		}
 		switch ev.Key {

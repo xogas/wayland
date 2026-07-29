@@ -34,7 +34,7 @@ func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjManagerV1GetSurfaceRequest struct {
 	ID      wire.NewID
@@ -55,7 +55,7 @@ func (r *LinuxDrmSyncobjManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *LinuxDrmSyncobjManagerV1GetSurfaceRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjManagerV1ImportTimelineRequest struct {
 	ID wire.NewID
@@ -76,7 +76,7 @@ func (r *LinuxDrmSyncobjManagerV1ImportTimelineRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *LinuxDrmSyncobjManagerV1ImportTimelineRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjManagerV1ImportTimelineRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjManagerV1 struct {
 	proxy *wayland.Proxy

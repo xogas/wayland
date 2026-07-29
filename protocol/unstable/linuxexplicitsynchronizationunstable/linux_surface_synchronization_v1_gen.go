@@ -38,7 +38,7 @@ func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxSurfaceSynchronizationV1SetAcquireFenceRequest struct {
 	Fd int
@@ -55,7 +55,7 @@ func (r *LinuxSurfaceSynchronizationV1SetAcquireFenceRequest) Marshal(w *wire.Wr
 	return nil
 }
 
-func (r *LinuxSurfaceSynchronizationV1SetAcquireFenceRequest) Since() int { return 1 }
+func (r *LinuxSurfaceSynchronizationV1SetAcquireFenceRequest) Since() uint32 { return 1 }
 
 type LinuxSurfaceSynchronizationV1GetReleaseRequest struct {
 	Release wire.NewID
@@ -72,7 +72,7 @@ func (r *LinuxSurfaceSynchronizationV1GetReleaseRequest) Marshal(w *wire.Writer)
 	return nil
 }
 
-func (r *LinuxSurfaceSynchronizationV1GetReleaseRequest) Since() int { return 1 }
+func (r *LinuxSurfaceSynchronizationV1GetReleaseRequest) Since() uint32 { return 1 }
 
 type LinuxSurfaceSynchronizationV1 struct {
 	proxy *wayland.Proxy

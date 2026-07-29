@@ -27,7 +27,7 @@ func (r *FractionalScaleV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FractionalScaleV1DestroyRequest) Since() int { return 1 }
+func (r *FractionalScaleV1DestroyRequest) Since() uint32 { return 1 }
 
 type FractionalScaleV1PreferredScaleEvent struct {
 	Scale uint32
@@ -46,7 +46,7 @@ func (e *FractionalScaleV1PreferredScaleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *FractionalScaleV1PreferredScaleEvent) Since() int { return 1 }
+func (e *FractionalScaleV1PreferredScaleEvent) Since() uint32 { return 1 }
 
 type FractionalScaleV1PreferredScaleFunc func(ev FractionalScaleV1PreferredScaleEvent)
 

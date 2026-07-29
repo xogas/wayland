@@ -64,10 +64,10 @@ func (r *SurfaceDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceDestroyRequest) Since() int { return 1 }
+func (r *SurfaceDestroyRequest) Since() uint32 { return 1 }
 
 type SurfaceSetParentRequest struct {
-	Parent wire.ObjectID
+	Parent wire.ObjectID // nullable
 }
 
 func (r *SurfaceSetParentRequest) Opcode() uint16 { return SurfaceRequestSetParent }
@@ -79,7 +79,7 @@ func (r *SurfaceSetParentRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetParentRequest) Since() int { return 1 }
+func (r *SurfaceSetParentRequest) Since() uint32 { return 1 }
 
 type SurfaceSetTitleRequest struct {
 	Title string
@@ -94,7 +94,7 @@ func (r *SurfaceSetTitleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetTitleRequest) Since() int { return 1 }
+func (r *SurfaceSetTitleRequest) Since() uint32 { return 1 }
 
 type SurfaceSetAppIDRequest struct {
 	AppID string
@@ -109,7 +109,7 @@ func (r *SurfaceSetAppIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetAppIDRequest) Since() int { return 1 }
+func (r *SurfaceSetAppIDRequest) Since() uint32 { return 1 }
 
 type SurfaceShowWindowMenuRequest struct {
 	Seat   wire.ObjectID
@@ -136,7 +136,7 @@ func (r *SurfaceShowWindowMenuRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceShowWindowMenuRequest) Since() int { return 1 }
+func (r *SurfaceShowWindowMenuRequest) Since() uint32 { return 1 }
 
 type SurfaceMoveRequest struct {
 	Seat   wire.ObjectID
@@ -155,7 +155,7 @@ func (r *SurfaceMoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceMoveRequest) Since() int { return 1 }
+func (r *SurfaceMoveRequest) Since() uint32 { return 1 }
 
 type SurfaceResizeRequest struct {
 	Seat   wire.ObjectID
@@ -178,7 +178,7 @@ func (r *SurfaceResizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceResizeRequest) Since() int { return 1 }
+func (r *SurfaceResizeRequest) Since() uint32 { return 1 }
 
 type SurfaceAckConfigureRequest struct {
 	Serial uint32
@@ -193,7 +193,7 @@ func (r *SurfaceAckConfigureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceAckConfigureRequest) Since() int { return 1 }
+func (r *SurfaceAckConfigureRequest) Since() uint32 { return 1 }
 
 type SurfaceSetWindowGeometryRequest struct {
 	X      int32
@@ -220,7 +220,7 @@ func (r *SurfaceSetWindowGeometryRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetWindowGeometryRequest) Since() int { return 1 }
+func (r *SurfaceSetWindowGeometryRequest) Since() uint32 { return 1 }
 
 type SurfaceSetMaximizedRequest struct {
 }
@@ -231,7 +231,7 @@ func (r *SurfaceSetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetMaximizedRequest) Since() int { return 1 }
+func (r *SurfaceSetMaximizedRequest) Since() uint32 { return 1 }
 
 type SurfaceUnsetMaximizedRequest struct {
 }
@@ -242,10 +242,10 @@ func (r *SurfaceUnsetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceUnsetMaximizedRequest) Since() int { return 1 }
+func (r *SurfaceUnsetMaximizedRequest) Since() uint32 { return 1 }
 
 type SurfaceSetFullscreenRequest struct {
-	Output wire.ObjectID
+	Output wire.ObjectID // nullable
 }
 
 func (r *SurfaceSetFullscreenRequest) Opcode() uint16 { return SurfaceRequestSetFullscreen }
@@ -257,7 +257,7 @@ func (r *SurfaceSetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetFullscreenRequest) Since() int { return 1 }
+func (r *SurfaceSetFullscreenRequest) Since() uint32 { return 1 }
 
 type SurfaceUnsetFullscreenRequest struct {
 }
@@ -268,7 +268,7 @@ func (r *SurfaceUnsetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceUnsetFullscreenRequest) Since() int { return 1 }
+func (r *SurfaceUnsetFullscreenRequest) Since() uint32 { return 1 }
 
 type SurfaceSetMinimizedRequest struct {
 }
@@ -279,7 +279,7 @@ func (r *SurfaceSetMinimizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetMinimizedRequest) Since() int { return 1 }
+func (r *SurfaceSetMinimizedRequest) Since() uint32 { return 1 }
 
 type SurfaceConfigureEvent struct {
 	Width  int32
@@ -314,7 +314,7 @@ func (e *SurfaceConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfaceConfigureEvent) Since() int { return 1 }
+func (e *SurfaceConfigureEvent) Since() uint32 { return 1 }
 
 type SurfaceCloseEvent struct {
 }
@@ -325,7 +325,7 @@ func (e *SurfaceCloseEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfaceCloseEvent) Since() int { return 1 }
+func (e *SurfaceCloseEvent) Since() uint32 { return 1 }
 
 type SurfaceConfigureFunc func(ev SurfaceConfigureEvent)
 

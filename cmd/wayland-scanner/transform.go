@@ -25,49 +25,54 @@ type GoInterface struct {
 
 // GoRequest is the Go-specific view of a protocol Request.
 type GoRequest struct {
-	Name          string
-	OpName        string
-	StructName    string
-	Opcode        int
-	Since         int
-	Args          []GoArg
-	HasNewID      bool   // new_id with resolvable interface in same protocol
-	NewIDType     string // Go type created by this request
-	HasCrossNewID bool   // new_id without resolvable interface
-	MethodArgs    string // pre-computed method signature (new_id args filtered)
-	IsDestructor  bool
+	Name            string
+	OpName          string
+	StructName      string
+	Opcode          int
+	Since           int
+	DeprecatedSince int // 0 means not deprecated
+	Args            []GoArg
+	HasNewID        bool   // new_id with resolvable interface in same protocol
+	NewIDType       string // Go type created by this request
+	HasCrossNewID   bool   // new_id without resolvable interface
+	MethodArgs      string // pre-computed method signature (new_id args filtered)
+	IsDestructor    bool
 }
 
 // GoEvent is the Go-specific view of a protocol Event.
 type GoEvent struct {
-	Name       string
-	OpName     string
-	StructName string
-	FuncName   string
-	Opcode     int
-	Since      int
-	Args       []GoArg
-	HasNewID   bool   // event has a new_id arg with resolvable interface
-	NewIDType  string // Go type created for the new_id
-	HasFD      bool
+	Name            string
+	OpName          string
+	StructName      string
+	FuncName        string
+	Opcode          int
+	Since           int
+	DeprecatedSince int // 0 means not deprecated
+	Args            []GoArg
+	HasNewID        bool   // event has a new_id arg with resolvable interface
+	NewIDType       string // Go type created for the new_id
+	HasFD           bool
 }
 
 // GoArg is the Go-specific view of an argument.
 type GoArg struct {
 	GoName    string
-	GoType    string
+	GoType    string // wire type (uint32, int32, ...)
+	EnumType  string // Go enum type name when arg references a known enum
 	ParamName string
 	WireRead  string
 	WriteFn   string
 	IsNewID   bool
 	NewIDType string // set when new_id has resolvable interface
+	AllowNull bool   // object arg with allow-null="true"
 }
 
 // GoEnum is the Go-specific view of an enum.
 type GoEnum struct {
-	Name    string
-	Type    string
-	Entries []GoEnumEntry
+	Name       string
+	Type       string
+	IsBitField bool
+	Entries    []GoEnumEntry
 }
 
 // GoEnumEntry is the Go-specific view of an enum entry.
@@ -76,8 +81,29 @@ type GoEnumEntry struct {
 	Val   string
 }
 
+// enumMap maps enum reference strings to Go type names.
+// Keys are either short names ("format") for same-interface enums
+// or fully-qualified names ("wl_shm.format") for cross-interface enums.
+type enumMap map[string]string
+
+// buildEnumMap builds a protocol-wide enum reference -> Go type mapping.
+func buildEnumMap(ifaces []Interface, prefix string) enumMap {
+	m := make(enumMap)
+	for i := range ifaces {
+		iface := &ifaces[i]
+		tn := typeName(iface.Name, prefix)
+		for j := range iface.Enums {
+			e := &iface.Enums[j]
+			goType := tn + pascal(e.Name)
+			m[e.Name] = goType
+			m[iface.Name+"."+e.Name] = goType
+		}
+	}
+	return m
+}
+
 // convertInterface converts a single Interface into its Go-specific view.
-func convertInterface(iface *Interface, pkg, prefix string, knownIface map[string]bool) GoInterface {
+func convertInterface(iface *Interface, pkg, prefix string, knownIface map[string]bool, em enumMap) GoInterface {
 	tn := typeName(iface.Name, prefix)
 
 	isRoot := pkg == "wayland"
@@ -92,8 +118,8 @@ func convertInterface(iface *Interface, pkg, prefix string, knownIface map[strin
 	}
 
 	g.Enums = buildEnums(iface, tn)
-	g.Requests = buildRequests(iface, tn, prefix, knownIface)
-	g.Events, g.EventFDCounts, g.HasFDEvent = buildEvents(iface, tn, prefix, knownIface)
+	g.Requests = buildRequests(iface, tn, prefix, knownIface, em)
+	g.Events, g.EventFDCounts, g.HasFDEvent = buildEvents(iface, tn, prefix, knownIface, em)
 
 	hasWire := len(g.Requests) > 0 || len(g.Events) > 0
 	g.Imports = buildImports(hasWire, isRoot)
@@ -107,8 +133,9 @@ func buildEnums(iface *Interface, typeName string) []GoEnum {
 	for i := range iface.Enums {
 		e := &iface.Enums[i]
 		en := GoEnum{
-			Name: pascal(e.Name),
-			Type: typeName + pascal(e.Name),
+			Name:       pascal(e.Name),
+			Type:       typeName + pascal(e.Name),
+			IsBitField: e.BitField,
 		}
 		for j := range e.Entries {
 			en.Entries = append(en.Entries, GoEnumEntry{
@@ -122,22 +149,23 @@ func buildEnums(iface *Interface, typeName string) []GoEnum {
 }
 
 // buildRequests converts Interface requests to GoRequests.
-func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bool) []GoRequest {
+func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) []GoRequest {
 	var out []GoRequest
 	for opcode := range iface.Requests {
 		r := &iface.Requests[opcode]
 		reqName := pascal(r.Name)
 		rd := GoRequest{
-			Name:         reqName,
-			OpName:       tn + "Request" + reqName,
-			StructName:   tn + reqName + "Request",
-			Opcode:       opcode,
-			Since:        max(r.Since, 1),
-			IsDestructor: r.Type == "destructor",
+			Name:            reqName,
+			OpName:          tn + "Request" + reqName,
+			StructName:      tn + reqName + "Request",
+			Opcode:          opcode,
+			Since:           max(r.Since, 1),
+			DeprecatedSince: r.DeprecatedSince,
+			IsDestructor:    r.Type == "destructor",
 		}
 
 		for j := range r.Args {
-			ga := buildArg(&r.Args[j])
+			ga := buildArg(&r.Args[j], em)
 			// Synthetic args: new_id without interface attribute
 			// (e.g. wl_registry.bind) needs interface/version injected.
 			if ga.IsNewID && r.Args[j].Interface == "" {
@@ -165,7 +193,7 @@ func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bo
 }
 
 // buildEvents converts Interface events to GoEvents and returns fd count info.
-func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool) ([]GoEvent, map[uint16]int, bool) {
+func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) ([]GoEvent, map[uint16]int, bool) {
 	var events []GoEvent
 	var fdCounts map[uint16]int
 	hasFD := false
@@ -173,16 +201,17 @@ func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool
 		e := &iface.Events[opcode]
 		evtName := pascal(e.Name)
 		ed := GoEvent{
-			Name:       evtName,
-			OpName:     tn + "Event" + evtName,
-			StructName: tn + evtName + "Event",
-			FuncName:   tn + evtName + "Func",
-			Opcode:     opcode,
-			Since:      max(e.Since, 1),
+			Name:            evtName,
+			OpName:          tn + "Event" + evtName,
+			StructName:      tn + evtName + "Event",
+			FuncName:        tn + evtName + "Func",
+			Opcode:          opcode,
+			Since:           max(e.Since, 1),
+			DeprecatedSince: e.DeprecatedSince,
 		}
 		fdCount := 0
 		for j := range e.Args {
-			ga := buildArg(&e.Args[j])
+			ga := buildArg(&e.Args[j], em)
 			// Detect new_id with resolvable interface
 			if ga.IsNewID && e.Args[j].Interface != "" && knownIface[e.Args[j].Interface] {
 				ga.NewIDType = typeName(e.Args[j].Interface, prefix)
@@ -208,8 +237,8 @@ func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool
 }
 
 // buildArg maps a parsed Arg to its Go-specific view.
-func buildArg(a *Arg) GoArg {
-	ad := GoArg{GoName: pascal(a.Name), ParamName: camel(a.Name)}
+func buildArg(a *Arg, em enumMap) GoArg {
+	ad := GoArg{GoName: pascal(a.Name), ParamName: camel(a.Name), AllowNull: a.AllowNull}
 	switch a.Type {
 	case "int":
 		ad.GoType, ad.WireRead, ad.WriteFn = "int32", "r.Int32()", "Int32"
@@ -230,6 +259,14 @@ func buildArg(a *Arg) GoArg {
 	default:
 		ad.GoType, ad.WireRead, ad.WriteFn = "??", "??", "??"
 	}
+	// Override GoType with enum type when the arg references a known enum.
+	// Only propagate for uint32 wire-typed args; int32-based enums need the
+	// enum base type to match, which requires deeper changes.
+	if a.Enum != "" && ad.GoType == "uint32" {
+		if t, ok := em[a.Enum]; ok {
+			ad.EnumType = t
+		}
+	}
 	return ad
 }
 
@@ -241,7 +278,11 @@ func methodArgs(r GoRequest) string {
 		if (r.HasNewID || r.HasCrossNewID) && a.IsNewID {
 			continue
 		}
-		parts = append(parts, a.ParamName+" "+a.GoType)
+		t := a.GoType
+		if a.EnumType != "" {
+			t = a.EnumType
+		}
+		parts = append(parts, a.ParamName+" "+t)
 	}
 	return joinArgsStr(parts)
 }

@@ -53,7 +53,7 @@ func (r *CutoutsV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CutoutsV1DestroyRequest) Since() int { return 1 }
+func (r *CutoutsV1DestroyRequest) Since() uint32 { return 1 }
 
 type CutoutsV1SetUnhandledRequest struct {
 	Unhandled []byte
@@ -68,14 +68,14 @@ func (r *CutoutsV1SetUnhandledRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CutoutsV1SetUnhandledRequest) Since() int { return 1 }
+func (r *CutoutsV1SetUnhandledRequest) Since() uint32 { return 1 }
 
 type CutoutsV1CutoutBoxEvent struct {
 	X      int32
 	Y      int32
 	Width  int32
 	Height int32
-	Type   uint32
+	Type   CutoutsV1Type
 	ID     uint32
 }
 
@@ -106,19 +106,19 @@ func (e *CutoutsV1CutoutBoxEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Type = type_
-	iD, err := r.Uint32()
+	e.Type = CutoutsV1Type(type_)
+	id, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *CutoutsV1CutoutBoxEvent) Since() int { return 1 }
+func (e *CutoutsV1CutoutBoxEvent) Since() uint32 { return 1 }
 
 type CutoutsV1CutoutCornerEvent struct {
-	Position uint32
+	Position CutoutsV1CornerPosition
 	Radius   uint32
 	ID       uint32
 }
@@ -130,21 +130,21 @@ func (e *CutoutsV1CutoutCornerEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Position = position
+	e.Position = CutoutsV1CornerPosition(position)
 	radius, err := r.Uint32()
 	if err != nil {
 		return err
 	}
 	e.Radius = radius
-	iD, err := r.Uint32()
+	id, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *CutoutsV1CutoutCornerEvent) Since() int { return 1 }
+func (e *CutoutsV1CutoutCornerEvent) Since() uint32 { return 1 }
 
 type CutoutsV1ConfigureEvent struct {
 }
@@ -155,7 +155,7 @@ func (e *CutoutsV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *CutoutsV1ConfigureEvent) Since() int { return 1 }
+func (e *CutoutsV1ConfigureEvent) Since() uint32 { return 1 }
 
 type CutoutsV1CutoutBoxFunc func(ev CutoutsV1CutoutBoxEvent)
 

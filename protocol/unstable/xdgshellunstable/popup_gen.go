@@ -27,7 +27,7 @@ func (r *PopupDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupDestroyRequest) Since() int { return 1 }
+func (r *PopupDestroyRequest) Since() uint32 { return 1 }
 
 type PopupPopupDoneEvent struct {
 }
@@ -38,7 +38,7 @@ func (e *PopupPopupDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupPopupDoneEvent) Since() int { return 1 }
+func (e *PopupPopupDoneEvent) Since() uint32 { return 1 }
 
 type PopupPopupDoneFunc func(ev PopupPopupDoneEvent)
 

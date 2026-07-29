@@ -41,7 +41,7 @@ func (r *DisplaySyncRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DisplaySyncRequest) Since() int { return 1 }
+func (r *DisplaySyncRequest) Since() uint32 { return 1 }
 
 type DisplayGetRegistryRequest struct {
 	Registry wire.NewID
@@ -56,7 +56,7 @@ func (r *DisplayGetRegistryRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DisplayGetRegistryRequest) Since() int { return 1 }
+func (r *DisplayGetRegistryRequest) Since() uint32 { return 1 }
 
 type DisplayErrorEvent struct {
 	ObjectID wire.ObjectID
@@ -85,7 +85,7 @@ func (e *DisplayErrorEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DisplayErrorEvent) Since() int { return 1 }
+func (e *DisplayErrorEvent) Since() uint32 { return 1 }
 
 type DisplayDeleteIDEvent struct {
 	ID uint32
@@ -94,15 +94,15 @@ type DisplayDeleteIDEvent struct {
 func (e *DisplayDeleteIDEvent) Opcode() uint16 { return DisplayEventDeleteID }
 
 func (e *DisplayDeleteIDEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Uint32()
+	id, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *DisplayDeleteIDEvent) Since() int { return 1 }
+func (e *DisplayDeleteIDEvent) Since() uint32 { return 1 }
 
 type DisplayErrorFunc func(ev DisplayErrorEvent)
 

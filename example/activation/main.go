@@ -78,7 +78,7 @@ func commitColor(surface *wayland.Surface, shm *wayland.Shm, w, h int32, c [4]by
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	buf, err := pool.CreateBuffer(0, w, h, stride, uint32(wayland.ShmFormatXrgb8888))
+	buf, err := pool.CreateBuffer(0, w, h, stride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func main() {
 
 	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) { _ = wmBase.Pong(ev.Serial) })
 
-	var caps uint32
+	var caps wayland.SeatCapability
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
@@ -249,7 +249,7 @@ func main() {
 	}
 
 	var kbd *wayland.Keyboard
-	if caps&uint32(wayland.SeatCapabilityKeyboard) != 0 {
+	if caps&wayland.SeatCapabilityKeyboard != 0 {
 		kbd, err = seat.GetKeyboard()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "get_keyboard: %v\n", err)

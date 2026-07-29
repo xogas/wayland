@@ -45,7 +45,7 @@ func (r *TabletPadRingV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadRingV2SetFeedbackRequest) Since() int { return 1 }
+func (r *TabletPadRingV2SetFeedbackRequest) Since() uint32 { return 1 }
 
 type TabletPadRingV2DestroyRequest struct {
 }
@@ -56,10 +56,10 @@ func (r *TabletPadRingV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadRingV2DestroyRequest) Since() int { return 1 }
+func (r *TabletPadRingV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletPadRingV2SourceEvent struct {
-	Source uint32
+	Source TabletPadStripV2Source
 }
 
 func (e *TabletPadRingV2SourceEvent) Opcode() uint16 { return TabletPadRingV2EventSource }
@@ -69,11 +69,11 @@ func (e *TabletPadRingV2SourceEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Source = source
+	e.Source = TabletPadStripV2Source(source)
 	return nil
 }
 
-func (e *TabletPadRingV2SourceEvent) Since() int { return 1 }
+func (e *TabletPadRingV2SourceEvent) Since() uint32 { return 1 }
 
 type TabletPadRingV2AngleEvent struct {
 	Degrees wire.Fixed
@@ -90,7 +90,7 @@ func (e *TabletPadRingV2AngleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadRingV2AngleEvent) Since() int { return 1 }
+func (e *TabletPadRingV2AngleEvent) Since() uint32 { return 1 }
 
 type TabletPadRingV2StopEvent struct {
 }
@@ -101,7 +101,7 @@ func (e *TabletPadRingV2StopEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadRingV2StopEvent) Since() int { return 1 }
+func (e *TabletPadRingV2StopEvent) Since() uint32 { return 1 }
 
 type TabletPadRingV2FrameEvent struct {
 	Time uint32
@@ -118,7 +118,7 @@ func (e *TabletPadRingV2FrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadRingV2FrameEvent) Since() int { return 1 }
+func (e *TabletPadRingV2FrameEvent) Since() uint32 { return 1 }
 
 type TabletPadRingV2SourceFunc func(ev TabletPadRingV2SourceEvent)
 

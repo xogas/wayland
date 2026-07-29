@@ -37,7 +37,7 @@ func (r *PopupDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupDestroyRequest) Since() int { return 1 }
+func (r *PopupDestroyRequest) Since() uint32 { return 1 }
 
 type PopupGrabRequest struct {
 	Seat   wire.ObjectID
@@ -56,7 +56,7 @@ func (r *PopupGrabRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupGrabRequest) Since() int { return 1 }
+func (r *PopupGrabRequest) Since() uint32 { return 1 }
 
 type PopupRepositionRequest struct {
 	Positioner wire.ObjectID
@@ -75,7 +75,7 @@ func (r *PopupRepositionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PopupRepositionRequest) Since() int { return 3 }
+func (r *PopupRepositionRequest) Since() uint32 { return 3 }
 
 type PopupConfigureEvent struct {
 	X      int32
@@ -110,7 +110,7 @@ func (e *PopupConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupConfigureEvent) Since() int { return 1 }
+func (e *PopupConfigureEvent) Since() uint32 { return 1 }
 
 type PopupPopupDoneEvent struct {
 }
@@ -121,7 +121,7 @@ func (e *PopupPopupDoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupPopupDoneEvent) Since() int { return 1 }
+func (e *PopupPopupDoneEvent) Since() uint32 { return 1 }
 
 type PopupRepositionedEvent struct {
 	Token uint32
@@ -138,7 +138,7 @@ func (e *PopupRepositionedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PopupRepositionedEvent) Since() int { return 3 }
+func (e *PopupRepositionedEvent) Since() uint32 { return 3 }
 
 type PopupConfigureFunc func(ev PopupConfigureEvent)
 

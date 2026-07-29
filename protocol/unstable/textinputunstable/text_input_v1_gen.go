@@ -40,6 +40,7 @@ const (
 	TextInputV1EventTextDirection         uint16 = 12
 )
 
+// TextInputV1ContentHint is a bitfield of flags.
 type TextInputV1ContentHint uint32
 
 const (
@@ -114,7 +115,7 @@ func (r *TextInputV1ActivateRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1ActivateRequest) Since() int { return 1 }
+func (r *TextInputV1ActivateRequest) Since() uint32 { return 1 }
 
 type TextInputV1DeactivateRequest struct {
 	Seat wire.ObjectID
@@ -129,7 +130,7 @@ func (r *TextInputV1DeactivateRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1DeactivateRequest) Since() int { return 1 }
+func (r *TextInputV1DeactivateRequest) Since() uint32 { return 1 }
 
 type TextInputV1ShowInputPanelRequest struct {
 }
@@ -140,7 +141,7 @@ func (r *TextInputV1ShowInputPanelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1ShowInputPanelRequest) Since() int { return 1 }
+func (r *TextInputV1ShowInputPanelRequest) Since() uint32 { return 1 }
 
 type TextInputV1HideInputPanelRequest struct {
 }
@@ -151,7 +152,7 @@ func (r *TextInputV1HideInputPanelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1HideInputPanelRequest) Since() int { return 1 }
+func (r *TextInputV1HideInputPanelRequest) Since() uint32 { return 1 }
 
 type TextInputV1ResetRequest struct {
 }
@@ -162,7 +163,7 @@ func (r *TextInputV1ResetRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1ResetRequest) Since() int { return 1 }
+func (r *TextInputV1ResetRequest) Since() uint32 { return 1 }
 
 type TextInputV1SetSurroundingTextRequest struct {
 	Text   string
@@ -187,26 +188,26 @@ func (r *TextInputV1SetSurroundingTextRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1SetSurroundingTextRequest) Since() int { return 1 }
+func (r *TextInputV1SetSurroundingTextRequest) Since() uint32 { return 1 }
 
 type TextInputV1SetContentTypeRequest struct {
-	Hint    uint32
-	Purpose uint32
+	Hint    TextInputV1ContentHint
+	Purpose TextInputV1ContentPurpose
 }
 
 func (r *TextInputV1SetContentTypeRequest) Opcode() uint16 { return TextInputV1RequestSetContentType }
 
 func (r *TextInputV1SetContentTypeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Hint); err != nil {
+	if err := w.Uint32(uint32(r.Hint)); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Purpose); err != nil {
+	if err := w.Uint32(uint32(r.Purpose)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TextInputV1SetContentTypeRequest) Since() int { return 1 }
+func (r *TextInputV1SetContentTypeRequest) Since() uint32 { return 1 }
 
 type TextInputV1SetCursorRectangleRequest struct {
 	X      int32
@@ -235,7 +236,7 @@ func (r *TextInputV1SetCursorRectangleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1SetCursorRectangleRequest) Since() int { return 1 }
+func (r *TextInputV1SetCursorRectangleRequest) Since() uint32 { return 1 }
 
 type TextInputV1SetPreferredLanguageRequest struct {
 	Language string
@@ -252,7 +253,7 @@ func (r *TextInputV1SetPreferredLanguageRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1SetPreferredLanguageRequest) Since() int { return 1 }
+func (r *TextInputV1SetPreferredLanguageRequest) Since() uint32 { return 1 }
 
 type TextInputV1CommitStateRequest struct {
 	Serial uint32
@@ -267,7 +268,7 @@ func (r *TextInputV1CommitStateRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1CommitStateRequest) Since() int { return 1 }
+func (r *TextInputV1CommitStateRequest) Since() uint32 { return 1 }
 
 type TextInputV1InvokeActionRequest struct {
 	Button uint32
@@ -286,7 +287,7 @@ func (r *TextInputV1InvokeActionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputV1InvokeActionRequest) Since() int { return 1 }
+func (r *TextInputV1InvokeActionRequest) Since() uint32 { return 1 }
 
 type TextInputV1EnterEvent struct {
 	Surface wire.ObjectID
@@ -303,7 +304,7 @@ func (e *TextInputV1EnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1EnterEvent) Since() int { return 1 }
+func (e *TextInputV1EnterEvent) Since() uint32 { return 1 }
 
 type TextInputV1LeaveEvent struct {
 }
@@ -314,7 +315,7 @@ func (e *TextInputV1LeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1LeaveEvent) Since() int { return 1 }
+func (e *TextInputV1LeaveEvent) Since() uint32 { return 1 }
 
 type TextInputV1ModifiersMapEvent struct {
 	Map []byte
@@ -331,7 +332,7 @@ func (e *TextInputV1ModifiersMapEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1ModifiersMapEvent) Since() int { return 1 }
+func (e *TextInputV1ModifiersMapEvent) Since() uint32 { return 1 }
 
 type TextInputV1InputPanelStateEvent struct {
 	State uint32
@@ -348,7 +349,7 @@ func (e *TextInputV1InputPanelStateEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1InputPanelStateEvent) Since() int { return 1 }
+func (e *TextInputV1InputPanelStateEvent) Since() uint32 { return 1 }
 
 type TextInputV1PreeditStringEvent struct {
 	Serial uint32
@@ -377,12 +378,12 @@ func (e *TextInputV1PreeditStringEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1PreeditStringEvent) Since() int { return 1 }
+func (e *TextInputV1PreeditStringEvent) Since() uint32 { return 1 }
 
 type TextInputV1PreeditStylingEvent struct {
 	Index  uint32
 	Length uint32
-	Style  uint32
+	Style  TextInputV1PreeditStyle
 }
 
 func (e *TextInputV1PreeditStylingEvent) Opcode() uint16 { return TextInputV1EventPreeditStyling }
@@ -402,11 +403,11 @@ func (e *TextInputV1PreeditStylingEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Style = style
+	e.Style = TextInputV1PreeditStyle(style)
 	return nil
 }
 
-func (e *TextInputV1PreeditStylingEvent) Since() int { return 1 }
+func (e *TextInputV1PreeditStylingEvent) Since() uint32 { return 1 }
 
 type TextInputV1PreeditCursorEvent struct {
 	Index int32
@@ -423,7 +424,7 @@ func (e *TextInputV1PreeditCursorEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1PreeditCursorEvent) Since() int { return 1 }
+func (e *TextInputV1PreeditCursorEvent) Since() uint32 { return 1 }
 
 type TextInputV1CommitStringEvent struct {
 	Serial uint32
@@ -446,7 +447,7 @@ func (e *TextInputV1CommitStringEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1CommitStringEvent) Since() int { return 1 }
+func (e *TextInputV1CommitStringEvent) Since() uint32 { return 1 }
 
 type TextInputV1CursorPositionEvent struct {
 	Index  int32
@@ -469,7 +470,7 @@ func (e *TextInputV1CursorPositionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1CursorPositionEvent) Since() int { return 1 }
+func (e *TextInputV1CursorPositionEvent) Since() uint32 { return 1 }
 
 type TextInputV1DeleteSurroundingTextEvent struct {
 	Index  int32
@@ -494,7 +495,7 @@ func (e *TextInputV1DeleteSurroundingTextEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *TextInputV1DeleteSurroundingTextEvent) Since() int { return 1 }
+func (e *TextInputV1DeleteSurroundingTextEvent) Since() uint32 { return 1 }
 
 type TextInputV1KeysymEvent struct {
 	Serial    uint32
@@ -535,7 +536,7 @@ func (e *TextInputV1KeysymEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1KeysymEvent) Since() int { return 1 }
+func (e *TextInputV1KeysymEvent) Since() uint32 { return 1 }
 
 type TextInputV1LanguageEvent struct {
 	Serial   uint32
@@ -558,11 +559,11 @@ func (e *TextInputV1LanguageEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TextInputV1LanguageEvent) Since() int { return 1 }
+func (e *TextInputV1LanguageEvent) Since() uint32 { return 1 }
 
 type TextInputV1TextDirectionEvent struct {
 	Serial    uint32
-	Direction uint32
+	Direction TextInputV1TextDirection
 }
 
 func (e *TextInputV1TextDirectionEvent) Opcode() uint16 { return TextInputV1EventTextDirection }
@@ -577,11 +578,11 @@ func (e *TextInputV1TextDirectionEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Direction = direction
+	e.Direction = TextInputV1TextDirection(direction)
 	return nil
 }
 
-func (e *TextInputV1TextDirectionEvent) Since() int { return 1 }
+func (e *TextInputV1TextDirectionEvent) Since() uint32 { return 1 }
 
 type TextInputV1EnterFunc func(ev TextInputV1EnterEvent)
 
@@ -823,7 +824,7 @@ func (o *TextInputV1) SetSurroundingText(text string, cursor uint32, anchor uint
 	})
 }
 
-func (o *TextInputV1) SetContentType(hint uint32, purpose uint32) error {
+func (o *TextInputV1) SetContentType(hint TextInputV1ContentHint, purpose TextInputV1ContentPurpose) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetContentType, &TextInputV1SetContentTypeRequest{
 		Hint:    hint,
 		Purpose: purpose,

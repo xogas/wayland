@@ -46,7 +46,7 @@ func (r *ImageDescriptionV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImageDescriptionV1DestroyRequest) Since() int { return 1 }
+func (r *ImageDescriptionV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionV1GetInformationRequest struct {
 	Information wire.NewID
@@ -63,10 +63,10 @@ func (r *ImageDescriptionV1GetInformationRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *ImageDescriptionV1GetInformationRequest) Since() int { return 1 }
+func (r *ImageDescriptionV1GetInformationRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionV1FailedEvent struct {
-	Cause uint32
+	Cause ImageDescriptionV1Cause
 	Msg   string
 }
 
@@ -77,7 +77,7 @@ func (e *ImageDescriptionV1FailedEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Cause = cause
+	e.Cause = ImageDescriptionV1Cause(cause)
 	msg, err := r.String()
 	if err != nil {
 		return err
@@ -86,47 +86,48 @@ func (e *ImageDescriptionV1FailedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageDescriptionV1FailedEvent) Since() int { return 1 }
+func (e *ImageDescriptionV1FailedEvent) Since() uint32 { return 1 }
 
+// Deprecated: since version 2.
 type ImageDescriptionV1ReadyEvent struct {
-	IDentity uint32
+	Identity uint32
 }
 
 func (e *ImageDescriptionV1ReadyEvent) Opcode() uint16 { return ImageDescriptionV1EventReady }
 
 func (e *ImageDescriptionV1ReadyEvent) Unmarshal(r *wire.Reader) error {
-	iDentity, err := r.Uint32()
+	identity, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentity = iDentity
+	e.Identity = identity
 	return nil
 }
 
-func (e *ImageDescriptionV1ReadyEvent) Since() int { return 1 }
+func (e *ImageDescriptionV1ReadyEvent) Since() uint32 { return 1 }
 
 type ImageDescriptionV1Ready2Event struct {
-	IDentityHi uint32
-	IDentityLo uint32
+	IdentityHi uint32
+	IdentityLo uint32
 }
 
 func (e *ImageDescriptionV1Ready2Event) Opcode() uint16 { return ImageDescriptionV1EventReady2 }
 
 func (e *ImageDescriptionV1Ready2Event) Unmarshal(r *wire.Reader) error {
-	iDentityHi, err := r.Uint32()
+	identityHi, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentityHi = iDentityHi
-	iDentityLo, err := r.Uint32()
+	e.IdentityHi = identityHi
+	identityLo, err := r.Uint32()
 	if err != nil {
 		return err
 	}
-	e.IDentityLo = iDentityLo
+	e.IdentityLo = identityLo
 	return nil
 }
 
-func (e *ImageDescriptionV1Ready2Event) Since() int { return 2 }
+func (e *ImageDescriptionV1Ready2Event) Since() uint32 { return 2 }
 
 type ImageDescriptionV1FailedFunc func(ev ImageDescriptionV1FailedEvent)
 

@@ -147,7 +147,7 @@ func main() {
 
 	incDamage := true
 	keyboard.OnKey(func(ev wayland.KeyboardKeyEvent) {
-		if ev.Key == keyD && ev.State == uint32(wayland.KeyboardKeyStatePressed) {
+		if ev.Key == keyD && ev.State == wayland.KeyboardKeyStatePressed {
 			incDamage = !incDamage
 			if incDamage {
 				fmt.Println("switched to incremental damage")
@@ -221,7 +221,7 @@ func main() {
 	bufs := [2]bufSlot{}
 	for i := 0; i < 2; i++ {
 		off := int32(i) * int32(oneSize)
-		wlBuf, err := pool.CreateBuffer(off, int32(winW), bufH, stride, uint32(wayland.ShmFormatXrgb8888))
+		wlBuf, err := pool.CreateBuffer(off, int32(winW), bufH, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer %d: %v\n", i, err)
 			os.Exit(1)

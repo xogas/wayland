@@ -32,7 +32,7 @@ func (r *FractionalScaleManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FractionalScaleManagerV2DestroyRequest) Since() int { return 1 }
+func (r *FractionalScaleManagerV2DestroyRequest) Since() uint32 { return 1 }
 
 type FractionalScaleManagerV2GetFractionalScaleRequest struct {
 	ID      wire.NewID
@@ -53,7 +53,7 @@ func (r *FractionalScaleManagerV2GetFractionalScaleRequest) Marshal(w *wire.Writ
 	return nil
 }
 
-func (r *FractionalScaleManagerV2GetFractionalScaleRequest) Since() int { return 1 }
+func (r *FractionalScaleManagerV2GetFractionalScaleRequest) Since() uint32 { return 1 }
 
 type FractionalScaleManagerV2 struct {
 	proxy *wayland.Proxy

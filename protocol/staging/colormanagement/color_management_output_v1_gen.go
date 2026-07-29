@@ -30,7 +30,7 @@ func (r *ColorManagementOutputV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ColorManagementOutputV1DestroyRequest) Since() int { return 1 }
+func (r *ColorManagementOutputV1DestroyRequest) Since() uint32 { return 1 }
 
 type ColorManagementOutputV1GetImageDescriptionRequest struct {
 	ImageDescription wire.NewID
@@ -47,7 +47,7 @@ func (r *ColorManagementOutputV1GetImageDescriptionRequest) Marshal(w *wire.Writ
 	return nil
 }
 
-func (r *ColorManagementOutputV1GetImageDescriptionRequest) Since() int { return 1 }
+func (r *ColorManagementOutputV1GetImageDescriptionRequest) Since() uint32 { return 1 }
 
 type ColorManagementOutputV1ImageDescriptionChangedEvent struct {
 }
@@ -60,7 +60,7 @@ func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Unmarshal(r *wire.
 	return nil
 }
 
-func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Since() int { return 1 }
+func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Since() uint32 { return 1 }
 
 type ColorManagementOutputV1ImageDescriptionChangedFunc func(ev ColorManagementOutputV1ImageDescriptionChangedEvent)
 

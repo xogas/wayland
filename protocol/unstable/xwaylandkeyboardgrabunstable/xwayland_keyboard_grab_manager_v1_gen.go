@@ -26,7 +26,7 @@ func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Since() int { return 1 }
+func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type XwaylandKeyboardGrabManagerV1GrabKeyboardRequest struct {
 	ID      wire.NewID
@@ -51,7 +51,7 @@ func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Marshal(w *wire.Write
 	return nil
 }
 
-func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Since() int { return 1 }
+func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Since() uint32 { return 1 }
 
 type XwaylandKeyboardGrabManagerV1 struct {
 	proxy *wayland.Proxy

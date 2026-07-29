@@ -42,7 +42,7 @@ func (r *TabletV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletV2DestroyRequest) Since() int { return 1 }
+func (r *TabletV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletV2NameEvent struct {
 	Name string
@@ -59,7 +59,7 @@ func (e *TabletV2NameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV2NameEvent) Since() int { return 1 }
+func (e *TabletV2NameEvent) Since() uint32 { return 1 }
 
 type TabletV2IDEvent struct {
 	Vid uint32
@@ -82,7 +82,7 @@ func (e *TabletV2IDEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV2IDEvent) Since() int { return 1 }
+func (e *TabletV2IDEvent) Since() uint32 { return 1 }
 
 type TabletV2PathEvent struct {
 	Path string
@@ -99,7 +99,7 @@ func (e *TabletV2PathEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV2PathEvent) Since() int { return 1 }
+func (e *TabletV2PathEvent) Since() uint32 { return 1 }
 
 type TabletV2DoneEvent struct {
 }
@@ -110,7 +110,7 @@ func (e *TabletV2DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV2DoneEvent) Since() int { return 1 }
+func (e *TabletV2DoneEvent) Since() uint32 { return 1 }
 
 type TabletV2RemovedEvent struct {
 }
@@ -121,10 +121,10 @@ func (e *TabletV2RemovedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletV2RemovedEvent) Since() int { return 1 }
+func (e *TabletV2RemovedEvent) Since() uint32 { return 1 }
 
 type TabletV2BustypeEvent struct {
-	Bustype uint32
+	Bustype TabletV2Bustype
 }
 
 func (e *TabletV2BustypeEvent) Opcode() uint16 { return TabletV2EventBustype }
@@ -134,11 +134,11 @@ func (e *TabletV2BustypeEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Bustype = bustype
+	e.Bustype = TabletV2Bustype(bustype)
 	return nil
 }
 
-func (e *TabletV2BustypeEvent) Since() int { return 2 }
+func (e *TabletV2BustypeEvent) Since() uint32 { return 2 }
 
 type TabletV2NameFunc func(ev TabletV2NameEvent)
 

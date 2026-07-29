@@ -40,14 +40,14 @@ func (r *PointerConstraintsV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerConstraintsV1DestroyRequest) Since() int { return 1 }
+func (r *PointerConstraintsV1DestroyRequest) Since() uint32 { return 1 }
 
 type PointerConstraintsV1LockPointerRequest struct {
 	ID       wire.NewID
 	Surface  wire.ObjectID
 	Pointer  wire.ObjectID
-	Region   wire.ObjectID
-	Lifetime uint32
+	Region   wire.ObjectID // nullable
+	Lifetime PointerConstraintsV1Lifetime
 }
 
 func (r *PointerConstraintsV1LockPointerRequest) Opcode() uint16 {
@@ -67,20 +67,20 @@ func (r *PointerConstraintsV1LockPointerRequest) Marshal(w *wire.Writer) error {
 	if err := w.Object(r.Region); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Lifetime); err != nil {
+	if err := w.Uint32(uint32(r.Lifetime)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PointerConstraintsV1LockPointerRequest) Since() int { return 1 }
+func (r *PointerConstraintsV1LockPointerRequest) Since() uint32 { return 1 }
 
 type PointerConstraintsV1ConfinePointerRequest struct {
 	ID       wire.NewID
 	Surface  wire.ObjectID
 	Pointer  wire.ObjectID
-	Region   wire.ObjectID
-	Lifetime uint32
+	Region   wire.ObjectID // nullable
+	Lifetime PointerConstraintsV1Lifetime
 }
 
 func (r *PointerConstraintsV1ConfinePointerRequest) Opcode() uint16 {
@@ -100,13 +100,13 @@ func (r *PointerConstraintsV1ConfinePointerRequest) Marshal(w *wire.Writer) erro
 	if err := w.Object(r.Region); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Lifetime); err != nil {
+	if err := w.Uint32(uint32(r.Lifetime)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *PointerConstraintsV1ConfinePointerRequest) Since() int { return 1 }
+func (r *PointerConstraintsV1ConfinePointerRequest) Since() uint32 { return 1 }
 
 type PointerConstraintsV1 struct {
 	proxy *wayland.Proxy
@@ -131,7 +131,7 @@ func (o *PointerConstraintsV1) Destroy() error {
 	return nil
 }
 
-func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime uint32) (*LockedPointerV1, error) {
+func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*LockedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
@@ -151,7 +151,7 @@ func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.O
 	return wrapped, nil
 }
 
-func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime uint32) (*ConfinedPointerV1, error) {
+func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*ConfinedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())

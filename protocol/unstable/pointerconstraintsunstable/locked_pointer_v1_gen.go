@@ -30,7 +30,7 @@ func (r *LockedPointerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LockedPointerV1DestroyRequest) Since() int { return 1 }
+func (r *LockedPointerV1DestroyRequest) Since() uint32 { return 1 }
 
 type LockedPointerV1SetCursorPositionHintRequest struct {
 	SurfaceX wire.Fixed
@@ -51,10 +51,10 @@ func (r *LockedPointerV1SetCursorPositionHintRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *LockedPointerV1SetCursorPositionHintRequest) Since() int { return 1 }
+func (r *LockedPointerV1SetCursorPositionHintRequest) Since() uint32 { return 1 }
 
 type LockedPointerV1SetRegionRequest struct {
-	Region wire.ObjectID
+	Region wire.ObjectID // nullable
 }
 
 func (r *LockedPointerV1SetRegionRequest) Opcode() uint16 { return LockedPointerV1RequestSetRegion }
@@ -66,7 +66,7 @@ func (r *LockedPointerV1SetRegionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LockedPointerV1SetRegionRequest) Since() int { return 1 }
+func (r *LockedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 
 type LockedPointerV1LockedEvent struct {
 }
@@ -77,7 +77,7 @@ func (e *LockedPointerV1LockedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LockedPointerV1LockedEvent) Since() int { return 1 }
+func (e *LockedPointerV1LockedEvent) Since() uint32 { return 1 }
 
 type LockedPointerV1UnlockedEvent struct {
 }
@@ -88,7 +88,7 @@ func (e *LockedPointerV1UnlockedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LockedPointerV1UnlockedEvent) Since() int { return 1 }
+func (e *LockedPointerV1UnlockedEvent) Since() uint32 { return 1 }
 
 type LockedPointerV1LockedFunc func(ev LockedPointerV1LockedEvent)
 

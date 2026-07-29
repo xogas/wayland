@@ -52,7 +52,7 @@ func (r *ImageCopyCaptureFrameV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImageCopyCaptureFrameV1DestroyRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureFrameV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1AttachBufferRequest struct {
 	Buffer wire.ObjectID
@@ -69,7 +69,7 @@ func (r *ImageCopyCaptureFrameV1AttachBufferRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *ImageCopyCaptureFrameV1AttachBufferRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureFrameV1AttachBufferRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1DamageBufferRequest struct {
 	X      int32
@@ -98,7 +98,7 @@ func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1CaptureRequest struct {
 }
@@ -111,7 +111,7 @@ func (r *ImageCopyCaptureFrameV1CaptureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ImageCopyCaptureFrameV1CaptureRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureFrameV1CaptureRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1TransformEvent struct {
 	Transform uint32
@@ -130,7 +130,7 @@ func (e *ImageCopyCaptureFrameV1TransformEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *ImageCopyCaptureFrameV1TransformEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureFrameV1TransformEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1DamageEvent struct {
 	X      int32
@@ -167,7 +167,7 @@ func (e *ImageCopyCaptureFrameV1DamageEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageCopyCaptureFrameV1DamageEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureFrameV1DamageEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1PresentationTimeEvent struct {
 	TvSecHi uint32
@@ -198,7 +198,7 @@ func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Unmarshal(r *wire.Reader)
 	return nil
 }
 
-func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1ReadyEvent struct {
 }
@@ -209,10 +209,10 @@ func (e *ImageCopyCaptureFrameV1ReadyEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageCopyCaptureFrameV1ReadyEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureFrameV1ReadyEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1FailedEvent struct {
-	Reason uint32
+	Reason ImageCopyCaptureFrameV1FailureReason
 }
 
 func (e *ImageCopyCaptureFrameV1FailedEvent) Opcode() uint16 {
@@ -224,11 +224,11 @@ func (e *ImageCopyCaptureFrameV1FailedEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Reason = reason
+	e.Reason = ImageCopyCaptureFrameV1FailureReason(reason)
 	return nil
 }
 
-func (e *ImageCopyCaptureFrameV1FailedEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureFrameV1FailedEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureFrameV1TransformFunc func(ev ImageCopyCaptureFrameV1TransformEvent)
 

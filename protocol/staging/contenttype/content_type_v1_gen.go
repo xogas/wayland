@@ -33,10 +33,10 @@ func (r *ContentTypeV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ContentTypeV1DestroyRequest) Since() int { return 1 }
+func (r *ContentTypeV1DestroyRequest) Since() uint32 { return 1 }
 
 type ContentTypeV1SetContentTypeRequest struct {
-	ContentType uint32
+	ContentType ContentTypeV1Type
 }
 
 func (r *ContentTypeV1SetContentTypeRequest) Opcode() uint16 {
@@ -44,13 +44,13 @@ func (r *ContentTypeV1SetContentTypeRequest) Opcode() uint16 {
 }
 
 func (r *ContentTypeV1SetContentTypeRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.ContentType); err != nil {
+	if err := w.Uint32(uint32(r.ContentType)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ContentTypeV1SetContentTypeRequest) Since() int { return 1 }
+func (r *ContentTypeV1SetContentTypeRequest) Since() uint32 { return 1 }
 
 type ContentTypeV1 struct {
 	proxy *wayland.Proxy
@@ -75,7 +75,7 @@ func (o *ContentTypeV1) Destroy() error {
 	return nil
 }
 
-func (o *ContentTypeV1) SetContentType(contentType uint32) error {
+func (o *ContentTypeV1) SetContentType(contentType ContentTypeV1Type) error {
 	return o.proxy.SendRequest(ContentTypeV1RequestSetContentType, &ContentTypeV1SetContentTypeRequest{
 		ContentType: contentType,
 	})

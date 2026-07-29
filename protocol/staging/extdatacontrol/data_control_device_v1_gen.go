@@ -30,7 +30,7 @@ const (
 )
 
 type DataControlDeviceV1SetSelectionRequest struct {
-	Source wire.ObjectID
+	Source wire.ObjectID // nullable
 }
 
 func (r *DataControlDeviceV1SetSelectionRequest) Opcode() uint16 {
@@ -44,7 +44,7 @@ func (r *DataControlDeviceV1SetSelectionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataControlDeviceV1SetSelectionRequest) Since() int { return 1 }
+func (r *DataControlDeviceV1SetSelectionRequest) Since() uint32 { return 1 }
 
 type DataControlDeviceV1DestroyRequest struct {
 }
@@ -55,10 +55,10 @@ func (r *DataControlDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *DataControlDeviceV1DestroyRequest) Since() int { return 1 }
+func (r *DataControlDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
 type DataControlDeviceV1SetPrimarySelectionRequest struct {
-	Source wire.ObjectID
+	Source wire.ObjectID // nullable
 }
 
 func (r *DataControlDeviceV1SetPrimarySelectionRequest) Opcode() uint16 {
@@ -72,7 +72,7 @@ func (r *DataControlDeviceV1SetPrimarySelectionRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *DataControlDeviceV1SetPrimarySelectionRequest) Since() int { return 1 }
+func (r *DataControlDeviceV1SetPrimarySelectionRequest) Since() uint32 { return 1 }
 
 type DataControlDeviceV1DataOfferEvent struct {
 	ID *DataControlOfferV1
@@ -80,24 +80,24 @@ type DataControlDeviceV1DataOfferEvent struct {
 
 func (e *DataControlDeviceV1DataOfferEvent) Opcode() uint16 { return DataControlDeviceV1EventDataOffer }
 
-func (e *DataControlDeviceV1DataOfferEvent) Since() int { return 1 }
+func (e *DataControlDeviceV1DataOfferEvent) Since() uint32 { return 1 }
 
 type DataControlDeviceV1SelectionEvent struct {
-	ID wire.ObjectID
+	ID wire.ObjectID // nullable
 }
 
 func (e *DataControlDeviceV1SelectionEvent) Opcode() uint16 { return DataControlDeviceV1EventSelection }
 
 func (e *DataControlDeviceV1SelectionEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Object()
+	id, err := r.Object()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *DataControlDeviceV1SelectionEvent) Since() int { return 1 }
+func (e *DataControlDeviceV1SelectionEvent) Since() uint32 { return 1 }
 
 type DataControlDeviceV1FinishedEvent struct {
 }
@@ -108,10 +108,10 @@ func (e *DataControlDeviceV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *DataControlDeviceV1FinishedEvent) Since() int { return 1 }
+func (e *DataControlDeviceV1FinishedEvent) Since() uint32 { return 1 }
 
 type DataControlDeviceV1PrimarySelectionEvent struct {
-	ID wire.ObjectID
+	ID wire.ObjectID // nullable
 }
 
 func (e *DataControlDeviceV1PrimarySelectionEvent) Opcode() uint16 {
@@ -119,15 +119,15 @@ func (e *DataControlDeviceV1PrimarySelectionEvent) Opcode() uint16 {
 }
 
 func (e *DataControlDeviceV1PrimarySelectionEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Object()
+	id, err := r.Object()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *DataControlDeviceV1PrimarySelectionEvent) Since() int { return 1 }
+func (e *DataControlDeviceV1PrimarySelectionEvent) Since() uint32 { return 1 }
 
 type DataControlDeviceV1DataOfferFunc func(ev DataControlDeviceV1DataOfferEvent)
 

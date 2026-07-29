@@ -35,7 +35,7 @@ func (r *SecurityContextV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SecurityContextV1DestroyRequest) Since() int { return 1 }
+func (r *SecurityContextV1DestroyRequest) Since() uint32 { return 1 }
 
 type SecurityContextV1SetSandboxEngineRequest struct {
 	Name string
@@ -52,7 +52,7 @@ func (r *SecurityContextV1SetSandboxEngineRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *SecurityContextV1SetSandboxEngineRequest) Since() int { return 1 }
+func (r *SecurityContextV1SetSandboxEngineRequest) Since() uint32 { return 1 }
 
 type SecurityContextV1SetAppIDRequest struct {
 	AppID string
@@ -67,7 +67,7 @@ func (r *SecurityContextV1SetAppIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SecurityContextV1SetAppIDRequest) Since() int { return 1 }
+func (r *SecurityContextV1SetAppIDRequest) Since() uint32 { return 1 }
 
 type SecurityContextV1SetInstanceIDRequest struct {
 	InstanceID string
@@ -84,7 +84,7 @@ func (r *SecurityContextV1SetInstanceIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SecurityContextV1SetInstanceIDRequest) Since() int { return 1 }
+func (r *SecurityContextV1SetInstanceIDRequest) Since() uint32 { return 1 }
 
 type SecurityContextV1CommitRequest struct {
 }
@@ -95,7 +95,7 @@ func (r *SecurityContextV1CommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SecurityContextV1CommitRequest) Since() int { return 1 }
+func (r *SecurityContextV1CommitRequest) Since() uint32 { return 1 }
 
 type SecurityContextV1 struct {
 	proxy *wayland.Proxy

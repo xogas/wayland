@@ -43,7 +43,7 @@ func (r *RegistryBindRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *RegistryBindRequest) Since() int { return 1 }
+func (r *RegistryBindRequest) Since() uint32 { return 1 }
 
 type RegistryGlobalEvent struct {
 	Name      uint32
@@ -72,7 +72,7 @@ func (e *RegistryGlobalEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *RegistryGlobalEvent) Since() int { return 1 }
+func (e *RegistryGlobalEvent) Since() uint32 { return 1 }
 
 type RegistryGlobalRemoveEvent struct {
 	Name uint32
@@ -89,7 +89,7 @@ func (e *RegistryGlobalRemoveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *RegistryGlobalRemoveEvent) Since() int { return 1 }
+func (e *RegistryGlobalRemoveEvent) Since() uint32 { return 1 }
 
 type RegistryGlobalFunc func(ev RegistryGlobalEvent)
 

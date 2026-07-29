@@ -42,7 +42,7 @@ func (r *InputPopupSurfaceV2AckConfigureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupSurfaceV2AckConfigureRequest) Since() int { return 1 }
+func (r *InputPopupSurfaceV2AckConfigureRequest) Since() uint32 { return 1 }
 
 type InputPopupSurfaceV2RepositionRequest struct {
 	Positioner wire.ObjectID
@@ -63,7 +63,7 @@ func (r *InputPopupSurfaceV2RepositionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupSurfaceV2RepositionRequest) Since() int { return 1 }
+func (r *InputPopupSurfaceV2RepositionRequest) Since() uint32 { return 1 }
 
 type InputPopupSurfaceV2DestroyRequest struct {
 }
@@ -74,7 +74,7 @@ func (r *InputPopupSurfaceV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPopupSurfaceV2DestroyRequest) Since() int { return 1 }
+func (r *InputPopupSurfaceV2DestroyRequest) Since() uint32 { return 1 }
 
 type InputPopupSurfaceV2StartConfigureEvent struct {
 	Width        uint32
@@ -129,7 +129,7 @@ func (e *InputPopupSurfaceV2StartConfigureEvent) Unmarshal(r *wire.Reader) error
 	return nil
 }
 
-func (e *InputPopupSurfaceV2StartConfigureEvent) Since() int { return 1 }
+func (e *InputPopupSurfaceV2StartConfigureEvent) Since() uint32 { return 1 }
 
 type InputPopupSurfaceV2RepositionedEvent struct {
 	Token uint32
@@ -148,7 +148,7 @@ func (e *InputPopupSurfaceV2RepositionedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputPopupSurfaceV2RepositionedEvent) Since() int { return 1 }
+func (e *InputPopupSurfaceV2RepositionedEvent) Since() uint32 { return 1 }
 
 type InputPopupSurfaceV2StartConfigureFunc func(ev InputPopupSurfaceV2StartConfigureEvent)
 

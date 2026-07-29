@@ -45,7 +45,7 @@ func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Marshal(w *wire.Writer) er
 	return nil
 }
 
-func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1DestroyRequest struct {
 }
@@ -58,7 +58,7 @@ func (r *ImageCopyCaptureSessionV1DestroyRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *ImageCopyCaptureSessionV1DestroyRequest) Since() int { return 1 }
+func (r *ImageCopyCaptureSessionV1DestroyRequest) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1BufferSizeEvent struct {
 	Width  uint32
@@ -83,7 +83,7 @@ func (e *ImageCopyCaptureSessionV1BufferSizeEvent) Unmarshal(r *wire.Reader) err
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1BufferSizeEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1BufferSizeEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1ShmFormatEvent struct {
 	Format uint32
@@ -102,7 +102,7 @@ func (e *ImageCopyCaptureSessionV1ShmFormatEvent) Unmarshal(r *wire.Reader) erro
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1ShmFormatEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1ShmFormatEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1DmabufDeviceEvent struct {
 	Device []byte
@@ -121,7 +121,7 @@ func (e *ImageCopyCaptureSessionV1DmabufDeviceEvent) Unmarshal(r *wire.Reader) e
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1DmabufDeviceEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1DmabufDeviceEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1DmabufFormatEvent struct {
 	Format    uint32
@@ -146,7 +146,7 @@ func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Unmarshal(r *wire.Reader) e
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1DoneEvent struct {
 }
@@ -159,7 +159,7 @@ func (e *ImageCopyCaptureSessionV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1DoneEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1DoneEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1StoppedEvent struct {
 }
@@ -172,7 +172,7 @@ func (e *ImageCopyCaptureSessionV1StoppedEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *ImageCopyCaptureSessionV1StoppedEvent) Since() int { return 1 }
+func (e *ImageCopyCaptureSessionV1StoppedEvent) Since() uint32 { return 1 }
 
 type ImageCopyCaptureSessionV1BufferSizeFunc func(ev ImageCopyCaptureSessionV1BufferSizeEvent)
 

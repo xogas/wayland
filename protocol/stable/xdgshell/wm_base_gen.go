@@ -42,7 +42,7 @@ func (r *WmBaseDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WmBaseDestroyRequest) Since() int { return 1 }
+func (r *WmBaseDestroyRequest) Since() uint32 { return 1 }
 
 type WmBaseCreatePositionerRequest struct {
 	ID wire.NewID
@@ -57,7 +57,7 @@ func (r *WmBaseCreatePositionerRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WmBaseCreatePositionerRequest) Since() int { return 1 }
+func (r *WmBaseCreatePositionerRequest) Since() uint32 { return 1 }
 
 type WmBaseGetXdgSurfaceRequest struct {
 	ID      wire.NewID
@@ -76,7 +76,7 @@ func (r *WmBaseGetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WmBaseGetXdgSurfaceRequest) Since() int { return 1 }
+func (r *WmBaseGetXdgSurfaceRequest) Since() uint32 { return 1 }
 
 type WmBasePongRequest struct {
 	Serial uint32
@@ -91,7 +91,7 @@ func (r *WmBasePongRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *WmBasePongRequest) Since() int { return 1 }
+func (r *WmBasePongRequest) Since() uint32 { return 1 }
 
 type WmBasePingEvent struct {
 	Serial uint32
@@ -108,7 +108,7 @@ func (e *WmBasePingEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *WmBasePingEvent) Since() int { return 1 }
+func (e *WmBasePingEvent) Since() uint32 { return 1 }
 
 type WmBasePingFunc func(ev WmBasePingEvent)
 

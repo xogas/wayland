@@ -64,10 +64,10 @@ func (r *ToplevelV6DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6DestroyRequest) Since() int { return 1 }
+func (r *ToplevelV6DestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetParentRequest struct {
-	Parent wire.ObjectID
+	Parent wire.ObjectID // nullable
 }
 
 func (r *ToplevelV6SetParentRequest) Opcode() uint16 { return ToplevelV6RequestSetParent }
@@ -79,7 +79,7 @@ func (r *ToplevelV6SetParentRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetParentRequest) Since() int { return 1 }
+func (r *ToplevelV6SetParentRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetTitleRequest struct {
 	Title string
@@ -94,7 +94,7 @@ func (r *ToplevelV6SetTitleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetTitleRequest) Since() int { return 1 }
+func (r *ToplevelV6SetTitleRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetAppIDRequest struct {
 	AppID string
@@ -109,7 +109,7 @@ func (r *ToplevelV6SetAppIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetAppIDRequest) Since() int { return 1 }
+func (r *ToplevelV6SetAppIDRequest) Since() uint32 { return 1 }
 
 type ToplevelV6ShowWindowMenuRequest struct {
 	Seat   wire.ObjectID
@@ -136,7 +136,7 @@ func (r *ToplevelV6ShowWindowMenuRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6ShowWindowMenuRequest) Since() int { return 1 }
+func (r *ToplevelV6ShowWindowMenuRequest) Since() uint32 { return 1 }
 
 type ToplevelV6MoveRequest struct {
 	Seat   wire.ObjectID
@@ -155,7 +155,7 @@ func (r *ToplevelV6MoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6MoveRequest) Since() int { return 1 }
+func (r *ToplevelV6MoveRequest) Since() uint32 { return 1 }
 
 type ToplevelV6ResizeRequest struct {
 	Seat   wire.ObjectID
@@ -178,7 +178,7 @@ func (r *ToplevelV6ResizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6ResizeRequest) Since() int { return 1 }
+func (r *ToplevelV6ResizeRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetMaxSizeRequest struct {
 	Width  int32
@@ -197,7 +197,7 @@ func (r *ToplevelV6SetMaxSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetMaxSizeRequest) Since() int { return 1 }
+func (r *ToplevelV6SetMaxSizeRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetMinSizeRequest struct {
 	Width  int32
@@ -216,7 +216,7 @@ func (r *ToplevelV6SetMinSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetMinSizeRequest) Since() int { return 1 }
+func (r *ToplevelV6SetMinSizeRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetMaximizedRequest struct {
 }
@@ -227,7 +227,7 @@ func (r *ToplevelV6SetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetMaximizedRequest) Since() int { return 1 }
+func (r *ToplevelV6SetMaximizedRequest) Since() uint32 { return 1 }
 
 type ToplevelV6UnsetMaximizedRequest struct {
 }
@@ -238,10 +238,10 @@ func (r *ToplevelV6UnsetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6UnsetMaximizedRequest) Since() int { return 1 }
+func (r *ToplevelV6UnsetMaximizedRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetFullscreenRequest struct {
-	Output wire.ObjectID
+	Output wire.ObjectID // nullable
 }
 
 func (r *ToplevelV6SetFullscreenRequest) Opcode() uint16 { return ToplevelV6RequestSetFullscreen }
@@ -253,7 +253,7 @@ func (r *ToplevelV6SetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetFullscreenRequest) Since() int { return 1 }
+func (r *ToplevelV6SetFullscreenRequest) Since() uint32 { return 1 }
 
 type ToplevelV6UnsetFullscreenRequest struct {
 }
@@ -264,7 +264,7 @@ func (r *ToplevelV6UnsetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6UnsetFullscreenRequest) Since() int { return 1 }
+func (r *ToplevelV6UnsetFullscreenRequest) Since() uint32 { return 1 }
 
 type ToplevelV6SetMinimizedRequest struct {
 }
@@ -275,7 +275,7 @@ func (r *ToplevelV6SetMinimizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelV6SetMinimizedRequest) Since() int { return 1 }
+func (r *ToplevelV6SetMinimizedRequest) Since() uint32 { return 1 }
 
 type ToplevelV6ConfigureEvent struct {
 	Width  int32
@@ -304,7 +304,7 @@ func (e *ToplevelV6ConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelV6ConfigureEvent) Since() int { return 1 }
+func (e *ToplevelV6ConfigureEvent) Since() uint32 { return 1 }
 
 type ToplevelV6CloseEvent struct {
 }
@@ -315,7 +315,7 @@ func (e *ToplevelV6CloseEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelV6CloseEvent) Since() int { return 1 }
+func (e *ToplevelV6CloseEvent) Since() uint32 { return 1 }
 
 type ToplevelV6ConfigureFunc func(ev ToplevelV6ConfigureEvent)
 

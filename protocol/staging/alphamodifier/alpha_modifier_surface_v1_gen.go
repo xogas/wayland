@@ -32,7 +32,7 @@ func (r *AlphaModifierSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *AlphaModifierSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *AlphaModifierSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type AlphaModifierSurfaceV1SetMultiplierRequest struct {
 	Factor uint32
@@ -49,7 +49,7 @@ func (r *AlphaModifierSurfaceV1SetMultiplierRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *AlphaModifierSurfaceV1SetMultiplierRequest) Since() int { return 1 }
+func (r *AlphaModifierSurfaceV1SetMultiplierRequest) Since() uint32 { return 1 }
 
 type AlphaModifierSurfaceV1 struct {
 	proxy *wayland.Proxy

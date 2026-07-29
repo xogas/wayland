@@ -92,10 +92,10 @@ func (r *ToplevelDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelDestroyRequest) Since() int { return 1 }
+func (r *ToplevelDestroyRequest) Since() uint32 { return 1 }
 
 type ToplevelSetParentRequest struct {
-	Parent wire.ObjectID
+	Parent wire.ObjectID // nullable
 }
 
 func (r *ToplevelSetParentRequest) Opcode() uint16 { return ToplevelRequestSetParent }
@@ -107,7 +107,7 @@ func (r *ToplevelSetParentRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetParentRequest) Since() int { return 1 }
+func (r *ToplevelSetParentRequest) Since() uint32 { return 1 }
 
 type ToplevelSetTitleRequest struct {
 	Title string
@@ -122,7 +122,7 @@ func (r *ToplevelSetTitleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetTitleRequest) Since() int { return 1 }
+func (r *ToplevelSetTitleRequest) Since() uint32 { return 1 }
 
 type ToplevelSetAppIDRequest struct {
 	AppID string
@@ -137,7 +137,7 @@ func (r *ToplevelSetAppIDRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetAppIDRequest) Since() int { return 1 }
+func (r *ToplevelSetAppIDRequest) Since() uint32 { return 1 }
 
 type ToplevelShowWindowMenuRequest struct {
 	Seat   wire.ObjectID
@@ -164,7 +164,7 @@ func (r *ToplevelShowWindowMenuRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelShowWindowMenuRequest) Since() int { return 1 }
+func (r *ToplevelShowWindowMenuRequest) Since() uint32 { return 1 }
 
 type ToplevelMoveRequest struct {
 	Seat   wire.ObjectID
@@ -183,12 +183,12 @@ func (r *ToplevelMoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelMoveRequest) Since() int { return 1 }
+func (r *ToplevelMoveRequest) Since() uint32 { return 1 }
 
 type ToplevelResizeRequest struct {
 	Seat   wire.ObjectID
 	Serial uint32
-	Edges  uint32
+	Edges  ToplevelResizeEdge
 }
 
 func (r *ToplevelResizeRequest) Opcode() uint16 { return ToplevelRequestResize }
@@ -200,13 +200,13 @@ func (r *ToplevelResizeRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Serial); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Edges); err != nil {
+	if err := w.Uint32(uint32(r.Edges)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ToplevelResizeRequest) Since() int { return 1 }
+func (r *ToplevelResizeRequest) Since() uint32 { return 1 }
 
 type ToplevelSetMaxSizeRequest struct {
 	Width  int32
@@ -225,7 +225,7 @@ func (r *ToplevelSetMaxSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetMaxSizeRequest) Since() int { return 1 }
+func (r *ToplevelSetMaxSizeRequest) Since() uint32 { return 1 }
 
 type ToplevelSetMinSizeRequest struct {
 	Width  int32
@@ -244,7 +244,7 @@ func (r *ToplevelSetMinSizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetMinSizeRequest) Since() int { return 1 }
+func (r *ToplevelSetMinSizeRequest) Since() uint32 { return 1 }
 
 type ToplevelSetMaximizedRequest struct {
 }
@@ -255,7 +255,7 @@ func (r *ToplevelSetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetMaximizedRequest) Since() int { return 1 }
+func (r *ToplevelSetMaximizedRequest) Since() uint32 { return 1 }
 
 type ToplevelUnsetMaximizedRequest struct {
 }
@@ -266,10 +266,10 @@ func (r *ToplevelUnsetMaximizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelUnsetMaximizedRequest) Since() int { return 1 }
+func (r *ToplevelUnsetMaximizedRequest) Since() uint32 { return 1 }
 
 type ToplevelSetFullscreenRequest struct {
-	Output wire.ObjectID
+	Output wire.ObjectID // nullable
 }
 
 func (r *ToplevelSetFullscreenRequest) Opcode() uint16 { return ToplevelRequestSetFullscreen }
@@ -281,7 +281,7 @@ func (r *ToplevelSetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetFullscreenRequest) Since() int { return 1 }
+func (r *ToplevelSetFullscreenRequest) Since() uint32 { return 1 }
 
 type ToplevelUnsetFullscreenRequest struct {
 }
@@ -292,7 +292,7 @@ func (r *ToplevelUnsetFullscreenRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelUnsetFullscreenRequest) Since() int { return 1 }
+func (r *ToplevelUnsetFullscreenRequest) Since() uint32 { return 1 }
 
 type ToplevelSetMinimizedRequest struct {
 }
@@ -303,7 +303,7 @@ func (r *ToplevelSetMinimizedRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ToplevelSetMinimizedRequest) Since() int { return 1 }
+func (r *ToplevelSetMinimizedRequest) Since() uint32 { return 1 }
 
 type ToplevelConfigureEvent struct {
 	Width  int32
@@ -332,7 +332,7 @@ func (e *ToplevelConfigureEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelConfigureEvent) Since() int { return 1 }
+func (e *ToplevelConfigureEvent) Since() uint32 { return 1 }
 
 type ToplevelCloseEvent struct {
 }
@@ -343,7 +343,7 @@ func (e *ToplevelCloseEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelCloseEvent) Since() int { return 1 }
+func (e *ToplevelCloseEvent) Since() uint32 { return 1 }
 
 type ToplevelConfigureBoundsEvent struct {
 	Width  int32
@@ -366,7 +366,7 @@ func (e *ToplevelConfigureBoundsEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelConfigureBoundsEvent) Since() int { return 4 }
+func (e *ToplevelConfigureBoundsEvent) Since() uint32 { return 4 }
 
 type ToplevelWmCapabilitiesEvent struct {
 	Capabilities []byte
@@ -383,7 +383,7 @@ func (e *ToplevelWmCapabilitiesEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ToplevelWmCapabilitiesEvent) Since() int { return 5 }
+func (e *ToplevelWmCapabilitiesEvent) Since() uint32 { return 5 }
 
 type ToplevelConfigureFunc func(ev ToplevelConfigureEvent)
 
@@ -502,7 +502,7 @@ func (o *Toplevel) Move(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
-func (o *Toplevel) Resize(seat wire.ObjectID, serial uint32, edges uint32) error {
+func (o *Toplevel) Resize(seat wire.ObjectID, serial uint32, edges ToplevelResizeEdge) error {
 	return o.proxy.SendRequest(ToplevelRequestResize, &ToplevelResizeRequest{
 		Seat:   seat,
 		Serial: serial,

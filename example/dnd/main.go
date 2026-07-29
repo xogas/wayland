@@ -190,7 +190,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var caps uint32
+	var caps wayland.SeatCapability
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
@@ -200,11 +200,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if caps&uint32(wayland.SeatCapabilityKeyboard) == 0 {
+	if caps&wayland.SeatCapabilityKeyboard == 0 {
 		fmt.Fprintln(os.Stderr, "seat has no keyboard capability")
 		os.Exit(1)
 	}
-	if caps&uint32(wayland.SeatCapabilityPointer) == 0 {
+	if caps&wayland.SeatCapabilityPointer == 0 {
 		fmt.Fprintln(os.Stderr, "seat has no pointer capability")
 		os.Exit(1)
 	}
@@ -314,7 +314,7 @@ func main() {
 			closeFd()
 			os.Exit(1)
 		}
-		buf, err := pool.CreateBuffer(0, winW, winH, stride, uint32(wayland.ShmFormatXrgb8888))
+		buf, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 			_ = pool.Destroy()
@@ -347,7 +347,7 @@ func main() {
 		fmt.Printf("keyboard: leave serial=%d\n", ev.Serial)
 	})
 	kb.OnKey(func(ev wayland.KeyboardKeyEvent) {
-		if ev.State != uint32(wayland.KeyboardKeyStatePressed) {
+		if ev.State != wayland.KeyboardKeyStatePressed {
 			return
 		}
 		switch ev.Key {
@@ -434,11 +434,11 @@ func main() {
 	})
 	ptr.OnButton(func(ev wayland.PointerButtonEvent) {
 		st := "release"
-		if ev.State == uint32(wayland.PointerButtonStatePressed) {
+		if ev.State == wayland.PointerButtonStatePressed {
 			st = "press"
 		}
 		fmt.Printf("pointer: button=%d state=%s serial=%d\n", ev.Button, st, ev.Serial)
-		if ev.State == uint32(wayland.PointerButtonStatePressed) && ev.Button == 272 {
+		if ev.State == wayland.PointerButtonStatePressed && ev.Button == 272 {
 			b := boxAt(ptrX, ptrY)
 			if b != nil {
 				fmt.Printf("dnd: start_drag color=%s\n", b.colorHex)
@@ -467,7 +467,7 @@ func main() {
 					_ = src.Destroy()
 				})
 				if ddmVersion >= 3 {
-					_ = src.SetActions(uint32(wayland.DataDeviceManagerDndActionCopy))
+					_ = src.SetActions(wayland.DataDeviceManagerDndActionCopy)
 				}
 				_ = dd.StartDrag(wire.ObjectID(src.Proxy().ID()), wire.ObjectID(surface.Proxy().ID()), 0, ev.Serial)
 			}
@@ -503,7 +503,7 @@ func main() {
 		if offer != nil {
 			_ = offer.Accept(ev.Serial, "application/x-color")
 			if ddmVersion >= 3 {
-				_ = offer.SetActions(uint32(wayland.DataDeviceManagerDndActionCopy), uint32(wayland.DataDeviceManagerDndActionCopy))
+				_ = offer.SetActions(wayland.DataDeviceManagerDndActionCopy, wayland.DataDeviceManagerDndActionCopy)
 			}
 		}
 	})

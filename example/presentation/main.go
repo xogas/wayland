@@ -36,11 +36,11 @@ type latencyStats struct {
 	maxNS     int64
 	totalNS   int64
 	refresh   uint32
-	flags     uint32
+	flags     presentationtime.PresentationFeedbackKind
 	discarded int
 }
 
-func (s *latencyStats) record(ns int64, refresh, flags uint32) {
+func (s *latencyStats) record(ns int64, refresh uint32, flags presentationtime.PresentationFeedbackKind) {
 	s.mu.Lock()
 	s.n++
 	s.totalNS += ns
@@ -90,18 +90,18 @@ func (s *latencyStats) report() {
 	fmt.Println()
 }
 
-func flagsString(f uint32) string {
+func flagsString(f presentationtime.PresentationFeedbackKind) string {
 	s := ""
-	if f&uint32(presentationtime.PresentationFeedbackKindVsync) != 0 {
+	if f&presentationtime.PresentationFeedbackKindVsync != 0 {
 		s += "vsync "
 	}
-	if f&uint32(presentationtime.PresentationFeedbackKindHwClock) != 0 {
+	if f&presentationtime.PresentationFeedbackKindHwClock != 0 {
 		s += "hw_clock "
 	}
-	if f&uint32(presentationtime.PresentationFeedbackKindHwCompletion) != 0 {
+	if f&presentationtime.PresentationFeedbackKindHwCompletion != 0 {
 		s += "hw_completion "
 	}
-	if f&uint32(presentationtime.PresentationFeedbackKindZeroCopy) != 0 {
+	if f&presentationtime.PresentationFeedbackKindZeroCopy != 0 {
 		s += "zero_copy "
 	}
 	if s == "" {
@@ -273,7 +273,7 @@ func main() {
 	bufs := [2]bufSlot{}
 	for i := 0; i < 2; i++ {
 		off := int32(i) * int32(oneSize)
-		wlBuf, err := pool.CreateBuffer(off, int32(winWidth), bufH, stride, uint32(wayland.ShmFormatXrgb8888))
+		wlBuf, err := pool.CreateBuffer(off, int32(winWidth), bufH, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer %d: %v\n", i, err)
 			os.Exit(1)

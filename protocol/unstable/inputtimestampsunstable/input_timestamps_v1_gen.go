@@ -27,7 +27,7 @@ func (r *InputTimestampsV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputTimestampsV1DestroyRequest) Since() int { return 1 }
+func (r *InputTimestampsV1DestroyRequest) Since() uint32 { return 1 }
 
 type InputTimestampsV1TimestampEvent struct {
 	TvSecHi uint32
@@ -56,7 +56,7 @@ func (e *InputTimestampsV1TimestampEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputTimestampsV1TimestampEvent) Since() int { return 1 }
+func (e *InputTimestampsV1TimestampEvent) Since() uint32 { return 1 }
 
 type InputTimestampsV1TimestampFunc func(ev InputTimestampsV1TimestampEvent)
 

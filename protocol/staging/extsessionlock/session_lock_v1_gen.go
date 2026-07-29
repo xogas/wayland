@@ -40,7 +40,7 @@ func (r *SessionLockV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockV1DestroyRequest) Since() int { return 1 }
+func (r *SessionLockV1DestroyRequest) Since() uint32 { return 1 }
 
 type SessionLockV1GetLockSurfaceRequest struct {
 	ID      wire.NewID
@@ -65,7 +65,7 @@ func (r *SessionLockV1GetLockSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockV1GetLockSurfaceRequest) Since() int { return 1 }
+func (r *SessionLockV1GetLockSurfaceRequest) Since() uint32 { return 1 }
 
 type SessionLockV1UnlockAndDestroyRequest struct {
 }
@@ -78,7 +78,7 @@ func (r *SessionLockV1UnlockAndDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionLockV1UnlockAndDestroyRequest) Since() int { return 1 }
+func (r *SessionLockV1UnlockAndDestroyRequest) Since() uint32 { return 1 }
 
 type SessionLockV1LockedEvent struct {
 }
@@ -89,7 +89,7 @@ func (e *SessionLockV1LockedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SessionLockV1LockedEvent) Since() int { return 1 }
+func (e *SessionLockV1LockedEvent) Since() uint32 { return 1 }
 
 type SessionLockV1FinishedEvent struct {
 }
@@ -100,7 +100,7 @@ func (e *SessionLockV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SessionLockV1FinishedEvent) Since() int { return 1 }
+func (e *SessionLockV1FinishedEvent) Since() uint32 { return 1 }
 
 type SessionLockV1LockedFunc func(ev SessionLockV1LockedEvent)
 

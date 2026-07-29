@@ -50,10 +50,10 @@ func (r *KeyboardReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *KeyboardReleaseRequest) Since() int { return 3 }
+func (r *KeyboardReleaseRequest) Since() uint32 { return 3 }
 
 type KeyboardKeymapEvent struct {
-	Format uint32
+	Format KeyboardKeymapFormat
 	Fd     int
 	Size   uint32
 }
@@ -65,7 +65,7 @@ func (e *KeyboardKeymapEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Format = format
+	e.Format = KeyboardKeymapFormat(format)
 	fd, err := r.Fd()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (e *KeyboardKeymapEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *KeyboardKeymapEvent) Since() int { return 1 }
+func (e *KeyboardKeymapEvent) Since() uint32 { return 1 }
 
 type KeyboardEnterEvent struct {
 	Serial  uint32
@@ -108,7 +108,7 @@ func (e *KeyboardEnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *KeyboardEnterEvent) Since() int { return 1 }
+func (e *KeyboardEnterEvent) Since() uint32 { return 1 }
 
 type KeyboardLeaveEvent struct {
 	Serial  uint32
@@ -131,13 +131,13 @@ func (e *KeyboardLeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *KeyboardLeaveEvent) Since() int { return 1 }
+func (e *KeyboardLeaveEvent) Since() uint32 { return 1 }
 
 type KeyboardKeyEvent struct {
 	Serial uint32
 	Time   uint32
 	Key    uint32
-	State  uint32
+	State  KeyboardKeyState
 }
 
 func (e *KeyboardKeyEvent) Opcode() uint16 { return KeyboardEventKey }
@@ -162,11 +162,11 @@ func (e *KeyboardKeyEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.State = state
+	e.State = KeyboardKeyState(state)
 	return nil
 }
 
-func (e *KeyboardKeyEvent) Since() int { return 1 }
+func (e *KeyboardKeyEvent) Since() uint32 { return 1 }
 
 type KeyboardModifiersEvent struct {
 	Serial        uint32
@@ -207,7 +207,7 @@ func (e *KeyboardModifiersEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *KeyboardModifiersEvent) Since() int { return 1 }
+func (e *KeyboardModifiersEvent) Since() uint32 { return 1 }
 
 type KeyboardRepeatInfoEvent struct {
 	Rate  int32
@@ -230,7 +230,7 @@ func (e *KeyboardRepeatInfoEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *KeyboardRepeatInfoEvent) Since() int { return 4 }
+func (e *KeyboardRepeatInfoEvent) Since() uint32 { return 4 }
 
 type KeyboardKeymapFunc func(ev KeyboardKeymapEvent)
 

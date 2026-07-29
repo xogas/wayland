@@ -162,7 +162,7 @@ func redraw(surface *wayland.Surface, shm *wayland.Shm, w, h int32, states []xdg
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	buf, err := pool.CreateBuffer(0, w, h, stride, uint32(wayland.ShmFormatXrgb8888))
+	buf, err := pool.CreateBuffer(0, w, h, stride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func main() {
 		if err == nil {
 			td, err := decoMan.GetToplevelDecoration(wire.ObjectID(toplevel.Proxy().ID()))
 			if err == nil {
-				_ = td.SetMode(uint32(xdgdecorationunstable.ToplevelDecorationV1ModeServerSide))
+				_ = td.SetMode(xdgdecorationunstable.ToplevelDecorationV1ModeServerSide)
 				fmt.Println("requested server-side decoration")
 			}
 		}
@@ -379,7 +379,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
 		} else {
 			seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
-				if ev.Capabilities&uint32(wayland.SeatCapabilityKeyboard) != 0 && kb == nil {
+				if ev.Capabilities&wayland.SeatCapabilityKeyboard != 0 && kb == nil {
 					k, err := seat.GetKeyboard()
 					if err == nil {
 						kb = k
@@ -426,7 +426,7 @@ func main() {
 						})
 					}
 				}
-				if ev.Capabilities&uint32(wayland.SeatCapabilityPointer) != 0 && ptr == nil {
+				if ev.Capabilities&wayland.SeatCapabilityPointer != 0 && ptr == nil {
 					p, err := seat.GetPointer()
 					if err == nil {
 						ptr = p
@@ -443,7 +443,7 @@ func main() {
 							if edge == xdgshell.ToplevelResizeEdgeNone {
 								_ = toplevel.Move(seatID, ev.Serial)
 							} else {
-								_ = toplevel.Resize(seatID, ev.Serial, uint32(edge))
+								_ = toplevel.Resize(seatID, ev.Serial, xdgshell.ToplevelResizeEdge(edge))
 							}
 						})
 					}

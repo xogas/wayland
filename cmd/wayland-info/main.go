@@ -22,12 +22,12 @@ import (
 
 type modeInfo struct {
 	width, height, refresh int32
-	flags                  uint32
+	flags                  wayland.OutputMode
 }
 
 type trancheInfo struct {
 	targetDevice []byte
-	flags        uint32
+	flags        linuxdmabuf.LinuxDmabufFeedbackV1TrancheFlags
 	formats      string
 }
 
@@ -43,7 +43,7 @@ type dmabufInfo struct {
 
 type seatData struct {
 	name                    string
-	capabilities            uint32
+	capabilities            wayland.SeatCapability
 	repeatRate, repeatDelay int32
 }
 
@@ -62,17 +62,17 @@ type outputData struct {
 }
 
 type collectedData struct {
-	shmFormats       []uint32
+	shmFormats       []wayland.ShmFormat
 	presClockID      uint32
 	dmabuf           *dmabufInfo
 	drmLeaseFd       int
 	drmLeasePath     string
 	drmLeaseConn     []connectorInfo
-	cmIntents        []uint32
-	cmFeatures       []uint32
-	cmTf             []uint32
-	cmPrimaries      []uint32
-	crAlphaModes     []uint32
+	cmIntents        []colormanagement.ColorManagerV1RenderIntent
+	cmFeatures       []colormanagement.ColorManagerV1Feature
+	cmTf             []colormanagement.ColorManagerV1TransferFunction
+	cmPrimaries      []colormanagement.ColorManagerV1Primaries
+	crAlphaModes     []colorrepresentation.ColorRepresentationSurfaceV1AlphaMode
 	crCoeffAndRanges []coeffRange
 	outputs          map[uint32]*outputData
 	xdgOutputs       []*xdgOutputInfo
@@ -80,7 +80,8 @@ type collectedData struct {
 }
 
 type coeffRange struct {
-	coefficients, rangeVal uint32
+	coefficients colorrepresentation.ColorRepresentationSurfaceV1Coefficients
+	rangeVal     colorrepresentation.ColorRepresentationSurfaceV1Range
 }
 
 func main() {
@@ -369,7 +370,7 @@ func main() {
 			if !ok {
 				continue
 			}
-			if si.capabilities&uint32(wayland.SeatCapabilityKeyboard) != 0 {
+			if si.capabilities&wayland.SeatCapabilityKeyboard != 0 {
 				seat, err := wayland.BindSeat(reg, g.Name, min(g.Version, wayland.VersionSeat))
 				if err != nil {
 					continue
@@ -430,7 +431,7 @@ func printDetail(b *strings.Builder, g wayland.RegistryGlobalEvent, cd *collecte
 		for _, m := range od.modes {
 			hz := float64(m.refresh) / 1000.0
 			cur := ""
-			if m.flags&uint32(wayland.OutputModeCurrent) != 0 {
+			if m.flags&wayland.OutputModeCurrent != 0 {
 				cur = " *"
 			}
 			fmt.Fprintf(b, "    mode %dx%d %.2fHz%s\n", m.width, m.height, hz, cur)
@@ -505,15 +506,15 @@ func printDetail(b *strings.Builder, g wayland.RegistryGlobalEvent, cd *collecte
 	}
 }
 
-func capsString(caps uint32) string {
+func capsString(caps wayland.SeatCapability) string {
 	var parts []string
-	if caps&uint32(wayland.SeatCapabilityPointer) != 0 {
+	if caps&wayland.SeatCapabilityPointer != 0 {
 		parts = append(parts, "pointer")
 	}
-	if caps&uint32(wayland.SeatCapabilityKeyboard) != 0 {
+	if caps&wayland.SeatCapabilityKeyboard != 0 {
 		parts = append(parts, "keyboard")
 	}
-	if caps&uint32(wayland.SeatCapabilityTouch) != 0 {
+	if caps&wayland.SeatCapabilityTouch != 0 {
 		parts = append(parts, "touch")
 	}
 	if len(parts) == 0 {
@@ -590,8 +591,8 @@ func drmFdPath(fd int) string {
 	return p
 }
 
-func intentName(v uint32) string {
-	switch colormanagement.ColorManagerV1RenderIntent(v) {
+func intentName(v colormanagement.ColorManagerV1RenderIntent) string {
+	switch v {
 	case colormanagement.ColorManagerV1RenderIntentPerceptual:
 		return "perceptual"
 	case colormanagement.ColorManagerV1RenderIntentRelative:
@@ -609,8 +610,8 @@ func intentName(v uint32) string {
 	}
 }
 
-func cmFeatureName(v uint32) string {
-	switch colormanagement.ColorManagerV1Feature(v) {
+func cmFeatureName(v colormanagement.ColorManagerV1Feature) string {
+	switch v {
 	case colormanagement.ColorManagerV1FeatureIccV2V4:
 		return "icc_v2_v4"
 	case colormanagement.ColorManagerV1FeatureParametric:
@@ -634,8 +635,8 @@ func cmFeatureName(v uint32) string {
 	}
 }
 
-func tfName(v uint32) string {
-	switch colormanagement.ColorManagerV1TransferFunction(v) {
+func tfName(v colormanagement.ColorManagerV1TransferFunction) string {
+	switch v {
 	case colormanagement.ColorManagerV1TransferFunctionBt1886:
 		return "bt.1886"
 	case colormanagement.ColorManagerV1TransferFunctionGamma22:
@@ -669,8 +670,8 @@ func tfName(v uint32) string {
 	}
 }
 
-func primariesName(v uint32) string {
-	switch colormanagement.ColorManagerV1Primaries(v) {
+func primariesName(v colormanagement.ColorManagerV1Primaries) string {
+	switch v {
 	case colormanagement.ColorManagerV1PrimariesSrgb:
 		return "srgb"
 	case colormanagement.ColorManagerV1PrimariesPalM:

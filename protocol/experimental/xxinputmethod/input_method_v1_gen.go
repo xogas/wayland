@@ -61,7 +61,7 @@ func (r *InputMethodV1PerformActionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1PerformActionRequest) Since() int { return 3 }
+func (r *InputMethodV1PerformActionRequest) Since() uint32 { return 3 }
 
 type InputMethodV1CommitStringRequest struct {
 	Text string
@@ -76,7 +76,7 @@ func (r *InputMethodV1CommitStringRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1CommitStringRequest) Since() int { return 1 }
+func (r *InputMethodV1CommitStringRequest) Since() uint32 { return 1 }
 
 type InputMethodV1SetPreeditStringRequest struct {
 	Text        string
@@ -101,7 +101,7 @@ func (r *InputMethodV1SetPreeditStringRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1SetPreeditStringRequest) Since() int { return 1 }
+func (r *InputMethodV1SetPreeditStringRequest) Since() uint32 { return 1 }
 
 type InputMethodV1DeleteSurroundingTextRequest struct {
 	BeforeLength uint32
@@ -122,7 +122,7 @@ func (r *InputMethodV1DeleteSurroundingTextRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *InputMethodV1DeleteSurroundingTextRequest) Since() int { return 1 }
+func (r *InputMethodV1DeleteSurroundingTextRequest) Since() uint32 { return 1 }
 
 type InputMethodV1MoveCursorRequest struct {
 	Cursor int32
@@ -141,7 +141,7 @@ func (r *InputMethodV1MoveCursorRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1MoveCursorRequest) Since() int { return 3 }
+func (r *InputMethodV1MoveCursorRequest) Since() uint32 { return 3 }
 
 type InputMethodV1CommitRequest struct {
 	Serial uint32
@@ -156,7 +156,7 @@ func (r *InputMethodV1CommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1CommitRequest) Since() int { return 1 }
+func (r *InputMethodV1CommitRequest) Since() uint32 { return 1 }
 
 type InputMethodV1GetInputPopupSurfaceRequest struct {
 	ID         wire.NewID
@@ -181,7 +181,7 @@ func (r *InputMethodV1GetInputPopupSurfaceRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *InputMethodV1GetInputPopupSurfaceRequest) Since() int { return 2 }
+func (r *InputMethodV1GetInputPopupSurfaceRequest) Since() uint32 { return 2 }
 
 type InputMethodV1DestroyRequest struct {
 }
@@ -192,7 +192,7 @@ func (r *InputMethodV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputMethodV1DestroyRequest) Since() int { return 1 }
+func (r *InputMethodV1DestroyRequest) Since() uint32 { return 1 }
 
 type InputMethodV1ActivateEvent struct {
 }
@@ -203,7 +203,7 @@ func (e *InputMethodV1ActivateEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1ActivateEvent) Since() int { return 1 }
+func (e *InputMethodV1ActivateEvent) Since() uint32 { return 1 }
 
 type InputMethodV1DeactivateEvent struct {
 }
@@ -214,7 +214,7 @@ func (e *InputMethodV1DeactivateEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1DeactivateEvent) Since() int { return 1 }
+func (e *InputMethodV1DeactivateEvent) Since() uint32 { return 1 }
 
 type InputMethodV1SurroundingTextEvent struct {
 	Text   string
@@ -243,7 +243,7 @@ func (e *InputMethodV1SurroundingTextEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1SurroundingTextEvent) Since() int { return 1 }
+func (e *InputMethodV1SurroundingTextEvent) Since() uint32 { return 1 }
 
 type InputMethodV1TextChangeCauseEvent struct {
 	Cause uint32
@@ -260,7 +260,7 @@ func (e *InputMethodV1TextChangeCauseEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1TextChangeCauseEvent) Since() int { return 1 }
+func (e *InputMethodV1TextChangeCauseEvent) Since() uint32 { return 1 }
 
 type InputMethodV1ContentTypeEvent struct {
 	Hint    uint32
@@ -283,7 +283,7 @@ func (e *InputMethodV1ContentTypeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1ContentTypeEvent) Since() int { return 1 }
+func (e *InputMethodV1ContentTypeEvent) Since() uint32 { return 1 }
 
 type InputMethodV1SetAvailableActionsEvent struct {
 	AvailableActions []byte
@@ -302,7 +302,7 @@ func (e *InputMethodV1SetAvailableActionsEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *InputMethodV1SetAvailableActionsEvent) Since() int { return 3 }
+func (e *InputMethodV1SetAvailableActionsEvent) Since() uint32 { return 3 }
 
 type InputMethodV1AnnounceSupportedFeaturesEvent struct {
 	Features uint32
@@ -321,10 +321,10 @@ func (e *InputMethodV1AnnounceSupportedFeaturesEvent) Unmarshal(r *wire.Reader) 
 	return nil
 }
 
-func (e *InputMethodV1AnnounceSupportedFeaturesEvent) Since() int { return 3 }
+func (e *InputMethodV1AnnounceSupportedFeaturesEvent) Since() uint32 { return 3 }
 
 type InputMethodV1AnnounceProtocolCompatEvent struct {
-	CompatLevel uint32
+	CompatLevel InputMethodV1ProtocolCompat
 }
 
 func (e *InputMethodV1AnnounceProtocolCompatEvent) Opcode() uint16 {
@@ -336,11 +336,11 @@ func (e *InputMethodV1AnnounceProtocolCompatEvent) Unmarshal(r *wire.Reader) err
 	if err != nil {
 		return err
 	}
-	e.CompatLevel = compatLevel
+	e.CompatLevel = InputMethodV1ProtocolCompat(compatLevel)
 	return nil
 }
 
-func (e *InputMethodV1AnnounceProtocolCompatEvent) Since() int { return 3 }
+func (e *InputMethodV1AnnounceProtocolCompatEvent) Since() uint32 { return 3 }
 
 type InputMethodV1DoneEvent struct {
 }
@@ -351,7 +351,7 @@ func (e *InputMethodV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1DoneEvent) Since() int { return 1 }
+func (e *InputMethodV1DoneEvent) Since() uint32 { return 1 }
 
 type InputMethodV1UnavailableEvent struct {
 }
@@ -362,7 +362,7 @@ func (e *InputMethodV1UnavailableEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *InputMethodV1UnavailableEvent) Since() int { return 1 }
+func (e *InputMethodV1UnavailableEvent) Since() uint32 { return 1 }
 
 type InputMethodV1ActivateFunc func(ev InputMethodV1ActivateEvent)
 

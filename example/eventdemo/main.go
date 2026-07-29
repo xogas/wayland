@@ -79,7 +79,7 @@ func btnName(code uint32) string {
 	return fmt.Sprintf("0x%x", code)
 }
 
-func axisName(code uint32) string {
+func axisName(code wayland.PointerAxis) string {
 	switch code {
 	case 0:
 		return "V"
@@ -195,7 +195,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var caps uint32
+	var caps wayland.SeatCapability
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
@@ -294,7 +294,7 @@ func main() {
 			closeFd()
 			return
 		}
-		buf, err := pool.CreateBuffer(0, winW, winH, stride, uint32(wayland.ShmFormatXrgb8888))
+		buf, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 			_ = pool.Destroy()
@@ -399,21 +399,21 @@ func main() {
 		haveTouch    bool
 	)
 
-	if caps&uint32(wayland.SeatCapabilityPointer) != 0 {
+	if caps&wayland.SeatCapabilityPointer != 0 {
 		p, err := seat.GetPointer()
 		if err == nil {
 			registerPointer(p)
 			havePointer = true
 		}
 	}
-	if caps&uint32(wayland.SeatCapabilityKeyboard) != 0 {
+	if caps&wayland.SeatCapabilityKeyboard != 0 {
 		k, err := seat.GetKeyboard()
 		if err == nil {
 			registerKeyboard(k)
 			haveKeyboard = true
 		}
 	}
-	if caps&uint32(wayland.SeatCapabilityTouch) != 0 {
+	if caps&wayland.SeatCapabilityTouch != 0 {
 		t, err := seat.GetTouch()
 		if err == nil {
 			registerTouch(t)
@@ -426,21 +426,21 @@ func main() {
 		if !ready {
 			return
 		}
-		if ev.Capabilities&uint32(wayland.SeatCapabilityPointer) != 0 && !havePointer {
+		if ev.Capabilities&wayland.SeatCapabilityPointer != 0 && !havePointer {
 			p, err := seat.GetPointer()
 			if err == nil {
 				registerPointer(p)
 				havePointer = true
 			}
 		}
-		if ev.Capabilities&uint32(wayland.SeatCapabilityKeyboard) != 0 && !haveKeyboard {
+		if ev.Capabilities&wayland.SeatCapabilityKeyboard != 0 && !haveKeyboard {
 			k, err := seat.GetKeyboard()
 			if err == nil {
 				registerKeyboard(k)
 				haveKeyboard = true
 			}
 		}
-		if ev.Capabilities&uint32(wayland.SeatCapabilityTouch) != 0 && !haveTouch {
+		if ev.Capabilities&wayland.SeatCapabilityTouch != 0 && !haveTouch {
 			t, err := seat.GetTouch()
 			if err == nil {
 				registerTouch(t)

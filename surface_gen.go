@@ -51,10 +51,10 @@ func (r *SurfaceDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceDestroyRequest) Since() int { return 1 }
+func (r *SurfaceDestroyRequest) Since() uint32 { return 1 }
 
 type SurfaceAttachRequest struct {
-	Buffer wire.ObjectID
+	Buffer wire.ObjectID // nullable
 	X      int32
 	Y      int32
 }
@@ -74,7 +74,7 @@ func (r *SurfaceAttachRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceAttachRequest) Since() int { return 1 }
+func (r *SurfaceAttachRequest) Since() uint32 { return 1 }
 
 type SurfaceDamageRequest struct {
 	X      int32
@@ -101,7 +101,7 @@ func (r *SurfaceDamageRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceDamageRequest) Since() int { return 1 }
+func (r *SurfaceDamageRequest) Since() uint32 { return 1 }
 
 type SurfaceFrameRequest struct {
 	Callback wire.NewID
@@ -116,10 +116,10 @@ func (r *SurfaceFrameRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceFrameRequest) Since() int { return 1 }
+func (r *SurfaceFrameRequest) Since() uint32 { return 1 }
 
 type SurfaceSetOpaqueRegionRequest struct {
-	Region wire.ObjectID
+	Region wire.ObjectID // nullable
 }
 
 func (r *SurfaceSetOpaqueRegionRequest) Opcode() uint16 { return SurfaceRequestSetOpaqueRegion }
@@ -131,10 +131,10 @@ func (r *SurfaceSetOpaqueRegionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetOpaqueRegionRequest) Since() int { return 1 }
+func (r *SurfaceSetOpaqueRegionRequest) Since() uint32 { return 1 }
 
 type SurfaceSetInputRegionRequest struct {
-	Region wire.ObjectID
+	Region wire.ObjectID // nullable
 }
 
 func (r *SurfaceSetInputRegionRequest) Opcode() uint16 { return SurfaceRequestSetInputRegion }
@@ -146,7 +146,7 @@ func (r *SurfaceSetInputRegionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetInputRegionRequest) Since() int { return 1 }
+func (r *SurfaceSetInputRegionRequest) Since() uint32 { return 1 }
 
 type SurfaceCommitRequest struct {
 }
@@ -157,7 +157,7 @@ func (r *SurfaceCommitRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceCommitRequest) Since() int { return 1 }
+func (r *SurfaceCommitRequest) Since() uint32 { return 1 }
 
 type SurfaceSetBufferTransformRequest struct {
 	Transform int32
@@ -172,7 +172,7 @@ func (r *SurfaceSetBufferTransformRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetBufferTransformRequest) Since() int { return 2 }
+func (r *SurfaceSetBufferTransformRequest) Since() uint32 { return 2 }
 
 type SurfaceSetBufferScaleRequest struct {
 	Scale int32
@@ -187,7 +187,7 @@ func (r *SurfaceSetBufferScaleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceSetBufferScaleRequest) Since() int { return 3 }
+func (r *SurfaceSetBufferScaleRequest) Since() uint32 { return 3 }
 
 type SurfaceDamageBufferRequest struct {
 	X      int32
@@ -214,7 +214,7 @@ func (r *SurfaceDamageBufferRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceDamageBufferRequest) Since() int { return 4 }
+func (r *SurfaceDamageBufferRequest) Since() uint32 { return 4 }
 
 type SurfaceOffsetRequest struct {
 	X int32
@@ -233,7 +233,7 @@ func (r *SurfaceOffsetRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceOffsetRequest) Since() int { return 5 }
+func (r *SurfaceOffsetRequest) Since() uint32 { return 5 }
 
 type SurfaceGetReleaseRequest struct {
 	Callback wire.NewID
@@ -248,7 +248,7 @@ func (r *SurfaceGetReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SurfaceGetReleaseRequest) Since() int { return 7 }
+func (r *SurfaceGetReleaseRequest) Since() uint32 { return 7 }
 
 type SurfaceEnterEvent struct {
 	Output wire.ObjectID
@@ -265,7 +265,7 @@ func (e *SurfaceEnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfaceEnterEvent) Since() int { return 1 }
+func (e *SurfaceEnterEvent) Since() uint32 { return 1 }
 
 type SurfaceLeaveEvent struct {
 	Output wire.ObjectID
@@ -282,7 +282,7 @@ func (e *SurfaceLeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfaceLeaveEvent) Since() int { return 1 }
+func (e *SurfaceLeaveEvent) Since() uint32 { return 1 }
 
 type SurfacePreferredBufferScaleEvent struct {
 	Factor int32
@@ -299,10 +299,10 @@ func (e *SurfacePreferredBufferScaleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SurfacePreferredBufferScaleEvent) Since() int { return 6 }
+func (e *SurfacePreferredBufferScaleEvent) Since() uint32 { return 6 }
 
 type SurfacePreferredBufferTransformEvent struct {
-	Transform uint32
+	Transform OutputTransform
 }
 
 func (e *SurfacePreferredBufferTransformEvent) Opcode() uint16 {
@@ -314,11 +314,11 @@ func (e *SurfacePreferredBufferTransformEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Transform = transform
+	e.Transform = OutputTransform(transform)
 	return nil
 }
 
-func (e *SurfacePreferredBufferTransformEvent) Since() int { return 6 }
+func (e *SurfacePreferredBufferTransformEvent) Since() uint32 { return 6 }
 
 type SurfaceEnterFunc func(ev SurfaceEnterEvent)
 

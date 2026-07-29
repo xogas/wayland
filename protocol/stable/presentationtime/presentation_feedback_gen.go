@@ -16,6 +16,7 @@ const (
 	PresentationFeedbackEventDiscarded  uint16 = 2
 )
 
+// PresentationFeedbackKind is a bitfield of flags.
 type PresentationFeedbackKind uint32
 
 const (
@@ -42,7 +43,7 @@ func (e *PresentationFeedbackSyncOutputEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PresentationFeedbackSyncOutputEvent) Since() int { return 1 }
+func (e *PresentationFeedbackSyncOutputEvent) Since() uint32 { return 1 }
 
 type PresentationFeedbackPresentedEvent struct {
 	TvSecHi uint32
@@ -51,7 +52,7 @@ type PresentationFeedbackPresentedEvent struct {
 	Refresh uint32
 	SeqHi   uint32
 	SeqLo   uint32
-	Flags   uint32
+	Flags   PresentationFeedbackKind
 }
 
 func (e *PresentationFeedbackPresentedEvent) Opcode() uint16 {
@@ -93,11 +94,11 @@ func (e *PresentationFeedbackPresentedEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Flags = flags
+	e.Flags = PresentationFeedbackKind(flags)
 	return nil
 }
 
-func (e *PresentationFeedbackPresentedEvent) Since() int { return 1 }
+func (e *PresentationFeedbackPresentedEvent) Since() uint32 { return 1 }
 
 type PresentationFeedbackDiscardedEvent struct {
 }
@@ -110,7 +111,7 @@ func (e *PresentationFeedbackDiscardedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PresentationFeedbackDiscardedEvent) Since() int { return 1 }
+func (e *PresentationFeedbackDiscardedEvent) Since() uint32 { return 1 }
 
 type PresentationFeedbackSyncOutputFunc func(ev PresentationFeedbackSyncOutputEvent)
 

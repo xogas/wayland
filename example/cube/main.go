@@ -310,12 +310,12 @@ func main() {
 	}
 	defer pool.Destroy() //nolint: errcheck
 
-	buf0, err := pool.CreateBuffer(0, winW, winH, stride, uint32(wayland.ShmFormatXrgb8888))
+	buf0, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 		os.Exit(1)
 	}
-	buf1, err := pool.CreateBuffer(int32(bufBytes), winW, winH, stride, uint32(wayland.ShmFormatXrgb8888))
+	buf1, err := pool.CreateBuffer(int32(bufBytes), winW, winH, stride, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
 		os.Exit(1)

@@ -25,6 +25,7 @@ const (
 	BackgroundEffectManagerV1ErrorBackgroundEffectExists BackgroundEffectManagerV1Error = 0
 )
 
+// BackgroundEffectManagerV1Capability is a bitfield of flags.
 type BackgroundEffectManagerV1Capability uint32
 
 const (
@@ -42,7 +43,7 @@ func (r *BackgroundEffectManagerV1DestroyRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *BackgroundEffectManagerV1DestroyRequest) Since() int { return 1 }
+func (r *BackgroundEffectManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type BackgroundEffectManagerV1GetBackgroundEffectRequest struct {
 	ID      wire.NewID
@@ -63,10 +64,10 @@ func (r *BackgroundEffectManagerV1GetBackgroundEffectRequest) Marshal(w *wire.Wr
 	return nil
 }
 
-func (r *BackgroundEffectManagerV1GetBackgroundEffectRequest) Since() int { return 1 }
+func (r *BackgroundEffectManagerV1GetBackgroundEffectRequest) Since() uint32 { return 1 }
 
 type BackgroundEffectManagerV1CapabilitiesEvent struct {
-	Flags uint32
+	Flags BackgroundEffectManagerV1Capability
 }
 
 func (e *BackgroundEffectManagerV1CapabilitiesEvent) Opcode() uint16 {
@@ -78,11 +79,11 @@ func (e *BackgroundEffectManagerV1CapabilitiesEvent) Unmarshal(r *wire.Reader) e
 	if err != nil {
 		return err
 	}
-	e.Flags = flags
+	e.Flags = BackgroundEffectManagerV1Capability(flags)
 	return nil
 }
 
-func (e *BackgroundEffectManagerV1CapabilitiesEvent) Since() int { return 1 }
+func (e *BackgroundEffectManagerV1CapabilitiesEvent) Since() uint32 { return 1 }
 
 type BackgroundEffectManagerV1CapabilitiesFunc func(ev BackgroundEffectManagerV1CapabilitiesEvent)
 

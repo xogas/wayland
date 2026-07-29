@@ -33,7 +33,7 @@ func (r *SecurityContextManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SecurityContextManagerV1DestroyRequest) Since() int { return 1 }
+func (r *SecurityContextManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type SecurityContextManagerV1CreateListenerRequest struct {
 	ID       wire.NewID
@@ -58,7 +58,7 @@ func (r *SecurityContextManagerV1CreateListenerRequest) Marshal(w *wire.Writer) 
 	return nil
 }
 
-func (r *SecurityContextManagerV1CreateListenerRequest) Since() int { return 1 }
+func (r *SecurityContextManagerV1CreateListenerRequest) Since() uint32 { return 1 }
 
 type SecurityContextManagerV1 struct {
 	proxy *wayland.Proxy

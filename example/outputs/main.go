@@ -45,7 +45,7 @@ func main() {
 		width   int32
 		height  int32
 		refresh int32
-		flags   uint32
+		flags   wayland.OutputMode
 	}
 	type outputInfo struct {
 		name        string
@@ -99,11 +99,11 @@ func main() {
 		for _, m := range o.modes {
 			flagStr := "none"
 			switch {
-			case m.flags&uint32(wayland.OutputModeCurrent) != 0 && m.flags&uint32(wayland.OutputModePreferred) != 0:
+			case m.flags&wayland.OutputModeCurrent != 0 && m.flags&wayland.OutputModePreferred != 0:
 				flagStr = "current | preferred"
-			case m.flags&uint32(wayland.OutputModeCurrent) != 0:
+			case m.flags&wayland.OutputModeCurrent != 0:
 				flagStr = "current"
-			case m.flags&uint32(wayland.OutputModePreferred) != 0:
+			case m.flags&wayland.OutputModePreferred != 0:
 				flagStr = "preferred"
 			}
 			fmt.Printf("\t\t%dx%d @ %.3f Hz, flags: %s\n",

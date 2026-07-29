@@ -34,7 +34,7 @@ func (r *ViewportDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ViewportDestroyRequest) Since() int { return 1 }
+func (r *ViewportDestroyRequest) Since() uint32 { return 1 }
 
 type ViewportSetSourceRequest struct {
 	X      wire.Fixed
@@ -61,7 +61,7 @@ func (r *ViewportSetSourceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ViewportSetSourceRequest) Since() int { return 1 }
+func (r *ViewportSetSourceRequest) Since() uint32 { return 1 }
 
 type ViewportSetDestinationRequest struct {
 	Width  int32
@@ -80,7 +80,7 @@ func (r *ViewportSetDestinationRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ViewportSetDestinationRequest) Since() int { return 1 }
+func (r *ViewportSetDestinationRequest) Since() uint32 { return 1 }
 
 type Viewport struct {
 	proxy *wayland.Proxy

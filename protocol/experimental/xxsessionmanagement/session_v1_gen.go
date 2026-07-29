@@ -40,7 +40,7 @@ func (r *SessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionV1DestroyRequest) Since() int { return 1 }
+func (r *SessionV1DestroyRequest) Since() uint32 { return 1 }
 
 type SessionV1RemoveRequest struct {
 }
@@ -51,7 +51,7 @@ func (r *SessionV1RemoveRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionV1RemoveRequest) Since() int { return 1 }
+func (r *SessionV1RemoveRequest) Since() uint32 { return 1 }
 
 type SessionV1AddToplevelRequest struct {
 	ID       wire.NewID
@@ -74,7 +74,7 @@ func (r *SessionV1AddToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionV1AddToplevelRequest) Since() int { return 1 }
+func (r *SessionV1AddToplevelRequest) Since() uint32 { return 1 }
 
 type SessionV1RestoreToplevelRequest struct {
 	ID       wire.NewID
@@ -97,7 +97,7 @@ func (r *SessionV1RestoreToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SessionV1RestoreToplevelRequest) Since() int { return 1 }
+func (r *SessionV1RestoreToplevelRequest) Since() uint32 { return 1 }
 
 type SessionV1CreatedEvent struct {
 	ID string
@@ -106,15 +106,15 @@ type SessionV1CreatedEvent struct {
 func (e *SessionV1CreatedEvent) Opcode() uint16 { return SessionV1EventCreated }
 
 func (e *SessionV1CreatedEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.String()
+	id, err := r.String()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *SessionV1CreatedEvent) Since() int { return 1 }
+func (e *SessionV1CreatedEvent) Since() uint32 { return 1 }
 
 type SessionV1RestoredEvent struct {
 }
@@ -125,7 +125,7 @@ func (e *SessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SessionV1RestoredEvent) Since() int { return 1 }
+func (e *SessionV1RestoredEvent) Since() uint32 { return 1 }
 
 type SessionV1ReplacedEvent struct {
 }
@@ -136,7 +136,7 @@ func (e *SessionV1ReplacedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SessionV1ReplacedEvent) Since() int { return 1 }
+func (e *SessionV1ReplacedEvent) Since() uint32 { return 1 }
 
 type SessionV1CreatedFunc func(ev SessionV1CreatedEvent)
 

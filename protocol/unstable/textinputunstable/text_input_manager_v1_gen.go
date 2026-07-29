@@ -29,7 +29,7 @@ func (r *TextInputManagerV1CreateTextInputRequest) Marshal(w *wire.Writer) error
 	return nil
 }
 
-func (r *TextInputManagerV1CreateTextInputRequest) Since() int { return 1 }
+func (r *TextInputManagerV1CreateTextInputRequest) Since() uint32 { return 1 }
 
 type TextInputManagerV1 struct {
 	proxy *wayland.Proxy

@@ -40,7 +40,7 @@ func (r *ZoneV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneV1DestroyRequest) Since() int { return 1 }
+func (r *ZoneV1DestroyRequest) Since() uint32 { return 1 }
 
 type ZoneV1AddItemRequest struct {
 	Item wire.ObjectID
@@ -55,7 +55,7 @@ func (r *ZoneV1AddItemRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneV1AddItemRequest) Since() int { return 1 }
+func (r *ZoneV1AddItemRequest) Since() uint32 { return 1 }
 
 type ZoneV1RemoveItemRequest struct {
 	Item wire.ObjectID
@@ -70,7 +70,7 @@ func (r *ZoneV1RemoveItemRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneV1RemoveItemRequest) Since() int { return 1 }
+func (r *ZoneV1RemoveItemRequest) Since() uint32 { return 1 }
 
 type ZoneV1SizeEvent struct {
 	Width  int32
@@ -93,7 +93,7 @@ func (e *ZoneV1SizeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1SizeEvent) Since() int { return 1 }
+func (e *ZoneV1SizeEvent) Since() uint32 { return 1 }
 
 type ZoneV1HandleEvent struct {
 	Handle string
@@ -110,7 +110,7 @@ func (e *ZoneV1HandleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1HandleEvent) Since() int { return 1 }
+func (e *ZoneV1HandleEvent) Since() uint32 { return 1 }
 
 type ZoneV1DoneEvent struct {
 }
@@ -121,7 +121,7 @@ func (e *ZoneV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1DoneEvent) Since() int { return 1 }
+func (e *ZoneV1DoneEvent) Since() uint32 { return 1 }
 
 type ZoneV1ItemBlockedEvent struct {
 	Item wire.ObjectID
@@ -138,7 +138,7 @@ func (e *ZoneV1ItemBlockedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1ItemBlockedEvent) Since() int { return 1 }
+func (e *ZoneV1ItemBlockedEvent) Since() uint32 { return 1 }
 
 type ZoneV1ItemEnteredEvent struct {
 	Item wire.ObjectID
@@ -155,7 +155,7 @@ func (e *ZoneV1ItemEnteredEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1ItemEnteredEvent) Since() int { return 1 }
+func (e *ZoneV1ItemEnteredEvent) Since() uint32 { return 1 }
 
 type ZoneV1ItemLeftEvent struct {
 	Item wire.ObjectID
@@ -172,7 +172,7 @@ func (e *ZoneV1ItemLeftEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ZoneV1ItemLeftEvent) Since() int { return 1 }
+func (e *ZoneV1ItemLeftEvent) Since() uint32 { return 1 }
 
 type ZoneV1SizeFunc func(ev ZoneV1SizeEvent)
 

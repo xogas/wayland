@@ -38,7 +38,7 @@ func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest struct {
 	Timeline wire.ObjectID
@@ -63,7 +63,7 @@ func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Marshal(w *wire.Writer)
 	return nil
 }
 
-func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjSurfaceV1SetReleasePointRequest struct {
 	Timeline wire.ObjectID
@@ -88,7 +88,7 @@ func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Marshal(w *wire.Writer)
 	return nil
 }
 
-func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Since() int { return 1 }
+func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Since() uint32 { return 1 }
 
 type LinuxDrmSyncobjSurfaceV1 struct {
 	proxy *wayland.Proxy

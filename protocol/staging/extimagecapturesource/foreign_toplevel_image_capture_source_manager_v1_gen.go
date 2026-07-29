@@ -34,7 +34,7 @@ func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Marshal(
 	return nil
 }
 
-func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Since() int { return 1 }
+func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
 type ForeignToplevelImageCaptureSourceManagerV1DestroyRequest struct {
 }
@@ -47,7 +47,7 @@ func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Marshal(w *wi
 	return nil
 }
 
-func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ForeignToplevelImageCaptureSourceManagerV1 struct {
 	proxy *wayland.Proxy

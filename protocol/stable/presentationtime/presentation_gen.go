@@ -35,7 +35,7 @@ func (r *PresentationDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PresentationDestroyRequest) Since() int { return 1 }
+func (r *PresentationDestroyRequest) Since() uint32 { return 1 }
 
 type PresentationFeedbackRequest struct {
 	Surface  wire.ObjectID
@@ -54,7 +54,7 @@ func (r *PresentationFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PresentationFeedbackRequest) Since() int { return 1 }
+func (r *PresentationFeedbackRequest) Since() uint32 { return 1 }
 
 type PresentationClockIDEvent struct {
 	ClkID uint32
@@ -71,7 +71,7 @@ func (e *PresentationClockIDEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *PresentationClockIDEvent) Since() int { return 1 }
+func (e *PresentationClockIDEvent) Since() uint32 { return 1 }
 
 type PresentationClockIDFunc func(ev PresentationClockIDEvent)
 

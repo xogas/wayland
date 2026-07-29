@@ -49,10 +49,10 @@ func (r *ImageDescriptionCreatorParamsV1CreateRequest) Marshal(w *wire.Writer) e
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1CreateRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1CreateRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetTfNamedRequest struct {
-	Tf uint32
+	Tf ColorManagerV1TransferFunction
 }
 
 func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Opcode() uint16 {
@@ -60,13 +60,13 @@ func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Opcode() uint16 {
 }
 
 func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Tf); err != nil {
+	if err := w.Uint32(uint32(r.Tf)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetTfPowerRequest struct {
 	Eexp uint32
@@ -83,10 +83,10 @@ func (r *ImageDescriptionCreatorParamsV1SetTfPowerRequest) Marshal(w *wire.Write
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetTfPowerRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetTfPowerRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest struct {
-	Primaries uint32
+	Primaries ColorManagerV1Primaries
 }
 
 func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Opcode() uint16 {
@@ -94,13 +94,13 @@ func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Opcode() uint1
 }
 
 func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Marshal(w *wire.Writer) error {
-	if err := w.Uint32(r.Primaries); err != nil {
+	if err := w.Uint32(uint32(r.Primaries)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetPrimariesRequest struct {
 	RX int32
@@ -145,7 +145,7 @@ func (r *ImageDescriptionCreatorParamsV1SetPrimariesRequest) Marshal(w *wire.Wri
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetPrimariesRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetPrimariesRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetLuminancesRequest struct {
 	MinLum       uint32
@@ -170,7 +170,7 @@ func (r *ImageDescriptionCreatorParamsV1SetLuminancesRequest) Marshal(w *wire.Wr
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetLuminancesRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetLuminancesRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest struct {
 	RX int32
@@ -215,7 +215,7 @@ func (r *ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest) Mar
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest struct {
 	MinLum uint32
@@ -236,7 +236,7 @@ func (r *ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest) Marshal(w 
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetMaxCllRequest struct {
 	MaxCll uint32
@@ -253,7 +253,7 @@ func (r *ImageDescriptionCreatorParamsV1SetMaxCllRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetMaxCllRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetMaxCllRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1SetMaxFallRequest struct {
 	MaxFall uint32
@@ -270,7 +270,7 @@ func (r *ImageDescriptionCreatorParamsV1SetMaxFallRequest) Marshal(w *wire.Write
 	return nil
 }
 
-func (r *ImageDescriptionCreatorParamsV1SetMaxFallRequest) Since() int { return 1 }
+func (r *ImageDescriptionCreatorParamsV1SetMaxFallRequest) Since() uint32 { return 1 }
 
 type ImageDescriptionCreatorParamsV1 struct {
 	proxy *wayland.Proxy
@@ -300,7 +300,7 @@ func (o *ImageDescriptionCreatorParamsV1) Create() (*ImageDescriptionV1, error) 
 	return wrapped, nil
 }
 
-func (o *ImageDescriptionCreatorParamsV1) SetTfNamed(tf uint32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetTfNamed(tf ColorManagerV1TransferFunction) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetTfNamed, &ImageDescriptionCreatorParamsV1SetTfNamedRequest{
 		Tf: tf,
 	})
@@ -312,7 +312,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetTfPower(eexp uint32) error {
 	})
 }
 
-func (o *ImageDescriptionCreatorParamsV1) SetPrimariesNamed(primaries uint32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetPrimariesNamed(primaries ColorManagerV1Primaries) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetPrimariesNamed, &ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest{
 		Primaries: primaries,
 	})

@@ -26,7 +26,7 @@ func (r *ZoneManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneManagerV1DestroyRequest) Since() int { return 1 }
+func (r *ZoneManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type ZoneManagerV1GetZoneItemRequest struct {
 	ID       wire.NewID
@@ -45,11 +45,11 @@ func (r *ZoneManagerV1GetZoneItemRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneManagerV1GetZoneItemRequest) Since() int { return 1 }
+func (r *ZoneManagerV1GetZoneItemRequest) Since() uint32 { return 1 }
 
 type ZoneManagerV1GetZoneRequest struct {
 	ID     wire.NewID
-	Output wire.ObjectID
+	Output wire.ObjectID // nullable
 }
 
 func (r *ZoneManagerV1GetZoneRequest) Opcode() uint16 { return ZoneManagerV1RequestGetZone }
@@ -64,7 +64,7 @@ func (r *ZoneManagerV1GetZoneRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneManagerV1GetZoneRequest) Since() int { return 1 }
+func (r *ZoneManagerV1GetZoneRequest) Since() uint32 { return 1 }
 
 type ZoneManagerV1GetZoneFromHandleRequest struct {
 	ID     wire.NewID
@@ -85,7 +85,7 @@ func (r *ZoneManagerV1GetZoneFromHandleRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ZoneManagerV1GetZoneFromHandleRequest) Since() int { return 1 }
+func (r *ZoneManagerV1GetZoneFromHandleRequest) Since() uint32 { return 1 }
 
 type ZoneManagerV1 struct {
 	proxy *wayland.Proxy

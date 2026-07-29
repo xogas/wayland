@@ -26,7 +26,7 @@ const (
 	simH       = 200
 	simScale   = winW / simW
 	simCells   = simW * simH
-	pixFmt     = uint32(wayland.ShmFormatXrgb8888)
+	pixFmt     = wayland.ShmFormatXrgb8888
 	diffuseN   = 2
 	projectN   = 4
 	simDt      = 0.12

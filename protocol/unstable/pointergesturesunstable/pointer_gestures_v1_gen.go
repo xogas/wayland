@@ -36,7 +36,7 @@ func (r *PointerGesturesV1GetSwipeGestureRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *PointerGesturesV1GetSwipeGestureRequest) Since() int { return 1 }
+func (r *PointerGesturesV1GetSwipeGestureRequest) Since() uint32 { return 1 }
 
 type PointerGesturesV1GetPinchGestureRequest struct {
 	ID      wire.NewID
@@ -57,7 +57,7 @@ func (r *PointerGesturesV1GetPinchGestureRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *PointerGesturesV1GetPinchGestureRequest) Since() int { return 1 }
+func (r *PointerGesturesV1GetPinchGestureRequest) Since() uint32 { return 1 }
 
 type PointerGesturesV1ReleaseRequest struct {
 }
@@ -68,7 +68,7 @@ func (r *PointerGesturesV1ReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerGesturesV1ReleaseRequest) Since() int { return 2 }
+func (r *PointerGesturesV1ReleaseRequest) Since() uint32 { return 2 }
 
 type PointerGesturesV1GetHoldGestureRequest struct {
 	ID      wire.NewID
@@ -89,7 +89,7 @@ func (r *PointerGesturesV1GetHoldGestureRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *PointerGesturesV1GetHoldGestureRequest) Since() int { return 3 }
+func (r *PointerGesturesV1GetHoldGestureRequest) Since() uint32 { return 3 }
 
 type PointerGesturesV1 struct {
 	proxy *wayland.Proxy

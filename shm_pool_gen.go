@@ -21,7 +21,7 @@ type ShmPoolCreateBufferRequest struct {
 	Width  int32
 	Height int32
 	Stride int32
-	Format uint32
+	Format ShmFormat
 }
 
 func (r *ShmPoolCreateBufferRequest) Opcode() uint16 { return ShmPoolRequestCreateBuffer }
@@ -42,13 +42,13 @@ func (r *ShmPoolCreateBufferRequest) Marshal(w *wire.Writer) error {
 	if err := w.Int32(r.Stride); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Format); err != nil {
+	if err := w.Uint32(uint32(r.Format)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ShmPoolCreateBufferRequest) Since() int { return 1 }
+func (r *ShmPoolCreateBufferRequest) Since() uint32 { return 1 }
 
 type ShmPoolDestroyRequest struct {
 }
@@ -59,7 +59,7 @@ func (r *ShmPoolDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShmPoolDestroyRequest) Since() int { return 1 }
+func (r *ShmPoolDestroyRequest) Since() uint32 { return 1 }
 
 type ShmPoolResizeRequest struct {
 	Size int32
@@ -74,7 +74,7 @@ func (r *ShmPoolResizeRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShmPoolResizeRequest) Since() int { return 1 }
+func (r *ShmPoolResizeRequest) Since() uint32 { return 1 }
 
 type ShmPool struct {
 	proxy *Proxy
@@ -88,7 +88,7 @@ func (o *ShmPool) Proxy() *Proxy {
 	return o.proxy
 }
 
-func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format uint32) (*Buffer, error) {
+func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format ShmFormat) (*Buffer, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())

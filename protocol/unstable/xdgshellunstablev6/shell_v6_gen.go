@@ -41,7 +41,7 @@ func (r *ShellV6DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV6DestroyRequest) Since() int { return 1 }
+func (r *ShellV6DestroyRequest) Since() uint32 { return 1 }
 
 type ShellV6CreatePositionerRequest struct {
 	ID wire.NewID
@@ -56,7 +56,7 @@ func (r *ShellV6CreatePositionerRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV6CreatePositionerRequest) Since() int { return 1 }
+func (r *ShellV6CreatePositionerRequest) Since() uint32 { return 1 }
 
 type ShellV6GetXdgSurfaceRequest struct {
 	ID      wire.NewID
@@ -75,7 +75,7 @@ func (r *ShellV6GetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV6GetXdgSurfaceRequest) Since() int { return 1 }
+func (r *ShellV6GetXdgSurfaceRequest) Since() uint32 { return 1 }
 
 type ShellV6PongRequest struct {
 	Serial uint32
@@ -90,7 +90,7 @@ func (r *ShellV6PongRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellV6PongRequest) Since() int { return 1 }
+func (r *ShellV6PongRequest) Since() uint32 { return 1 }
 
 type ShellV6PingEvent struct {
 	Serial uint32
@@ -107,7 +107,7 @@ func (e *ShellV6PingEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ShellV6PingEvent) Since() int { return 1 }
+func (e *ShellV6PingEvent) Since() uint32 { return 1 }
 
 type ShellV6PingFunc func(ev ShellV6PingEvent)
 

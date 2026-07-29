@@ -32,7 +32,7 @@ func (r *TouchReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TouchReleaseRequest) Since() int { return 3 }
+func (r *TouchReleaseRequest) Since() uint32 { return 3 }
 
 type TouchDownEvent struct {
 	Serial  uint32
@@ -61,11 +61,11 @@ func (e *TouchDownEvent) Unmarshal(r *wire.Reader) error {
 		return err
 	}
 	e.Surface = surface
-	iD, err := r.Int32()
+	id, err := r.Int32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	x, err := r.Fixed()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (e *TouchDownEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchDownEvent) Since() int { return 1 }
+func (e *TouchDownEvent) Since() uint32 { return 1 }
 
 type TouchUpEvent struct {
 	Serial uint32
@@ -100,15 +100,15 @@ func (e *TouchUpEvent) Unmarshal(r *wire.Reader) error {
 		return err
 	}
 	e.Time = time
-	iD, err := r.Int32()
+	id, err := r.Int32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	return nil
 }
 
-func (e *TouchUpEvent) Since() int { return 1 }
+func (e *TouchUpEvent) Since() uint32 { return 1 }
 
 type TouchMotionEvent struct {
 	Time uint32
@@ -125,11 +125,11 @@ func (e *TouchMotionEvent) Unmarshal(r *wire.Reader) error {
 		return err
 	}
 	e.Time = time
-	iD, err := r.Int32()
+	id, err := r.Int32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	x, err := r.Fixed()
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (e *TouchMotionEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchMotionEvent) Since() int { return 1 }
+func (e *TouchMotionEvent) Since() uint32 { return 1 }
 
 type TouchFrameEvent struct {
 }
@@ -154,7 +154,7 @@ func (e *TouchFrameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchFrameEvent) Since() int { return 1 }
+func (e *TouchFrameEvent) Since() uint32 { return 1 }
 
 type TouchCancelEvent struct {
 }
@@ -165,7 +165,7 @@ func (e *TouchCancelEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchCancelEvent) Since() int { return 1 }
+func (e *TouchCancelEvent) Since() uint32 { return 1 }
 
 type TouchShapeEvent struct {
 	ID    int32
@@ -176,11 +176,11 @@ type TouchShapeEvent struct {
 func (e *TouchShapeEvent) Opcode() uint16 { return TouchEventShape }
 
 func (e *TouchShapeEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Int32()
+	id, err := r.Int32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	major, err := r.Fixed()
 	if err != nil {
 		return err
@@ -194,7 +194,7 @@ func (e *TouchShapeEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchShapeEvent) Since() int { return 6 }
+func (e *TouchShapeEvent) Since() uint32 { return 6 }
 
 type TouchOrientationEvent struct {
 	ID          int32
@@ -204,11 +204,11 @@ type TouchOrientationEvent struct {
 func (e *TouchOrientationEvent) Opcode() uint16 { return TouchEventOrientation }
 
 func (e *TouchOrientationEvent) Unmarshal(r *wire.Reader) error {
-	iD, err := r.Int32()
+	id, err := r.Int32()
 	if err != nil {
 		return err
 	}
-	e.ID = iD
+	e.ID = id
 	orientation, err := r.Fixed()
 	if err != nil {
 		return err
@@ -217,7 +217,7 @@ func (e *TouchOrientationEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TouchOrientationEvent) Since() int { return 6 }
+func (e *TouchOrientationEvent) Since() uint32 { return 6 }
 
 type TouchDownFunc func(ev TouchDownEvent)
 

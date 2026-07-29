@@ -34,7 +34,7 @@ func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Marshal(w *wire.W
 	return nil
 }
 
-func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Since() int { return 1 }
+func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
 type OutputImageCaptureSourceManagerV1DestroyRequest struct {
 }
@@ -47,7 +47,7 @@ func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Marshal(w *wire.Writer
 	return nil
 }
 
-func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Since() int { return 1 }
+func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 type OutputImageCaptureSourceManagerV1 struct {
 	proxy *wayland.Proxy

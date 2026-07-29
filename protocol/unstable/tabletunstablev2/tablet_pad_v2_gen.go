@@ -54,7 +54,7 @@ func (r *TabletPadV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadV2SetFeedbackRequest) Since() int { return 1 }
+func (r *TabletPadV2SetFeedbackRequest) Since() uint32 { return 1 }
 
 type TabletPadV2DestroyRequest struct {
 }
@@ -65,7 +65,7 @@ func (r *TabletPadV2DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TabletPadV2DestroyRequest) Since() int { return 1 }
+func (r *TabletPadV2DestroyRequest) Since() uint32 { return 1 }
 
 type TabletPadV2GroupEvent struct {
 	PadGroup *TabletPadGroupV2
@@ -73,7 +73,7 @@ type TabletPadV2GroupEvent struct {
 
 func (e *TabletPadV2GroupEvent) Opcode() uint16 { return TabletPadV2EventGroup }
 
-func (e *TabletPadV2GroupEvent) Since() int { return 1 }
+func (e *TabletPadV2GroupEvent) Since() uint32 { return 1 }
 
 type TabletPadV2PathEvent struct {
 	Path string
@@ -90,7 +90,7 @@ func (e *TabletPadV2PathEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2PathEvent) Since() int { return 1 }
+func (e *TabletPadV2PathEvent) Since() uint32 { return 1 }
 
 type TabletPadV2ButtonsEvent struct {
 	Buttons uint32
@@ -107,7 +107,7 @@ func (e *TabletPadV2ButtonsEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2ButtonsEvent) Since() int { return 1 }
+func (e *TabletPadV2ButtonsEvent) Since() uint32 { return 1 }
 
 type TabletPadV2DoneEvent struct {
 }
@@ -118,12 +118,12 @@ func (e *TabletPadV2DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2DoneEvent) Since() int { return 1 }
+func (e *TabletPadV2DoneEvent) Since() uint32 { return 1 }
 
 type TabletPadV2ButtonEvent struct {
 	Time   uint32
 	Button uint32
-	State  uint32
+	State  TabletPadV2ButtonState
 }
 
 func (e *TabletPadV2ButtonEvent) Opcode() uint16 { return TabletPadV2EventButton }
@@ -143,11 +143,11 @@ func (e *TabletPadV2ButtonEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.State = state
+	e.State = TabletPadV2ButtonState(state)
 	return nil
 }
 
-func (e *TabletPadV2ButtonEvent) Since() int { return 1 }
+func (e *TabletPadV2ButtonEvent) Since() uint32 { return 1 }
 
 type TabletPadV2EnterEvent struct {
 	Serial  uint32
@@ -176,7 +176,7 @@ func (e *TabletPadV2EnterEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2EnterEvent) Since() int { return 1 }
+func (e *TabletPadV2EnterEvent) Since() uint32 { return 1 }
 
 type TabletPadV2LeaveEvent struct {
 	Serial  uint32
@@ -199,7 +199,7 @@ func (e *TabletPadV2LeaveEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2LeaveEvent) Since() int { return 1 }
+func (e *TabletPadV2LeaveEvent) Since() uint32 { return 1 }
 
 type TabletPadV2RemovedEvent struct {
 }
@@ -210,7 +210,7 @@ func (e *TabletPadV2RemovedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *TabletPadV2RemovedEvent) Since() int { return 1 }
+func (e *TabletPadV2RemovedEvent) Since() uint32 { return 1 }
 
 type TabletPadV2GroupFunc func(ev TabletPadV2GroupEvent)
 

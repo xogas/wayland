@@ -21,6 +21,7 @@ const (
 	SeatEventName         uint16 = 1
 )
 
+// SeatCapability is a bitfield of flags.
 type SeatCapability uint32
 
 const (
@@ -48,7 +49,7 @@ func (r *SeatGetPointerRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SeatGetPointerRequest) Since() int { return 1 }
+func (r *SeatGetPointerRequest) Since() uint32 { return 1 }
 
 type SeatGetKeyboardRequest struct {
 	ID wire.NewID
@@ -63,7 +64,7 @@ func (r *SeatGetKeyboardRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SeatGetKeyboardRequest) Since() int { return 1 }
+func (r *SeatGetKeyboardRequest) Since() uint32 { return 1 }
 
 type SeatGetTouchRequest struct {
 	ID wire.NewID
@@ -78,7 +79,7 @@ func (r *SeatGetTouchRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SeatGetTouchRequest) Since() int { return 1 }
+func (r *SeatGetTouchRequest) Since() uint32 { return 1 }
 
 type SeatReleaseRequest struct {
 }
@@ -89,10 +90,10 @@ func (r *SeatReleaseRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *SeatReleaseRequest) Since() int { return 5 }
+func (r *SeatReleaseRequest) Since() uint32 { return 5 }
 
 type SeatCapabilitiesEvent struct {
-	Capabilities uint32
+	Capabilities SeatCapability
 }
 
 func (e *SeatCapabilitiesEvent) Opcode() uint16 { return SeatEventCapabilities }
@@ -102,11 +103,11 @@ func (e *SeatCapabilitiesEvent) Unmarshal(r *wire.Reader) error {
 	if err != nil {
 		return err
 	}
-	e.Capabilities = capabilities
+	e.Capabilities = SeatCapability(capabilities)
 	return nil
 }
 
-func (e *SeatCapabilitiesEvent) Since() int { return 1 }
+func (e *SeatCapabilitiesEvent) Since() uint32 { return 1 }
 
 type SeatNameEvent struct {
 	Name string
@@ -123,7 +124,7 @@ func (e *SeatNameEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *SeatNameEvent) Since() int { return 2 }
+func (e *SeatNameEvent) Since() uint32 { return 2 }
 
 type SeatCapabilitiesFunc func(ev SeatCapabilitiesEvent)
 

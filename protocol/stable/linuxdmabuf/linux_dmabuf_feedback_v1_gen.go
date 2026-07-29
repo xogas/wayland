@@ -28,6 +28,7 @@ var linuxdmabuffeedbackv1EventFDCounts = map[uint16]int{
 	1: 1,
 }
 
+// LinuxDmabufFeedbackV1TrancheFlags is a bitfield of flags.
 type LinuxDmabufFeedbackV1TrancheFlags uint32
 
 const (
@@ -46,7 +47,7 @@ func (r *LinuxDmabufFeedbackV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *LinuxDmabufFeedbackV1DestroyRequest) Since() int { return 1 }
+func (r *LinuxDmabufFeedbackV1DestroyRequest) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1DoneEvent struct {
 }
@@ -57,7 +58,7 @@ func (e *LinuxDmabufFeedbackV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1DoneEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1DoneEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1FormatTableEvent struct {
 	Fd   int
@@ -82,8 +83,9 @@ func (e *LinuxDmabufFeedbackV1FormatTableEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1FormatTableEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1FormatTableEvent) Since() uint32 { return 1 }
 
+// Deprecated: since version 6.
 type LinuxDmabufFeedbackV1MainDeviceEvent struct {
 	Device []byte
 }
@@ -101,7 +103,7 @@ func (e *LinuxDmabufFeedbackV1MainDeviceEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1MainDeviceEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1MainDeviceEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1TrancheDoneEvent struct {
 }
@@ -114,7 +116,7 @@ func (e *LinuxDmabufFeedbackV1TrancheDoneEvent) Unmarshal(r *wire.Reader) error 
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1TrancheDoneEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1TrancheDoneEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1TrancheTargetDeviceEvent struct {
 	Device []byte
@@ -133,7 +135,7 @@ func (e *LinuxDmabufFeedbackV1TrancheTargetDeviceEvent) Unmarshal(r *wire.Reader
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1TrancheTargetDeviceEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1TrancheTargetDeviceEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1TrancheFormatsEvent struct {
 	Indices []byte
@@ -152,10 +154,10 @@ func (e *LinuxDmabufFeedbackV1TrancheFormatsEvent) Unmarshal(r *wire.Reader) err
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1TrancheFormatsEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1TrancheFormatsEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1TrancheFlagsEvent struct {
-	Flags uint32
+	Flags LinuxDmabufFeedbackV1TrancheFlags
 }
 
 func (e *LinuxDmabufFeedbackV1TrancheFlagsEvent) Opcode() uint16 {
@@ -167,11 +169,11 @@ func (e *LinuxDmabufFeedbackV1TrancheFlagsEvent) Unmarshal(r *wire.Reader) error
 	if err != nil {
 		return err
 	}
-	e.Flags = flags
+	e.Flags = LinuxDmabufFeedbackV1TrancheFlags(flags)
 	return nil
 }
 
-func (e *LinuxDmabufFeedbackV1TrancheFlagsEvent) Since() int { return 1 }
+func (e *LinuxDmabufFeedbackV1TrancheFlagsEvent) Since() uint32 { return 1 }
 
 type LinuxDmabufFeedbackV1DoneFunc func(ev LinuxDmabufFeedbackV1DoneEvent)
 

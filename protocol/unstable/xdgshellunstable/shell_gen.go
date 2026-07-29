@@ -46,7 +46,7 @@ func (r *ShellDestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellDestroyRequest) Since() int { return 1 }
+func (r *ShellDestroyRequest) Since() uint32 { return 1 }
 
 type ShellUseUnstableVersionRequest struct {
 	Version int32
@@ -61,7 +61,7 @@ func (r *ShellUseUnstableVersionRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellUseUnstableVersionRequest) Since() int { return 1 }
+func (r *ShellUseUnstableVersionRequest) Since() uint32 { return 1 }
 
 type ShellGetXdgSurfaceRequest struct {
 	ID      wire.NewID
@@ -80,7 +80,7 @@ func (r *ShellGetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellGetXdgSurfaceRequest) Since() int { return 1 }
+func (r *ShellGetXdgSurfaceRequest) Since() uint32 { return 1 }
 
 type ShellGetXdgPopupRequest struct {
 	ID      wire.NewID
@@ -119,7 +119,7 @@ func (r *ShellGetXdgPopupRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellGetXdgPopupRequest) Since() int { return 1 }
+func (r *ShellGetXdgPopupRequest) Since() uint32 { return 1 }
 
 type ShellPongRequest struct {
 	Serial uint32
@@ -134,7 +134,7 @@ func (r *ShellPongRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ShellPongRequest) Since() int { return 1 }
+func (r *ShellPongRequest) Since() uint32 { return 1 }
 
 type ShellPingEvent struct {
 	Serial uint32
@@ -151,7 +151,7 @@ func (e *ShellPingEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ShellPingEvent) Since() int { return 1 }
+func (e *ShellPingEvent) Since() uint32 { return 1 }
 
 type ShellPingFunc func(ev ShellPingEvent)
 

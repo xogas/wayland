@@ -40,7 +40,7 @@ func (r *InputPanelSurfaceV1SetToplevelRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *InputPanelSurfaceV1SetToplevelRequest) Since() int { return 1 }
+func (r *InputPanelSurfaceV1SetToplevelRequest) Since() uint32 { return 1 }
 
 type InputPanelSurfaceV1SetOverlayPanelRequest struct {
 }
@@ -53,7 +53,7 @@ func (r *InputPanelSurfaceV1SetOverlayPanelRequest) Marshal(w *wire.Writer) erro
 	return nil
 }
 
-func (r *InputPanelSurfaceV1SetOverlayPanelRequest) Since() int { return 1 }
+func (r *InputPanelSurfaceV1SetOverlayPanelRequest) Since() uint32 { return 1 }
 
 type InputPanelSurfaceV1 struct {
 	proxy *wayland.Proxy

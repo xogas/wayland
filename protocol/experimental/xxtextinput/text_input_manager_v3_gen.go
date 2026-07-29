@@ -24,7 +24,7 @@ func (r *TextInputManagerV3DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputManagerV3DestroyRequest) Since() int { return 1 }
+func (r *TextInputManagerV3DestroyRequest) Since() uint32 { return 1 }
 
 type TextInputManagerV3GetTextInputRequest struct {
 	ID   wire.NewID
@@ -45,7 +45,7 @@ func (r *TextInputManagerV3GetTextInputRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *TextInputManagerV3GetTextInputRequest) Since() int { return 1 }
+func (r *TextInputManagerV3GetTextInputRequest) Since() uint32 { return 1 }
 
 type TextInputManagerV3 struct {
 	proxy *wayland.Proxy

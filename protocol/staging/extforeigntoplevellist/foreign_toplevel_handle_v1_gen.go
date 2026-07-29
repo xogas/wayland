@@ -19,7 +19,7 @@ const (
 	ForeignToplevelHandleV1EventDone       uint16 = 1
 	ForeignToplevelHandleV1EventTitle      uint16 = 2
 	ForeignToplevelHandleV1EventAppID      uint16 = 3
-	ForeignToplevelHandleV1EventIDentifier uint16 = 4
+	ForeignToplevelHandleV1EventIdentifier uint16 = 4
 )
 
 type ForeignToplevelHandleV1DestroyRequest struct {
@@ -33,7 +33,7 @@ func (r *ForeignToplevelHandleV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ForeignToplevelHandleV1DestroyRequest) Since() int { return 1 }
+func (r *ForeignToplevelHandleV1DestroyRequest) Since() uint32 { return 1 }
 
 type ForeignToplevelHandleV1ClosedEvent struct {
 }
@@ -46,7 +46,7 @@ func (e *ForeignToplevelHandleV1ClosedEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ForeignToplevelHandleV1ClosedEvent) Since() int { return 1 }
+func (e *ForeignToplevelHandleV1ClosedEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelHandleV1DoneEvent struct {
 }
@@ -57,7 +57,7 @@ func (e *ForeignToplevelHandleV1DoneEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ForeignToplevelHandleV1DoneEvent) Since() int { return 1 }
+func (e *ForeignToplevelHandleV1DoneEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelHandleV1TitleEvent struct {
 	Title string
@@ -74,7 +74,7 @@ func (e *ForeignToplevelHandleV1TitleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ForeignToplevelHandleV1TitleEvent) Since() int { return 1 }
+func (e *ForeignToplevelHandleV1TitleEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelHandleV1AppIDEvent struct {
 	AppID string
@@ -91,26 +91,26 @@ func (e *ForeignToplevelHandleV1AppIDEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ForeignToplevelHandleV1AppIDEvent) Since() int { return 1 }
+func (e *ForeignToplevelHandleV1AppIDEvent) Since() uint32 { return 1 }
 
-type ForeignToplevelHandleV1IDentifierEvent struct {
-	IDentifier string
+type ForeignToplevelHandleV1IdentifierEvent struct {
+	Identifier string
 }
 
-func (e *ForeignToplevelHandleV1IDentifierEvent) Opcode() uint16 {
-	return ForeignToplevelHandleV1EventIDentifier
+func (e *ForeignToplevelHandleV1IdentifierEvent) Opcode() uint16 {
+	return ForeignToplevelHandleV1EventIdentifier
 }
 
-func (e *ForeignToplevelHandleV1IDentifierEvent) Unmarshal(r *wire.Reader) error {
-	iDentifier, err := r.String()
+func (e *ForeignToplevelHandleV1IdentifierEvent) Unmarshal(r *wire.Reader) error {
+	identifier, err := r.String()
 	if err != nil {
 		return err
 	}
-	e.IDentifier = iDentifier
+	e.Identifier = identifier
 	return nil
 }
 
-func (e *ForeignToplevelHandleV1IDentifierEvent) Since() int { return 1 }
+func (e *ForeignToplevelHandleV1IdentifierEvent) Since() uint32 { return 1 }
 
 type ForeignToplevelHandleV1ClosedFunc func(ev ForeignToplevelHandleV1ClosedEvent)
 
@@ -120,7 +120,7 @@ type ForeignToplevelHandleV1TitleFunc func(ev ForeignToplevelHandleV1TitleEvent)
 
 type ForeignToplevelHandleV1AppIDFunc func(ev ForeignToplevelHandleV1AppIDEvent)
 
-type ForeignToplevelHandleV1IDentifierFunc func(ev ForeignToplevelHandleV1IDentifierEvent)
+type ForeignToplevelHandleV1IdentifierFunc func(ev ForeignToplevelHandleV1IdentifierEvent)
 
 type ForeignToplevelHandleV1 struct {
 	proxy *wayland.Proxy
@@ -186,12 +186,12 @@ func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 	})
 }
 
-func (o *ForeignToplevelHandleV1) OnIDentifier(fn ForeignToplevelHandleV1IDentifierFunc) {
-	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventIDentifier, func(r *wire.Reader) {
-		var ev ForeignToplevelHandleV1IDentifierEvent
+func (o *ForeignToplevelHandleV1) OnIdentifier(fn ForeignToplevelHandleV1IdentifierFunc) {
+	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventIdentifier, func(r *wire.Reader) {
+		var ev ForeignToplevelHandleV1IdentifierEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IDentifier", "error", err)
+			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Identifier", "error", err)
 			return
 		}
 

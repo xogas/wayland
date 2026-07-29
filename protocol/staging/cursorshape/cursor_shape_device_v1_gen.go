@@ -71,11 +71,11 @@ func (r *CursorShapeDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *CursorShapeDeviceV1DestroyRequest) Since() int { return 1 }
+func (r *CursorShapeDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
 type CursorShapeDeviceV1SetShapeRequest struct {
 	Serial uint32
-	Shape  uint32
+	Shape  CursorShapeDeviceV1Shape
 }
 
 func (r *CursorShapeDeviceV1SetShapeRequest) Opcode() uint16 {
@@ -86,13 +86,13 @@ func (r *CursorShapeDeviceV1SetShapeRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Serial); err != nil {
 		return err
 	}
-	if err := w.Uint32(r.Shape); err != nil {
+	if err := w.Uint32(uint32(r.Shape)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *CursorShapeDeviceV1SetShapeRequest) Since() int { return 1 }
+func (r *CursorShapeDeviceV1SetShapeRequest) Since() uint32 { return 1 }
 
 type CursorShapeDeviceV1 struct {
 	proxy *wayland.Proxy
@@ -117,7 +117,7 @@ func (o *CursorShapeDeviceV1) Destroy() error {
 	return nil
 }
 
-func (o *CursorShapeDeviceV1) SetShape(serial uint32, shape uint32) error {
+func (o *CursorShapeDeviceV1) SetShape(serial uint32, shape CursorShapeDeviceV1Shape) error {
 	return o.proxy.SendRequest(CursorShapeDeviceV1RequestSetShape, &CursorShapeDeviceV1SetShapeRequest{
 		Serial: serial,
 		Shape:  shape,

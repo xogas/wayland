@@ -31,7 +31,7 @@ func (r *FifoV1SetBarrierRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FifoV1SetBarrierRequest) Since() int { return 1 }
+func (r *FifoV1SetBarrierRequest) Since() uint32 { return 1 }
 
 type FifoV1WaitBarrierRequest struct {
 }
@@ -42,7 +42,7 @@ func (r *FifoV1WaitBarrierRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FifoV1WaitBarrierRequest) Since() int { return 1 }
+func (r *FifoV1WaitBarrierRequest) Since() uint32 { return 1 }
 
 type FifoV1DestroyRequest struct {
 }
@@ -53,7 +53,7 @@ func (r *FifoV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *FifoV1DestroyRequest) Since() int { return 1 }
+func (r *FifoV1DestroyRequest) Since() uint32 { return 1 }
 
 type FifoV1 struct {
 	proxy *wayland.Proxy

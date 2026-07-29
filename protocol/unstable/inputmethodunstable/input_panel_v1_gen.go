@@ -33,7 +33,7 @@ func (r *InputPanelV1GetInputPanelSurfaceRequest) Marshal(w *wire.Writer) error 
 	return nil
 }
 
-func (r *InputPanelV1GetInputPanelSurfaceRequest) Since() int { return 1 }
+func (r *InputPanelV1GetInputPanelSurfaceRequest) Since() uint32 { return 1 }
 
 type InputPanelV1 struct {
 	proxy *wayland.Proxy

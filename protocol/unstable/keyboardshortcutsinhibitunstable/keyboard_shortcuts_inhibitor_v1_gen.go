@@ -30,7 +30,7 @@ func (r *KeyboardShortcutsInhibitorV1DestroyRequest) Marshal(w *wire.Writer) err
 	return nil
 }
 
-func (r *KeyboardShortcutsInhibitorV1DestroyRequest) Since() int { return 1 }
+func (r *KeyboardShortcutsInhibitorV1DestroyRequest) Since() uint32 { return 1 }
 
 type KeyboardShortcutsInhibitorV1ActiveEvent struct {
 }
@@ -43,7 +43,7 @@ func (e *KeyboardShortcutsInhibitorV1ActiveEvent) Unmarshal(r *wire.Reader) erro
 	return nil
 }
 
-func (e *KeyboardShortcutsInhibitorV1ActiveEvent) Since() int { return 1 }
+func (e *KeyboardShortcutsInhibitorV1ActiveEvent) Since() uint32 { return 1 }
 
 type KeyboardShortcutsInhibitorV1InactiveEvent struct {
 }
@@ -56,7 +56,7 @@ func (e *KeyboardShortcutsInhibitorV1InactiveEvent) Unmarshal(r *wire.Reader) er
 	return nil
 }
 
-func (e *KeyboardShortcutsInhibitorV1InactiveEvent) Since() int { return 1 }
+func (e *KeyboardShortcutsInhibitorV1InactiveEvent) Since() uint32 { return 1 }
 
 type KeyboardShortcutsInhibitorV1ActiveFunc func(ev KeyboardShortcutsInhibitorV1ActiveEvent)
 

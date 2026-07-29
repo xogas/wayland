@@ -27,7 +27,7 @@ func (r *ExportedV1DestroyRequest) Marshal(w *wire.Writer) error {
 	return nil
 }
 
-func (r *ExportedV1DestroyRequest) Since() int { return 1 }
+func (r *ExportedV1DestroyRequest) Since() uint32 { return 1 }
 
 type ExportedV1HandleEvent struct {
 	Handle string
@@ -44,7 +44,7 @@ func (e *ExportedV1HandleEvent) Unmarshal(r *wire.Reader) error {
 	return nil
 }
 
-func (e *ExportedV1HandleEvent) Since() int { return 1 }
+func (e *ExportedV1HandleEvent) Since() uint32 { return 1 }
 
 type ExportedV1HandleFunc func(ev ExportedV1HandleEvent)
 
