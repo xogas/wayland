@@ -119,6 +119,9 @@ func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, erro
 }
 
 func (o *DataDeviceManager) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(4) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

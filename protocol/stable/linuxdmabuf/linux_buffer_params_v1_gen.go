@@ -292,6 +292,9 @@ func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint
 }
 
 func (o *LinuxBufferParamsV1) SetSamplingDevice(device []byte) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(6) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(LinuxBufferParamsV1RequestSetSamplingDevice, &LinuxBufferParamsV1SetSamplingDeviceRequest{
 		Device: device,
 	})

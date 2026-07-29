@@ -453,18 +453,27 @@ func (o *Surface) Commit() error {
 }
 
 func (o *Surface) SetBufferTransform(transform int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(SurfaceRequestSetBufferTransform, &SurfaceSetBufferTransformRequest{
 		Transform: transform,
 	})
 }
 
 func (o *Surface) SetBufferScale(scale int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(SurfaceRequestSetBufferScale, &SurfaceSetBufferScaleRequest{
 		Scale: scale,
 	})
 }
 
 func (o *Surface) DamageBuffer(x int32, y int32, width int32, height int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(4) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(SurfaceRequestDamageBuffer, &SurfaceDamageBufferRequest{
 		X:      x,
 		Y:      y,
@@ -474,6 +483,9 @@ func (o *Surface) DamageBuffer(x int32, y int32, width int32, height int32) erro
 }
 
 func (o *Surface) Offset(x int32, y int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(5) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(SurfaceRequestOffset, &SurfaceOffsetRequest{
 		X: x,
 		Y: y,

@@ -245,10 +245,16 @@ func (o *DataOffer) Destroy() error {
 }
 
 func (o *DataOffer) Finish() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(DataOfferRequestFinish, &DataOfferFinishRequest{})
 }
 
 func (o *DataOffer) SetActions(dndActions uint32, preferredAction uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(DataOfferRequestSetActions, &DataOfferSetActionsRequest{
 		DndActions:      dndActions,
 		PreferredAction: preferredAction,

@@ -560,6 +560,9 @@ func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32
 }
 
 func (o *Pointer) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

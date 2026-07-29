@@ -527,6 +527,9 @@ func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 }
 
 func (o *InputMethodV1) PerformAction(action uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(InputMethodV1RequestPerformAction, &InputMethodV1PerformActionRequest{
 		Action: action,
 	})
@@ -554,6 +557,9 @@ func (o *InputMethodV1) DeleteSurroundingText(beforeLength uint32, afterLength u
 }
 
 func (o *InputMethodV1) MoveCursor(cursor int32, anchor int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(InputMethodV1RequestMoveCursor, &InputMethodV1MoveCursorRequest{
 		Cursor: cursor,
 		Anchor: anchor,

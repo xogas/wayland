@@ -216,6 +216,9 @@ func (o *Popup) Grab(seat wire.ObjectID, serial uint32) error {
 }
 
 func (o *Popup) Reposition(positioner wire.ObjectID, token uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(PopupRequestReposition, &PopupRepositionRequest{
 		Positioner: positioner,
 		Token:      token,

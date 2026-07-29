@@ -304,10 +304,16 @@ func (o *Positioner) SetOffset(x int32, y int32) error {
 }
 
 func (o *Positioner) SetReactive() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(PositionerRequestSetReactive, &PositionerSetReactiveRequest{})
 }
 
 func (o *Positioner) SetParentSize(parentWidth int32, parentHeight int32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(PositionerRequestSetParentSize, &PositionerSetParentSizeRequest{
 		ParentWidth:  parentWidth,
 		ParentHeight: parentHeight,
@@ -315,6 +321,9 @@ func (o *Positioner) SetParentSize(parentWidth int32, parentHeight int32) error 
 }
 
 func (o *Positioner) SetParentConfigure(serial uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(PositionerRequestSetParentConfigure, &PositionerSetParentConfigureRequest{
 		Serial: serial,
 	})

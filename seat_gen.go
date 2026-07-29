@@ -216,6 +216,9 @@ func (o *Seat) GetTouch() (*Touch, error) {
 }
 
 func (o *Seat) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(5) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

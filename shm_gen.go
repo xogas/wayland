@@ -271,6 +271,9 @@ func (o *Shm) CreatePool(fd int, size int32) (*ShmPool, error) {
 }
 
 func (o *Shm) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

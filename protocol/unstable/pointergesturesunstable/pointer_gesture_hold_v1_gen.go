@@ -139,6 +139,9 @@ func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 }
 
 func (o *PointerGestureHoldV1) Destroy() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return wayland.ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

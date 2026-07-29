@@ -101,6 +101,9 @@ func (o *Compositor) CreateRegion() (*Region, error) {
 }
 
 func (o *Compositor) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(7) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

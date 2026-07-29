@@ -606,12 +606,18 @@ func (o *TextInputV3) Commit() error {
 }
 
 func (o *TextInputV3) SetAvailableActions(availableActions []byte) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(TextInputV3RequestSetAvailableActions, &TextInputV3SetAvailableActionsRequest{
 		AvailableActions: availableActions,
 	})
 }
 
 func (o *TextInputV3) AnnounceSupportedFeatures(features uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return wayland.ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(TextInputV3RequestAnnounceSupportedFeatures, &TextInputV3AnnounceSupportedFeaturesRequest{
 		Features: features,
 	})

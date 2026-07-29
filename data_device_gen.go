@@ -329,6 +329,9 @@ func (o *DataDevice) SetSelection(source wire.ObjectID, serial uint32) error {
 }
 
 func (o *DataDevice) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

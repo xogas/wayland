@@ -337,6 +337,9 @@ func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 }
 
 func (o *Touch) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

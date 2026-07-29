@@ -336,6 +336,9 @@ func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 }
 
 func (o *Keyboard) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}

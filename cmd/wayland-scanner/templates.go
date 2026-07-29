@@ -167,20 +167,26 @@ func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDTy
 }
 {{else if .IsDestructor}}
 func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
-    if o.proxy.Deleted() {
-        return nil
-    }
-    if err := o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
+{{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
+		return {{$.WaylandPkg}}ErrVersionMismatch
+	}
+{{end}}	if o.proxy.Deleted() {
+		return nil
+	}
+	if err := o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
 {{range .Args}}		{{.GoName}}: {{.ParamName}},
 {{end}}	}); err != nil {
-        return err
-    }
-    o.proxy.Conn().UnregisterProxy(o.proxy.ID())
-    return nil
+		return err
+	}
+	o.proxy.Conn().UnregisterProxy(o.proxy.ID())
+	return nil
 }
 {{else}}
 func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
-    return o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
+{{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
+		return {{$.WaylandPkg}}ErrVersionMismatch
+	}
+{{end}}	return o.proxy.SendRequest({{.OpName}}, &{{.StructName}}{
 {{range .Args}}		{{.GoName}}: {{.ParamName}},
 {{end}}	})
 }

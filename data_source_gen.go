@@ -287,6 +287,9 @@ func (o *DataSource) Destroy() error {
 }
 
 func (o *DataSource) SetActions(dndActions uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
+		return ErrVersionMismatch
+	}
 	return o.proxy.SendRequest(DataSourceRequestSetActions, &DataSourceSetActionsRequest{
 		DndActions: dndActions,
 	})

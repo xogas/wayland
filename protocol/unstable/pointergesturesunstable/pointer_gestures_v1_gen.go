@@ -138,6 +138,9 @@ func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGest
 }
 
 func (o *PointerGesturesV1) Release() error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return wayland.ErrVersionMismatch
+	}
 	if o.proxy.Deleted() {
 		return nil
 	}
