@@ -128,7 +128,7 @@ func (o *ShellV6) OnPing(fn ShellV6PingFunc) {
 		var ev ShellV6PingEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
+			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
 
@@ -151,6 +151,7 @@ func (o *ShellV6) CreatePositioner() (*PositionerV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPositionerV6(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellV6RequestCreatePositioner, &ShellV6CreatePositionerRequest{
@@ -167,6 +168,7 @@ func (o *ShellV6) GetXdgSurface(surface wire.ObjectID) (*SurfaceV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSurfaceV6(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellV6RequestGetXdgSurface, &ShellV6GetXdgSurfaceRequest{

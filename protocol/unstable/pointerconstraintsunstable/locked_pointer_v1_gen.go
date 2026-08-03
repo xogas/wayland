@@ -111,7 +111,7 @@ func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 		var ev LockedPointerV1LockedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Locked", "error", err)
+			o.proxy.Conn().FailEvent("Locked", err)
 			return
 		}
 
@@ -124,7 +124,7 @@ func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 		var ev LockedPointerV1UnlockedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unlocked", "error", err)
+			o.proxy.Conn().FailEvent("Unlocked", err)
 			return
 		}
 

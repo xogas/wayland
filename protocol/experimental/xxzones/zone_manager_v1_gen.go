@@ -114,6 +114,7 @@ func (o *ZoneManagerV1) GetZoneItem(toplevel wire.ObjectID) (*ZoneItemV1, error)
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewZoneItemV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ZoneManagerV1RequestGetZoneItem, &ZoneManagerV1GetZoneItemRequest{
@@ -131,6 +132,7 @@ func (o *ZoneManagerV1) GetZone(output wire.ObjectID) (*ZoneV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewZoneV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ZoneManagerV1RequestGetZone, &ZoneManagerV1GetZoneRequest{
@@ -148,6 +150,7 @@ func (o *ZoneManagerV1) GetZoneFromHandle(handle string) (*ZoneV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewZoneV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ZoneManagerV1RequestGetZoneFromHandle, &ZoneManagerV1GetZoneFromHandleRequest{

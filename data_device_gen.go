@@ -235,7 +235,7 @@ func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
+			o.proxy.Conn().FailEvent("DataOffer", err)
 			return
 		}
 		p := NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -252,7 +252,7 @@ func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 		var ev DataDeviceEnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -265,7 +265,7 @@ func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 		var ev DataDeviceLeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -278,7 +278,7 @@ func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 		var ev DataDeviceMotionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
+			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
 
@@ -291,7 +291,7 @@ func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 		var ev DataDeviceDropEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Drop", "error", err)
+			o.proxy.Conn().FailEvent("Drop", err)
 			return
 		}
 
@@ -304,7 +304,7 @@ func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 		var ev DataDeviceSelectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
+			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
 

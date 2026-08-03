@@ -107,6 +107,7 @@ func (o *PointerGesturesV1) GetSwipeGesture(pointer wire.ObjectID) (*PointerGest
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPointerGestureSwipeV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetSwipeGesture, &PointerGesturesV1GetSwipeGestureRequest{
@@ -124,6 +125,7 @@ func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGest
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPointerGesturePinchV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetPinchGesture, &PointerGesturesV1GetPinchGestureRequest{
@@ -158,6 +160,7 @@ func (o *PointerGesturesV1) GetHoldGesture(pointer wire.ObjectID) (*PointerGestu
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPointerGestureHoldV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetHoldGesture, &PointerGesturesV1GetHoldGestureRequest{

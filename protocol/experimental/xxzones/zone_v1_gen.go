@@ -203,7 +203,7 @@ func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 		var ev ZoneV1SizeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Size", "error", err)
+			o.proxy.Conn().FailEvent("Size", err)
 			return
 		}
 
@@ -216,7 +216,7 @@ func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 		var ev ZoneV1HandleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Handle", "error", err)
+			o.proxy.Conn().FailEvent("Handle", err)
 			return
 		}
 
@@ -229,7 +229,7 @@ func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 		var ev ZoneV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -242,7 +242,7 @@ func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 		var ev ZoneV1ItemBlockedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemBlocked", "error", err)
+			o.proxy.Conn().FailEvent("ItemBlocked", err)
 			return
 		}
 
@@ -255,7 +255,7 @@ func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 		var ev ZoneV1ItemEnteredEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemEntered", "error", err)
+			o.proxy.Conn().FailEvent("ItemEntered", err)
 			return
 		}
 
@@ -268,7 +268,7 @@ func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 		var ev ZoneV1ItemLeftEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ItemLeft", "error", err)
+			o.proxy.Conn().FailEvent("ItemLeft", err)
 			return
 		}
 

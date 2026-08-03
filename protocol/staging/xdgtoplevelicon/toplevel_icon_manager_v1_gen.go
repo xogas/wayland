@@ -123,7 +123,7 @@ func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc)
 		var ev ToplevelIconManagerV1IconSizeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IconSize", "error", err)
+			o.proxy.Conn().FailEvent("IconSize", err)
 			return
 		}
 
@@ -136,7 +136,7 @@ func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 		var ev ToplevelIconManagerV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -159,6 +159,7 @@ func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelIconV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ToplevelIconManagerV1RequestCreateIcon, &ToplevelIconManagerV1CreateIconRequest{

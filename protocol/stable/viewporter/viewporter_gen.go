@@ -78,6 +78,7 @@ func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewViewport(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ViewporterRequestGetViewport, &ViewporterGetViewportRequest{

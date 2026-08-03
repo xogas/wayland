@@ -73,7 +73,7 @@ func (o *LinuxBufferReleaseV1) OnFencedRelease(fn LinuxBufferReleaseV1FencedRele
 		var ev LinuxBufferReleaseV1FencedReleaseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "FencedRelease", "error", err)
+			o.proxy.Conn().FailEvent("FencedRelease", err)
 			return
 		}
 
@@ -86,7 +86,7 @@ func (o *LinuxBufferReleaseV1) OnImmediateRelease(fn LinuxBufferReleaseV1Immedia
 		var ev LinuxBufferReleaseV1ImmediateReleaseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ImmediateRelease", "error", err)
+			o.proxy.Conn().FailEvent("ImmediateRelease", err)
 			return
 		}
 

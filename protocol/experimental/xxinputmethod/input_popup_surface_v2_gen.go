@@ -171,7 +171,7 @@ func (o *InputPopupSurfaceV2) OnStartConfigure(fn InputPopupSurfaceV2StartConfig
 		var ev InputPopupSurfaceV2StartConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "StartConfigure", "error", err)
+			o.proxy.Conn().FailEvent("StartConfigure", err)
 			return
 		}
 
@@ -184,7 +184,7 @@ func (o *InputPopupSurfaceV2) OnRepositioned(fn InputPopupSurfaceV2RepositionedF
 		var ev InputPopupSurfaceV2RepositionedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Repositioned", "error", err)
+			o.proxy.Conn().FailEvent("Repositioned", err)
 			return
 		}
 

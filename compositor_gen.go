@@ -72,6 +72,7 @@ func (o *Compositor) CreateSurface() (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateSurface, &CompositorCreateSurfaceRequest{
@@ -88,6 +89,7 @@ func (o *Compositor) CreateRegion() (*Region, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewRegion(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateRegion, &CompositorCreateRegionRequest{

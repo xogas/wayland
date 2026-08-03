@@ -257,7 +257,7 @@ func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1Transfor
 		var ev ImageCopyCaptureFrameV1TransformEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Transform", "error", err)
+			o.proxy.Conn().FailEvent("Transform", err)
 			return
 		}
 
@@ -270,7 +270,7 @@ func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc)
 		var ev ImageCopyCaptureFrameV1DamageEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Damage", "error", err)
+			o.proxy.Conn().FailEvent("Damage", err)
 			return
 		}
 
@@ -283,7 +283,7 @@ func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1P
 		var ev ImageCopyCaptureFrameV1PresentationTimeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PresentationTime", "error", err)
+			o.proxy.Conn().FailEvent("PresentationTime", err)
 			return
 		}
 
@@ -296,7 +296,7 @@ func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 		var ev ImageCopyCaptureFrameV1ReadyEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
+			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
 
@@ -309,7 +309,7 @@ func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc)
 		var ev ImageCopyCaptureFrameV1FailedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
+			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
 

@@ -92,6 +92,7 @@ func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride i
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewBuffer(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShmPoolRequestCreateBuffer, &ShmPoolCreateBufferRequest{

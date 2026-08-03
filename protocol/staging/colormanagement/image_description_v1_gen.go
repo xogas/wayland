@@ -152,7 +152,7 @@ func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 		var ev ImageDescriptionV1FailedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
+			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
 
@@ -165,7 +165,7 @@ func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 		var ev ImageDescriptionV1ReadyEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
+			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 		var ev ImageDescriptionV1Ready2Event
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready2", "error", err)
+			o.proxy.Conn().FailEvent("Ready2", err)
 			return
 		}
 
@@ -201,6 +201,7 @@ func (o *ImageDescriptionV1) GetInformation() (*ImageDescriptionInfoV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionInfoV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageDescriptionV1RequestGetInformation, &ImageDescriptionV1GetInformationRequest{

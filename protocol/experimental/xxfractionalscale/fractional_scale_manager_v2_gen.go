@@ -82,6 +82,7 @@ func (o *FractionalScaleManagerV2) GetFractionalScale(surface wire.ObjectID) (*F
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewFractionalScaleV2(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), FractionalScaleManagerV2RequestGetFractionalScale, &FractionalScaleManagerV2GetFractionalScaleRequest{

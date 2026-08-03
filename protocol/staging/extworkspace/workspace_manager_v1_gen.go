@@ -110,7 +110,7 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceGroup", "error", err)
+			o.proxy.Conn().FailEvent("WorkspaceGroup", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -128,7 +128,7 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Workspace", "error", err)
+			o.proxy.Conn().FailEvent("Workspace", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -145,7 +145,7 @@ func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 		var ev WorkspaceManagerV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -158,7 +158,7 @@ func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 		var ev WorkspaceManagerV1FinishedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
+			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
 

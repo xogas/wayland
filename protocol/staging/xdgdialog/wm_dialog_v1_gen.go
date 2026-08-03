@@ -78,6 +78,7 @@ func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDialogV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), WmDialogV1RequestGetXdgDialog, &WmDialogV1GetXdgDialogRequest{

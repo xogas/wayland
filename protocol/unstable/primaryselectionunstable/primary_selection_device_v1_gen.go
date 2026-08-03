@@ -105,7 +105,7 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
+			o.proxy.Conn().FailEvent("DataOffer", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -122,7 +122,7 @@ func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1Select
 		var ev PrimarySelectionDeviceV1SelectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
+			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
 

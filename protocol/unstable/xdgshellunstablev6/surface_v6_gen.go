@@ -157,7 +157,7 @@ func (o *SurfaceV6) OnConfigure(fn SurfaceV6ConfigureFunc) {
 		var ev SurfaceV6ConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -180,6 +180,7 @@ func (o *SurfaceV6) GetToplevel() (*ToplevelV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelV6(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetToplevel, &SurfaceV6GetToplevelRequest{
@@ -196,6 +197,7 @@ func (o *SurfaceV6) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*P
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPopupV6(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetPopup, &SurfaceV6GetPopupRequest{

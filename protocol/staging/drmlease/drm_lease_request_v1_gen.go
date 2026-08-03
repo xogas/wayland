@@ -77,6 +77,7 @@ func (o *DrmLeaseRequestV1) Submit() (*DrmLeaseV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDrmLeaseV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DrmLeaseRequestV1RequestSubmit, &DrmLeaseRequestV1SubmitRequest{

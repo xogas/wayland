@@ -112,7 +112,7 @@ func (o *DataControlSourceV1) OnSend(fn DataControlSourceV1SendFunc) {
 		var ev DataControlSourceV1SendEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Send", "error", err)
+			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
 
@@ -125,7 +125,7 @@ func (o *DataControlSourceV1) OnCancelled(fn DataControlSourceV1CancelledFunc) {
 		var ev DataControlSourceV1CancelledEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancelled", "error", err)
+			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
 

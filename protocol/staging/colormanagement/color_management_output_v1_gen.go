@@ -81,7 +81,7 @@ func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOu
 		var ev ColorManagementOutputV1ImageDescriptionChangedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ImageDescriptionChanged", "error", err)
+			o.proxy.Conn().FailEvent("ImageDescriptionChanged", err)
 			return
 		}
 
@@ -104,6 +104,7 @@ func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, er
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagementOutputV1RequestGetImageDescription, &ColorManagementOutputV1GetImageDescriptionRequest{

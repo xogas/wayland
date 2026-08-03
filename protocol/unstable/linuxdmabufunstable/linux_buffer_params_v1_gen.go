@@ -199,7 +199,7 @@ func (o *LinuxBufferParamsV1) OnCreated(fn LinuxBufferParamsV1CreatedFunc) {
 		var ev LinuxBufferParamsV1CreatedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Created", "error", err)
+			o.proxy.Conn().FailEvent("Created", err)
 			return
 		}
 
@@ -212,7 +212,7 @@ func (o *LinuxBufferParamsV1) OnFailed(fn LinuxBufferParamsV1FailedFunc) {
 		var ev LinuxBufferParamsV1FailedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Failed", "error", err)
+			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
 
@@ -258,6 +258,7 @@ func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxBufferParamsV1RequestCreateImmed, &LinuxBufferParamsV1CreateImmedRequest{
 		BufferID: wire.NewID(p.ID()),

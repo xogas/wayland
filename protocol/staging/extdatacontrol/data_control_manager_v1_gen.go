@@ -83,6 +83,7 @@ func (o *DataControlManagerV1) CreateDataSource() (*DataControlSourceV1, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDataControlSourceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestCreateDataSource, &DataControlManagerV1CreateDataSourceRequest{
@@ -99,6 +100,7 @@ func (o *DataControlManagerV1) GetDataDevice(seat wire.ObjectID) (*DataControlDe
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDataControlDeviceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestGetDataDevice, &DataControlManagerV1GetDataDeviceRequest{

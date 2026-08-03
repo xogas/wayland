@@ -145,7 +145,7 @@ func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 		var ev TabletPadRingV2SourceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Source", "error", err)
+			o.proxy.Conn().FailEvent("Source", err)
 			return
 		}
 
@@ -158,7 +158,7 @@ func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 		var ev TabletPadRingV2AngleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Angle", "error", err)
+			o.proxy.Conn().FailEvent("Angle", err)
 			return
 		}
 
@@ -171,7 +171,7 @@ func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 		var ev TabletPadRingV2StopEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stop", "error", err)
+			o.proxy.Conn().FailEvent("Stop", err)
 			return
 		}
 
@@ -184,7 +184,7 @@ func (o *TabletPadRingV2) OnFrame(fn TabletPadRingV2FrameFunc) {
 		var ev TabletPadRingV2FrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 

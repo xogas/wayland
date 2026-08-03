@@ -58,7 +58,7 @@ func (o *Buffer) OnRelease(fn BufferReleaseFunc) {
 		var ev BufferReleaseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Release", "error", err)
+			o.proxy.Conn().FailEvent("Release", err)
 			return
 		}
 

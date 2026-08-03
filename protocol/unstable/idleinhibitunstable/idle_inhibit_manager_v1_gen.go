@@ -76,6 +76,7 @@ func (o *IdleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IdleInhi
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewIdleInhibitorV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), IdleInhibitManagerV1RequestCreateInhibitor, &IdleInhibitManagerV1CreateInhibitorRequest{

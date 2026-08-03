@@ -79,6 +79,7 @@ func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error)
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCutoutsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CutoutsManagerV1RequestGetCutouts, &CutoutsManagerV1GetCutoutsRequest{

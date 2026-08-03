@@ -160,7 +160,7 @@ func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 		var ev SurfaceConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -183,6 +183,7 @@ func (o *Surface) GetToplevel() (*Toplevel, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevel(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetToplevel, &SurfaceGetToplevelRequest{
@@ -199,6 +200,7 @@ func (o *Surface) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*Pop
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPopup(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetPopup, &SurfaceGetPopupRequest{

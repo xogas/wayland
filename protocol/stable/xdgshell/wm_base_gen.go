@@ -129,7 +129,7 @@ func (o *WmBase) OnPing(fn WmBasePingFunc) {
 		var ev WmBasePingEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
+			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
 
@@ -152,6 +152,7 @@ func (o *WmBase) CreatePositioner() (*Positioner, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPositioner(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), WmBaseRequestCreatePositioner, &WmBaseCreatePositionerRequest{
@@ -168,6 +169,7 @@ func (o *WmBase) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), WmBaseRequestGetXdgSurface, &WmBaseGetXdgSurfaceRequest{

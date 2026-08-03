@@ -152,7 +152,7 @@ func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 		var ev OutputV1LogicalPositionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "LogicalPosition", "error", err)
+			o.proxy.Conn().FailEvent("LogicalPosition", err)
 			return
 		}
 
@@ -165,7 +165,7 @@ func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 		var ev OutputV1LogicalSizeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "LogicalSize", "error", err)
+			o.proxy.Conn().FailEvent("LogicalSize", err)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 		var ev OutputV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -191,7 +191,7 @@ func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 		var ev OutputV1NameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -204,7 +204,7 @@ func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 		var ev OutputV1DescriptionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Description", "error", err)
+			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
 

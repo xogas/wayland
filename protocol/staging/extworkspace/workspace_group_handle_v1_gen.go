@@ -198,7 +198,7 @@ func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1Capabil
 		var ev WorkspaceGroupHandleV1CapabilitiesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
+			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
 
@@ -211,7 +211,7 @@ func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEn
 		var ev WorkspaceGroupHandleV1OutputEnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "OutputEnter", "error", err)
+			o.proxy.Conn().FailEvent("OutputEnter", err)
 			return
 		}
 
@@ -224,7 +224,7 @@ func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLe
 		var ev WorkspaceGroupHandleV1OutputLeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "OutputLeave", "error", err)
+			o.proxy.Conn().FailEvent("OutputLeave", err)
 			return
 		}
 
@@ -237,7 +237,7 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1Works
 		var ev WorkspaceGroupHandleV1WorkspaceEnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceEnter", "error", err)
+			o.proxy.Conn().FailEvent("WorkspaceEnter", err)
 			return
 		}
 
@@ -250,7 +250,7 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1Works
 		var ev WorkspaceGroupHandleV1WorkspaceLeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WorkspaceLeave", "error", err)
+			o.proxy.Conn().FailEvent("WorkspaceLeave", err)
 			return
 		}
 
@@ -263,7 +263,7 @@ func (o *WorkspaceGroupHandleV1) OnRemoved(fn WorkspaceGroupHandleV1RemovedFunc)
 		var ev WorkspaceGroupHandleV1RemovedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
+			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
 

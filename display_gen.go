@@ -125,7 +125,7 @@ func (o *Display) OnError(fn DisplayErrorFunc) {
 		var ev DisplayErrorEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Error", "error", err)
+			o.proxy.Conn().FailEvent("Error", err)
 			return
 		}
 
@@ -138,7 +138,7 @@ func (o *Display) OnDeleteID(fn DisplayDeleteIDFunc) {
 		var ev DisplayDeleteIDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteID", "error", err)
+			o.proxy.Conn().FailEvent("DeleteID", err)
 			return
 		}
 
@@ -150,6 +150,7 @@ func (o *Display) Sync() (*Callback, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DisplayRequestSync, &DisplaySyncRequest{
@@ -166,6 +167,7 @@ func (o *Display) GetRegistry() (*Registry, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewRegistry(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DisplayRequestGetRegistry, &DisplayGetRegistryRequest{

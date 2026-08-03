@@ -63,6 +63,7 @@ func (o *TabletManagerV2) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV2, erro
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewTabletSeatV2(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), TabletManagerV2RequestGetTabletSeat, &TabletManagerV2GetTabletSeatRequest{

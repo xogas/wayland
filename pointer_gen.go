@@ -413,7 +413,7 @@ func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 		var ev PointerEnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -426,7 +426,7 @@ func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 		var ev PointerLeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -439,7 +439,7 @@ func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 		var ev PointerMotionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
+			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
 
@@ -452,7 +452,7 @@ func (o *Pointer) OnButton(fn PointerButtonFunc) {
 		var ev PointerButtonEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
+			o.proxy.Conn().FailEvent("Button", err)
 			return
 		}
 
@@ -465,7 +465,7 @@ func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 		var ev PointerAxisEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Axis", "error", err)
+			o.proxy.Conn().FailEvent("Axis", err)
 			return
 		}
 
@@ -478,7 +478,7 @@ func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 		var ev PointerFrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 
@@ -491,7 +491,7 @@ func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 		var ev PointerAxisSourceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisSource", "error", err)
+			o.proxy.Conn().FailEvent("AxisSource", err)
 			return
 		}
 
@@ -504,7 +504,7 @@ func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 		var ev PointerAxisStopEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisStop", "error", err)
+			o.proxy.Conn().FailEvent("AxisStop", err)
 			return
 		}
 
@@ -517,7 +517,7 @@ func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 		var ev PointerAxisDiscreteEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisDiscrete", "error", err)
+			o.proxy.Conn().FailEvent("AxisDiscrete", err)
 			return
 		}
 
@@ -530,7 +530,7 @@ func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 		var ev PointerAxisValue120Event
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisValue120", "error", err)
+			o.proxy.Conn().FailEvent("AxisValue120", err)
 			return
 		}
 
@@ -543,7 +543,7 @@ func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 		var ev PointerAxisRelativeDirectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AxisRelativeDirection", "error", err)
+			o.proxy.Conn().FailEvent("AxisRelativeDirection", err)
 			return
 		}
 

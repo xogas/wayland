@@ -90,6 +90,7 @@ func (o *ActivationV1) GetActivationToken() (*ActivationTokenV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewActivationTokenV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ActivationV1RequestGetActivationToken, &ActivationV1GetActivationTokenRequest{

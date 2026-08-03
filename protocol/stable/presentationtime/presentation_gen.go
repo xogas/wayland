@@ -92,7 +92,7 @@ func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 		var ev PresentationClockIDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ClockID", "error", err)
+			o.proxy.Conn().FailEvent("ClockID", err)
 			return
 		}
 
@@ -115,6 +115,7 @@ func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, e
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPresentationFeedback(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PresentationRequestFeedback, &PresentationFeedbackRequest{

@@ -65,7 +65,7 @@ func (o *ExportedV2) OnHandle(fn ExportedV2HandleFunc) {
 		var ev ExportedV2HandleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Handle", "error", err)
+			o.proxy.Conn().FailEvent("Handle", err)
 			return
 		}
 

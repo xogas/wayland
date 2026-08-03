@@ -180,7 +180,7 @@ func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 		var ev CutoutsV1CutoutBoxEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CutoutBox", "error", err)
+			o.proxy.Conn().FailEvent("CutoutBox", err)
 			return
 		}
 
@@ -193,7 +193,7 @@ func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 		var ev CutoutsV1CutoutCornerEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CutoutCorner", "error", err)
+			o.proxy.Conn().FailEvent("CutoutCorner", err)
 			return
 		}
 
@@ -206,7 +206,7 @@ func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 		var ev CutoutsV1ConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 

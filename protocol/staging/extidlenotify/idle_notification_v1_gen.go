@@ -73,7 +73,7 @@ func (o *IdleNotificationV1) OnIdled(fn IdleNotificationV1IdledFunc) {
 		var ev IdleNotificationV1IdledEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Idled", "error", err)
+			o.proxy.Conn().FailEvent("Idled", err)
 			return
 		}
 
@@ -86,7 +86,7 @@ func (o *IdleNotificationV1) OnResumed(fn IdleNotificationV1ResumedFunc) {
 		var ev IdleNotificationV1ResumedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Resumed", "error", err)
+			o.proxy.Conn().FailEvent("Resumed", err)
 			return
 		}
 

@@ -135,6 +135,7 @@ func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.O
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLockedPointerV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestLockPointer, &PointerConstraintsV1LockPointerRequest{
@@ -155,6 +156,7 @@ func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wir
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewConfinedPointerV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestConfinePointer, &PointerConstraintsV1ConfinePointerRequest{

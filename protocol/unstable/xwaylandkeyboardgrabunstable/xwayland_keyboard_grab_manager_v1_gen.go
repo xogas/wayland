@@ -80,6 +80,7 @@ func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface wire.ObjectID, seat
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewXwaylandKeyboardGrabV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), XwaylandKeyboardGrabManagerV1RequestGrabKeyboard, &XwaylandKeyboardGrabManagerV1GrabKeyboardRequest{

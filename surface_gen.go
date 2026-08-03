@@ -345,7 +345,7 @@ func (o *Surface) OnEnter(fn SurfaceEnterFunc) {
 		var ev SurfaceEnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -358,7 +358,7 @@ func (o *Surface) OnLeave(fn SurfaceLeaveFunc) {
 		var ev SurfaceLeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -371,7 +371,7 @@ func (o *Surface) OnPreferredBufferScale(fn SurfacePreferredBufferScaleFunc) {
 		var ev SurfacePreferredBufferScaleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredBufferScale", "error", err)
+			o.proxy.Conn().FailEvent("PreferredBufferScale", err)
 			return
 		}
 
@@ -384,7 +384,7 @@ func (o *Surface) OnPreferredBufferTransform(fn SurfacePreferredBufferTransformF
 		var ev SurfacePreferredBufferTransformEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredBufferTransform", "error", err)
+			o.proxy.Conn().FailEvent("PreferredBufferTransform", err)
 			return
 		}
 
@@ -424,6 +424,7 @@ func (o *Surface) Frame() (*Callback, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestFrame, &SurfaceFrameRequest{
@@ -499,6 +500,7 @@ func (o *Surface) GetRelease() (*Callback, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetRelease, &SurfaceGetReleaseRequest{

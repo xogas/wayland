@@ -159,7 +159,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessi
 		var ev ImageCopyCaptureCursorSessionV1EnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -172,7 +172,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessi
 		var ev ImageCopyCaptureCursorSessionV1LeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -185,7 +185,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSe
 		var ev ImageCopyCaptureCursorSessionV1PositionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
+			o.proxy.Conn().FailEvent("Position", err)
 			return
 		}
 
@@ -198,7 +198,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSes
 		var ev ImageCopyCaptureCursorSessionV1HotspotEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Hotspot", "error", err)
+			o.proxy.Conn().FailEvent("Hotspot", err)
 			return
 		}
 
@@ -221,6 +221,7 @@ func (o *ImageCopyCaptureCursorSessionV1) GetCaptureSession() (*ImageCopyCapture
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageCopyCaptureSessionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureCursorSessionV1RequestGetCaptureSession, &ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest{

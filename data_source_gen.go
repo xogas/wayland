@@ -77,13 +77,13 @@ func (r *DataSourceSetActionsRequest) Marshal(w *wire.Writer) error {
 func (r *DataSourceSetActionsRequest) Since() uint32 { return 3 }
 
 type DataSourceTargetEvent struct {
-	MimeType string // nullable
+	MimeType *string // nullable
 }
 
 func (e *DataSourceTargetEvent) Opcode() uint16 { return DataSourceEventTarget }
 
 func (e *DataSourceTargetEvent) Unmarshal(r *wire.Reader) error {
-	mimeType, err := r.String()
+	mimeType, err := r.StringNullable()
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (o *DataSource) OnTarget(fn DataSourceTargetFunc) {
 		var ev DataSourceTargetEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Target", "error", err)
+			o.proxy.Conn().FailEvent("Target", err)
 			return
 		}
 
@@ -209,7 +209,7 @@ func (o *DataSource) OnSend(fn DataSourceSendFunc) {
 		var ev DataSourceSendEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Send", "error", err)
+			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
 
@@ -222,7 +222,7 @@ func (o *DataSource) OnCancelled(fn DataSourceCancelledFunc) {
 		var ev DataSourceCancelledEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancelled", "error", err)
+			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
 
@@ -235,7 +235,7 @@ func (o *DataSource) OnDndDropPerformed(fn DataSourceDndDropPerformedFunc) {
 		var ev DataSourceDndDropPerformedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DndDropPerformed", "error", err)
+			o.proxy.Conn().FailEvent("DndDropPerformed", err)
 			return
 		}
 
@@ -248,7 +248,7 @@ func (o *DataSource) OnDndFinished(fn DataSourceDndFinishedFunc) {
 		var ev DataSourceDndFinishedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DndFinished", "error", err)
+			o.proxy.Conn().FailEvent("DndFinished", err)
 			return
 		}
 
@@ -261,7 +261,7 @@ func (o *DataSource) OnAction(fn DataSourceActionFunc) {
 		var ev DataSourceActionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Action", "error", err)
+			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
 

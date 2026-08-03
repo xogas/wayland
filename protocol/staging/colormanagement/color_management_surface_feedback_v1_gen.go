@@ -141,7 +141,7 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagement
 		var ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredChanged", "error", err)
+			o.proxy.Conn().FailEvent("PreferredChanged", err)
 			return
 		}
 
@@ -154,7 +154,7 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagemen
 		var ev ColorManagementSurfaceFeedbackV1PreferredChanged2Event
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredChanged2", "error", err)
+			o.proxy.Conn().FailEvent("PreferredChanged2", err)
 			return
 		}
 
@@ -177,6 +177,7 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferred() (*ImageDescriptionV1, 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferred, &ColorManagementSurfaceFeedbackV1GetPreferredRequest{
@@ -193,6 +194,7 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferredParametric() (*ImageDescr
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferredParametric, &ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest{

@@ -49,7 +49,7 @@ func (o *Callback) OnDone(fn CallbackDoneFunc) {
 		var ev CallbackDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 

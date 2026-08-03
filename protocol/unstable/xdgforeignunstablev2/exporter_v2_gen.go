@@ -78,6 +78,7 @@ func (o *ExporterV2) ExportToplevel(surface wire.ObjectID) (*ExportedV2, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewExportedV2(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ExporterV2RequestExportToplevel, &ExporterV2ExportToplevelRequest{

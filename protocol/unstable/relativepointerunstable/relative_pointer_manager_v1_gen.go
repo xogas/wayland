@@ -76,6 +76,7 @@ func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*R
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewRelativePointerV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), RelativePointerManagerV1RequestGetRelativePointer, &RelativePointerManagerV1GetRelativePointerRequest{

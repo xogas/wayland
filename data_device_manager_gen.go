@@ -90,6 +90,7 @@ func (o *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDataSource(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestCreateDataSource, &DataDeviceManagerCreateDataSourceRequest{
@@ -106,6 +107,7 @@ func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, erro
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDataDevice(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestGetDataDevice, &DataDeviceManagerGetDataDeviceRequest{

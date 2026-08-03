@@ -337,7 +337,7 @@ func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 		var ev ShellSurfacePingEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
+			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
 
@@ -350,7 +350,7 @@ func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 		var ev ShellSurfaceConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -363,7 +363,7 @@ func (o *ShellSurface) OnPopupDone(fn ShellSurfacePopupDoneFunc) {
 		var ev ShellSurfacePopupDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
+			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
 

@@ -401,7 +401,7 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 		var ev InputMethodV1ActivateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Activate", "error", err)
+			o.proxy.Conn().FailEvent("Activate", err)
 			return
 		}
 
@@ -414,7 +414,7 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 		var ev InputMethodV1DeactivateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Deactivate", "error", err)
+			o.proxy.Conn().FailEvent("Deactivate", err)
 			return
 		}
 
@@ -427,7 +427,7 @@ func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 		var ev InputMethodV1SurroundingTextEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SurroundingText", "error", err)
+			o.proxy.Conn().FailEvent("SurroundingText", err)
 			return
 		}
 
@@ -440,7 +440,7 @@ func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 		var ev InputMethodV1TextChangeCauseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TextChangeCause", "error", err)
+			o.proxy.Conn().FailEvent("TextChangeCause", err)
 			return
 		}
 
@@ -453,7 +453,7 @@ func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 		var ev InputMethodV1ContentTypeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ContentType", "error", err)
+			o.proxy.Conn().FailEvent("ContentType", err)
 			return
 		}
 
@@ -466,7 +466,7 @@ func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableAction
 		var ev InputMethodV1SetAvailableActionsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SetAvailableActions", "error", err)
+			o.proxy.Conn().FailEvent("SetAvailableActions", err)
 			return
 		}
 
@@ -479,7 +479,7 @@ func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupp
 		var ev InputMethodV1AnnounceSupportedFeaturesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AnnounceSupportedFeatures", "error", err)
+			o.proxy.Conn().FailEvent("AnnounceSupportedFeatures", err)
 			return
 		}
 
@@ -492,7 +492,7 @@ func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtoco
 		var ev InputMethodV1AnnounceProtocolCompatEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AnnounceProtocolCompat", "error", err)
+			o.proxy.Conn().FailEvent("AnnounceProtocolCompat", err)
 			return
 		}
 
@@ -505,7 +505,7 @@ func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 		var ev InputMethodV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -518,7 +518,7 @@ func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 		var ev InputMethodV1UnavailableEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unavailable", "error", err)
+			o.proxy.Conn().FailEvent("Unavailable", err)
 			return
 		}
 
@@ -579,6 +579,7 @@ func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner w
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputPopupSurfaceV2(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputMethodV1RequestGetInputPopupSurface, &InputMethodV1GetInputPopupSurfaceRequest{

@@ -123,7 +123,7 @@ func (o *SessionLockV1) OnLocked(fn SessionLockV1LockedFunc) {
 		var ev SessionLockV1LockedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Locked", "error", err)
+			o.proxy.Conn().FailEvent("Locked", err)
 			return
 		}
 
@@ -136,7 +136,7 @@ func (o *SessionLockV1) OnFinished(fn SessionLockV1FinishedFunc) {
 		var ev SessionLockV1FinishedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
+			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
 
@@ -159,6 +159,7 @@ func (o *SessionLockV1) GetLockSurface(surface wire.ObjectID, output wire.Object
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSessionLockSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SessionLockV1RequestGetLockSurface, &SessionLockV1GetLockSurfaceRequest{

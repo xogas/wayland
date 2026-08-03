@@ -98,6 +98,7 @@ func (o *CursorShapeManagerV1) GetPointer(pointer wire.ObjectID) (*CursorShapeDe
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCursorShapeDeviceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetPointer, &CursorShapeManagerV1GetPointerRequest{
@@ -115,6 +116,7 @@ func (o *CursorShapeManagerV1) GetTabletToolV2(tabletTool wire.ObjectID) (*Curso
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCursorShapeDeviceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetTabletToolV2, &CursorShapeManagerV1GetTabletToolV2Request{

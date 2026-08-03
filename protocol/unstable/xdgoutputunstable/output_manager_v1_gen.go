@@ -74,6 +74,7 @@ func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewOutputV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), OutputManagerV1RequestGetXdgOutput, &OutputManagerV1GetXdgOutputRequest{

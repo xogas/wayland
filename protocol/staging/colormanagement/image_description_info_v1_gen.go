@@ -377,7 +377,7 @@ func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 		var ev ImageDescriptionInfoV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -390,7 +390,7 @@ func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc)
 		var ev ImageDescriptionInfoV1IccFileEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "IccFile", "error", err)
+			o.proxy.Conn().FailEvent("IccFile", err)
 			return
 		}
 
@@ -403,7 +403,7 @@ func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesF
 		var ev ImageDescriptionInfoV1PrimariesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Primaries", "error", err)
+			o.proxy.Conn().FailEvent("Primaries", err)
 			return
 		}
 
@@ -416,7 +416,7 @@ func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1Prima
 		var ev ImageDescriptionInfoV1PrimariesNamedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PrimariesNamed", "error", err)
+			o.proxy.Conn().FailEvent("PrimariesNamed", err)
 			return
 		}
 
@@ -429,7 +429,7 @@ func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc)
 		var ev ImageDescriptionInfoV1TfPowerEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TfPower", "error", err)
+			o.proxy.Conn().FailEvent("TfPower", err)
 			return
 		}
 
@@ -442,7 +442,7 @@ func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc)
 		var ev ImageDescriptionInfoV1TfNamedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TfNamed", "error", err)
+			o.proxy.Conn().FailEvent("TfNamed", err)
 			return
 		}
 
@@ -455,7 +455,7 @@ func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1Luminance
 		var ev ImageDescriptionInfoV1LuminancesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Luminances", "error", err)
+			o.proxy.Conn().FailEvent("Luminances", err)
 			return
 		}
 
@@ -468,7 +468,7 @@ func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1Targ
 		var ev ImageDescriptionInfoV1TargetPrimariesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetPrimaries", "error", err)
+			o.proxy.Conn().FailEvent("TargetPrimaries", err)
 			return
 		}
 
@@ -481,7 +481,7 @@ func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1Targ
 		var ev ImageDescriptionInfoV1TargetLuminanceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetLuminance", "error", err)
+			o.proxy.Conn().FailEvent("TargetLuminance", err)
 			return
 		}
 
@@ -494,7 +494,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetM
 		var ev ImageDescriptionInfoV1TargetMaxCllEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetMaxCll", "error", err)
+			o.proxy.Conn().FailEvent("TargetMaxCll", err)
 			return
 		}
 
@@ -507,7 +507,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1Target
 		var ev ImageDescriptionInfoV1TargetMaxFallEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TargetMaxFall", "error", err)
+			o.proxy.Conn().FailEvent("TargetMaxFall", err)
 			return
 		}
 

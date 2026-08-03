@@ -104,6 +104,7 @@ func (o *IdleNotifierV1) GetIdleNotification(timeout uint32, seat wire.ObjectID)
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewIdleNotificationV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetIdleNotification, &IdleNotifierV1GetIdleNotificationRequest{
@@ -125,6 +126,7 @@ func (o *IdleNotifierV1) GetInputIdleNotification(timeout uint32, seat wire.Obje
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewIdleNotificationV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetInputIdleNotification, &IdleNotifierV1GetInputIdleNotificationRequest{

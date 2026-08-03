@@ -139,7 +139,7 @@ func (o *TabletV1) OnName(fn TabletV1NameFunc) {
 		var ev TabletV1NameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -152,7 +152,7 @@ func (o *TabletV1) OnID(fn TabletV1IDFunc) {
 		var ev TabletV1IDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ID", "error", err)
+			o.proxy.Conn().FailEvent("ID", err)
 			return
 		}
 
@@ -165,7 +165,7 @@ func (o *TabletV1) OnPath(fn TabletV1PathFunc) {
 		var ev TabletV1PathEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Path", "error", err)
+			o.proxy.Conn().FailEvent("Path", err)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (o *TabletV1) OnDone(fn TabletV1DoneFunc) {
 		var ev TabletV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -191,7 +191,7 @@ func (o *TabletV1) OnRemoved(fn TabletV1RemovedFunc) {
 		var ev TabletV1RemovedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
+			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
 

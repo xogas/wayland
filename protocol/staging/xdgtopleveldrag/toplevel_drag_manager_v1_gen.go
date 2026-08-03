@@ -82,6 +82,7 @@ func (o *ToplevelDragManagerV1) GetXdgToplevelDrag(dataSource wire.ObjectID) (*T
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelDragV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ToplevelDragManagerV1RequestGetXdgToplevelDrag, &ToplevelDragManagerV1GetXdgToplevelDragRequest{

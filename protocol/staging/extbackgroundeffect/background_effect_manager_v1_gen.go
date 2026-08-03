@@ -104,7 +104,7 @@ func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1C
 		var ev BackgroundEffectManagerV1CapabilitiesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
+			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
 
@@ -127,6 +127,7 @@ func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewBackgroundEffectSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), BackgroundEffectManagerV1RequestGetBackgroundEffect, &BackgroundEffectManagerV1GetBackgroundEffectRequest{

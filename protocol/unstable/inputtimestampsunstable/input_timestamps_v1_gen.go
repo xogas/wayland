@@ -77,7 +77,7 @@ func (o *InputTimestampsV1) OnTimestamp(fn InputTimestampsV1TimestampFunc) {
 		var ev InputTimestampsV1TimestampEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Timestamp", "error", err)
+			o.proxy.Conn().FailEvent("Timestamp", err)
 			return
 		}
 

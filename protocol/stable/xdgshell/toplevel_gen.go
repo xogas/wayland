@@ -410,7 +410,7 @@ func (o *Toplevel) OnConfigure(fn ToplevelConfigureFunc) {
 		var ev ToplevelConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -423,7 +423,7 @@ func (o *Toplevel) OnClose(fn ToplevelCloseFunc) {
 		var ev ToplevelCloseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Close", "error", err)
+			o.proxy.Conn().FailEvent("Close", err)
 			return
 		}
 
@@ -436,7 +436,7 @@ func (o *Toplevel) OnConfigureBounds(fn ToplevelConfigureBoundsFunc) {
 		var ev ToplevelConfigureBoundsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ConfigureBounds", "error", err)
+			o.proxy.Conn().FailEvent("ConfigureBounds", err)
 			return
 		}
 
@@ -449,7 +449,7 @@ func (o *Toplevel) OnWmCapabilities(fn ToplevelWmCapabilitiesFunc) {
 		var ev ToplevelWmCapabilitiesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "WmCapabilities", "error", err)
+			o.proxy.Conn().FailEvent("WmCapabilities", err)
 			return
 		}
 

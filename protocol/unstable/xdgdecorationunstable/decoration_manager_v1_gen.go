@@ -74,6 +74,7 @@ func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*To
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelDecorationV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DecorationManagerV1RequestGetToplevelDecoration, &DecorationManagerV1GetToplevelDecorationRequest{

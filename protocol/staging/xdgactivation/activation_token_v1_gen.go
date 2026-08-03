@@ -137,7 +137,7 @@ func (o *ActivationTokenV1) OnDone(fn ActivationTokenV1DoneFunc) {
 		var ev ActivationTokenV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 

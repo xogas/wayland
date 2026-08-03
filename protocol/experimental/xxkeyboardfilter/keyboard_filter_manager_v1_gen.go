@@ -80,6 +80,7 @@ func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard wire.ObjectID, inpu
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewKeyboardFilterV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), KeyboardFilterManagerV1RequestBindToInputMethod, &KeyboardFilterManagerV1BindToInputMethodRequest{

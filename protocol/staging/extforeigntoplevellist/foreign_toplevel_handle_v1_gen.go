@@ -139,7 +139,7 @@ func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc)
 		var ev ForeignToplevelHandleV1ClosedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Closed", "error", err)
+			o.proxy.Conn().FailEvent("Closed", err)
 			return
 		}
 
@@ -152,7 +152,7 @@ func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 		var ev ForeignToplevelHandleV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -165,7 +165,7 @@ func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 		var ev ForeignToplevelHandleV1TitleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Title", "error", err)
+			o.proxy.Conn().FailEvent("Title", err)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 		var ev ForeignToplevelHandleV1AppIDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "AppID", "error", err)
+			o.proxy.Conn().FailEvent("AppID", err)
 			return
 		}
 
@@ -191,7 +191,7 @@ func (o *ForeignToplevelHandleV1) OnIdentifier(fn ForeignToplevelHandleV1Identif
 		var ev ForeignToplevelHandleV1IdentifierEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Identifier", "error", err)
+			o.proxy.Conn().FailEvent("Identifier", err)
 			return
 		}
 

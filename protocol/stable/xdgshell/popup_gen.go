@@ -163,7 +163,7 @@ func (o *Popup) OnConfigure(fn PopupConfigureFunc) {
 		var ev PopupConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -176,7 +176,7 @@ func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 		var ev PopupPopupDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
+			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
 
@@ -189,7 +189,7 @@ func (o *Popup) OnRepositioned(fn PopupRepositionedFunc) {
 		var ev PopupRepositionedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Repositioned", "error", err)
+			o.proxy.Conn().FailEvent("Repositioned", err)
 			return
 		}
 

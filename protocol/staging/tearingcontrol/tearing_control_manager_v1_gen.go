@@ -82,6 +82,7 @@ func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*Tea
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewTearingControlV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), TearingControlManagerV1RequestGetTearingControl, &TearingControlManagerV1GetTearingControlRequest{

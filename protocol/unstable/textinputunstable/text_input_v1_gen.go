@@ -627,7 +627,7 @@ func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 		var ev TextInputV1EnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -640,7 +640,7 @@ func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 		var ev TextInputV1LeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -653,7 +653,7 @@ func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 		var ev TextInputV1ModifiersMapEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModifiersMap", "error", err)
+			o.proxy.Conn().FailEvent("ModifiersMap", err)
 			return
 		}
 
@@ -666,7 +666,7 @@ func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 		var ev TextInputV1InputPanelStateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "InputPanelState", "error", err)
+			o.proxy.Conn().FailEvent("InputPanelState", err)
 			return
 		}
 
@@ -679,7 +679,7 @@ func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 		var ev TextInputV1PreeditStringEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditString", "error", err)
+			o.proxy.Conn().FailEvent("PreeditString", err)
 			return
 		}
 
@@ -692,7 +692,7 @@ func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 		var ev TextInputV1PreeditStylingEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditStyling", "error", err)
+			o.proxy.Conn().FailEvent("PreeditStyling", err)
 			return
 		}
 
@@ -705,7 +705,7 @@ func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 		var ev TextInputV1PreeditCursorEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditCursor", "error", err)
+			o.proxy.Conn().FailEvent("PreeditCursor", err)
 			return
 		}
 
@@ -718,7 +718,7 @@ func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 		var ev TextInputV1CommitStringEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitString", "error", err)
+			o.proxy.Conn().FailEvent("CommitString", err)
 			return
 		}
 
@@ -731,7 +731,7 @@ func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 		var ev TextInputV1CursorPositionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CursorPosition", "error", err)
+			o.proxy.Conn().FailEvent("CursorPosition", err)
 			return
 		}
 
@@ -744,7 +744,7 @@ func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTex
 		var ev TextInputV1DeleteSurroundingTextEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteSurroundingText", "error", err)
+			o.proxy.Conn().FailEvent("DeleteSurroundingText", err)
 			return
 		}
 
@@ -757,7 +757,7 @@ func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 		var ev TextInputV1KeysymEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Keysym", "error", err)
+			o.proxy.Conn().FailEvent("Keysym", err)
 			return
 		}
 
@@ -770,7 +770,7 @@ func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 		var ev TextInputV1LanguageEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Language", "error", err)
+			o.proxy.Conn().FailEvent("Language", err)
 			return
 		}
 
@@ -783,7 +783,7 @@ func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 		var ev TextInputV1TextDirectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TextDirection", "error", err)
+			o.proxy.Conn().FailEvent("TextDirection", err)
 			return
 		}
 

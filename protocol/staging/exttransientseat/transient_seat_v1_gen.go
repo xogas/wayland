@@ -79,7 +79,7 @@ func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 		var ev TransientSeatV1ReadyEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ready", "error", err)
+			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
 
@@ -92,7 +92,7 @@ func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 		var ev TransientSeatV1DeniedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Denied", "error", err)
+			o.proxy.Conn().FailEvent("Denied", err)
 			return
 		}
 

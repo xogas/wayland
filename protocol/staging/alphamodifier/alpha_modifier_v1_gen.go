@@ -78,6 +78,7 @@ func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfa
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewAlphaModifierSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), AlphaModifierV1RequestGetSurface, &AlphaModifierV1GetSurfaceRequest{

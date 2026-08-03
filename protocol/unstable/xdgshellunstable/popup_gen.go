@@ -59,7 +59,7 @@ func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 		var ev PopupPopupDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PopupDone", "error", err)
+			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
 

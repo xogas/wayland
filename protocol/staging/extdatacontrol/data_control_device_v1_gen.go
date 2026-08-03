@@ -155,7 +155,7 @@ func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DataOffer", "error", err)
+			o.proxy.Conn().FailEvent("DataOffer", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -172,7 +172,7 @@ func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 		var ev DataControlDeviceV1SelectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Selection", "error", err)
+			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
 
@@ -185,7 +185,7 @@ func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 		var ev DataControlDeviceV1FinishedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
+			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
 
@@ -198,7 +198,7 @@ func (o *DataControlDeviceV1) OnPrimarySelection(fn DataControlDeviceV1PrimarySe
 		var ev DataControlDeviceV1PrimarySelectionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PrimarySelection", "error", err)
+			o.proxy.Conn().FailEvent("PrimarySelection", err)
 			return
 		}
 

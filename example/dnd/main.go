@@ -448,9 +448,13 @@ func main() {
 					return
 				}
 				_ = src.Offer("application/x-color")
-				src.OnTarget(func(ev wayland.DataSourceTargetEvent) {
-					fmt.Printf("dnd: target mime=%q\n", ev.MimeType)
-				})
+			src.OnTarget(func(ev wayland.DataSourceTargetEvent) {
+				mime := "<none>"
+				if ev.MimeType != nil {
+					mime = *ev.MimeType
+				}
+				fmt.Printf("dnd: target mime=%q\n", mime)
+			})
 				src.OnSend(func(ev wayland.DataSourceSendEvent) {
 					fmt.Printf("dnd: send mime=%q\n", ev.MimeType)
 					writeAndClose(ev.Fd, b.colorHex)
@@ -501,7 +505,8 @@ func main() {
 		}
 		offer := offerMap[id]
 		if offer != nil {
-			_ = offer.Accept(ev.Serial, "application/x-color")
+			mime := "application/x-color"
+			_ = offer.Accept(ev.Serial, &mime)
 			if ddmVersion >= 3 {
 				_ = offer.SetActions(wayland.DataDeviceManagerDndActionCopy, wayland.DataDeviceManagerDndActionCopy)
 			}

@@ -82,6 +82,7 @@ func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*Co
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewContentTypeV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ContentTypeManagerV1RequestGetSurfaceContentType, &ContentTypeManagerV1GetSurfaceContentTypeRequest{

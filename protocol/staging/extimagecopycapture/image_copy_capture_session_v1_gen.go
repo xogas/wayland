@@ -203,7 +203,7 @@ func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1Buf
 		var ev ImageCopyCaptureSessionV1BufferSizeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "BufferSize", "error", err)
+			o.proxy.Conn().FailEvent("BufferSize", err)
 			return
 		}
 
@@ -216,7 +216,7 @@ func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmF
 		var ev ImageCopyCaptureSessionV1ShmFormatEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ShmFormat", "error", err)
+			o.proxy.Conn().FailEvent("ShmFormat", err)
 			return
 		}
 
@@ -229,7 +229,7 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1D
 		var ev ImageCopyCaptureSessionV1DmabufDeviceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DmabufDevice", "error", err)
+			o.proxy.Conn().FailEvent("DmabufDevice", err)
 			return
 		}
 
@@ -242,7 +242,7 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1D
 		var ev ImageCopyCaptureSessionV1DmabufFormatEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DmabufFormat", "error", err)
+			o.proxy.Conn().FailEvent("DmabufFormat", err)
 			return
 		}
 
@@ -255,7 +255,7 @@ func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc)
 		var ev ImageCopyCaptureSessionV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -268,7 +268,7 @@ func (o *ImageCopyCaptureSessionV1) OnStopped(fn ImageCopyCaptureSessionV1Stoppe
 		var ev ImageCopyCaptureSessionV1StoppedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stopped", "error", err)
+			o.proxy.Conn().FailEvent("Stopped", err)
 			return
 		}
 
@@ -280,6 +280,7 @@ func (o *ImageCopyCaptureSessionV1) CreateFrame() (*ImageCopyCaptureFrameV1, err
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageCopyCaptureFrameV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureSessionV1RequestCreateFrame, &ImageCopyCaptureSessionV1CreateFrameRequest{

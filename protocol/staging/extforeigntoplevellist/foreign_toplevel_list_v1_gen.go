@@ -89,7 +89,7 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Toplevel", "error", err)
+			o.proxy.Conn().FailEvent("Toplevel", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -106,7 +106,7 @@ func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc)
 		var ev ForeignToplevelListV1FinishedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Finished", "error", err)
+			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
 

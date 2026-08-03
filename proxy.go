@@ -1,6 +1,7 @@
 package wayland
 
 import (
+	"slices"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -19,7 +20,7 @@ type Proxy struct {
 	id       uint32
 	conn     *Conn
 	deleted  atomic.Bool
-	version  uint32
+	version  atomic.Uint32
 	events   map[uint16][]func(*wire.Reader)
 	eventsMu sync.Mutex
 	fdCounts map[uint16]int
@@ -55,11 +56,11 @@ func (p *Proxy) Deleted() bool {
 }
 
 func (p *Proxy) Version() uint32 {
-	return p.version
+	return p.version.Load()
 }
 
 func (p *Proxy) SetVersion(v uint32) {
-	p.version = v
+	p.version.Store(v)
 }
 
 // SetEventFDCounts sets the per-opcode file descriptor counts for incoming events.
@@ -102,8 +103,7 @@ func (p *Proxy) RegisterEvent(opcode uint16, h func(*wire.Reader)) {
 
 func (p *Proxy) dispatchEvent(opcode uint16, r *wire.Reader) {
 	p.eventsMu.Lock()
-	handlers := make([]func(*wire.Reader), len(p.events[opcode]))
-	copy(handlers, p.events[opcode])
+	handlers := slices.Clone(p.events[opcode])
 	p.eventsMu.Unlock()
 
 	totalFDs := len(r.UnconsumedFDs())

@@ -3,6 +3,7 @@ package wire
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"syscall"
@@ -77,7 +78,10 @@ func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 	}
 
 	rights := syscall.UnixRights(w.Fds()...)
-	_, _, err := c.conn.WriteMsgUnix(buf, rights, nil)
+	n, _, err := c.conn.WriteMsgUnix(buf, rights, nil)
+	if err == nil && n != len(buf) {
+		err = io.ErrShortWrite
+	}
 	return err
 }
 

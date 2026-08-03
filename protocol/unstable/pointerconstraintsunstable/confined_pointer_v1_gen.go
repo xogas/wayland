@@ -89,7 +89,7 @@ func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 		var ev ConfinedPointerV1ConfinedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Confined", "error", err)
+			o.proxy.Conn().FailEvent("Confined", err)
 			return
 		}
 
@@ -102,7 +102,7 @@ func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 		var ev ConfinedPointerV1UnconfinedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Unconfined", "error", err)
+			o.proxy.Conn().FailEvent("Unconfined", err)
 			return
 		}
 

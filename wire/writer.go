@@ -32,14 +32,11 @@ func (w *Writer) Fixed(v Fixed) error {
 	return w.Int32(int32(v))
 }
 
-// String writes a length-prefixed string.
-// The 4-byte length prefix includes the NUL terminator.
+// String writes a length-prefixed string for a non-nullable argument.
+// The 4-byte length prefix includes the NUL terminator, so an empty string
+// is encoded as length 1 followed by the NUL byte (matching libwayland).
 // The encoded bytes are padded to a 4-byte boundary.
-// An empty string is encoded as a length of 0 with no further bytes.
 func (w *Writer) String(s string) error {
-	if s == "" {
-		return w.Uint32(0)
-	}
 	n := len(s) + 1 // includes NUL
 	if err := w.Uint32(uint32(n)); err != nil {
 		return err
@@ -57,6 +54,16 @@ func (w *Writer) String(s string) error {
 		}
 	}
 	return nil
+}
+
+// StringNullable writes a string for an allow-null argument.
+// A nil pointer is encoded as length 0 (NULL on the wire); a non-nil
+// pointer is encoded like String.
+func (w *Writer) StringNullable(s *string) error {
+	if s == nil {
+		return w.Uint32(0)
+	}
+	return w.String(*s)
 }
 
 // Object writes an object ID.

@@ -250,7 +250,7 @@ func (o *Touch) OnDown(fn TouchDownFunc) {
 		var ev TouchDownEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Down", "error", err)
+			o.proxy.Conn().FailEvent("Down", err)
 			return
 		}
 
@@ -263,7 +263,7 @@ func (o *Touch) OnUp(fn TouchUpFunc) {
 		var ev TouchUpEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Up", "error", err)
+			o.proxy.Conn().FailEvent("Up", err)
 			return
 		}
 
@@ -276,7 +276,7 @@ func (o *Touch) OnMotion(fn TouchMotionFunc) {
 		var ev TouchMotionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
+			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (o *Touch) OnFrame(fn TouchFrameFunc) {
 		var ev TouchFrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 
@@ -302,7 +302,7 @@ func (o *Touch) OnCancel(fn TouchCancelFunc) {
 		var ev TouchCancelEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancel", "error", err)
+			o.proxy.Conn().FailEvent("Cancel", err)
 			return
 		}
 
@@ -315,7 +315,7 @@ func (o *Touch) OnShape(fn TouchShapeFunc) {
 		var ev TouchShapeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Shape", "error", err)
+			o.proxy.Conn().FailEvent("Shape", err)
 			return
 		}
 
@@ -328,7 +328,7 @@ func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 		var ev TouchOrientationEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Orientation", "error", err)
+			o.proxy.Conn().FailEvent("Orientation", err)
 			return
 		}
 

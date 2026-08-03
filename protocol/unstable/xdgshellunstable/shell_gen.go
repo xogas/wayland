@@ -172,7 +172,7 @@ func (o *Shell) OnPing(fn ShellPingFunc) {
 		var ev ShellPingEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ping", "error", err)
+			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
 
@@ -201,6 +201,7 @@ func (o *Shell) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgSurface, &ShellGetXdgSurfaceRequest{
@@ -218,6 +219,7 @@ func (o *Shell) GetXdgPopup(surface wire.ObjectID, parent wire.ObjectID, seat wi
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPopup(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgPopup, &ShellGetXdgPopupRequest{

@@ -520,7 +520,7 @@ func (o *TabletToolV1) OnType(fn TabletToolV1TypeFunc) {
 		var ev TabletToolV1TypeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Type", "error", err)
+			o.proxy.Conn().FailEvent("Type", err)
 			return
 		}
 
@@ -533,7 +533,7 @@ func (o *TabletToolV1) OnHardwareSerial(fn TabletToolV1HardwareSerialFunc) {
 		var ev TabletToolV1HardwareSerialEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "HardwareSerial", "error", err)
+			o.proxy.Conn().FailEvent("HardwareSerial", err)
 			return
 		}
 
@@ -546,7 +546,7 @@ func (o *TabletToolV1) OnHardwareIDWacom(fn TabletToolV1HardwareIDWacomFunc) {
 		var ev TabletToolV1HardwareIDWacomEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "HardwareIDWacom", "error", err)
+			o.proxy.Conn().FailEvent("HardwareIDWacom", err)
 			return
 		}
 
@@ -559,7 +559,7 @@ func (o *TabletToolV1) OnCapability(fn TabletToolV1CapabilityFunc) {
 		var ev TabletToolV1CapabilityEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capability", "error", err)
+			o.proxy.Conn().FailEvent("Capability", err)
 			return
 		}
 
@@ -572,7 +572,7 @@ func (o *TabletToolV1) OnDone(fn TabletToolV1DoneFunc) {
 		var ev TabletToolV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -585,7 +585,7 @@ func (o *TabletToolV1) OnRemoved(fn TabletToolV1RemovedFunc) {
 		var ev TabletToolV1RemovedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
+			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
 
@@ -598,7 +598,7 @@ func (o *TabletToolV1) OnProximityIn(fn TabletToolV1ProximityInFunc) {
 		var ev TabletToolV1ProximityInEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ProximityIn", "error", err)
+			o.proxy.Conn().FailEvent("ProximityIn", err)
 			return
 		}
 
@@ -611,7 +611,7 @@ func (o *TabletToolV1) OnProximityOut(fn TabletToolV1ProximityOutFunc) {
 		var ev TabletToolV1ProximityOutEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ProximityOut", "error", err)
+			o.proxy.Conn().FailEvent("ProximityOut", err)
 			return
 		}
 
@@ -624,7 +624,7 @@ func (o *TabletToolV1) OnDown(fn TabletToolV1DownFunc) {
 		var ev TabletToolV1DownEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Down", "error", err)
+			o.proxy.Conn().FailEvent("Down", err)
 			return
 		}
 
@@ -637,7 +637,7 @@ func (o *TabletToolV1) OnUp(fn TabletToolV1UpFunc) {
 		var ev TabletToolV1UpEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Up", "error", err)
+			o.proxy.Conn().FailEvent("Up", err)
 			return
 		}
 
@@ -650,7 +650,7 @@ func (o *TabletToolV1) OnMotion(fn TabletToolV1MotionFunc) {
 		var ev TabletToolV1MotionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Motion", "error", err)
+			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
 
@@ -663,7 +663,7 @@ func (o *TabletToolV1) OnPressure(fn TabletToolV1PressureFunc) {
 		var ev TabletToolV1PressureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Pressure", "error", err)
+			o.proxy.Conn().FailEvent("Pressure", err)
 			return
 		}
 
@@ -676,7 +676,7 @@ func (o *TabletToolV1) OnDistance(fn TabletToolV1DistanceFunc) {
 		var ev TabletToolV1DistanceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Distance", "error", err)
+			o.proxy.Conn().FailEvent("Distance", err)
 			return
 		}
 
@@ -689,7 +689,7 @@ func (o *TabletToolV1) OnTilt(fn TabletToolV1TiltFunc) {
 		var ev TabletToolV1TiltEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Tilt", "error", err)
+			o.proxy.Conn().FailEvent("Tilt", err)
 			return
 		}
 
@@ -702,7 +702,7 @@ func (o *TabletToolV1) OnRotation(fn TabletToolV1RotationFunc) {
 		var ev TabletToolV1RotationEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Rotation", "error", err)
+			o.proxy.Conn().FailEvent("Rotation", err)
 			return
 		}
 
@@ -715,7 +715,7 @@ func (o *TabletToolV1) OnSlider(fn TabletToolV1SliderFunc) {
 		var ev TabletToolV1SliderEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Slider", "error", err)
+			o.proxy.Conn().FailEvent("Slider", err)
 			return
 		}
 
@@ -728,7 +728,7 @@ func (o *TabletToolV1) OnWheel(fn TabletToolV1WheelFunc) {
 		var ev TabletToolV1WheelEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Wheel", "error", err)
+			o.proxy.Conn().FailEvent("Wheel", err)
 			return
 		}
 
@@ -741,7 +741,7 @@ func (o *TabletToolV1) OnButton(fn TabletToolV1ButtonFunc) {
 		var ev TabletToolV1ButtonEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
+			o.proxy.Conn().FailEvent("Button", err)
 			return
 		}
 
@@ -754,7 +754,7 @@ func (o *TabletToolV1) OnFrame(fn TabletToolV1FrameFunc) {
 		var ev TabletToolV1FrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 

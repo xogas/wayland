@@ -79,7 +79,7 @@ func (o *KeyboardShortcutsInhibitorV1) OnActive(fn KeyboardShortcutsInhibitorV1A
 		var ev KeyboardShortcutsInhibitorV1ActiveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Active", "error", err)
+			o.proxy.Conn().FailEvent("Active", err)
 			return
 		}
 
@@ -92,7 +92,7 @@ func (o *KeyboardShortcutsInhibitorV1) OnInactive(fn KeyboardShortcutsInhibitorV
 		var ev KeyboardShortcutsInhibitorV1InactiveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Inactive", "error", err)
+			o.proxy.Conn().FailEvent("Inactive", err)
 			return
 		}
 

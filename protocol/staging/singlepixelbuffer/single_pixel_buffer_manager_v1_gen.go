@@ -88,6 +88,7 @@ func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b u
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SinglePixelBufferManagerV1RequestCreateU32RgbaBuffer, &SinglePixelBufferManagerV1CreateU32RgbaBufferRequest{
 		ID: wire.NewID(p.ID()),

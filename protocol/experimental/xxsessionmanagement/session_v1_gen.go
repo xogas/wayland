@@ -161,7 +161,7 @@ func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 		var ev SessionV1CreatedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Created", "error", err)
+			o.proxy.Conn().FailEvent("Created", err)
 			return
 		}
 
@@ -174,7 +174,7 @@ func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 		var ev SessionV1RestoredEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Restored", "error", err)
+			o.proxy.Conn().FailEvent("Restored", err)
 			return
 		}
 
@@ -187,7 +187,7 @@ func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 		var ev SessionV1ReplacedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Replaced", "error", err)
+			o.proxy.Conn().FailEvent("Replaced", err)
 			return
 		}
 
@@ -221,6 +221,7 @@ func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelS
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelSessionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SessionV1RequestAddToplevel, &SessionV1AddToplevelRequest{
@@ -239,6 +240,7 @@ func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*Tople
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewToplevelSessionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SessionV1RequestRestoreToplevel, &SessionV1RestoreToplevelRequest{

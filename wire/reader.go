@@ -95,6 +95,32 @@ func (r *Reader) String() (string, error) {
 	return s, nil
 }
 
+// StringNullable reads a length-prefixed string for an allow-null argument.
+// A length of 0 decodes to nil; anything else decodes like String.
+func (r *Reader) StringNullable() (*string, error) {
+	length, err := r.Uint32()
+	if err != nil {
+		return nil, err
+	}
+	if length == 0 {
+		return nil, nil
+	}
+	byteLen := int(length) - 1
+	if err := r.check(byteLen + 1); err != nil {
+		return nil, fmt.Errorf("wire: string data truncated (need %d): %w", byteLen+1, err)
+	}
+	s := string(r.buf[r.pos : r.pos+byteLen])
+	r.pos += byteLen
+	if r.buf[r.pos] != 0 {
+		return nil, fmt.Errorf("wire: missing NUL terminator in string")
+	}
+	r.pos++
+	if err = r.skipPad(int(length)); err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
 // Object reads an object ID.
 func (r *Reader) Object() (ObjectID, error) {
 	v, err := r.Uint32()

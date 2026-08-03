@@ -147,7 +147,7 @@ func (o *Seat) OnCapabilities(fn SeatCapabilitiesFunc) {
 		var ev SeatCapabilitiesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
+			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
 
@@ -160,7 +160,7 @@ func (o *Seat) OnName(fn SeatNameFunc) {
 		var ev SeatNameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -172,6 +172,7 @@ func (o *Seat) GetPointer() (*Pointer, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPointer(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetPointer, &SeatGetPointerRequest{
@@ -188,6 +189,7 @@ func (o *Seat) GetKeyboard() (*Keyboard, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewKeyboard(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetKeyboard, &SeatGetKeyboardRequest{
@@ -204,6 +206,7 @@ func (o *Seat) GetTouch() (*Touch, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewTouch(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetTouch, &SeatGetTouchRequest{

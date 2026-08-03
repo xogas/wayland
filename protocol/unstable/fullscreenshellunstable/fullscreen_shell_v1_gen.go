@@ -145,7 +145,7 @@ func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 		var ev FullscreenShellV1CapabilityEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capability", "error", err)
+			o.proxy.Conn().FailEvent("Capability", err)
 			return
 		}
 
@@ -176,6 +176,7 @@ func (o *FullscreenShellV1) PresentSurfaceForMode(surface wire.ObjectID, output 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewFullscreenShellModeFeedbackV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), FullscreenShellV1RequestPresentSurfaceForMode, &FullscreenShellV1PresentSurfaceForModeRequest{

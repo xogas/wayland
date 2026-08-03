@@ -61,6 +61,7 @@ func (o *TransientSeatManagerV1) Create() (*TransientSeatV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewTransientSeatV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), TransientSeatManagerV1RequestCreate, &TransientSeatManagerV1CreateRequest{

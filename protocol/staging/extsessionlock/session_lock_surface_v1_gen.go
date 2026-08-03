@@ -108,7 +108,7 @@ func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc)
 		var ev SessionLockSurfaceV1ConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 

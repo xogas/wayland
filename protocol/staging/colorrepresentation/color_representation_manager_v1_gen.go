@@ -141,7 +141,7 @@ func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentati
 		var ev ColorRepresentationManagerV1SupportedAlphaModeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedAlphaMode", "error", err)
+			o.proxy.Conn().FailEvent("SupportedAlphaMode", err)
 			return
 		}
 
@@ -154,7 +154,7 @@ func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn Color
 		var ev ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedCoefficientsAndRanges", "error", err)
+			o.proxy.Conn().FailEvent("SupportedCoefficientsAndRanges", err)
 			return
 		}
 
@@ -167,7 +167,7 @@ func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1Don
 		var ev ColorRepresentationManagerV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -190,6 +190,7 @@ func (o *ColorRepresentationManagerV1) GetSurface(surface wire.ObjectID) (*Color
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewColorRepresentationSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorRepresentationManagerV1RequestGetSurface, &ColorRepresentationManagerV1GetSurfaceRequest{

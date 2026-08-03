@@ -70,6 +70,7 @@ func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSessionLockV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SessionLockManagerV1RequestLock, &SessionLockManagerV1LockRequest{

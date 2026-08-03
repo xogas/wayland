@@ -83,6 +83,7 @@ func (o *PrimarySelectionDeviceManagerV1) CreateSource() (*PrimarySelectionSourc
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPrimarySelectionSourceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestCreateSource, &PrimarySelectionDeviceManagerV1CreateSourceRequest{
@@ -99,6 +100,7 @@ func (o *PrimarySelectionDeviceManagerV1) GetDevice(seat wire.ObjectID) (*Primar
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewPrimarySelectionDeviceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestGetDevice, &PrimarySelectionDeviceManagerV1GetDeviceRequest{

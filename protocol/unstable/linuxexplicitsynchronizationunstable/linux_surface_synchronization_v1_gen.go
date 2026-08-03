@@ -107,6 +107,7 @@ func (o *LinuxSurfaceSynchronizationV1) GetRelease() (*LinuxBufferReleaseV1, err
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxBufferReleaseV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxSurfaceSynchronizationV1RequestGetRelease, &LinuxSurfaceSynchronizationV1GetReleaseRequest{

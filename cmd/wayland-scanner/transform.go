@@ -35,6 +35,7 @@ type GoRequest struct {
 	HasNewID        bool   // new_id with resolvable interface in same protocol
 	NewIDType       string // Go type created by this request
 	HasCrossNewID   bool   // new_id without resolvable interface
+	HasSynthVersion bool   // interface-less new_id: synthetic interface/version args injected
 	MethodArgs      string // pre-computed method signature (new_id args filtered)
 	IsDestructor    bool
 }
@@ -169,6 +170,7 @@ func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bo
 			// Synthetic args: new_id without interface attribute
 			// (e.g. wl_registry.bind) needs interface/version injected.
 			if ga.IsNewID && r.Args[j].Interface == "" {
+				rd.HasSynthVersion = true
 				rd.Args = append(rd.Args,
 					GoArg{GoName: "Interface", ParamName: "interface_", GoType: "string", WireRead: "r.String()", WriteFn: "String"},
 					GoArg{GoName: "Version", ParamName: "version", GoType: "uint32", WireRead: "r.Uint32()", WriteFn: "Uint32"},
@@ -247,7 +249,11 @@ func buildArg(a *Arg, em enumMap) GoArg {
 	case "fixed":
 		ad.GoType, ad.WireRead, ad.WriteFn = "wire.Fixed", "r.Fixed()", "Fixed"
 	case "string":
-		ad.GoType, ad.WireRead, ad.WriteFn = "string", "r.String()", "String"
+		if a.AllowNull {
+			ad.GoType, ad.WireRead, ad.WriteFn = "*string", "r.StringNullable()", "StringNullable"
+		} else {
+			ad.GoType, ad.WireRead, ad.WriteFn = "string", "r.String()", "String"
+		}
 	case "object":
 		ad.GoType, ad.WireRead, ad.WriteFn = "wire.ObjectID", "r.Object()", "Object"
 	case "new_id":

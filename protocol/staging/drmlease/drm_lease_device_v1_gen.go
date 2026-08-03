@@ -127,7 +127,7 @@ func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 		var ev DrmLeaseDeviceV1DrmFdEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DrmFd", "error", err)
+			o.proxy.Conn().FailEvent("DrmFd", err)
 			return
 		}
 
@@ -141,7 +141,7 @@ func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Connector", "error", err)
+			o.proxy.Conn().FailEvent("Connector", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -158,7 +158,7 @@ func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 		var ev DrmLeaseDeviceV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -171,7 +171,7 @@ func (o *DrmLeaseDeviceV1) OnReleased(fn DrmLeaseDeviceV1ReleasedFunc) {
 		var ev DrmLeaseDeviceV1ReleasedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Released", "error", err)
+			o.proxy.Conn().FailEvent("Released", err)
 			return
 		}
 
@@ -183,6 +183,7 @@ func (o *DrmLeaseDeviceV1) CreateLeaseRequest() (*DrmLeaseRequestV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewDrmLeaseRequestV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), DrmLeaseDeviceV1RequestCreateLeaseRequest, &DrmLeaseDeviceV1CreateLeaseRequestRequest{

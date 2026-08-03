@@ -78,7 +78,7 @@ func (o *FullscreenShellModeFeedbackV1) OnModeSuccessful(fn FullscreenShellModeF
 		var ev FullscreenShellModeFeedbackV1ModeSuccessfulEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModeSuccessful", "error", err)
+			o.proxy.Conn().FailEvent("ModeSuccessful", err)
 			return
 		}
 
@@ -91,7 +91,7 @@ func (o *FullscreenShellModeFeedbackV1) OnModeFailed(fn FullscreenShellModeFeedb
 		var ev FullscreenShellModeFeedbackV1ModeFailedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModeFailed", "error", err)
+			o.proxy.Conn().FailEvent("ModeFailed", err)
 			return
 		}
 
@@ -104,7 +104,7 @@ func (o *FullscreenShellModeFeedbackV1) OnPresentCancelled(fn FullscreenShellMod
 		var ev FullscreenShellModeFeedbackV1PresentCancelledEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PresentCancelled", "error", err)
+			o.proxy.Conn().FailEvent("PresentCancelled", err)
 			return
 		}
 

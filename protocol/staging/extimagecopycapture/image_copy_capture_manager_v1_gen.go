@@ -108,6 +108,7 @@ func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageCopyCaptureSessionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreateSession, &ImageCopyCaptureManagerV1CreateSessionRequest{
@@ -126,6 +127,7 @@ func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source wire.Objec
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageCopyCaptureCursorSessionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreatePointerCursorSession, &ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest{

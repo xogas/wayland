@@ -147,7 +147,7 @@ func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 		var ev TabletPadStripV2SourceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Source", "error", err)
+			o.proxy.Conn().FailEvent("Source", err)
 			return
 		}
 
@@ -160,7 +160,7 @@ func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 		var ev TabletPadStripV2PositionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Position", "error", err)
+			o.proxy.Conn().FailEvent("Position", err)
 			return
 		}
 
@@ -173,7 +173,7 @@ func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 		var ev TabletPadStripV2StopEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Stop", "error", err)
+			o.proxy.Conn().FailEvent("Stop", err)
 			return
 		}
 
@@ -186,7 +186,7 @@ func (o *TabletPadStripV2) OnFrame(fn TabletPadStripV2FrameFunc) {
 		var ev TabletPadStripV2FrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 

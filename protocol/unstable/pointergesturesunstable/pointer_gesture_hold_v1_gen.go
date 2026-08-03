@@ -117,7 +117,7 @@ func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 		var ev PointerGestureHoldV1BeginEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Begin", "error", err)
+			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
 
@@ -130,7 +130,7 @@ func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 		var ev PointerGestureHoldV1EndEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "End", "error", err)
+			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
 

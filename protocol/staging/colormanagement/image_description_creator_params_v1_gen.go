@@ -288,6 +288,7 @@ func (o *ImageDescriptionCreatorParamsV1) Create() (*ImageDescriptionV1, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImageDescriptionCreatorParamsV1RequestCreate, &ImageDescriptionCreatorParamsV1CreateRequest{

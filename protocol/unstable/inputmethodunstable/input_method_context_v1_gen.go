@@ -505,7 +505,7 @@ func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1Surround
 		var ev InputMethodContextV1SurroundingTextEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SurroundingText", "error", err)
+			o.proxy.Conn().FailEvent("SurroundingText", err)
 			return
 		}
 
@@ -518,7 +518,7 @@ func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 		var ev InputMethodContextV1ResetEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Reset", "error", err)
+			o.proxy.Conn().FailEvent("Reset", err)
 			return
 		}
 
@@ -531,7 +531,7 @@ func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeF
 		var ev InputMethodContextV1ContentTypeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ContentType", "error", err)
+			o.proxy.Conn().FailEvent("ContentType", err)
 			return
 		}
 
@@ -544,7 +544,7 @@ func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActio
 		var ev InputMethodContextV1InvokeActionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "InvokeAction", "error", err)
+			o.proxy.Conn().FailEvent("InvokeAction", err)
 			return
 		}
 
@@ -557,7 +557,7 @@ func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateF
 		var ev InputMethodContextV1CommitStateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitState", "error", err)
+			o.proxy.Conn().FailEvent("CommitState", err)
 			return
 		}
 
@@ -570,7 +570,7 @@ func (o *InputMethodContextV1) OnPreferredLanguage(fn InputMethodContextV1Prefer
 		var ev InputMethodContextV1PreferredLanguageEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredLanguage", "error", err)
+			o.proxy.Conn().FailEvent("PreferredLanguage", err)
 			return
 		}
 
@@ -652,6 +652,7 @@ func (o *InputMethodContextV1) GrabKeyboard() (*wayland.Proxy, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputMethodContextV1RequestGrabKeyboard, &InputMethodContextV1GrabKeyboardRequest{
 		Keyboard: wire.NewID(p.ID()),

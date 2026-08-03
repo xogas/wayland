@@ -246,7 +246,7 @@ func (o *TabletPadV2) OnGroup(fn TabletPadV2GroupFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Group", "error", err)
+			o.proxy.Conn().FailEvent("Group", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -263,7 +263,7 @@ func (o *TabletPadV2) OnPath(fn TabletPadV2PathFunc) {
 		var ev TabletPadV2PathEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Path", "error", err)
+			o.proxy.Conn().FailEvent("Path", err)
 			return
 		}
 
@@ -276,7 +276,7 @@ func (o *TabletPadV2) OnButtons(fn TabletPadV2ButtonsFunc) {
 		var ev TabletPadV2ButtonsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Buttons", "error", err)
+			o.proxy.Conn().FailEvent("Buttons", err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (o *TabletPadV2) OnDone(fn TabletPadV2DoneFunc) {
 		var ev TabletPadV2DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -302,7 +302,7 @@ func (o *TabletPadV2) OnButton(fn TabletPadV2ButtonFunc) {
 		var ev TabletPadV2ButtonEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Button", "error", err)
+			o.proxy.Conn().FailEvent("Button", err)
 			return
 		}
 
@@ -315,7 +315,7 @@ func (o *TabletPadV2) OnEnter(fn TabletPadV2EnterFunc) {
 		var ev TabletPadV2EnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -328,7 +328,7 @@ func (o *TabletPadV2) OnLeave(fn TabletPadV2LeaveFunc) {
 		var ev TabletPadV2LeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -341,7 +341,7 @@ func (o *TabletPadV2) OnRemoved(fn TabletPadV2RemovedFunc) {
 		var ev TabletPadV2RemovedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
+			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
 

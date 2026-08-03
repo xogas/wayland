@@ -82,6 +82,7 @@ func (o *CommitTimingManagerV1) GetTimer(surface wire.ObjectID) (*CommitTimerV1,
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewCommitTimerV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), CommitTimingManagerV1RequestGetTimer, &CommitTimingManagerV1GetTimerRequest{

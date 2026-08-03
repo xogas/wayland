@@ -62,7 +62,7 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Activate", "error", err)
+			o.proxy.Conn().FailEvent("Activate", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -79,7 +79,7 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 		var ev InputMethodV1DeactivateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Deactivate", "error", err)
+			o.proxy.Conn().FailEvent("Deactivate", err)
 			return
 		}
 

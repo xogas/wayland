@@ -87,6 +87,7 @@ func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*S
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSecurityContextV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SecurityContextManagerV1RequestCreateListener, &SecurityContextManagerV1CreateListenerRequest{

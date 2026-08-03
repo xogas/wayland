@@ -83,6 +83,7 @@ func (o *InputMethodManagerV2) GetInputMethod(seat wire.ObjectID) (*InputMethodV
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputMethodV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetInputMethod, &InputMethodManagerV2GetInputMethodRequest{
@@ -100,6 +101,7 @@ func (o *InputMethodManagerV2) GetPositioner() (*InputPopupPositionerV1, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputPopupPositionerV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetPositioner, &InputMethodManagerV2GetPositionerRequest{

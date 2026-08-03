@@ -315,7 +315,7 @@ func (e *TextInputV3LeaveEvent) Unmarshal(r *wire.Reader) error {
 func (e *TextInputV3LeaveEvent) Since() uint32 { return 1 }
 
 type TextInputV3PreeditStringEvent struct {
-	Text        string // nullable
+	Text        *string // nullable
 	CursorBegin int32
 	CursorEnd   int32
 }
@@ -323,7 +323,7 @@ type TextInputV3PreeditStringEvent struct {
 func (e *TextInputV3PreeditStringEvent) Opcode() uint16 { return TextInputV3EventPreeditString }
 
 func (e *TextInputV3PreeditStringEvent) Unmarshal(r *wire.Reader) error {
-	text, err := r.String()
+	text, err := r.StringNullable()
 	if err != nil {
 		return err
 	}
@@ -344,13 +344,13 @@ func (e *TextInputV3PreeditStringEvent) Unmarshal(r *wire.Reader) error {
 func (e *TextInputV3PreeditStringEvent) Since() uint32 { return 1 }
 
 type TextInputV3CommitStringEvent struct {
-	Text string // nullable
+	Text *string // nullable
 }
 
 func (e *TextInputV3CommitStringEvent) Opcode() uint16 { return TextInputV3EventCommitString }
 
 func (e *TextInputV3CommitStringEvent) Unmarshal(r *wire.Reader) error {
-	text, err := r.String()
+	text, err := r.StringNullable()
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 		var ev TextInputV3EnterEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Enter", "error", err)
+			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
 
@@ -519,7 +519,7 @@ func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 		var ev TextInputV3LeaveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Leave", "error", err)
+			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
 
@@ -532,7 +532,7 @@ func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 		var ev TextInputV3PreeditStringEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditString", "error", err)
+			o.proxy.Conn().FailEvent("PreeditString", err)
 			return
 		}
 
@@ -545,7 +545,7 @@ func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 		var ev TextInputV3CommitStringEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "CommitString", "error", err)
+			o.proxy.Conn().FailEvent("CommitString", err)
 			return
 		}
 
@@ -558,7 +558,7 @@ func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTex
 		var ev TextInputV3DeleteSurroundingTextEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "DeleteSurroundingText", "error", err)
+			o.proxy.Conn().FailEvent("DeleteSurroundingText", err)
 			return
 		}
 
@@ -571,7 +571,7 @@ func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 		var ev TextInputV3DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -584,7 +584,7 @@ func (o *TextInputV3) OnAction(fn TextInputV3ActionFunc) {
 		var ev TextInputV3ActionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Action", "error", err)
+			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
 
@@ -597,7 +597,7 @@ func (o *TextInputV3) OnLanguage(fn TextInputV3LanguageFunc) {
 		var ev TextInputV3LanguageEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Language", "error", err)
+			o.proxy.Conn().FailEvent("Language", err)
 			return
 		}
 
@@ -610,7 +610,7 @@ func (o *TextInputV3) OnPreeditHint(fn TextInputV3PreeditHintFunc) {
 		var ev TextInputV3PreeditHintEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreeditHint", "error", err)
+			o.proxy.Conn().FailEvent("PreeditHint", err)
 			return
 		}
 

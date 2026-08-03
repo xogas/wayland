@@ -149,7 +149,7 @@ func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 		var ev PointerGestureSwipeV1BeginEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Begin", "error", err)
+			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
 
@@ -162,7 +162,7 @@ func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 		var ev PointerGestureSwipeV1UpdateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Update", "error", err)
+			o.proxy.Conn().FailEvent("Update", err)
 			return
 		}
 
@@ -175,7 +175,7 @@ func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 		var ev PointerGestureSwipeV1EndEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "End", "error", err)
+			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
 

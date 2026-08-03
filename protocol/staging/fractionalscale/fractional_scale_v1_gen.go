@@ -67,7 +67,7 @@ func (o *FractionalScaleV1) OnPreferredScale(fn FractionalScaleV1PreferredScaleF
 		var ev FractionalScaleV1PreferredScaleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PreferredScale", "error", err)
+			o.proxy.Conn().FailEvent("PreferredScale", err)
 			return
 		}
 

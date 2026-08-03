@@ -112,7 +112,7 @@ func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 		var ev PrimarySelectionSourceV1SendEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Send", "error", err)
+			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
 
@@ -125,7 +125,7 @@ func (o *PrimarySelectionSourceV1) OnCancelled(fn PrimarySelectionSourceV1Cancel
 		var ev PrimarySelectionSourceV1CancelledEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Cancelled", "error", err)
+			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
 

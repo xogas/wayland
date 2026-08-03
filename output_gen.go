@@ -250,7 +250,7 @@ func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 		var ev OutputGeometryEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Geometry", "error", err)
+			o.proxy.Conn().FailEvent("Geometry", err)
 			return
 		}
 
@@ -263,7 +263,7 @@ func (o *Output) OnMode(fn OutputModeFunc) {
 		var ev OutputModeEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Mode", "error", err)
+			o.proxy.Conn().FailEvent("Mode", err)
 			return
 		}
 
@@ -276,7 +276,7 @@ func (o *Output) OnDone(fn OutputDoneFunc) {
 		var ev OutputDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (o *Output) OnScale(fn OutputScaleFunc) {
 		var ev OutputScaleEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Scale", "error", err)
+			o.proxy.Conn().FailEvent("Scale", err)
 			return
 		}
 
@@ -302,7 +302,7 @@ func (o *Output) OnName(fn OutputNameFunc) {
 		var ev OutputNameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -315,7 +315,7 @@ func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 		var ev OutputDescriptionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Description", "error", err)
+			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
 

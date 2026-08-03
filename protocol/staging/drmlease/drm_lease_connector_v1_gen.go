@@ -137,7 +137,7 @@ func (o *DrmLeaseConnectorV1) OnName(fn DrmLeaseConnectorV1NameFunc) {
 		var ev DrmLeaseConnectorV1NameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -150,7 +150,7 @@ func (o *DrmLeaseConnectorV1) OnDescription(fn DrmLeaseConnectorV1DescriptionFun
 		var ev DrmLeaseConnectorV1DescriptionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Description", "error", err)
+			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
 
@@ -163,7 +163,7 @@ func (o *DrmLeaseConnectorV1) OnConnectorID(fn DrmLeaseConnectorV1ConnectorIDFun
 		var ev DrmLeaseConnectorV1ConnectorIDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ConnectorID", "error", err)
+			o.proxy.Conn().FailEvent("ConnectorID", err)
 			return
 		}
 
@@ -176,7 +176,7 @@ func (o *DrmLeaseConnectorV1) OnDone(fn DrmLeaseConnectorV1DoneFunc) {
 		var ev DrmLeaseConnectorV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -189,7 +189,7 @@ func (o *DrmLeaseConnectorV1) OnWithdrawn(fn DrmLeaseConnectorV1WithdrawnFunc) {
 		var ev DrmLeaseConnectorV1WithdrawnEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Withdrawn", "error", err)
+			o.proxy.Conn().FailEvent("Withdrawn", err)
 			return
 		}
 

@@ -65,6 +65,7 @@ func (o *ForeignToplevelImageCaptureSourceManagerV1) CreateSource(toplevelHandle
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageCaptureSourceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ForeignToplevelImageCaptureSourceManagerV1RequestCreateSource, &ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest{

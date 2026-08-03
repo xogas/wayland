@@ -112,7 +112,7 @@ func (o *Registry) OnGlobal(fn RegistryGlobalFunc) {
 		var ev RegistryGlobalEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Global", "error", err)
+			o.proxy.Conn().FailEvent("Global", err)
 			return
 		}
 
@@ -125,7 +125,7 @@ func (o *Registry) OnGlobalRemove(fn RegistryGlobalRemoveFunc) {
 		var ev RegistryGlobalRemoveEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "GlobalRemove", "error", err)
+			o.proxy.Conn().FailEvent("GlobalRemove", err)
 			return
 		}
 
@@ -136,7 +136,8 @@ func (o *Registry) OnGlobalRemove(fn RegistryGlobalRemoveFunc) {
 func (o *Registry) Bind(name uint32, interface_ string, version uint32) (*Proxy, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
-	p.SetVersion(o.proxy.Version())
+	p.SetVersion(version)
+
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), RegistryRequestBind, &RegistryBindRequest{
 		Name:      name,

@@ -153,7 +153,7 @@ func (o *LinuxDmabufV1) OnFormat(fn LinuxDmabufV1FormatFunc) {
 		var ev LinuxDmabufV1FormatEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Format", "error", err)
+			o.proxy.Conn().FailEvent("Format", err)
 			return
 		}
 
@@ -166,7 +166,7 @@ func (o *LinuxDmabufV1) OnModifier(fn LinuxDmabufV1ModifierFunc) {
 		var ev LinuxDmabufV1ModifierEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modifier", "error", err)
+			o.proxy.Conn().FailEvent("Modifier", err)
 			return
 		}
 
@@ -189,6 +189,7 @@ func (o *LinuxDmabufV1) CreateParams() (*LinuxBufferParamsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxBufferParamsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestCreateParams, &LinuxDmabufV1CreateParamsRequest{
@@ -208,6 +209,7 @@ func (o *LinuxDmabufV1) GetDefaultFeedback() (*LinuxDmabufFeedbackV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxDmabufFeedbackV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetDefaultFeedback, &LinuxDmabufV1GetDefaultFeedbackRequest{
@@ -227,6 +229,7 @@ func (o *LinuxDmabufV1) GetSurfaceFeedback(surface wire.ObjectID) (*LinuxDmabufF
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxDmabufFeedbackV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetSurfaceFeedback, &LinuxDmabufV1GetSurfaceFeedbackRequest{

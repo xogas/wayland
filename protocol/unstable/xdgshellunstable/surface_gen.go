@@ -348,7 +348,7 @@ func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 		var ev SurfaceConfigureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Configure", "error", err)
+			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
 
@@ -361,7 +361,7 @@ func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 		var ev SurfaceCloseEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Close", "error", err)
+			o.proxy.Conn().FailEvent("Close", err)
 			return
 		}
 

@@ -136,7 +136,7 @@ func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFun
 		var ev PresentationFeedbackSyncOutputEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SyncOutput", "error", err)
+			o.proxy.Conn().FailEvent("SyncOutput", err)
 			return
 		}
 
@@ -149,7 +149,7 @@ func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc)
 		var ev PresentationFeedbackPresentedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Presented", "error", err)
+			o.proxy.Conn().FailEvent("Presented", err)
 			return
 		}
 
@@ -162,7 +162,7 @@ func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc)
 		var ev PresentationFeedbackDiscardedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Discarded", "error", err)
+			o.proxy.Conn().FailEvent("Discarded", err)
 			return
 		}
 

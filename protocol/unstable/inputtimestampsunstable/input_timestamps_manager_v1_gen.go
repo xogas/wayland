@@ -120,6 +120,7 @@ func (o *InputTimestampsManagerV1) GetKeyboardTimestamps(keyboard wire.ObjectID)
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputTimestampsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputTimestampsManagerV1RequestGetKeyboardTimestamps, &InputTimestampsManagerV1GetKeyboardTimestampsRequest{
@@ -137,6 +138,7 @@ func (o *InputTimestampsManagerV1) GetPointerTimestamps(pointer wire.ObjectID) (
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputTimestampsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputTimestampsManagerV1RequestGetPointerTimestamps, &InputTimestampsManagerV1GetPointerTimestampsRequest{
@@ -154,6 +156,7 @@ func (o *InputTimestampsManagerV1) GetTouchTimestamps(touch wire.ObjectID) (*Inp
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewInputTimestampsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), InputTimestampsManagerV1RequestGetTouchTimestamps, &InputTimestampsManagerV1GetTouchTimestampsRequest{

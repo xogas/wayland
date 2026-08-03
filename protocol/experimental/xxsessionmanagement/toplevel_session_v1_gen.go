@@ -77,7 +77,7 @@ func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 		var ev ToplevelSessionV1RestoredEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Restored", "error", err)
+			o.proxy.Conn().FailEvent("Restored", err)
 			return
 		}
 

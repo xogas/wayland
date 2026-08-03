@@ -105,7 +105,7 @@ func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 		var ev TabletPadDialV2DeltaEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Delta", "error", err)
+			o.proxy.Conn().FailEvent("Delta", err)
 			return
 		}
 
@@ -118,7 +118,7 @@ func (o *TabletPadDialV2) OnFrame(fn TabletPadDialV2FrameFunc) {
 		var ev TabletPadDialV2FrameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Frame", "error", err)
+			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
 

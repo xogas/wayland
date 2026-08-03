@@ -74,6 +74,7 @@ func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, err
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewTextInputV3(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), TextInputManagerV3RequestGetTextInput, &TextInputManagerV3GetTextInputRequest{

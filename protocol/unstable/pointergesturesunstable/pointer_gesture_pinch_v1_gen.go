@@ -161,7 +161,7 @@ func (o *PointerGesturePinchV1) OnBegin(fn PointerGesturePinchV1BeginFunc) {
 		var ev PointerGesturePinchV1BeginEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Begin", "error", err)
+			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
 
@@ -174,7 +174,7 @@ func (o *PointerGesturePinchV1) OnUpdate(fn PointerGesturePinchV1UpdateFunc) {
 		var ev PointerGesturePinchV1UpdateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Update", "error", err)
+			o.proxy.Conn().FailEvent("Update", err)
 			return
 		}
 
@@ -187,7 +187,7 @@ func (o *PointerGesturePinchV1) OnEnd(fn PointerGesturePinchV1EndFunc) {
 		var ev PointerGesturePinchV1EndEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "End", "error", err)
+			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
 

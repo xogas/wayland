@@ -41,6 +41,7 @@ func ConnectPath(ctx context.Context, path string) (*Display, error) {
 	wc := wire.NewConn(unixConn)
 	conn := newConn(unixConn, wc)
 	proxy := NewProxyWithID(conn, displayID)
+	proxy.SetVersion(VersionDisplay)
 	conn.RegisterProxy(proxy)
 	dpy := NewDisplay(proxy)
 	wireDisplayEvents(dpy, conn)
@@ -48,6 +49,10 @@ func ConnectPath(ctx context.Context, path string) (*Display, error) {
 }
 
 // ConnectFd uses an already-opened file descriptor to create the display connection.
+//
+// ConnectFd takes ownership of fd: it is closed when this function returns and
+// must not be used by the caller afterwards. The connection internally uses a
+// duplicate that is closed by Display.Close.
 func ConnectFd(ctx context.Context, fd int, path string) (*Display, error) {
 	f := os.NewFile(uintptr(fd), path)
 	defer f.Close() //nolint: errcheck
@@ -64,6 +69,7 @@ func ConnectFd(ctx context.Context, fd int, path string) (*Display, error) {
 	wc := wire.NewConn(unixConn)
 	conn := newConn(unixConn, wc)
 	proxy := NewProxyWithID(conn, displayID)
+	proxy.SetVersion(VersionDisplay)
 	conn.RegisterProxy(proxy)
 	dpy := NewDisplay(proxy)
 	wireDisplayEvents(dpy, conn)
@@ -72,21 +78,28 @@ func ConnectFd(ctx context.Context, fd int, path string) (*Display, error) {
 
 func wireDisplayEvents(dpy *Display, conn *Conn) {
 	dpy.OnError(func(ev DisplayErrorEvent) {
-		conn.connMu.Lock()
-		fn := conn.onError
-		conn.connMu.Unlock()
-		if fn == nil {
-			return
-		}
 		pe := &ProtocolError{
 			ObjectID: uint32(ev.ObjectID),
 			Code:     ev.Code,
 			Message:  ev.Message,
 		}
-		fn(pe)
+		// A protocol error means the compositor has declared the protocol
+		// state of this connection invalid; per the Wayland spec the
+		// client must terminate. Record it as the connection's fatal
+		// error and close: Dispatch/DispatchPending return pe, and all
+		// further sends fail fast. SetOnError remains available as an
+		// optional notification hook.
+		conn.setProtoErr(pe)
+		conn.Close()
+		conn.connMu.Lock()
+		fn := conn.onError
+		conn.connMu.Unlock()
+		if fn != nil {
+			fn(pe)
+		}
 	})
 	dpy.OnDeleteID(func(ev DisplayDeleteIDEvent) {
-		conn.UnregisterProxy(ev.ID)
+		conn.removeProxy(ev.ID)
 	})
 }
 

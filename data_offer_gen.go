@@ -34,7 +34,7 @@ const (
 
 type DataOfferAcceptRequest struct {
 	Serial   uint32
-	MimeType string // nullable
+	MimeType *string // nullable
 }
 
 func (r *DataOfferAcceptRequest) Opcode() uint16 { return DataOfferRequestAccept }
@@ -43,7 +43,7 @@ func (r *DataOfferAcceptRequest) Marshal(w *wire.Writer) error {
 	if err := w.Uint32(r.Serial); err != nil {
 		return err
 	}
-	if err := w.String(r.MimeType); err != nil {
+	if err := w.StringNullable(r.MimeType); err != nil {
 		return err
 	}
 	return nil
@@ -185,7 +185,7 @@ func (o *DataOffer) OnOffer(fn DataOfferOfferFunc) {
 		var ev DataOfferOfferEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Offer", "error", err)
+			o.proxy.Conn().FailEvent("Offer", err)
 			return
 		}
 
@@ -198,7 +198,7 @@ func (o *DataOffer) OnSourceActions(fn DataOfferSourceActionsFunc) {
 		var ev DataOfferSourceActionsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SourceActions", "error", err)
+			o.proxy.Conn().FailEvent("SourceActions", err)
 			return
 		}
 
@@ -211,7 +211,7 @@ func (o *DataOffer) OnAction(fn DataOfferActionFunc) {
 		var ev DataOfferActionEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Action", "error", err)
+			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
 
@@ -219,7 +219,7 @@ func (o *DataOffer) OnAction(fn DataOfferActionFunc) {
 	})
 }
 
-func (o *DataOffer) Accept(serial uint32, mimeType string) error {
+func (o *DataOffer) Accept(serial uint32, mimeType *string) error {
 	return o.proxy.SendRequest(DataOfferRequestAccept, &DataOfferAcceptRequest{
 		Serial:   serial,
 		MimeType: mimeType,

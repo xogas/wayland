@@ -164,7 +164,7 @@ func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 		var ev TabletPadGroupV2ButtonsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Buttons", "error", err)
+			o.proxy.Conn().FailEvent("Buttons", err)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Ring", "error", err)
+			o.proxy.Conn().FailEvent("Ring", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -196,7 +196,7 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Strip", "error", err)
+			o.proxy.Conn().FailEvent("Strip", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -213,7 +213,7 @@ func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 		var ev TabletPadGroupV2ModesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Modes", "error", err)
+			o.proxy.Conn().FailEvent("Modes", err)
 			return
 		}
 
@@ -226,7 +226,7 @@ func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 		var ev TabletPadGroupV2DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -239,7 +239,7 @@ func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 		var ev TabletPadGroupV2ModeSwitchEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ModeSwitch", "error", err)
+			o.proxy.Conn().FailEvent("ModeSwitch", err)
 			return
 		}
 
@@ -253,7 +253,7 @@ func (o *TabletPadGroupV2) OnDial(fn TabletPadGroupV2DialFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Dial", "error", err)
+			o.proxy.Conn().FailEvent("Dial", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))

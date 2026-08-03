@@ -54,6 +54,7 @@ func (o *Shell) GetShellSurface(surface wire.ObjectID) (*ShellSurface, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewShellSurface(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetShellSurface, &ShellGetShellSurfaceRequest{

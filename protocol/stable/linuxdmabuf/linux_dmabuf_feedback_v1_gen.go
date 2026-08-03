@@ -207,7 +207,7 @@ func (o *LinuxDmabufFeedbackV1) OnDone(fn LinuxDmabufFeedbackV1DoneFunc) {
 		var ev LinuxDmabufFeedbackV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -220,7 +220,7 @@ func (o *LinuxDmabufFeedbackV1) OnFormatTable(fn LinuxDmabufFeedbackV1FormatTabl
 		var ev LinuxDmabufFeedbackV1FormatTableEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "FormatTable", "error", err)
+			o.proxy.Conn().FailEvent("FormatTable", err)
 			return
 		}
 
@@ -233,7 +233,7 @@ func (o *LinuxDmabufFeedbackV1) OnMainDevice(fn LinuxDmabufFeedbackV1MainDeviceF
 		var ev LinuxDmabufFeedbackV1MainDeviceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "MainDevice", "error", err)
+			o.proxy.Conn().FailEvent("MainDevice", err)
 			return
 		}
 
@@ -246,7 +246,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheDone(fn LinuxDmabufFeedbackV1TrancheDon
 		var ev LinuxDmabufFeedbackV1TrancheDoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheDone", "error", err)
+			o.proxy.Conn().FailEvent("TrancheDone", err)
 			return
 		}
 
@@ -259,7 +259,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheTargetDevice(fn LinuxDmabufFeedbackV1Tr
 		var ev LinuxDmabufFeedbackV1TrancheTargetDeviceEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheTargetDevice", "error", err)
+			o.proxy.Conn().FailEvent("TrancheTargetDevice", err)
 			return
 		}
 
@@ -272,7 +272,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFormats(fn LinuxDmabufFeedbackV1Tranche
 		var ev LinuxDmabufFeedbackV1TrancheFormatsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheFormats", "error", err)
+			o.proxy.Conn().FailEvent("TrancheFormats", err)
 			return
 		}
 
@@ -285,7 +285,7 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFlags(fn LinuxDmabufFeedbackV1TrancheFl
 		var ev LinuxDmabufFeedbackV1TrancheFlagsEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TrancheFlags", "error", err)
+			o.proxy.Conn().FailEvent("TrancheFlags", err)
 			return
 		}
 

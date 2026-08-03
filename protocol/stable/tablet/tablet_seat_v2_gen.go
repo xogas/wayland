@@ -79,7 +79,7 @@ func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "TabletAdded", "error", err)
+			o.proxy.Conn().FailEvent("TabletAdded", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -97,7 +97,7 @@ func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ToolAdded", "error", err)
+			o.proxy.Conn().FailEvent("ToolAdded", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -115,7 +115,7 @@ func (o *TabletSeatV2) OnPadAdded(fn TabletSeatV2PadAddedFunc) {
 
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "PadAdded", "error", err)
+			o.proxy.Conn().FailEvent("PadAdded", err)
 			return
 		}
 		p := wayland.NewProxyWithID(o.proxy.Conn(), uint32(rawID))

@@ -234,7 +234,7 @@ func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 		var ev WorkspaceHandleV1IDEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "ID", "error", err)
+			o.proxy.Conn().FailEvent("ID", err)
 			return
 		}
 
@@ -247,7 +247,7 @@ func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 		var ev WorkspaceHandleV1NameEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Name", "error", err)
+			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
 
@@ -260,7 +260,7 @@ func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 		var ev WorkspaceHandleV1CoordinatesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Coordinates", "error", err)
+			o.proxy.Conn().FailEvent("Coordinates", err)
 			return
 		}
 
@@ -273,7 +273,7 @@ func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 		var ev WorkspaceHandleV1StateEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "State", "error", err)
+			o.proxy.Conn().FailEvent("State", err)
 			return
 		}
 
@@ -286,7 +286,7 @@ func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc)
 		var ev WorkspaceHandleV1CapabilitiesEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Capabilities", "error", err)
+			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
 
@@ -299,7 +299,7 @@ func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 		var ev WorkspaceHandleV1RemovedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Removed", "error", err)
+			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
 

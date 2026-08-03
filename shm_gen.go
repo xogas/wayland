@@ -244,7 +244,7 @@ func (o *Shm) OnFormat(fn ShmFormatFunc) {
 		var ev ShmFormatEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Format", "error", err)
+			o.proxy.Conn().FailEvent("Format", err)
 			return
 		}
 
@@ -256,6 +256,7 @@ func (o *Shm) CreatePool(fd int, size int32) (*ShmPool, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewShmPool(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShmRequestCreatePool, &ShmCreatePoolRequest{

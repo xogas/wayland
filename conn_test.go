@@ -2,8 +2,10 @@ package wayland
 
 import (
 	"context"
+	"errors"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"syscall"
 	"testing"
@@ -38,6 +40,23 @@ func socketPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
 type mockMarshaler struct{}
 
 func (m mockMarshaler) Marshal(w *wire.Writer) error { return nil }
+
+// waitForReadCh blocks until the reader goroutine has buffered at least one
+// message in readCh, i.e. consumed it from the socket. Polling the actual
+// condition keeps tests deterministic without fixed sleeps; the deadline only
+// guards against a broken reader. startReader is idempotent, so this works
+// both before and after the first Dispatch.
+func waitForReadCh(t *testing.T, conn *Conn) {
+	t.Helper()
+	conn.startReader()
+	deadline := time.Now().Add(2 * time.Second)
+	for len(conn.readCh) == 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("timeout waiting for reader to buffer a message")
+		}
+		runtime.Gosched()
+	}
+}
 
 func TestDisplayID(t *testing.T) {
 	if displayID != 1 {
@@ -246,7 +265,7 @@ func TestGlobalEventDispatch(t *testing.T) {
 		t.Fatalf("server SendMessage: %v", err)
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	if err := conn.Dispatch(ctx); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
@@ -295,7 +314,7 @@ func TestDeleteIDUnregister(t *testing.T) {
 		t.Fatalf("SendMessage delete_id: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
@@ -337,8 +356,10 @@ func TestErrorEventDispatch(t *testing.T) {
 		t.Fatalf("SendMessage error: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
-		t.Fatalf("Dispatch: %v", err)
+	err := conn.Dispatch(t.Context())
+	var pe2 *ProtocolError
+	if !errors.As(err, &pe2) {
+		t.Fatalf("Dispatch: got %v, want *ProtocolError", err)
 	}
 
 	select {
@@ -358,6 +379,145 @@ func TestErrorEventDispatch(t *testing.T) {
 	}
 	if pe.Message != "test error" {
 		t.Fatalf("Message: got %q, want %q", pe.Message, "test error")
+	}
+}
+
+// TestProtocolErrorFatal verifies that wl_display.error is fatal: the error
+// is returned by Dispatch, the connection is closed, and every subsequent
+// Dispatch and SendRequest fails fast with the same error.
+func TestProtocolErrorFatal(t *testing.T) {
+	clientUC, serverUC := socketPair(t)
+	defer clientUC.Close() //nolint: errcheck
+	defer serverUC.Close() //nolint: errcheck
+
+	wc := wire.NewConn(clientUC)
+	conn := newConn(clientUC, wc)
+	swc := wire.NewConn(serverUC)
+
+	dpyProxy := NewProxyWithID(conn, displayID)
+	conn.RegisterProxy(dpyProxy)
+	dpy := NewDisplay(dpyProxy)
+	wireDisplayEvents(dpy, conn)
+
+	w := &wire.Writer{}
+	_ = w.Object(wire.ObjectID(7))
+	_ = w.Uint32(1)
+	_ = w.String("boom")
+	if err := swc.SendMessage(wire.ObjectID(displayID), DisplayEventError, w); err != nil {
+		t.Fatalf("SendMessage error: %v", err)
+	}
+
+	err1 := conn.Dispatch(t.Context())
+	var pe *ProtocolError
+	if !errors.As(err1, &pe) {
+		t.Fatalf("Dispatch: got %v, want *ProtocolError", err1)
+	}
+	if pe.Code != 1 || pe.Message != "boom" {
+		t.Fatalf("unexpected protocol error: %v", pe)
+	}
+	if !conn.IsClosed() {
+		t.Fatal("connection should be closed after protocol error")
+	}
+
+	// Sticky: every further call fails fast with the same error, not
+	// ErrConnClosed.
+	err2 := conn.Dispatch(t.Context())
+	if !errors.Is(err2, err1) {
+		t.Fatalf("second Dispatch: got %v, want sticky %v", err2, err1)
+	}
+	if err := conn.DispatchPending(); !errors.Is(err, err1) {
+		t.Fatalf("DispatchPending: got %v, want sticky %v", err, err1)
+	}
+	if err := conn.SendRequest(displayID, DisplayRequestSync, mockMarshaler{}); !errors.Is(err, err1) {
+		t.Fatalf("SendRequest: got %v, want sticky %v", err, err1)
+	}
+}
+
+// TestEventDecodeFailureFatal verifies that an event that cannot be decoded
+// is fatal: the stream is corrupt, so the connection is terminated and
+// Dispatch returns the decode error.
+func TestEventDecodeFailureFatal(t *testing.T) {
+	clientUC, serverUC := socketPair(t)
+	defer clientUC.Close() //nolint: errcheck
+	defer serverUC.Close() //nolint: errcheck
+
+	wc := wire.NewConn(clientUC)
+	conn := newConn(clientUC, wc)
+	defer conn.Close() //nolint: errcheck
+	swc := wire.NewConn(serverUC)
+
+	p := NewProxyWithID(conn, displayID)
+	conn.RegisterProxy(p)
+	dpy := NewDisplay(p)
+	wireDisplayEvents(dpy, conn)
+
+	reg, err := dpy.GetRegistry()
+	if err != nil {
+		t.Fatalf("GetRegistry: %v", err)
+	}
+	regID := reg.Proxy().ID()
+	_, _, _, _ = swc.ReceiveMessage()
+
+	// A registered handler is required for the event to reach the decoder.
+	reg.OnGlobal(func(ev RegistryGlobalEvent) {})
+
+	// Malformed global event: the string length (100) exceeds the payload.
+	w := &wire.Writer{}
+	_ = w.Uint32(1)
+	_ = w.Uint32(100)
+	if err := swc.SendMessage(wire.ObjectID(regID), RegistryEventGlobal, w); err != nil {
+		t.Fatalf("SendMessage: %v", err)
+	}
+
+	err = conn.Dispatch(t.Context())
+	if err == nil {
+		t.Fatal("Dispatch: expected decode error, got nil")
+	}
+	if !conn.IsClosed() {
+		t.Fatal("connection should be closed after decode failure")
+	}
+
+	// Sticky: subsequent calls fail fast with the same error.
+	err2 := conn.Dispatch(t.Context())
+	if !errors.Is(err2, err) {
+		t.Fatalf("second Dispatch: got %v, want sticky %v", err2, err)
+	}
+}
+
+// TestUnknownObjectEventNotFatal documents the deliberate handling of events
+// for objects that no longer exist: after a client-side destroy, events
+// already in flight may still arrive. They carry no fds (fd-carrying objects
+// keep zombie entries that drain them), so they are dropped without touching
+// the connection.
+func TestUnknownObjectEventNotFatal(t *testing.T) {
+	clientUC, serverUC := socketPair(t)
+	defer clientUC.Close() //nolint: errcheck
+	defer serverUC.Close() //nolint: errcheck
+
+	wc := wire.NewConn(clientUC)
+	conn := newConn(clientUC, wc)
+	defer conn.Close() //nolint: errcheck
+	swc := wire.NewConn(serverUC)
+
+	p := NewProxy(conn)
+	conn.RegisterProxy(p)
+	proxyID := p.ID()
+	conn.UnregisterProxy(proxyID) // client-side destroy; no fd events -> no zombie
+
+	w := &wire.Writer{}
+	_ = w.Uint32(9)
+	if err := swc.SendMessage(wire.ObjectID(proxyID), 0, w); err != nil {
+		t.Fatalf("SendMessage: %v", err)
+	}
+
+	if err := conn.Dispatch(t.Context()); err != nil {
+		t.Fatalf("Dispatch: %v", err)
+	}
+	if conn.IsClosed() {
+		t.Fatal("connection must survive events for destroyed objects")
+	}
+	if err := conn.SendRequest(displayID, DisplayRequestSync, mockMarshaler{}); err != nil {
+		t.Fatalf("SendRequest after unknown-object event: %v", err)
 	}
 }
 
@@ -400,7 +560,7 @@ func TestRoundtrip(t *testing.T) {
 		_ = swc.SendMessage(wire.ObjectID(obj), DisplayEventDeleteID, w2)
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
 	defer cancel()
 
 	if err := dpy.Roundtrip(ctx); err != nil {
@@ -427,7 +587,7 @@ func TestRoundtripCancel(t *testing.T) {
 		_, _, _, _ = swc.ReceiveMessage()
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	err := dpy.Roundtrip(ctx)
@@ -470,7 +630,7 @@ func TestDispatchPending(t *testing.T) {
 	_ = w1.Uint32(1)
 	_ = swc.SendMessage(wire.ObjectID(regID), RegistryEventGlobal, w1)
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("first Dispatch: %v", err)
 	}
 
@@ -489,7 +649,9 @@ func TestDispatchPending(t *testing.T) {
 	_ = w2.Uint32(regID)
 	_ = swc.SendMessage(wire.ObjectID(displayID), DisplayEventDeleteID, w2)
 
-	time.Sleep(50 * time.Millisecond)
+	// Wait for the reader to buffer the message instead of guessing with a
+	// fixed sleep: DispatchPending only drains what has already been read.
+	waitForReadCh(t, conn)
 
 	if err := conn.DispatchPending(); err != nil {
 		t.Fatalf("DispatchPending: %v", err)
@@ -533,10 +695,7 @@ func TestConcurrentSendAndDispatch(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range uint32(numMsgs) {
 			err := conn.SendRequest(displayID, DisplayRequestSync, mockMarshaler{})
 			if err != nil {
@@ -544,10 +703,9 @@ func TestConcurrentSendAndDispatch(t *testing.T) {
 				return
 			}
 		}
-	}()
+	})
 
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for i := range numMsgs {
 			obj, opcode, _, err := swc.ReceiveMessage()
 			if err != nil {
@@ -561,9 +719,9 @@ func TestConcurrentSendAndDispatch(t *testing.T) {
 			_ = w.Uint32(uint32(i) + 100)
 			_ = swc.SendMessage(obj, DisplayEventDeleteID, w)
 		}
-	}()
+	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
 
 	go func() {
@@ -629,7 +787,7 @@ func TestFDEventDispatch(t *testing.T) {
 		t.Fatalf("server SendMessage: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
@@ -679,7 +837,7 @@ func TestFDEventNoHandler(t *testing.T) {
 		t.Fatalf("server SendMessage: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
@@ -731,10 +889,10 @@ func TestZombieFDClose(t *testing.T) {
 		t.Fatalf("SendMessage fd event: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch delete_id: %v", err)
 	}
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch fd event for zombie: %v", err)
 	}
 
@@ -797,7 +955,7 @@ func TestMultiHandlerDispatch(t *testing.T) {
 		t.Fatalf("SendMessage: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
@@ -875,7 +1033,7 @@ func TestMultiHandlerWithFD(t *testing.T) {
 		t.Fatalf("SendMessage: %v", err)
 	}
 
-	if err := conn.Dispatch(context.Background()); err != nil {
+	if err := conn.Dispatch(t.Context()); err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
 
@@ -908,7 +1066,7 @@ func TestDispatchContextCancel(t *testing.T) {
 	conn := newConn(clientUC, wc)
 	defer conn.Close() //nolint: errcheck
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	err := conn.Dispatch(ctx)
@@ -927,7 +1085,7 @@ func TestDispatchAfterClose(t *testing.T) {
 
 	_ = conn.Close()
 
-	err := conn.Dispatch(context.Background())
+	err := conn.Dispatch(t.Context())
 	if err != ErrConnClosed {
 		t.Fatalf("Dispatch after close: got %v, want ErrConnClosed", err)
 	}
@@ -960,23 +1118,19 @@ func TestConcurrentSetOnError(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for i := 0; i < 50; i++ {
 			dpy.SetOnError(func(pe *ProtocolError) {})
 		}
-	}()
+	})
 
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for i := 0; i < 50; i++ {
 			conn.connMu.Lock()
 			_ = conn.onError
 			conn.connMu.Unlock()
 		}
-	}()
+	})
 
 	wg.Wait()
 
@@ -986,7 +1140,7 @@ func TestConcurrentSetOnError(t *testing.T) {
 	_ = w.String("race test")
 	_ = swc.SendMessage(wire.ObjectID(displayID), DisplayEventError, w)
 
-	_ = conn.Dispatch(context.Background())
+	_ = conn.Dispatch(t.Context())
 }
 
 func TestCloseDrainsReadCh(t *testing.T) {
@@ -1007,10 +1161,119 @@ func TestCloseDrainsReadCh(t *testing.T) {
 	_ = w.Uint32(100)
 	_ = swc.SendMessage(wire.ObjectID(displayID), DisplayEventDeleteID, w)
 
-	time.Sleep(50 * time.Millisecond)
+	// Ensure a message is queued in readCh before Close, so the test covers
+	// closing a connection with undelivered messages in flight.
+	waitForReadCh(t, conn)
 
 	if err := conn.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
+	}
+}
+
+func TestStickyReadError(t *testing.T) {
+	clientUC, serverUC := socketPair(t)
+	defer clientUC.Close() //nolint: errcheck
+
+	wc := wire.NewConn(clientUC)
+	conn := newConn(clientUC, wc)
+	defer conn.Close() //nolint: errcheck
+
+	p := NewProxyWithID(conn, displayID)
+	conn.RegisterProxy(p)
+
+	// Server disappears: the reader goroutine hits EOF.
+	if err := serverUC.Close(); err != nil {
+		t.Fatalf("server close: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	err1 := conn.Dispatch(ctx)
+	if err1 == nil {
+		t.Fatal("first Dispatch: expected read error, got nil")
+	}
+
+	// The error must be sticky: subsequent calls fail fast instead of
+	// blocking on a reader goroutine that no longer exists.
+	err2 := conn.Dispatch(ctx)
+	if err2 != err1 {
+		t.Fatalf("second Dispatch: got %v, want sticky %v", err2, err1)
+	}
+	if err := conn.DispatchPending(); err != err1 {
+		t.Fatalf("DispatchPending: got %v, want sticky %v", err, err1)
+	}
+	if err := conn.SendRequest(displayID, DisplayRequestSync, mockMarshaler{}); err != err1 {
+		t.Fatalf("SendRequest: got %v, want sticky %v", err, err1)
+	}
+}
+
+func TestZombieLifecycle(t *testing.T) {
+	clientUC, serverUC := socketPair(t)
+	defer clientUC.Close() //nolint: errcheck
+	defer serverUC.Close() //nolint: errcheck
+
+	wc := wire.NewConn(clientUC)
+	conn := newConn(clientUC, wc)
+	defer conn.Close() //nolint: errcheck
+	swc := wire.NewConn(serverUC)
+
+	dpyProxy := NewProxyWithID(conn, displayID)
+	conn.RegisterProxy(dpyProxy)
+	dpy := NewDisplay(dpyProxy)
+	wireDisplayEvents(dpy, conn)
+
+	p := NewProxy(conn)
+	p.SetEventFDCounts(map[uint16]int{0: 1})
+	conn.RegisterProxy(p)
+	proxyID := p.ID()
+
+	tmp, err := os.CreateTemp("", "wayland-test-fd-*")
+	if err != nil {
+		t.Fatalf("CreateTemp: %v", err)
+	}
+	defer os.Remove(tmp.Name()) //nolint: errcheck
+	defer tmp.Close()           //nolint: errcheck
+
+	// Client destroys the object (destructor request path).
+	conn.UnregisterProxy(proxyID)
+	if _, ok := conn.zombies[proxyID]; !ok {
+		t.Fatal("expected zombie entry after client-side destroy")
+	}
+
+	// An fd-carrying event already in flight arrives, then delete_id.
+	wFD := &wire.Writer{}
+	_ = wFD.Uint32(1)
+	_ = wFD.Fd(int(tmp.Fd()))
+	if err := swc.SendMessage(wire.ObjectID(proxyID), 0, wFD); err != nil {
+		t.Fatalf("SendMessage fd event: %v", err)
+	}
+	wDel := &wire.Writer{}
+	_ = wDel.Uint32(proxyID)
+	if err := swc.SendMessage(wire.ObjectID(displayID), DisplayEventDeleteID, wDel); err != nil {
+		t.Fatalf("SendMessage delete_id: %v", err)
+	}
+
+	if err := conn.Dispatch(t.Context()); err != nil {
+		t.Fatalf("Dispatch zombie event: %v", err)
+	}
+	if err := conn.Dispatch(t.Context()); err != nil {
+		t.Fatalf("Dispatch delete_id: %v", err)
+	}
+
+	// The zombie fd must have been drained and closed, not left in the queue.
+	if fds := conn.wc.TakeAllFDs(); len(fds) != 0 {
+		for _, fd := range fds {
+			_ = syscall.Close(fd)
+		}
+		t.Fatalf("expected empty fd queue, got %d fds", len(fds))
+	}
+	// delete_id removes the zombie entry for good.
+	if _, ok := conn.zombies[proxyID]; ok {
+		t.Fatal("zombie entry should be removed after delete_id")
+	}
+	if !p.Deleted() {
+		t.Fatal("proxy should stay deleted")
 	}
 }
 

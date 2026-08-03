@@ -369,7 +369,7 @@ func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc)
 		var ev ColorManagerV1SupportedIntentEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedIntent", "error", err)
+			o.proxy.Conn().FailEvent("SupportedIntent", err)
 			return
 		}
 
@@ -382,7 +382,7 @@ func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFun
 		var ev ColorManagerV1SupportedFeatureEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedFeature", "error", err)
+			o.proxy.Conn().FailEvent("SupportedFeature", err)
 			return
 		}
 
@@ -395,7 +395,7 @@ func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFun
 		var ev ColorManagerV1SupportedTfNamedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedTfNamed", "error", err)
+			o.proxy.Conn().FailEvent("SupportedTfNamed", err)
 			return
 		}
 
@@ -408,7 +408,7 @@ func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPri
 		var ev ColorManagerV1SupportedPrimariesNamedEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "SupportedPrimariesNamed", "error", err)
+			o.proxy.Conn().FailEvent("SupportedPrimariesNamed", err)
 			return
 		}
 
@@ -421,7 +421,7 @@ func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 		var ev ColorManagerV1DoneEvent
 
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "Done", "error", err)
+			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
 
@@ -444,6 +444,7 @@ func (o *ColorManagerV1) GetOutput(output wire.ObjectID) (*ColorManagementOutput
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewColorManagementOutputV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetOutput, &ColorManagerV1GetOutputRequest{
@@ -461,6 +462,7 @@ func (o *ColorManagerV1) GetSurface(surface wire.ObjectID) (*ColorManagementSurf
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewColorManagementSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurface, &ColorManagerV1GetSurfaceRequest{
@@ -478,6 +480,7 @@ func (o *ColorManagerV1) GetSurfaceFeedback(surface wire.ObjectID) (*ColorManage
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewColorManagementSurfaceFeedbackV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurfaceFeedback, &ColorManagerV1GetSurfaceFeedbackRequest{
@@ -495,6 +498,7 @@ func (o *ColorManagerV1) CreateIccCreator() (*ImageDescriptionCreatorIccV1, erro
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionCreatorIccV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateIccCreator, &ColorManagerV1CreateIccCreatorRequest{
@@ -511,6 +515,7 @@ func (o *ColorManagerV1) CreateParametricCreator() (*ImageDescriptionCreatorPara
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionCreatorParamsV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateParametricCreator, &ColorManagerV1CreateParametricCreatorRequest{
@@ -527,6 +532,7 @@ func (o *ColorManagerV1) CreateWindowsScrgb() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsScrgb, &ColorManagerV1CreateWindowsScrgbRequest{
@@ -546,6 +552,7 @@ func (o *ColorManagerV1) GetImageDescription(reference wire.ObjectID) (*ImageDes
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetImageDescription, &ColorManagerV1GetImageDescriptionRequest{
@@ -566,6 +573,7 @@ func (o *ColorManagerV1) CreateWindowsBt2100() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsBt2100, &ColorManagerV1CreateWindowsBt2100Request{

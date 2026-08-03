@@ -105,6 +105,7 @@ func (o *LinuxDrmSyncobjManagerV1) GetSurface(surface wire.ObjectID) (*LinuxDrmS
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxDrmSyncobjSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestGetSurface, &LinuxDrmSyncobjManagerV1GetSurfaceRequest{
@@ -122,6 +123,7 @@ func (o *LinuxDrmSyncobjManagerV1) ImportTimeline(fd int) (*LinuxDrmSyncobjTimel
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewLinuxDrmSyncobjTimelineV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestImportTimeline, &LinuxDrmSyncobjManagerV1ImportTimelineRequest{

@@ -78,6 +78,7 @@ func (o *ShellV1) GetXwaylandSurface(surface wire.ObjectID) (*SurfaceV1, error) 
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSurfaceV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ShellV1RequestGetXwaylandSurface, &ShellV1GetXwaylandSurfaceRequest{

@@ -126,7 +126,7 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 		{{range $ev.Args}}{{if .IsNewID}}
 		rawID, err := r.NewID()
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
+			o.proxy.Conn().FailEvent("{{$ev.Name}}", err)
 			return
 		}
 		p := {{$.WaylandPkg}}NewProxyWithID(o.proxy.Conn(), uint32(rawID))
@@ -136,14 +136,14 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 		{{else}}
 		{{.ParamName}}, err := {{.WireRead}}
 		if err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
+			o.proxy.Conn().FailEvent("{{$ev.Name}}", err)
 			return
 		}
 		ev.{{.GoName}} = {{if .EnumType}}{{.EnumType}}({{end}}{{.ParamName}}{{if .EnumType}}){{end}}
 		{{end}}{{end}}
 		{{else}}
 		if err := ev.Unmarshal(r); err != nil {
-			o.proxy.Conn().Logger().Warn("event unmarshal error", "event", "{{$ev.Name}}", "error", err)
+			o.proxy.Conn().FailEvent("{{$ev.Name}}", err)
 			return
 		}
 		{{end}}
@@ -161,7 +161,9 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
     }
 {{end}}	conn := o.proxy.Conn()
     p := {{$.WaylandPkg}}NewProxy(conn)
-    p.SetVersion(o.proxy.Version())
+{{if .HasSynthVersion}}	p.SetVersion(version)
+{{else}}	p.SetVersion(o.proxy.Version())
+{{end}}
 {{if .HasNewID}}	wrapped := New{{.NewIDType}}(p)
 {{end}}	conn.RegisterProxy(p)
     err := conn.SendRequest(o.proxy.ID(), {{.OpName}}, &{{.StructName}}{

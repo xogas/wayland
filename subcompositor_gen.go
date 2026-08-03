@@ -82,6 +82,7 @@ func (o *Subcompositor) GetSubsurface(surface wire.ObjectID, parent wire.ObjectI
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewSubsurface(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), SubcompositorRequestGetSubsurface, &SubcompositorGetSubsurfaceRequest{

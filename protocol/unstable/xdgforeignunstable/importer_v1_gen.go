@@ -72,6 +72,7 @@ func (o *ImporterV1) Import(handle string) (*ImportedV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
+
 	wrapped := NewImportedV1(p)
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), ImporterV1RequestImport, &ImporterV1ImportRequest{
