@@ -213,7 +213,13 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 `)
 
 // bindTmpl renders the BindXxx registry factory.
-var bindTmpl = mustTmpl("bind", `func Bind{{.TypeName}}(b {{.WaylandPkg}}Binder, name uint32, version uint32) (*{{.TypeName}}, error) {
+var bindTmpl = mustTmpl("bind", `// Bind{{.TypeName}} binds the {{.IfName}} global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, Version{{.TypeName}}] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. Bind{{.TypeName}}(reg, name, min(g.Version,
+// Version{{.TypeName}})), to bind at the highest mutually supported version.
+func Bind{{.TypeName}}(b {{.WaylandPkg}}Binder, name uint32, version uint32) (*{{.TypeName}}, error) {
 	if version < 1 || version > Version{{.TypeName}} {
 		return nil, {{.WaylandPkg}}ErrVersionMismatch
 	}

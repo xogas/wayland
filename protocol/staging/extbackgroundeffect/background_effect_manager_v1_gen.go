@@ -149,6 +149,12 @@ func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (
 	return wrapped, nil
 }
 
+// BindBackgroundEffectManagerV1 binds the ext_background_effect_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionBackgroundEffectManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindBackgroundEffectManagerV1(reg, name, min(g.Version,
+// VersionBackgroundEffectManagerV1)), to bind at the highest mutually supported version.
 func BindBackgroundEffectManagerV1(b wayland.Binder, name uint32, version uint32) (*BackgroundEffectManagerV1, error) {
 	if version < 1 || version > VersionBackgroundEffectManagerV1 {
 		return nil, wayland.ErrVersionMismatch

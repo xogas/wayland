@@ -164,22 +164,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	compositor, err := wayland.BindCompositor(reg, compG.Name, compG.Version)
+	compositor, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
 		os.Exit(1)
 	}
-	shm, err := wayland.BindShm(reg, shmG.Name, shmG.Version)
+	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, wmG.Version)
+	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)
 	}
-	presentation, err := presentationtime.BindPresentation(reg, presG.Name, presG.Version)
+	presentation, err := presentationtime.BindPresentation(reg, presG.Name, min(presG.Version, presentationtime.VersionPresentation))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wp_presentation: %v\n", err)
 		os.Exit(1)

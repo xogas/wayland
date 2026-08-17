@@ -114,6 +114,12 @@ func (o *ImportedV2) SetParentOf(surface wire.ObjectID) error {
 	})
 }
 
+// BindImportedV2 binds the zxdg_imported_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImportedV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImportedV2(reg, name, min(g.Version,
+// VersionImportedV2)), to bind at the highest mutually supported version.
 func BindImportedV2(b wayland.Binder, name uint32, version uint32) (*ImportedV2, error) {
 	if version < 1 || version > VersionImportedV2 {
 		return nil, wayland.ErrVersionMismatch

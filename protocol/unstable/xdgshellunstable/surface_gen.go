@@ -468,6 +468,12 @@ func (o *Surface) SetMinimized() error {
 	return o.proxy.SendRequest(SurfaceRequestSetMinimized, &SurfaceSetMinimizedRequest{})
 }
 
+// BindSurface binds the xdg_surface global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSurface] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSurface(reg, name, min(g.Version,
+// VersionSurface)), to bind at the highest mutually supported version.
 func BindSurface(b wayland.Binder, name uint32, version uint32) (*Surface, error) {
 	if version < 1 || version > VersionSurface {
 		return nil, wayland.ErrVersionMismatch

@@ -125,6 +125,12 @@ func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, er
 	return wrapped, nil
 }
 
+// BindColorManagementOutputV1 binds the wp_color_management_output_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionColorManagementOutputV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindColorManagementOutputV1(reg, name, min(g.Version,
+// VersionColorManagementOutputV1)), to bind at the highest mutually supported version.
 func BindColorManagementOutputV1(b wayland.Binder, name uint32, version uint32) (*ColorManagementOutputV1, error) {
 	if version < 1 || version > VersionColorManagementOutputV1 {
 		return nil, wayland.ErrVersionMismatch

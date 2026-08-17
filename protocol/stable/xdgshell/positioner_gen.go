@@ -330,6 +330,12 @@ func (o *Positioner) SetParentConfigure(serial uint32) error {
 	})
 }
 
+// BindPositioner binds the xdg_positioner global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPositioner] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPositioner(reg, name, min(g.Version,
+// VersionPositioner)), to bind at the highest mutually supported version.
 func BindPositioner(b wayland.Binder, name uint32, version uint32) (*Positioner, error) {
 	if version < 1 || version > VersionPositioner {
 		return nil, wayland.ErrVersionMismatch

@@ -142,6 +142,12 @@ func (o *SecurityContextV1) Commit() error {
 	return o.proxy.SendRequest(SecurityContextV1RequestCommit, &SecurityContextV1CommitRequest{})
 }
 
+// BindSecurityContextV1 binds the wp_security_context_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSecurityContextV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSecurityContextV1(reg, name, min(g.Version,
+// VersionSecurityContextV1)), to bind at the highest mutually supported version.
 func BindSecurityContextV1(b wayland.Binder, name uint32, version uint32) (*SecurityContextV1, error) {
 	if version < 1 || version > VersionSecurityContextV1 {
 		return nil, wayland.ErrVersionMismatch

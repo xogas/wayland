@@ -879,6 +879,12 @@ func (o *TextInputV1) InvokeAction(button uint32, index uint32) error {
 	})
 }
 
+// BindTextInputV1 binds the zwp_text_input_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTextInputV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTextInputV1(reg, name, min(g.Version,
+// VersionTextInputV1)), to bind at the highest mutually supported version.
 func BindTextInputV1(b wayland.Binder, name uint32, version uint32) (*TextInputV1, error) {
 	if version < 1 || version > VersionTextInputV1 {
 		return nil, wayland.ErrVersionMismatch

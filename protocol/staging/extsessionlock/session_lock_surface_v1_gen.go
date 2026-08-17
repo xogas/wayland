@@ -141,6 +141,12 @@ func (o *SessionLockSurfaceV1) AckConfigure(serial uint32) error {
 	})
 }
 
+// BindSessionLockSurfaceV1 binds the ext_session_lock_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSessionLockSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSessionLockSurfaceV1(reg, name, min(g.Version,
+// VersionSessionLockSurfaceV1)), to bind at the highest mutually supported version.
 func BindSessionLockSurfaceV1(b wayland.Binder, name uint32, version uint32) (*SessionLockSurfaceV1, error) {
 	if version < 1 || version > VersionSessionLockSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

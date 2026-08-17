@@ -164,6 +164,12 @@ func (o *ZoneManagerV1) GetZoneFromHandle(handle string) (*ZoneV1, error) {
 	return wrapped, nil
 }
 
+// BindZoneManagerV1 binds the xx_zone_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionZoneManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindZoneManagerV1(reg, name, min(g.Version,
+// VersionZoneManagerV1)), to bind at the highest mutually supported version.
 func BindZoneManagerV1(b wayland.Binder, name uint32, version uint32) (*ZoneManagerV1, error) {
 	if version < 1 || version > VersionZoneManagerV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -311,6 +311,12 @@ func (o *LinuxDmabufFeedbackV1) Destroy() error {
 	return nil
 }
 
+// BindLinuxDmabufFeedbackV1 binds the zwp_linux_dmabuf_feedback_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxDmabufFeedbackV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxDmabufFeedbackV1(reg, name, min(g.Version,
+// VersionLinuxDmabufFeedbackV1)), to bind at the highest mutually supported version.
 func BindLinuxDmabufFeedbackV1(b wayland.Binder, name uint32, version uint32) (*LinuxDmabufFeedbackV1, error) {
 	if version < 1 || version > VersionLinuxDmabufFeedbackV1 {
 		return nil, wayland.ErrVersionMismatch

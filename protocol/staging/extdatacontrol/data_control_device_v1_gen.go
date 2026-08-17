@@ -240,6 +240,12 @@ func (o *DataControlDeviceV1) SetPrimarySelection(source wire.ObjectID) error {
 	})
 }
 
+// BindDataControlDeviceV1 binds the ext_data_control_device_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataControlDeviceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataControlDeviceV1(reg, name, min(g.Version,
+// VersionDataControlDeviceV1)), to bind at the highest mutually supported version.
 func BindDataControlDeviceV1(b wayland.Binder, name uint32, version uint32) (*DataControlDeviceV1, error) {
 	if version < 1 || version > VersionDataControlDeviceV1 {
 		return nil, wayland.ErrVersionMismatch

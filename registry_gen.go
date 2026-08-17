@@ -161,6 +161,12 @@ func (o *Registry) Bind(name uint32, interface_ string, version uint32) (*Proxy,
 	return p, nil
 }
 
+// BindRegistry binds the wl_registry global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionRegistry] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindRegistry(reg, name, min(g.Version,
+// VersionRegistry)), to bind at the highest mutually supported version.
 func BindRegistry(b Binder, name uint32, version uint32) (*Registry, error) {
 	if version < 1 || version > VersionRegistry {
 		return nil, ErrVersionMismatch

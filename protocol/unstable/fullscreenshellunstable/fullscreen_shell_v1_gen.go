@@ -200,6 +200,12 @@ func (o *FullscreenShellV1) PresentSurfaceForMode(surface wire.ObjectID, output 
 	return wrapped, nil
 }
 
+// BindFullscreenShellV1 binds the zwp_fullscreen_shell_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFullscreenShellV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFullscreenShellV1(reg, name, min(g.Version,
+// VersionFullscreenShellV1)), to bind at the highest mutually supported version.
 func BindFullscreenShellV1(b wayland.Binder, name uint32, version uint32) (*FullscreenShellV1, error) {
 	if version < 1 || version > VersionFullscreenShellV1 {
 		return nil, wayland.ErrVersionMismatch

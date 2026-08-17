@@ -137,6 +137,12 @@ func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, e
 	return wrapped, nil
 }
 
+// BindPresentation binds the wp_presentation global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPresentation] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPresentation(reg, name, min(g.Version,
+// VersionPresentation)), to bind at the highest mutually supported version.
 func BindPresentation(b wayland.Binder, name uint32, version uint32) (*Presentation, error) {
 	if version < 1 || version > VersionPresentation {
 		return nil, wayland.ErrVersionMismatch

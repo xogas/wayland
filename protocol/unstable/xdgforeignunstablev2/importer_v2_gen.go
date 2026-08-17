@@ -86,6 +86,12 @@ func (o *ImporterV2) ImportToplevel(handle string) (*ImportedV2, error) {
 	return wrapped, nil
 }
 
+// BindImporterV2 binds the zxdg_importer_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImporterV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImporterV2(reg, name, min(g.Version,
+// VersionImporterV2)), to bind at the highest mutually supported version.
 func BindImporterV2(b wayland.Binder, name uint32, version uint32) (*ImporterV2, error) {
 	if version < 1 || version > VersionImporterV2 {
 		return nil, wayland.ErrVersionMismatch

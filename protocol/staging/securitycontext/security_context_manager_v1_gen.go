@@ -102,6 +102,12 @@ func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*S
 	return wrapped, nil
 }
 
+// BindSecurityContextManagerV1 binds the wp_security_context_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSecurityContextManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSecurityContextManagerV1(reg, name, min(g.Version,
+// VersionSecurityContextManagerV1)), to bind at the highest mutually supported version.
 func BindSecurityContextManagerV1(b wayland.Binder, name uint32, version uint32) (*SecurityContextManagerV1, error) {
 	if version < 1 || version > VersionSecurityContextManagerV1 {
 		return nil, wayland.ErrVersionMismatch

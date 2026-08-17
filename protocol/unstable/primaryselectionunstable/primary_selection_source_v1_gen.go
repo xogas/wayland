@@ -154,6 +154,12 @@ func (o *PrimarySelectionSourceV1) Destroy() error {
 	return nil
 }
 
+// BindPrimarySelectionSourceV1 binds the zwp_primary_selection_source_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPrimarySelectionSourceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPrimarySelectionSourceV1(reg, name, min(g.Version,
+// VersionPrimarySelectionSourceV1)), to bind at the highest mutually supported version.
 func BindPrimarySelectionSourceV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionSourceV1, error) {
 	if version < 1 || version > VersionPrimarySelectionSourceV1 {
 		return nil, wayland.ErrVersionMismatch

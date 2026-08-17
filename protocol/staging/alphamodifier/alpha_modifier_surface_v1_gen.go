@@ -80,6 +80,12 @@ func (o *AlphaModifierSurfaceV1) SetMultiplier(factor uint32) error {
 	})
 }
 
+// BindAlphaModifierSurfaceV1 binds the wp_alpha_modifier_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionAlphaModifierSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindAlphaModifierSurfaceV1(reg, name, min(g.Version,
+// VersionAlphaModifierSurfaceV1)), to bind at the highest mutually supported version.
 func BindAlphaModifierSurfaceV1(b wayland.Binder, name uint32, version uint32) (*AlphaModifierSurfaceV1, error) {
 	if version < 1 || version > VersionAlphaModifierSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

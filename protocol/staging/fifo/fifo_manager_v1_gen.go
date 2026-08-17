@@ -92,6 +92,12 @@ func (o *FifoManagerV1) GetFifo(surface wire.ObjectID) (*FifoV1, error) {
 	return wrapped, nil
 }
 
+// BindFifoManagerV1 binds the wp_fifo_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFifoManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFifoManagerV1(reg, name, min(g.Version,
+// VersionFifoManagerV1)), to bind at the highest mutually supported version.
 func BindFifoManagerV1(b wayland.Binder, name uint32, version uint32) (*FifoManagerV1, error) {
 	if version < 1 || version > VersionFifoManagerV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -196,6 +196,12 @@ func (o *ShellV6) Pong(serial uint32) error {
 	})
 }
 
+// BindShellV6 binds the zxdg_shell_v6 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionShellV6] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindShellV6(reg, name, min(g.Version,
+// VersionShellV6)), to bind at the highest mutually supported version.
 func BindShellV6(b wayland.Binder, name uint32, version uint32) (*ShellV6, error) {
 	if version < 1 || version > VersionShellV6 {
 		return nil, wayland.ErrVersionMismatch

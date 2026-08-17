@@ -161,6 +161,12 @@ func (o *PointerGestureHoldV1) Destroy() error {
 	return nil
 }
 
+// BindPointerGestureHoldV1 binds the zwp_pointer_gesture_hold_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPointerGestureHoldV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPointerGestureHoldV1(reg, name, min(g.Version,
+// VersionPointerGestureHoldV1)), to bind at the highest mutually supported version.
 func BindPointerGestureHoldV1(b wayland.Binder, name uint32, version uint32) (*PointerGestureHoldV1, error) {
 	if version < 1 || version > VersionPointerGestureHoldV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -235,6 +235,12 @@ func (o *OutputV1) Destroy() error {
 	return nil
 }
 
+// BindOutputV1 binds the zxdg_output_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionOutputV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindOutputV1(reg, name, min(g.Version,
+// VersionOutputV1)), to bind at the highest mutually supported version.
 func BindOutputV1(b wayland.Binder, name uint32, version uint32) (*OutputV1, error) {
 	if version < 1 || version > VersionOutputV1 {
 		return nil, wayland.ErrVersionMismatch

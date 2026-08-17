@@ -293,6 +293,12 @@ func (o *Shm) Release() error {
 	return nil
 }
 
+// BindShm binds the wl_shm global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionShm] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindShm(reg, name, min(g.Version,
+// VersionShm)), to bind at the highest mutually supported version.
 func BindShm(b Binder, name uint32, version uint32) (*Shm, error) {
 	if version < 1 || version > VersionShm {
 		return nil, ErrVersionMismatch

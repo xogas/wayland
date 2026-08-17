@@ -154,6 +154,12 @@ func (o *DataControlSourceV1) Destroy() error {
 	return nil
 }
 
+// BindDataControlSourceV1 binds the ext_data_control_source_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataControlSourceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataControlSourceV1(reg, name, min(g.Version,
+// VersionDataControlSourceV1)), to bind at the highest mutually supported version.
 func BindDataControlSourceV1(b wayland.Binder, name uint32, version uint32) (*DataControlSourceV1, error) {
 	if version < 1 || version > VersionDataControlSourceV1 {
 		return nil, wayland.ErrVersionMismatch

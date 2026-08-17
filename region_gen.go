@@ -121,6 +121,12 @@ func (o *Region) Subtract(x int32, y int32, width int32, height int32) error {
 	})
 }
 
+// BindRegion binds the wl_region global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionRegion] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindRegion(reg, name, min(g.Version,
+// VersionRegion)), to bind at the highest mutually supported version.
 func BindRegion(b Binder, name uint32, version uint32) (*Region, error) {
 	if version < 1 || version > VersionRegion {
 		return nil, ErrVersionMismatch

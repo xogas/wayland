@@ -170,6 +170,12 @@ func (o *InputTimestampsManagerV1) GetTouchTimestamps(touch wire.ObjectID) (*Inp
 	return wrapped, nil
 }
 
+// BindInputTimestampsManagerV1 binds the zwp_input_timestamps_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputTimestampsManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputTimestampsManagerV1(reg, name, min(g.Version,
+// VersionInputTimestampsManagerV1)), to bind at the highest mutually supported version.
 func BindInputTimestampsManagerV1(b wayland.Binder, name uint32, version uint32) (*InputTimestampsManagerV1, error) {
 	if version < 1 || version > VersionInputTimestampsManagerV1 {
 		return nil, wayland.ErrVersionMismatch

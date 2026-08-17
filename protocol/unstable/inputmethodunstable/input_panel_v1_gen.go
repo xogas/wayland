@@ -65,6 +65,12 @@ func (o *InputPanelV1) GetInputPanelSurface(surface wire.ObjectID) (*InputPanelS
 	return wrapped, nil
 }
 
+// BindInputPanelV1 binds the zwp_input_panel_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputPanelV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputPanelV1(reg, name, min(g.Version,
+// VersionInputPanelV1)), to bind at the highest mutually supported version.
 func BindInputPanelV1(b wayland.Binder, name uint32, version uint32) (*InputPanelV1, error) {
 	if version < 1 || version > VersionInputPanelV1 {
 		return nil, wayland.ErrVersionMismatch

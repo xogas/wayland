@@ -104,6 +104,12 @@ func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b u
 	return p, nil
 }
 
+// BindSinglePixelBufferManagerV1 binds the wp_single_pixel_buffer_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSinglePixelBufferManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSinglePixelBufferManagerV1(reg, name, min(g.Version,
+// VersionSinglePixelBufferManagerV1)), to bind at the highest mutually supported version.
 func BindSinglePixelBufferManagerV1(b wayland.Binder, name uint32, version uint32) (*SinglePixelBufferManagerV1, error) {
 	if version < 1 || version > VersionSinglePixelBufferManagerV1 {
 		return nil, wayland.ErrVersionMismatch

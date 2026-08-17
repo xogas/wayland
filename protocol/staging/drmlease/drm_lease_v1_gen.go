@@ -120,6 +120,12 @@ func (o *DrmLeaseV1) Destroy() error {
 	return nil
 }
 
+// BindDrmLeaseV1 binds the wp_drm_lease_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDrmLeaseV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDrmLeaseV1(reg, name, min(g.Version,
+// VersionDrmLeaseV1)), to bind at the highest mutually supported version.
 func BindDrmLeaseV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseV1, error) {
 	if version < 1 || version > VersionDrmLeaseV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -65,6 +65,12 @@ func (o *Callback) OnDone(fn CallbackDoneFunc) {
 	})
 }
 
+// BindCallback binds the wl_callback global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionCallback] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindCallback(reg, name, min(g.Version,
+// VersionCallback)), to bind at the highest mutually supported version.
 func BindCallback(b Binder, name uint32, version uint32) (*Callback, error) {
 	if version < 1 || version > VersionCallback {
 		return nil, ErrVersionMismatch

@@ -557,6 +557,12 @@ func (o *Toplevel) SetMinimized() error {
 	return o.proxy.SendRequest(ToplevelRequestSetMinimized, &ToplevelSetMinimizedRequest{})
 }
 
+// BindToplevel binds the xdg_toplevel global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionToplevel] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindToplevel(reg, name, min(g.Version,
+// VersionToplevel)), to bind at the highest mutually supported version.
 func BindToplevel(b wayland.Binder, name uint32, version uint32) (*Toplevel, error) {
 	if version < 1 || version > VersionToplevel {
 		return nil, wayland.ErrVersionMismatch

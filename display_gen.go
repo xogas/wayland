@@ -189,6 +189,12 @@ func (o *Display) GetRegistry() (*Registry, error) {
 	return wrapped, nil
 }
 
+// BindDisplay binds the wl_display global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDisplay] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDisplay(reg, name, min(g.Version,
+// VersionDisplay)), to bind at the highest mutually supported version.
 func BindDisplay(b Binder, name uint32, version uint32) (*Display, error) {
 	if version < 1 || version > VersionDisplay {
 		return nil, ErrVersionMismatch

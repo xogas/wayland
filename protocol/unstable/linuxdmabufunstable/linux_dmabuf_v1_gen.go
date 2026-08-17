@@ -252,6 +252,12 @@ func (o *LinuxDmabufV1) GetSurfaceFeedback(surface wire.ObjectID) (*LinuxDmabufF
 	return wrapped, nil
 }
 
+// BindLinuxDmabufV1 binds the zwp_linux_dmabuf_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxDmabufV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxDmabufV1(reg, name, min(g.Version,
+// VersionLinuxDmabufV1)), to bind at the highest mutually supported version.
 func BindLinuxDmabufV1(b wayland.Binder, name uint32, version uint32) (*LinuxDmabufV1, error) {
 	if version < 1 || version > VersionLinuxDmabufV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -116,6 +116,12 @@ func (o *Compositor) Release() error {
 	return nil
 }
 
+// BindCompositor binds the wl_compositor global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionCompositor] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindCompositor(reg, name, min(g.Version,
+// VersionCompositor)), to bind at the highest mutually supported version.
 func BindCompositor(b Binder, name uint32, version uint32) (*Compositor, error) {
 	if version < 1 || version > VersionCompositor {
 		return nil, ErrVersionMismatch

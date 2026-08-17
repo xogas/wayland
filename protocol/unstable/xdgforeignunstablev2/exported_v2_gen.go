@@ -92,6 +92,12 @@ func (o *ExportedV2) Destroy() error {
 	return nil
 }
 
+// BindExportedV2 binds the zxdg_exported_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionExportedV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindExportedV2(reg, name, min(g.Version,
+// VersionExportedV2)), to bind at the highest mutually supported version.
 func BindExportedV2(b wayland.Binder, name uint32, version uint32) (*ExportedV2, error) {
 	if version < 1 || version > VersionExportedV2 {
 		return nil, wayland.ErrVersionMismatch

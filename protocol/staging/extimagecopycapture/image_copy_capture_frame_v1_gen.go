@@ -359,6 +359,12 @@ func (o *ImageCopyCaptureFrameV1) Capture() error {
 	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestCapture, &ImageCopyCaptureFrameV1CaptureRequest{})
 }
 
+// BindImageCopyCaptureFrameV1 binds the ext_image_copy_capture_frame_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImageCopyCaptureFrameV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImageCopyCaptureFrameV1(reg, name, min(g.Version,
+// VersionImageCopyCaptureFrameV1)), to bind at the highest mutually supported version.
 func BindImageCopyCaptureFrameV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureFrameV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureFrameV1 {
 		return nil, wayland.ErrVersionMismatch

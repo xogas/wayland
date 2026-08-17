@@ -185,6 +185,12 @@ func (o *WorkspaceManagerV1) Stop() error {
 	return o.proxy.SendRequest(WorkspaceManagerV1RequestStop, &WorkspaceManagerV1StopRequest{})
 }
 
+// BindWorkspaceManagerV1 binds the ext_workspace_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionWorkspaceManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindWorkspaceManagerV1(reg, name, min(g.Version,
+// VersionWorkspaceManagerV1)), to bind at the highest mutually supported version.
 func BindWorkspaceManagerV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceManagerV1, error) {
 	if version < 1 || version > VersionWorkspaceManagerV1 {
 		return nil, wayland.ErrVersionMismatch

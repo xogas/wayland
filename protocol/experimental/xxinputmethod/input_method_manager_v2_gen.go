@@ -125,6 +125,12 @@ func (o *InputMethodManagerV2) Destroy() error {
 	return nil
 }
 
+// BindInputMethodManagerV2 binds the xx_input_method_manager_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputMethodManagerV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputMethodManagerV2(reg, name, min(g.Version,
+// VersionInputMethodManagerV2)), to bind at the highest mutually supported version.
 func BindInputMethodManagerV2(b wayland.Binder, name uint32, version uint32) (*InputMethodManagerV2, error) {
 	if version < 1 || version > VersionInputMethodManagerV2 {
 		return nil, wayland.ErrVersionMismatch

@@ -96,6 +96,12 @@ func (o *LinuxExplicitSynchronizationV1) GetSynchronization(surface wire.ObjectI
 	return wrapped, nil
 }
 
+// BindLinuxExplicitSynchronizationV1 binds the zwp_linux_explicit_synchronization_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxExplicitSynchronizationV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxExplicitSynchronizationV1(reg, name, min(g.Version,
+// VersionLinuxExplicitSynchronizationV1)), to bind at the highest mutually supported version.
 func BindLinuxExplicitSynchronizationV1(b wayland.Binder, name uint32, version uint32) (*LinuxExplicitSynchronizationV1, error) {
 	if version < 1 || version > VersionLinuxExplicitSynchronizationV1 {
 		return nil, wayland.ErrVersionMismatch

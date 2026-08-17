@@ -96,6 +96,12 @@ func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*Co
 	return wrapped, nil
 }
 
+// BindContentTypeManagerV1 binds the wp_content_type_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionContentTypeManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindContentTypeManagerV1(reg, name, min(g.Version,
+// VersionContentTypeManagerV1)), to bind at the highest mutually supported version.
 func BindContentTypeManagerV1(b wayland.Binder, name uint32, version uint32) (*ContentTypeManagerV1, error) {
 	if version < 1 || version > VersionContentTypeManagerV1 {
 		return nil, wayland.ErrVersionMismatch

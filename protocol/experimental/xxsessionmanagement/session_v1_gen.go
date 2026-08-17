@@ -265,6 +265,12 @@ func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*Tople
 	return wrapped, nil
 }
 
+// BindSessionV1 binds the xx_session_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSessionV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSessionV1(reg, name, min(g.Version,
+// VersionSessionV1)), to bind at the highest mutually supported version.
 func BindSessionV1(b wayland.Binder, name uint32, version uint32) (*SessionV1, error) {
 	if version < 1 || version > VersionSessionV1 {
 		return nil, wayland.ErrVersionMismatch

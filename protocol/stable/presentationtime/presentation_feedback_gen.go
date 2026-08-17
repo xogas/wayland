@@ -180,6 +180,12 @@ func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc)
 	})
 }
 
+// BindPresentationFeedback binds the wp_presentation_feedback global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPresentationFeedback] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPresentationFeedback(reg, name, min(g.Version,
+// VersionPresentationFeedback)), to bind at the highest mutually supported version.
 func BindPresentationFeedback(b wayland.Binder, name uint32, version uint32) (*PresentationFeedback, error) {
 	if version < 1 || version > VersionPresentationFeedback {
 		return nil, wayland.ErrVersionMismatch

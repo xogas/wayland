@@ -372,6 +372,12 @@ func (o *ImageDescriptionCreatorParamsV1) SetMaxFall(maxFall uint32) error {
 	})
 }
 
+// BindImageDescriptionCreatorParamsV1 binds the wp_image_description_creator_params_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImageDescriptionCreatorParamsV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImageDescriptionCreatorParamsV1(reg, name, min(g.Version,
+// VersionImageDescriptionCreatorParamsV1)), to bind at the highest mutually supported version.
 func BindImageDescriptionCreatorParamsV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionCreatorParamsV1, error) {
 	if version < 1 || version > VersionImageDescriptionCreatorParamsV1 {
 		return nil, wayland.ErrVersionMismatch

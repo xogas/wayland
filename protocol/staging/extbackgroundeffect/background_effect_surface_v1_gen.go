@@ -80,6 +80,12 @@ func (o *BackgroundEffectSurfaceV1) SetBlurRegion(region wire.ObjectID) error {
 	})
 }
 
+// BindBackgroundEffectSurfaceV1 binds the ext_background_effect_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionBackgroundEffectSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindBackgroundEffectSurfaceV1(reg, name, min(g.Version,
+// VersionBackgroundEffectSurfaceV1)), to bind at the highest mutually supported version.
 func BindBackgroundEffectSurfaceV1(b wayland.Binder, name uint32, version uint32) (*BackgroundEffectSurfaceV1, error) {
 	if version < 1 || version > VersionBackgroundEffectSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

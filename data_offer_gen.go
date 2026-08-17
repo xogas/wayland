@@ -271,6 +271,12 @@ func (o *DataOffer) SetActions(dndActions DataDeviceManagerDndAction, preferredA
 	})
 }
 
+// BindDataOffer binds the wl_data_offer global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataOffer] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataOffer(reg, name, min(g.Version,
+// VersionDataOffer)), to bind at the highest mutually supported version.
 func BindDataOffer(b Binder, name uint32, version uint32) (*DataOffer, error) {
 	if version < 1 || version > VersionDataOffer {
 		return nil, ErrVersionMismatch

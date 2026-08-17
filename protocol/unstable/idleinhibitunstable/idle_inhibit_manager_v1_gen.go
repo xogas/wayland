@@ -90,6 +90,12 @@ func (o *IdleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IdleInhi
 	return wrapped, nil
 }
 
+// BindIdleInhibitManagerV1 binds the zwp_idle_inhibit_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionIdleInhibitManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindIdleInhibitManagerV1(reg, name, min(g.Version,
+// VersionIdleInhibitManagerV1)), to bind at the highest mutually supported version.
 func BindIdleInhibitManagerV1(b wayland.Binder, name uint32, version uint32) (*IdleInhibitManagerV1, error) {
 	if version < 1 || version > VersionIdleInhibitManagerV1 {
 		return nil, wayland.ErrVersionMismatch

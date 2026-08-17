@@ -245,6 +245,12 @@ func (o *InputPopupPositionerV1) SetReactive() error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetReactive, &InputPopupPositionerV1SetReactiveRequest{})
 }
 
+// BindInputPopupPositionerV1 binds the xx_input_popup_positioner_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputPopupPositionerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputPopupPositionerV1(reg, name, min(g.Version,
+// VersionInputPopupPositionerV1)), to bind at the highest mutually supported version.
 func BindInputPopupPositionerV1(b wayland.Binder, name uint32, version uint32) (*InputPopupPositionerV1, error) {
 	if version < 1 || version > VersionInputPopupPositionerV1 {
 		return nil, wayland.ErrVersionMismatch

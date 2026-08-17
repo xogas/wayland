@@ -59,7 +59,7 @@ func main() {
 		if g.Interface != wayland.InterfaceOutput {
 			continue
 		}
-		out, err := wayland.BindOutput(reg, g.Name, g.Version)
+		out, err := wayland.BindOutput(reg, g.Name, min(g.Version, wayland.VersionOutput))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "bind output %d: %v\n", g.Name, err)
 			continue

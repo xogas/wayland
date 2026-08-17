@@ -235,6 +235,12 @@ func (o *SurfaceV6) AckConfigure(serial uint32) error {
 	})
 }
 
+// BindSurfaceV6 binds the zxdg_surface_v6 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSurfaceV6] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSurfaceV6(reg, name, min(g.Version,
+// VersionSurfaceV6)), to bind at the highest mutually supported version.
 func BindSurfaceV6(b wayland.Binder, name uint32, version uint32) (*SurfaceV6, error) {
 	if version < 1 || version > VersionSurfaceV6 {
 		return nil, wayland.ErrVersionMismatch

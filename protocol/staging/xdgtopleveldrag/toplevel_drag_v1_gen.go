@@ -87,6 +87,12 @@ func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset int32, yOffset i
 	})
 }
 
+// BindToplevelDragV1 binds the xdg_toplevel_drag_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionToplevelDragV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindToplevelDragV1(reg, name, min(g.Version,
+// VersionToplevelDragV1)), to bind at the highest mutually supported version.
 func BindToplevelDragV1(b wayland.Binder, name uint32, version uint32) (*ToplevelDragV1, error) {
 	if version < 1 || version > VersionToplevelDragV1 {
 		return nil, wayland.ErrVersionMismatch

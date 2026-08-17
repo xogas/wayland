@@ -85,10 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	compVer := compG.Version
-	if compVer > wayland.VersionCompositor {
-		compVer = wayland.VersionCompositor
-	}
+	compVer := min(compG.Version, wayland.VersionCompositor)
 	compositor, err := wayland.BindCompositor(reg, compG.Name, compVer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
@@ -102,17 +99,17 @@ func main() {
 		fmt.Println("using Damage (surface coordinates)")
 	}
 
-	shm, err := wayland.BindShm(reg, shmG.Name, shmG.Version)
+	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, wmG.Version)
+	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)
 	}
-	seat, err := wayland.BindSeat(reg, seatG.Name, seatG.Version)
+	seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
 		os.Exit(1)

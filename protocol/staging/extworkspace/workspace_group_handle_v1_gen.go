@@ -301,6 +301,12 @@ func (o *WorkspaceGroupHandleV1) Destroy() error {
 	return nil
 }
 
+// BindWorkspaceGroupHandleV1 binds the ext_workspace_group_handle_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionWorkspaceGroupHandleV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindWorkspaceGroupHandleV1(reg, name, min(g.Version,
+// VersionWorkspaceGroupHandleV1)), to bind at the highest mutually supported version.
 func BindWorkspaceGroupHandleV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceGroupHandleV1, error) {
 	if version < 1 || version > VersionWorkspaceGroupHandleV1 {
 		return nil, wayland.ErrVersionMismatch

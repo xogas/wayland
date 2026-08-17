@@ -123,6 +123,12 @@ func (o *PrimarySelectionOfferV1) Destroy() error {
 	return nil
 }
 
+// BindPrimarySelectionOfferV1 binds the zwp_primary_selection_offer_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPrimarySelectionOfferV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPrimarySelectionOfferV1(reg, name, min(g.Version,
+// VersionPrimarySelectionOfferV1)), to bind at the highest mutually supported version.
 func BindPrimarySelectionOfferV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionOfferV1, error) {
 	if version < 1 || version > VersionPrimarySelectionOfferV1 {
 		return nil, wayland.ErrVersionMismatch

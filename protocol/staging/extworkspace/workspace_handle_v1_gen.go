@@ -349,6 +349,12 @@ func (o *WorkspaceHandleV1) Remove() error {
 	return o.proxy.SendRequest(WorkspaceHandleV1RequestRemove, &WorkspaceHandleV1RemoveRequest{})
 }
 
+// BindWorkspaceHandleV1 binds the ext_workspace_handle_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionWorkspaceHandleV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindWorkspaceHandleV1(reg, name, min(g.Version,
+// VersionWorkspaceHandleV1)), to bind at the highest mutually supported version.
 func BindWorkspaceHandleV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceHandleV1, error) {
 	if version < 1 || version > VersionWorkspaceHandleV1 {
 		return nil, wayland.ErrVersionMismatch

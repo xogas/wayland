@@ -50,6 +50,12 @@ func (o *LinuxDrmSyncobjTimelineV1) Destroy() error {
 	return nil
 }
 
+// BindLinuxDrmSyncobjTimelineV1 binds the wp_linux_drm_syncobj_timeline_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxDrmSyncobjTimelineV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxDrmSyncobjTimelineV1(reg, name, min(g.Version,
+// VersionLinuxDrmSyncobjTimelineV1)), to bind at the highest mutually supported version.
 func BindLinuxDrmSyncobjTimelineV1(b wayland.Binder, name uint32, version uint32) (*LinuxDrmSyncobjTimelineV1, error) {
 	if version < 1 || version > VersionLinuxDrmSyncobjTimelineV1 {
 		return nil, wayland.ErrVersionMismatch

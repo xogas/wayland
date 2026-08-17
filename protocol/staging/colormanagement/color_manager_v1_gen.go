@@ -598,6 +598,12 @@ func (o *ColorManagerV1) CreateWindowsBt2100() (*ImageDescriptionV1, error) {
 	return wrapped, nil
 }
 
+// BindColorManagerV1 binds the wp_color_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionColorManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindColorManagerV1(reg, name, min(g.Version,
+// VersionColorManagerV1)), to bind at the highest mutually supported version.
 func BindColorManagerV1(b wayland.Binder, name uint32, version uint32) (*ColorManagerV1, error) {
 	if version < 1 || version > VersionColorManagerV1 {
 		return nil, wayland.ErrVersionMismatch

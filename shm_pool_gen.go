@@ -127,6 +127,12 @@ func (o *ShmPool) Resize(size int32) error {
 	})
 }
 
+// BindShmPool binds the wl_shm_pool global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionShmPool] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindShmPool(reg, name, min(g.Version,
+// VersionShmPool)), to bind at the highest mutually supported version.
 func BindShmPool(b Binder, name uint32, version uint32) (*ShmPool, error) {
 	if version < 1 || version > VersionShmPool {
 		return nil, ErrVersionMismatch

@@ -83,6 +83,12 @@ func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {
 	return wrapped, nil
 }
 
+// BindSessionLockManagerV1 binds the ext_session_lock_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSessionLockManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSessionLockManagerV1(reg, name, min(g.Version,
+// VersionSessionLockManagerV1)), to bind at the highest mutually supported version.
 func BindSessionLockManagerV1(b wayland.Binder, name uint32, version uint32) (*SessionLockManagerV1, error) {
 	if version < 1 || version > VersionSessionLockManagerV1 {
 		return nil, wayland.ErrVersionMismatch

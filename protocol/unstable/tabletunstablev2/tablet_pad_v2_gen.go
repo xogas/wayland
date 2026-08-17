@@ -383,6 +383,12 @@ func (o *TabletPadV2) Destroy() error {
 	return nil
 }
 
+// BindTabletPadV2 binds the zwp_tablet_pad_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTabletPadV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTabletPadV2(reg, name, min(g.Version,
+// VersionTabletPadV2)), to bind at the highest mutually supported version.
 func BindTabletPadV2(b wayland.Binder, name uint32, version uint32) (*TabletPadV2, error) {
 	if version < 1 || version > VersionTabletPadV2 {
 		return nil, wayland.ErrVersionMismatch

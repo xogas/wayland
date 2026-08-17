@@ -808,6 +808,12 @@ func (o *TabletToolV2) Destroy() error {
 	return nil
 }
 
+// BindTabletToolV2 binds the zwp_tablet_tool_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTabletToolV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTabletToolV2(reg, name, min(g.Version,
+// VersionTabletToolV2)), to bind at the highest mutually supported version.
 func BindTabletToolV2(b wayland.Binder, name uint32, version uint32) (*TabletToolV2, error) {
 	if version < 1 || version > VersionTabletToolV2 {
 		return nil, wayland.ErrVersionMismatch

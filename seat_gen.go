@@ -242,6 +242,12 @@ func (o *Seat) Release() error {
 	return nil
 }
 
+// BindSeat binds the wl_seat global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSeat] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSeat(reg, name, min(g.Version,
+// VersionSeat)), to bind at the highest mutually supported version.
 func BindSeat(b Binder, name uint32, version uint32) (*Seat, error) {
 	if version < 1 || version > VersionSeat {
 		return nil, ErrVersionMismatch

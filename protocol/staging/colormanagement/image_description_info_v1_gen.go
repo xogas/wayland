@@ -528,6 +528,12 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1Target
 	})
 }
 
+// BindImageDescriptionInfoV1 binds the wp_image_description_info_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImageDescriptionInfoV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImageDescriptionInfoV1(reg, name, min(g.Version,
+// VersionImageDescriptionInfoV1)), to bind at the highest mutually supported version.
 func BindImageDescriptionInfoV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionInfoV1, error) {
 	if version < 1 || version > VersionImageDescriptionInfoV1 {
 		return nil, wayland.ErrVersionMismatch

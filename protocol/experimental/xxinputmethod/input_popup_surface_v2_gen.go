@@ -225,6 +225,12 @@ func (o *InputPopupSurfaceV2) Destroy() error {
 	return nil
 }
 
+// BindInputPopupSurfaceV2 binds the xx_input_popup_surface_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputPopupSurfaceV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputPopupSurfaceV2(reg, name, min(g.Version,
+// VersionInputPopupSurfaceV2)), to bind at the highest mutually supported version.
 func BindInputPopupSurfaceV2(b wayland.Binder, name uint32, version uint32) (*InputPopupSurfaceV2, error) {
 	if version < 1 || version > VersionInputPopupSurfaceV2 {
 		return nil, wayland.ErrVersionMismatch

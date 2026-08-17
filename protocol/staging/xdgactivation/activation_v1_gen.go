@@ -110,6 +110,12 @@ func (o *ActivationV1) Activate(token string, surface wire.ObjectID) error {
 	})
 }
 
+// BindActivationV1 binds the xdg_activation_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionActivationV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindActivationV1(reg, name, min(g.Version,
+// VersionActivationV1)), to bind at the highest mutually supported version.
 func BindActivationV1(b wayland.Binder, name uint32, version uint32) (*ActivationV1, error) {
 	if version < 1 || version > VersionActivationV1 {
 		return nil, wayland.ErrVersionMismatch

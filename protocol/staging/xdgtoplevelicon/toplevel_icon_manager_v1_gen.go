@@ -188,6 +188,12 @@ func (o *ToplevelIconManagerV1) SetIcon(toplevel wire.ObjectID, icon wire.Object
 	})
 }
 
+// BindToplevelIconManagerV1 binds the xdg_toplevel_icon_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionToplevelIconManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindToplevelIconManagerV1(reg, name, min(g.Version,
+// VersionToplevelIconManagerV1)), to bind at the highest mutually supported version.
 func BindToplevelIconManagerV1(b wayland.Binder, name uint32, version uint32) (*ToplevelIconManagerV1, error) {
 	if version < 1 || version > VersionToplevelIconManagerV1 {
 		return nil, wayland.ErrVersionMismatch

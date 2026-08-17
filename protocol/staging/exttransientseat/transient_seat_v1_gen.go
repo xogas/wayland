@@ -120,6 +120,12 @@ func (o *TransientSeatV1) Destroy() error {
 	return nil
 }
 
+// BindTransientSeatV1 binds the ext_transient_seat_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTransientSeatV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTransientSeatV1(reg, name, min(g.Version,
+// VersionTransientSeatV1)), to bind at the highest mutually supported version.
 func BindTransientSeatV1(b wayland.Binder, name uint32, version uint32) (*TransientSeatV1, error) {
 	if version < 1 || version > VersionTransientSeatV1 {
 		return nil, wayland.ErrVersionMismatch

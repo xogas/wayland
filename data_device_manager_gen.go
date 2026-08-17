@@ -135,6 +135,12 @@ func (o *DataDeviceManager) Release() error {
 	return nil
 }
 
+// BindDataDeviceManager binds the wl_data_device_manager global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataDeviceManager] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataDeviceManager(reg, name, min(g.Version,
+// VersionDataDeviceManager)), to bind at the highest mutually supported version.
 func BindDataDeviceManager(b Binder, name uint32, version uint32) (*DataDeviceManager, error) {
 	if version < 1 || version > VersionDataDeviceManager {
 		return nil, ErrVersionMismatch

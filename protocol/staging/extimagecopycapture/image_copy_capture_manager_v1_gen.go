@@ -153,6 +153,12 @@ func (o *ImageCopyCaptureManagerV1) Destroy() error {
 	return nil
 }
 
+// BindImageCopyCaptureManagerV1 binds the ext_image_copy_capture_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionImageCopyCaptureManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindImageCopyCaptureManagerV1(reg, name, min(g.Version,
+// VersionImageCopyCaptureManagerV1)), to bind at the highest mutually supported version.
 func BindImageCopyCaptureManagerV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureManagerV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureManagerV1 {
 		return nil, wayland.ErrVersionMismatch

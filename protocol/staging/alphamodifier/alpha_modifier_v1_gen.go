@@ -92,6 +92,12 @@ func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfa
 	return wrapped, nil
 }
 
+// BindAlphaModifierV1 binds the wp_alpha_modifier_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionAlphaModifierV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindAlphaModifierV1(reg, name, min(g.Version,
+// VersionAlphaModifierV1)), to bind at the highest mutually supported version.
 func BindAlphaModifierV1(b wayland.Binder, name uint32, version uint32) (*AlphaModifierV1, error) {
 	if version < 1 || version > VersionAlphaModifierV1 {
 		return nil, wayland.ErrVersionMismatch

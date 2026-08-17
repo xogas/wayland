@@ -96,6 +96,12 @@ func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*Tea
 	return wrapped, nil
 }
 
+// BindTearingControlManagerV1 binds the wp_tearing_control_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTearingControlManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTearingControlManagerV1(reg, name, min(g.Version,
+// VersionTearingControlManagerV1)), to bind at the highest mutually supported version.
 func BindTearingControlManagerV1(b wayland.Binder, name uint32, version uint32) (*TearingControlManagerV1, error) {
 	if version < 1 || version > VersionTearingControlManagerV1 {
 		return nil, wayland.ErrVersionMismatch

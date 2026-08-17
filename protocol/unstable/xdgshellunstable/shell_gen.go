@@ -252,6 +252,12 @@ func (o *Shell) Pong(serial uint32) error {
 	})
 }
 
+// BindShell binds the xdg_shell global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionShell] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindShell(reg, name, min(g.Version,
+// VersionShell)), to bind at the highest mutually supported version.
 func BindShell(b wayland.Binder, name uint32, version uint32) (*Shell, error) {
 	if version < 1 || version > VersionShell {
 		return nil, wayland.ErrVersionMismatch

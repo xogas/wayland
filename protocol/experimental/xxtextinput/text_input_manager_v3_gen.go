@@ -88,6 +88,12 @@ func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, err
 	return wrapped, nil
 }
 
+// BindTextInputManagerV3 binds the xx_text_input_manager_v3 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTextInputManagerV3] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTextInputManagerV3(reg, name, min(g.Version,
+// VersionTextInputManagerV3)), to bind at the highest mutually supported version.
 func BindTextInputManagerV3(b wayland.Binder, name uint32, version uint32) (*TextInputManagerV3, error) {
 	if version < 1 || version > VersionTextInputManagerV3 {
 		return nil, wayland.ErrVersionMismatch

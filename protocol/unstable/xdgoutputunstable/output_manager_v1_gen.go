@@ -88,6 +88,12 @@ func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) 
 	return wrapped, nil
 }
 
+// BindOutputManagerV1 binds the zxdg_output_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionOutputManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindOutputManagerV1(reg, name, min(g.Version,
+// VersionOutputManagerV1)), to bind at the highest mutually supported version.
 func BindOutputManagerV1(b wayland.Binder, name uint32, version uint32) (*OutputManagerV1, error) {
 	if version < 1 || version > VersionOutputManagerV1 {
 		return nil, wayland.ErrVersionMismatch

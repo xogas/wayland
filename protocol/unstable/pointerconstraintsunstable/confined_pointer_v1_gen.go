@@ -136,6 +136,12 @@ func (o *ConfinedPointerV1) SetRegion(region wire.ObjectID) error {
 	})
 }
 
+// BindConfinedPointerV1 binds the zwp_confined_pointer_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionConfinedPointerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindConfinedPointerV1(reg, name, min(g.Version,
+// VersionConfinedPointerV1)), to bind at the highest mutually supported version.
 func BindConfinedPointerV1(b wayland.Binder, name uint32, version uint32) (*ConfinedPointerV1, error) {
 	if version < 1 || version > VersionConfinedPointerV1 {
 		return nil, wayland.ErrVersionMismatch

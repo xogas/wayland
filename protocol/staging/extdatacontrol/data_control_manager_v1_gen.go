@@ -125,6 +125,12 @@ func (o *DataControlManagerV1) Destroy() error {
 	return nil
 }
 
+// BindDataControlManagerV1 binds the ext_data_control_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataControlManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataControlManagerV1(reg, name, min(g.Version,
+// VersionDataControlManagerV1)), to bind at the highest mutually supported version.
 func BindDataControlManagerV1(b wayland.Binder, name uint32, version uint32) (*DataControlManagerV1, error) {
 	if version < 1 || version > VersionDataControlManagerV1 {
 		return nil, wayland.ErrVersionMismatch

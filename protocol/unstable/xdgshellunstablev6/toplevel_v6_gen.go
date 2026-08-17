@@ -457,6 +457,12 @@ func (o *ToplevelV6) SetMinimized() error {
 	return o.proxy.SendRequest(ToplevelV6RequestSetMinimized, &ToplevelV6SetMinimizedRequest{})
 }
 
+// BindToplevelV6 binds the zxdg_toplevel_v6 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionToplevelV6] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindToplevelV6(reg, name, min(g.Version,
+// VersionToplevelV6)), to bind at the highest mutually supported version.
 func BindToplevelV6(b wayland.Binder, name uint32, version uint32) (*ToplevelV6, error) {
 	if version < 1 || version > VersionToplevelV6 {
 		return nil, wayland.ErrVersionMismatch

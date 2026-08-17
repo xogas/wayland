@@ -82,6 +82,12 @@ func (o *SurfaceV1) Destroy() error {
 	return nil
 }
 
+// BindSurfaceV1 binds the xwayland_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSurfaceV1(reg, name, min(g.Version,
+// VersionSurfaceV1)), to bind at the highest mutually supported version.
 func BindSurfaceV1(b wayland.Binder, name uint32, version uint32) (*SurfaceV1, error) {
 	if version < 1 || version > VersionSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

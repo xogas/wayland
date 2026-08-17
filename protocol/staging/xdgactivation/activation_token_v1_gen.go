@@ -187,6 +187,12 @@ func (o *ActivationTokenV1) Destroy() error {
 	return nil
 }
 
+// BindActivationTokenV1 binds the xdg_activation_token_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionActivationTokenV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindActivationTokenV1(reg, name, min(g.Version,
+// VersionActivationTokenV1)), to bind at the highest mutually supported version.
 func BindActivationTokenV1(b wayland.Binder, name uint32, version uint32) (*ActivationTokenV1, error) {
 	if version < 1 || version > VersionActivationTokenV1 {
 		return nil, wayland.ErrVersionMismatch

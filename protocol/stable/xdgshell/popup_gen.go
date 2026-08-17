@@ -235,6 +235,12 @@ func (o *Popup) Reposition(positioner wire.ObjectID, token uint32) error {
 	})
 }
 
+// BindPopup binds the xdg_popup global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPopup] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPopup(reg, name, min(g.Version,
+// VersionPopup)), to bind at the highest mutually supported version.
 func BindPopup(b wayland.Binder, name uint32, version uint32) (*Popup, error) {
 	if version < 1 || version > VersionPopup {
 		return nil, wayland.ErrVersionMismatch

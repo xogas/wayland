@@ -69,6 +69,12 @@ func (o *Fixes) DestroyRegistry(registry wire.ObjectID) error {
 	})
 }
 
+// BindFixes binds the wl_fixes global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFixes] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFixes(reg, name, min(g.Version,
+// VersionFixes)), to bind at the highest mutually supported version.
 func BindFixes(b Binder, name uint32, version uint32) (*Fixes, error) {
 	if version < 1 || version > VersionFixes {
 		return nil, ErrVersionMismatch

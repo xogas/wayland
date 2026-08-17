@@ -93,6 +93,12 @@ func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error)
 	return wrapped, nil
 }
 
+// BindCutoutsManagerV1 binds the xx_cutouts_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionCutoutsManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindCutoutsManagerV1(reg, name, min(g.Version,
+// VersionCutoutsManagerV1)), to bind at the highest mutually supported version.
 func BindCutoutsManagerV1(b wayland.Binder, name uint32, version uint32) (*CutoutsManagerV1, error) {
 	if version < 1 || version > VersionCutoutsManagerV1 {
 		return nil, wayland.ErrVersionMismatch

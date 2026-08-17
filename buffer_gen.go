@@ -85,6 +85,12 @@ func (o *Buffer) Destroy() error {
 	return nil
 }
 
+// BindBuffer binds the wl_buffer global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionBuffer] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindBuffer(reg, name, min(g.Version,
+// VersionBuffer)), to bind at the highest mutually supported version.
 func BindBuffer(b Binder, name uint32, version uint32) (*Buffer, error) {
 	if version < 1 || version > VersionBuffer {
 		return nil, ErrVersionMismatch

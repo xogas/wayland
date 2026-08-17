@@ -68,6 +68,12 @@ func (o *Shell) GetShellSurface(surface wire.ObjectID) (*ShellSurface, error) {
 	return wrapped, nil
 }
 
+// BindShell binds the wl_shell global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionShell] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindShell(reg, name, min(g.Version,
+// VersionShell)), to bind at the highest mutually supported version.
 func BindShell(b Binder, name uint32, version uint32) (*Shell, error) {
 	if version < 1 || version > VersionShell {
 		return nil, ErrVersionMismatch

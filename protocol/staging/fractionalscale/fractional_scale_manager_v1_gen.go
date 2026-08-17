@@ -96,6 +96,12 @@ func (o *FractionalScaleManagerV1) GetFractionalScale(surface wire.ObjectID) (*F
 	return wrapped, nil
 }
 
+// BindFractionalScaleManagerV1 binds the wp_fractional_scale_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFractionalScaleManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFractionalScaleManagerV1(reg, name, min(g.Version,
+// VersionFractionalScaleManagerV1)), to bind at the highest mutually supported version.
 func BindFractionalScaleManagerV1(b wayland.Binder, name uint32, version uint32) (*FractionalScaleManagerV1, error) {
 	if version < 1 || version > VersionFractionalScaleManagerV1 {
 		return nil, wayland.ErrVersionMismatch

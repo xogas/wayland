@@ -357,6 +357,12 @@ func (o *Keyboard) Release() error {
 	return nil
 }
 
+// BindKeyboard binds the wl_keyboard global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionKeyboard] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindKeyboard(reg, name, min(g.Version,
+// VersionKeyboard)), to bind at the highest mutually supported version.
 func BindKeyboard(b Binder, name uint32, version uint32) (*Keyboard, error) {
 	if version < 1 || version > VersionKeyboard {
 		return nil, ErrVersionMismatch

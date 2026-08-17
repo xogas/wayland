@@ -206,6 +206,12 @@ func (o *DrmLeaseDeviceV1) Release() error {
 	return o.proxy.SendRequest(DrmLeaseDeviceV1RequestRelease, &DrmLeaseDeviceV1ReleaseRequest{})
 }
 
+// BindDrmLeaseDeviceV1 binds the wp_drm_lease_device_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDrmLeaseDeviceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDrmLeaseDeviceV1(reg, name, min(g.Version,
+// VersionDrmLeaseDeviceV1)), to bind at the highest mutually supported version.
 func BindDrmLeaseDeviceV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseDeviceV1, error) {
 	if version < 1 || version > VersionDrmLeaseDeviceV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -248,6 +248,12 @@ func (o *PositionerV6) SetOffset(x int32, y int32) error {
 	})
 }
 
+// BindPositionerV6 binds the zxdg_positioner_v6 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPositionerV6] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPositionerV6(reg, name, min(g.Version,
+// VersionPositionerV6)), to bind at the highest mutually supported version.
 func BindPositionerV6(b wayland.Binder, name uint32, version uint32) (*PositionerV6, error) {
 	if version < 1 || version > VersionPositionerV6 {
 		return nil, wayland.ErrVersionMismatch

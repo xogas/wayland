@@ -311,6 +311,12 @@ func (o *LinuxBufferParamsV1) SetSamplingDevice(device []byte) error {
 	})
 }
 
+// BindLinuxBufferParamsV1 binds the zwp_linux_buffer_params_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxBufferParamsV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxBufferParamsV1(reg, name, min(g.Version,
+// VersionLinuxBufferParamsV1)), to bind at the highest mutually supported version.
 func BindLinuxBufferParamsV1(b wayland.Binder, name uint32, version uint32) (*LinuxBufferParamsV1, error) {
 	if version < 1 || version > VersionLinuxBufferParamsV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -90,6 +90,12 @@ func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*R
 	return wrapped, nil
 }
 
+// BindRelativePointerManagerV1 binds the zwp_relative_pointer_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionRelativePointerManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindRelativePointerManagerV1(reg, name, min(g.Version,
+// VersionRelativePointerManagerV1)), to bind at the highest mutually supported version.
 func BindRelativePointerManagerV1(b wayland.Binder, name uint32, version uint32) (*RelativePointerManagerV1, error) {
 	if version < 1 || version > VersionRelativePointerManagerV1 {
 		return nil, wayland.ErrVersionMismatch

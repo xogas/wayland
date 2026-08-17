@@ -640,6 +640,12 @@ func (o *TextInputV3) AnnounceSupportedFeatures(features TextInputV3SupportedFea
 	})
 }
 
+// BindTextInputV3 binds the xx_text_input_v3 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTextInputV3] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTextInputV3(reg, name, min(g.Version,
+// VersionTextInputV3)), to bind at the highest mutually supported version.
 func BindTextInputV3(b wayland.Binder, name uint32, version uint32) (*TextInputV3, error) {
 	if version < 1 || version > VersionTextInputV3 {
 		return nil, wayland.ErrVersionMismatch

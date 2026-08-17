@@ -86,6 +86,12 @@ func (o *FifoV1) Destroy() error {
 	return nil
 }
 
+// BindFifoV1 binds the wp_fifo_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFifoV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFifoV1(reg, name, min(g.Version,
+// VersionFifoV1)), to bind at the highest mutually supported version.
 func BindFifoV1(b wayland.Binder, name uint32, version uint32) (*FifoV1, error) {
 	if version < 1 || version > VersionFifoV1 {
 		return nil, wayland.ErrVersionMismatch

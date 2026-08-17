@@ -92,6 +92,12 @@ func (o *ExporterV2) ExportToplevel(surface wire.ObjectID) (*ExportedV2, error) 
 	return wrapped, nil
 }
 
+// BindExporterV2 binds the zxdg_exporter_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionExporterV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindExporterV2(reg, name, min(g.Version,
+// VersionExporterV2)), to bind at the highest mutually supported version.
 func BindExporterV2(b wayland.Binder, name uint32, version uint32) (*ExporterV2, error) {
 	if version < 1 || version > VersionExporterV2 {
 		return nil, wayland.ErrVersionMismatch

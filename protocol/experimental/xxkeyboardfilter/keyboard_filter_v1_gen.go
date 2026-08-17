@@ -104,6 +104,12 @@ func (o *KeyboardFilterV1) Destroy() error {
 	return nil
 }
 
+// BindKeyboardFilterV1 binds the xx_keyboard_filter_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionKeyboardFilterV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindKeyboardFilterV1(reg, name, min(g.Version,
+// VersionKeyboardFilterV1)), to bind at the highest mutually supported version.
 func BindKeyboardFilterV1(b wayland.Binder, name uint32, version uint32) (*KeyboardFilterV1, error) {
 	if version < 1 || version > VersionKeyboardFilterV1 {
 		return nil, wayland.ErrVersionMismatch

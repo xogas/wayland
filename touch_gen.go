@@ -364,6 +364,12 @@ func (o *Touch) Release() error {
 	return nil
 }
 
+// BindTouch binds the wl_touch global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTouch] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTouch(reg, name, min(g.Version,
+// VersionTouch)), to bind at the highest mutually supported version.
 func BindTouch(b Binder, name uint32, version uint32) (*Touch, error) {
 	if version < 1 || version > VersionTouch {
 		return nil, ErrVersionMismatch

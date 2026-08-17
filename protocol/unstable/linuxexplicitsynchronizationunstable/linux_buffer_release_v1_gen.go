@@ -98,6 +98,12 @@ func (o *LinuxBufferReleaseV1) OnImmediateRelease(fn LinuxBufferReleaseV1Immedia
 	})
 }
 
+// BindLinuxBufferReleaseV1 binds the zwp_linux_buffer_release_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLinuxBufferReleaseV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLinuxBufferReleaseV1(reg, name, min(g.Version,
+// VersionLinuxBufferReleaseV1)), to bind at the highest mutually supported version.
 func BindLinuxBufferReleaseV1(b wayland.Binder, name uint32, version uint32) (*LinuxBufferReleaseV1, error) {
 	if version < 1 || version > VersionLinuxBufferReleaseV1 {
 		return nil, wayland.ErrVersionMismatch

@@ -105,6 +105,12 @@ func (o *ColorManagementSurfaceV1) UnsetImageDescription() error {
 	return o.proxy.SendRequest(ColorManagementSurfaceV1RequestUnsetImageDescription, &ColorManagementSurfaceV1UnsetImageDescriptionRequest{})
 }
 
+// BindColorManagementSurfaceV1 binds the wp_color_management_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionColorManagementSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindColorManagementSurfaceV1(reg, name, min(g.Version,
+// VersionColorManagementSurfaceV1)), to bind at the highest mutually supported version.
 func BindColorManagementSurfaceV1(b wayland.Binder, name uint32, version uint32) (*ColorManagementSurfaceV1, error) {
 	if version < 1 || version > VersionColorManagementSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

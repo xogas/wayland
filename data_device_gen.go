@@ -355,6 +355,12 @@ func (o *DataDevice) Release() error {
 	return nil
 }
 
+// BindDataDevice binds the wl_data_device global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataDevice] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataDevice(reg, name, min(g.Version,
+// VersionDataDevice)), to bind at the highest mutually supported version.
 func BindDataDevice(b Binder, name uint32, version uint32) (*DataDevice, error) {
 	if version < 1 || version > VersionDataDevice {
 		return nil, ErrVersionMismatch

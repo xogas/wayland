@@ -88,6 +88,12 @@ func (o *TabletManagerV1) Destroy() error {
 	return nil
 }
 
+// BindTabletManagerV1 binds the zwp_tablet_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionTabletManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindTabletManagerV1(reg, name, min(g.Version,
+// VersionTabletManagerV1)), to bind at the highest mutually supported version.
 func BindTabletManagerV1(b wayland.Binder, name uint32, version uint32) (*TabletManagerV1, error) {
 	if version < 1 || version > VersionTabletManagerV1 {
 		return nil, wayland.ErrVersionMismatch

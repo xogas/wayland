@@ -154,6 +154,12 @@ func (o *ToplevelDecorationV1) UnsetMode() error {
 	return o.proxy.SendRequest(ToplevelDecorationV1RequestUnsetMode, &ToplevelDecorationV1UnsetModeRequest{})
 }
 
+// BindToplevelDecorationV1 binds the zxdg_toplevel_decoration_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionToplevelDecorationV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindToplevelDecorationV1(reg, name, min(g.Version,
+// VersionToplevelDecorationV1)), to bind at the highest mutually supported version.
 func BindToplevelDecorationV1(b wayland.Binder, name uint32, version uint32) (*ToplevelDecorationV1, error) {
 	if version < 1 || version > VersionToplevelDecorationV1 {
 		return nil, wayland.ErrVersionMismatch

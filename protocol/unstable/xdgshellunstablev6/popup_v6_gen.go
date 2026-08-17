@@ -171,6 +171,12 @@ func (o *PopupV6) Grab(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
+// BindPopupV6 binds the zxdg_popup_v6 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionPopupV6] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindPopupV6(reg, name, min(g.Version,
+// VersionPopupV6)), to bind at the highest mutually supported version.
 func BindPopupV6(b wayland.Binder, name uint32, version uint32) (*PopupV6, error) {
 	if version < 1 || version > VersionPopupV6 {
 		return nil, wayland.ErrVersionMismatch

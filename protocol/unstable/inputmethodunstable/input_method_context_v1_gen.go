@@ -710,6 +710,12 @@ func (o *InputMethodContextV1) TextDirection(serial uint32, direction uint32) er
 	})
 }
 
+// BindInputMethodContextV1 binds the zwp_input_method_context_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputMethodContextV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputMethodContextV1(reg, name, min(g.Version,
+// VersionInputMethodContextV1)), to bind at the highest mutually supported version.
 func BindInputMethodContextV1(b wayland.Binder, name uint32, version uint32) (*InputMethodContextV1, error) {
 	if version < 1 || version > VersionInputMethodContextV1 {
 		return nil, wayland.ErrVersionMismatch

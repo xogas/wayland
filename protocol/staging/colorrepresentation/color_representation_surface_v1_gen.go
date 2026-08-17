@@ -176,6 +176,12 @@ func (o *ColorRepresentationSurfaceV1) SetChromaLocation(chromaLocation ColorRep
 	})
 }
 
+// BindColorRepresentationSurfaceV1 binds the wp_color_representation_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionColorRepresentationSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindColorRepresentationSurfaceV1(reg, name, min(g.Version,
+// VersionColorRepresentationSurfaceV1)), to bind at the highest mutually supported version.
 func BindColorRepresentationSurfaceV1(b wayland.Binder, name uint32, version uint32) (*ColorRepresentationSurfaceV1, error) {
 	if version < 1 || version > VersionColorRepresentationSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

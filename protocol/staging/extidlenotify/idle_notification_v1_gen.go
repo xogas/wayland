@@ -114,6 +114,12 @@ func (o *IdleNotificationV1) Destroy() error {
 	return nil
 }
 
+// BindIdleNotificationV1 binds the ext_idle_notification_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionIdleNotificationV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindIdleNotificationV1(reg, name, min(g.Version,
+// VersionIdleNotificationV1)), to bind at the highest mutually supported version.
 func BindIdleNotificationV1(b wayland.Binder, name uint32, version uint32) (*IdleNotificationV1, error) {
 	if version < 1 || version > VersionIdleNotificationV1 {
 		return nil, wayland.ErrVersionMismatch

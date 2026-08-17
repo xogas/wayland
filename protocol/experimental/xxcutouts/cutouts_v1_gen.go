@@ -241,6 +241,12 @@ func (o *CutoutsV1) SetUnhandled(unhandled []byte) error {
 	})
 }
 
+// BindCutoutsV1 binds the xx_cutouts_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionCutoutsV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindCutoutsV1(reg, name, min(g.Version,
+// VersionCutoutsV1)), to bind at the highest mutually supported version.
 func BindCutoutsV1(b wayland.Binder, name uint32, version uint32) (*CutoutsV1, error) {
 	if version < 1 || version > VersionCutoutsV1 {
 		return nil, wayland.ErrVersionMismatch

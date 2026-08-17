@@ -92,6 +92,12 @@ func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {
 	return wrapped, nil
 }
 
+// BindViewporter binds the wp_viewporter global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionViewporter] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindViewporter(reg, name, min(g.Version,
+// VersionViewporter)), to bind at the highest mutually supported version.
 func BindViewporter(b wayland.Binder, name uint32, version uint32) (*Viewporter, error) {
 	if version < 1 || version > VersionViewporter {
 		return nil, wayland.ErrVersionMismatch

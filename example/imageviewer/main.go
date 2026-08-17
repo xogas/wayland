@@ -108,17 +108,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	compositor, err := wayland.BindCompositor(reg, compositorGlobal.Name, compositorGlobal.Version)
+	compositor, err := wayland.BindCompositor(reg, compositorGlobal.Name, min(compositorGlobal.Version, wayland.VersionCompositor))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
 		os.Exit(1)
 	}
-	shm, err := wayland.BindShm(reg, shmGlobal.Name, shmGlobal.Version)
+	shm, err := wayland.BindShm(reg, shmGlobal.Name, min(shmGlobal.Version, wayland.VersionShm))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmBaseGlobal.Name, wmBaseGlobal.Version)
+	wmBase, err := xdgshell.BindWmBase(reg, wmBaseGlobal.Name, min(wmBaseGlobal.Version, xdgshell.VersionWmBase))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)

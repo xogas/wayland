@@ -121,6 +121,12 @@ func (o *Viewport) SetDestination(width int32, height int32) error {
 	})
 }
 
+// BindViewport binds the wp_viewport global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionViewport] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindViewport(reg, name, min(g.Version,
+// VersionViewport)), to bind at the highest mutually supported version.
 func BindViewport(b wayland.Binder, name uint32, version uint32) (*Viewport, error) {
 	if version < 1 || version > VersionViewport {
 		return nil, wayland.ErrVersionMismatch

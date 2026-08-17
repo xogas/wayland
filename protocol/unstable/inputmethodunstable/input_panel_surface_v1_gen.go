@@ -78,6 +78,12 @@ func (o *InputPanelSurfaceV1) SetOverlayPanel() error {
 	return o.proxy.SendRequest(InputPanelSurfaceV1RequestSetOverlayPanel, &InputPanelSurfaceV1SetOverlayPanelRequest{})
 }
 
+// BindInputPanelSurfaceV1 binds the zwp_input_panel_surface_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionInputPanelSurfaceV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindInputPanelSurfaceV1(reg, name, min(g.Version,
+// VersionInputPanelSurfaceV1)), to bind at the highest mutually supported version.
 func BindInputPanelSurfaceV1(b wayland.Binder, name uint32, version uint32) (*InputPanelSurfaceV1, error) {
 	if version < 1 || version > VersionInputPanelSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch

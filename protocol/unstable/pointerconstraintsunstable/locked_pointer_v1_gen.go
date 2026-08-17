@@ -165,6 +165,12 @@ func (o *LockedPointerV1) SetRegion(region wire.ObjectID) error {
 	})
 }
 
+// BindLockedPointerV1 binds the zwp_locked_pointer_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionLockedPointerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindLockedPointerV1(reg, name, min(g.Version,
+// VersionLockedPointerV1)), to bind at the highest mutually supported version.
 func BindLockedPointerV1(b wayland.Binder, name uint32, version uint32) (*LockedPointerV1, error) {
 	if version < 1 || version > VersionLockedPointerV1 {
 		return nil, wayland.ErrVersionMismatch

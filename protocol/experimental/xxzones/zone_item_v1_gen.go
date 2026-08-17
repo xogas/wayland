@@ -233,6 +233,12 @@ func (o *ZoneItemV1) SetPosition(x int32, y int32) error {
 	})
 }
 
+// BindZoneItemV1 binds the xx_zone_item_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionZoneItemV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindZoneItemV1(reg, name, min(g.Version,
+// VersionZoneItemV1)), to bind at the highest mutually supported version.
 func BindZoneItemV1(b wayland.Binder, name uint32, version uint32) (*ZoneItemV1, error) {
 	if version < 1 || version > VersionZoneItemV1 {
 		return nil, wayland.ErrVersionMismatch

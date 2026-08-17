@@ -88,6 +88,12 @@ func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*To
 	return wrapped, nil
 }
 
+// BindDecorationManagerV1 binds the zxdg_decoration_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDecorationManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDecorationManagerV1(reg, name, min(g.Version,
+// VersionDecorationManagerV1)), to bind at the highest mutually supported version.
 func BindDecorationManagerV1(b wayland.Binder, name uint32, version uint32) (*DecorationManagerV1, error) {
 	if version < 1 || version > VersionDecorationManagerV1 {
 		return nil, wayland.ErrVersionMismatch

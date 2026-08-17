@@ -105,6 +105,12 @@ func (o *SessionManagerV1) GetSession(reason SessionManagerV1Reason, session *st
 	return wrapped, nil
 }
 
+// BindSessionManagerV1 binds the xx_session_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSessionManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSessionManagerV1(reg, name, min(g.Version,
+// VersionSessionManagerV1)), to bind at the highest mutually supported version.
 func BindSessionManagerV1(b wayland.Binder, name uint32, version uint32) (*SessionManagerV1, error) {
 	if version < 1 || version > VersionSessionManagerV1 {
 		return nil, wayland.ErrVersionMismatch

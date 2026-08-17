@@ -97,6 +97,12 @@ func (o *Subcompositor) GetSubsurface(surface wire.ObjectID, parent wire.ObjectI
 	return wrapped, nil
 }
 
+// BindSubcompositor binds the wl_subcompositor global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSubcompositor] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSubcompositor(reg, name, min(g.Version,
+// VersionSubcompositor)), to bind at the highest mutually supported version.
 func BindSubcompositor(b Binder, name uint32, version uint32) (*Subcompositor, error) {
 	if version < 1 || version > VersionSubcompositor {
 		return nil, ErrVersionMismatch

@@ -248,17 +248,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	comp, err := wayland.BindCompositor(reg, compG.Name, compG.Version)
+	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
 		os.Exit(1)
 	}
-	shm, err := wayland.BindShm(reg, shmG.Name, shmG.Version)
+	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, wmG.Version)
+	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)
@@ -327,7 +327,7 @@ func main() {
 	_ = toplevel.SetMaxSize(1280, 1024)
 
 	if decoG.Interface != "" {
-		decoMan, err := xdgdecorationunstable.BindDecorationManagerV1(reg, decoG.Name, decoG.Version)
+		decoMan, err := xdgdecorationunstable.BindDecorationManagerV1(reg, decoG.Name, min(decoG.Version, xdgdecorationunstable.VersionDecorationManagerV1))
 		if err == nil {
 			td, err := decoMan.GetToplevelDecoration(wire.ObjectID(toplevel.Proxy().ID()))
 			if err == nil {
@@ -374,7 +374,7 @@ func main() {
 	var ptrX, ptrY int32
 
 	if seatG.Interface != "" {
-		seat, err = wayland.BindSeat(reg, seatG.Name, seatG.Version)
+		seat, err = wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
 		} else {

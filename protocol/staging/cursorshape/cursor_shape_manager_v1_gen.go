@@ -130,6 +130,12 @@ func (o *CursorShapeManagerV1) GetTabletToolV2(tabletTool wire.ObjectID) (*Curso
 	return wrapped, nil
 }
 
+// BindCursorShapeManagerV1 binds the wp_cursor_shape_manager_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionCursorShapeManagerV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindCursorShapeManagerV1(reg, name, min(g.Version,
+// VersionCursorShapeManagerV1)), to bind at the highest mutually supported version.
 func BindCursorShapeManagerV1(b wayland.Binder, name uint32, version uint32) (*CursorShapeManagerV1, error) {
 	if version < 1 || version > VersionCursorShapeManagerV1 {
 		return nil, wayland.ErrVersionMismatch

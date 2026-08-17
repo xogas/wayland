@@ -122,6 +122,12 @@ func (o *FractionalScaleV2) Destroy() error {
 	return nil
 }
 
+// BindFractionalScaleV2 binds the xx_fractional_scale_v2 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionFractionalScaleV2] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindFractionalScaleV2(reg, name, min(g.Version,
+// VersionFractionalScaleV2)), to bind at the highest mutually supported version.
 func BindFractionalScaleV2(b wayland.Binder, name uint32, version uint32) (*FractionalScaleV2, error) {
 	if version < 1 || version > VersionFractionalScaleV2 {
 		return nil, wayland.ErrVersionMismatch

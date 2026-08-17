@@ -303,6 +303,12 @@ func (o *DataSource) SetActions(dndActions DataDeviceManagerDndAction) error {
 	})
 }
 
+// BindDataSource binds the wl_data_source global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionDataSource] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindDataSource(reg, name, min(g.Version,
+// VersionDataSource)), to bind at the highest mutually supported version.
 func BindDataSource(b Binder, name uint32, version uint32) (*DataSource, error) {
 	if version < 1 || version > VersionDataSource {
 		return nil, ErrVersionMismatch

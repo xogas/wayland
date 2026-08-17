@@ -197,6 +197,12 @@ func (o *WmBase) Pong(serial uint32) error {
 	})
 }
 
+// BindWmBase binds the xdg_wm_base global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionWmBase] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindWmBase(reg, name, min(g.Version,
+// VersionWmBase)), to bind at the highest mutually supported version.
 func BindWmBase(b wayland.Binder, name uint32, version uint32) (*WmBase, error) {
 	if version < 1 || version > VersionWmBase {
 		return nil, wayland.ErrVersionMismatch

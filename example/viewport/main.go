@@ -92,22 +92,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	compositor, err := wayland.BindCompositor(reg, compG.Name, compG.Version)
+	compositor, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
 		os.Exit(1)
 	}
-	shm, err := wayland.BindShm(reg, shmG.Name, shmG.Version)
+	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, wmG.Version)
+	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)
 	}
-	viewporterObj, err := viewporter.BindViewporter(reg, vpG.Name, vpG.Version)
+	viewporterObj, err := viewporter.BindViewporter(reg, vpG.Name, min(vpG.Version, viewporter.VersionViewporter))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind viewporter: %v\n", err)
 		os.Exit(1)
@@ -140,7 +140,7 @@ func main() {
 	}
 
 	if fsmG.Interface != "" {
-		fsm, err := fractionalscale.BindFractionalScaleManagerV1(reg, fsmG.Name, fsmG.Version)
+		fsm, err := fractionalscale.BindFractionalScaleManagerV1(reg, fsmG.Name, min(fsmG.Version, fractionalscale.VersionFractionalScaleManagerV1))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "bind fractional_scale_manager: %v\n", err)
 		} else {
@@ -230,7 +230,7 @@ func main() {
 	keyCh := make(chan uint32, 16)
 	var kbd *wayland.Keyboard
 	if seatG.Interface != "" {
-		seat, err := wayland.BindSeat(reg, seatG.Name, seatG.Version)
+		seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
 		} else {

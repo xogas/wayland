@@ -92,6 +92,12 @@ func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {
 	return wrapped, nil
 }
 
+// BindWmDialogV1 binds the xdg_wm_dialog_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionWmDialogV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindWmDialogV1(reg, name, min(g.Version,
+// VersionWmDialogV1)), to bind at the highest mutually supported version.
 func BindWmDialogV1(b wayland.Binder, name uint32, version uint32) (*WmDialogV1, error) {
 	if version < 1 || version > VersionWmDialogV1 {
 		return nil, wayland.ErrVersionMismatch

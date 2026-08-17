@@ -194,6 +194,12 @@ func (o *SessionLockV1) UnlockAndDestroy() error {
 	return nil
 }
 
+// BindSessionLockV1 binds the ext_session_lock_v1 global advertised by the server.
+// version is the version requested by the application; it must be within
+// [1, VersionSessionLockV1] or ErrVersionMismatch is returned. Servers newer
+// than this library may advertise a higher version: clamp the advertised
+// version with the builtin min, e.g. BindSessionLockV1(reg, name, min(g.Version,
+// VersionSessionLockV1)), to bind at the highest mutually supported version.
 func BindSessionLockV1(b wayland.Binder, name uint32, version uint32) (*SessionLockV1, error) {
 	if version < 1 || version > VersionSessionLockV1 {
 		return nil, wayland.ErrVersionMismatch
