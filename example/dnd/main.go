@@ -448,13 +448,13 @@ func main() {
 					return
 				}
 				_ = src.Offer("application/x-color")
-			src.OnTarget(func(ev wayland.DataSourceTargetEvent) {
-				mime := "<none>"
-				if ev.MimeType != nil {
-					mime = *ev.MimeType
-				}
-				fmt.Printf("dnd: target mime=%q\n", mime)
-			})
+				src.OnTarget(func(ev wayland.DataSourceTargetEvent) {
+					mime := "<none>"
+					if ev.MimeType != nil {
+						mime = *ev.MimeType
+					}
+					fmt.Printf("dnd: target mime=%q\n", mime)
+				})
 				src.OnSend(func(ev wayland.DataSourceSendEvent) {
 					fmt.Printf("dnd: send mime=%q\n", ev.MimeType)
 					writeAndClose(ev.Fd, b.colorHex)

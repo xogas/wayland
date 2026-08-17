@@ -1,4 +1,4 @@
-.PHONY: gen build test vet clean
+.PHONY: gen build test test-soak test-integration vet clean
 
 gen:
 	go run ./cmd/wayland-scanner
@@ -9,6 +9,12 @@ build:
 
 test:
 	go test -race ./...
+
+test-soak:
+	go test -race -count=1 -run TestSoak -v .
+
+test-integration:
+	go test -tags=integration -count=1 -run TestIntegration -v ./...
 
 vet:
 	go vet ./...
