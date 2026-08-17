@@ -7,12 +7,19 @@ import (
 )
 
 const InterfaceShmPool = "wl_shm_pool"
-const VersionShmPool = 2
+const VersionShmPool = 3
 
 const (
 	ShmPoolRequestCreateBuffer uint16 = 0
 	ShmPoolRequestDestroy      uint16 = 1
 	ShmPoolRequestResize       uint16 = 2
+)
+
+type ShmPoolError uint32
+
+const (
+	ShmPoolErrorInvalidFormat ShmPoolError = 0
+	ShmPoolErrorInvalidStride ShmPoolError = 1
 )
 
 type ShmPoolCreateBufferRequest struct {

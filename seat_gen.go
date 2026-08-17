@@ -7,7 +7,7 @@ import (
 )
 
 const InterfaceSeat = "wl_seat"
-const VersionSeat = 10
+const VersionSeat = 11
 
 const (
 	SeatRequestGetPointer  uint16 = 0

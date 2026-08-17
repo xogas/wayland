@@ -7,7 +7,7 @@ import (
 )
 
 const InterfaceKeyboard = "wl_keyboard"
-const VersionKeyboard = 10
+const VersionKeyboard = 11
 
 const (
 	KeyboardRequestRelease uint16 = 0

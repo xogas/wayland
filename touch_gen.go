@@ -7,7 +7,7 @@ import (
 )
 
 const InterfaceTouch = "wl_touch"
-const VersionTouch = 10
+const VersionTouch = 11
 
 const (
 	TouchRequestRelease uint16 = 0

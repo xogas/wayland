@@ -7,7 +7,7 @@ import (
 )
 
 const InterfaceShm = "wl_shm"
-const VersionShm = 2
+const VersionShm = 3
 
 const (
 	ShmRequestCreatePool uint16 = 0
@@ -179,6 +179,11 @@ const (
 	ShmFormatS016                 ShmFormat = 909193299
 	ShmFormatS216                 ShmFormat = 909193811
 	ShmFormatS416                 ShmFormat = 909194323
+	ShmFormatXvuy2101010          ShmFormat = 808671576
+	ShmFormatP230                 ShmFormat = 808661584
+	ShmFormatT430                 ShmFormat = 808662100
+	ShmFormatY8                   ShmFormat = 1497715271
+	ShmFormatXyyy2101010          ShmFormat = 876695641
 )
 
 type ShmCreatePoolRequest struct {

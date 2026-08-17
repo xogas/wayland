@@ -7,7 +7,7 @@ import (
 )
 
 const InterfacePointer = "wl_pointer"
-const VersionPointer = 10
+const VersionPointer = 11
 
 const (
 	PointerRequestSetCursor uint16 = 0
@@ -26,6 +26,7 @@ const (
 	PointerEventAxisDiscrete          uint16 = 8
 	PointerEventAxisValue120          uint16 = 9
 	PointerEventAxisRelativeDirection uint16 = 10
+	PointerEventWarp                  uint16 = 11
 )
 
 // pointerEventFDCounts maps every event opcode of this interface
@@ -43,6 +44,7 @@ var pointerEventFDCounts = map[uint16]int{
 	8:  0,
 	9:  0,
 	10: 0,
+	11: 0,
 }
 
 type PointerError uint32
@@ -391,6 +393,29 @@ func (e *PointerAxisRelativeDirectionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisRelativeDirectionEvent) Since() uint32 { return 9 }
 
+type PointerWarpEvent struct {
+	SurfaceX wire.Fixed
+	SurfaceY wire.Fixed
+}
+
+func (e *PointerWarpEvent) Opcode() uint16 { return PointerEventWarp }
+
+func (e *PointerWarpEvent) Unmarshal(r *wire.Reader) error {
+	surfaceX, err := r.Fixed()
+	if err != nil {
+		return err
+	}
+	e.SurfaceX = surfaceX
+	surfaceY, err := r.Fixed()
+	if err != nil {
+		return err
+	}
+	e.SurfaceY = surfaceY
+	return nil
+}
+
+func (e *PointerWarpEvent) Since() uint32 { return 11 }
+
 type PointerEnterFunc func(ev PointerEnterEvent)
 
 type PointerLeaveFunc func(ev PointerLeaveEvent)
@@ -412,6 +437,8 @@ type PointerAxisDiscreteFunc func(ev PointerAxisDiscreteEvent)
 type PointerAxisValue120Func func(ev PointerAxisValue120Event)
 
 type PointerAxisRelativeDirectionFunc func(ev PointerAxisRelativeDirectionEvent)
+
+type PointerWarpFunc func(ev PointerWarpEvent)
 
 type Pointer struct {
 	proxy *Proxy
@@ -562,6 +589,19 @@ func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisRelativeDirection", err)
+			return
+		}
+
+		fn(ev)
+	})
+}
+
+func (o *Pointer) OnWarp(fn PointerWarpFunc) {
+	o.proxy.RegisterEvent(PointerEventWarp, func(r *wire.Reader) {
+		var ev PointerWarpEvent
+
+		if err := ev.Unmarshal(r); err != nil {
+			o.proxy.Conn().FailEvent("Warp", err)
 			return
 		}
 

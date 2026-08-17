@@ -2,7 +2,7 @@
 
 A Wayland client protocol library in pure Go. Zero dependencies beyond the standard library.
 
-- wayland version: 1.25.0
+- wayland version: 1.26.0
 - wayland-protocols version: 1.49
 
 ## Requirements

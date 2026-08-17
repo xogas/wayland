@@ -7,11 +7,18 @@ import (
 )
 
 const InterfaceFixes = "wl_fixes"
-const VersionFixes = 1
+const VersionFixes = 2
 
 const (
 	FixesRequestDestroy         uint16 = 0
 	FixesRequestDestroyRegistry uint16 = 1
+	FixesRequestAckGlobalRemove uint16 = 2
+)
+
+type FixesError uint32
+
+const (
+	FixesErrorInvalidAckRemove FixesError = 0
 )
 
 type FixesDestroyRequest struct {
@@ -40,6 +47,25 @@ func (r *FixesDestroyRegistryRequest) Marshal(w *wire.Writer) error {
 
 func (r *FixesDestroyRegistryRequest) Since() uint32 { return 1 }
 
+type FixesAckGlobalRemoveRequest struct {
+	Registry wire.ObjectID
+	Name     uint32
+}
+
+func (r *FixesAckGlobalRemoveRequest) Opcode() uint16 { return FixesRequestAckGlobalRemove }
+
+func (r *FixesAckGlobalRemoveRequest) Marshal(w *wire.Writer) error {
+	if err := w.Object(r.Registry); err != nil {
+		return err
+	}
+	if err := w.Uint32(r.Name); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *FixesAckGlobalRemoveRequest) Since() uint32 { return 2 }
+
 type Fixes struct {
 	proxy *Proxy
 }
@@ -66,6 +92,16 @@ func (o *Fixes) Destroy() error {
 func (o *Fixes) DestroyRegistry(registry wire.ObjectID) error {
 	return o.proxy.SendRequest(FixesRequestDestroyRegistry, &FixesDestroyRegistryRequest{
 		Registry: registry,
+	})
+}
+
+func (o *Fixes) AckGlobalRemove(registry wire.ObjectID, name uint32) error {
+	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
+		return ErrVersionMismatch
+	}
+	return o.proxy.SendRequest(FixesRequestAckGlobalRemove, &FixesAckGlobalRemoveRequest{
+		Registry: registry,
+		Name:     name,
 	})
 }
 
