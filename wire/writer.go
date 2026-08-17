@@ -106,6 +106,14 @@ func (w *Writer) Bytes() []byte {
 	return w.buf.Bytes()
 }
 
+// Reset clears the accumulated payload and file descriptors so the Writer can
+// be reused for another message. The underlying buffer capacity is retained,
+// making Reset cheaper than allocating a fresh Writer per message.
+func (w *Writer) Reset() {
+	w.buf.Reset()
+	w.fds = w.fds[:0]
+}
+
 // Fds returns the accumulated file descriptors.
 func (w *Writer) Fds() []int {
 	return w.fds

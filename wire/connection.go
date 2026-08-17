@@ -11,10 +11,12 @@ import (
 
 // Conn wraps a Unix domain socket connection for sending and receiving Wayland messages.
 type Conn struct {
-	conn  *net.UnixConn
-	buf   []byte
-	fdsMu sync.Mutex
-	fds   []int
+	conn    *net.UnixConn
+	buf     []byte // byte-stream buffer holding incomplete messages
+	fdsMu   sync.Mutex
+	fds     []int
+	readBuf []byte // scratch buffer for ReadMsgUnix, reused across calls
+	oobBuf  []byte // scratch buffer for SCM_RIGHTS control data, reused across calls
 }
 
 // NewConn creates a new Conn wrapping a UnixConn.
@@ -111,10 +113,15 @@ func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 			}
 		}
 
-		buf := make([]byte, 4096)
-		oob := make([]byte, syscall.CmsgSpace(4*28))
+		// Reuse the scratch buffers across reads: ReceiveMessage is only
+		// called from the connection's reader goroutine, so this is safe and
+		// avoids two allocations per read syscall.
+		if c.readBuf == nil {
+			c.readBuf = make([]byte, 4096)
+			c.oobBuf = make([]byte, syscall.CmsgSpace(4*32))
+		}
 
-		n, oobn, flags, _, err := c.conn.ReadMsgUnix(buf, oob)
+		n, oobn, flags, _, err := c.conn.ReadMsgUnix(c.readBuf, c.oobBuf)
 		if err != nil {
 			return 0, 0, nil, err
 		}
@@ -124,7 +131,7 @@ func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 
 		var newFds []int
 		if oobn > 0 {
-			scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
+			scms, err := syscall.ParseSocketControlMessage(c.oobBuf[:oobn])
 			if err != nil {
 				return 0, 0, nil, fmt.Errorf("wire: parsing control message: %w", err)
 			}
@@ -143,6 +150,6 @@ func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 		c.fdsMu.Lock()
 		c.fds = append(c.fds, newFds...)
 		c.fdsMu.Unlock()
-		c.buf = append(c.buf, buf[:n]...)
+		c.buf = append(c.buf, c.readBuf[:n]...)
 	}
 }

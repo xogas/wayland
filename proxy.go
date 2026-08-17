@@ -1,7 +1,6 @@
 package wayland
 
 import (
-	"slices"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -22,7 +21,7 @@ type Proxy struct {
 	deleted  atomic.Bool
 	version  atomic.Uint32
 	events   map[uint16][]func(*wire.Reader)
-	eventsMu sync.Mutex
+	eventsMu sync.RWMutex
 	fdCounts map[uint16]int
 }
 
@@ -81,8 +80,8 @@ func (p *Proxy) fdCountForOpcode(opcode uint16) (n int, known bool) {
 }
 
 func (p *Proxy) hasEvent(opcode uint16) bool {
-	p.eventsMu.Lock()
-	defer p.eventsMu.Unlock()
+	p.eventsMu.RLock()
+	defer p.eventsMu.RUnlock()
 	return len(p.events[opcode]) > 0
 }
 
@@ -107,9 +106,13 @@ func (p *Proxy) RegisterEvent(opcode uint16, h func(*wire.Reader)) {
 }
 
 func (p *Proxy) dispatchEvent(opcode uint16, r *wire.Reader) {
-	p.eventsMu.Lock()
-	handlers := slices.Clone(p.events[opcode])
-	p.eventsMu.Unlock()
+	// Borrow the handler slice under RLock instead of copying it. Handlers
+	// are append-only (RegisterEvent); a concurrent append either reallocates
+	// the backing array or writes beyond this slice's length, so iteration
+	// sees exactly the handlers registered up to this point.
+	p.eventsMu.RLock()
+	handlers := p.events[opcode]
+	p.eventsMu.RUnlock()
 
 	totalFDs := len(r.UnconsumedFDs())
 	maxConsumed := 0
