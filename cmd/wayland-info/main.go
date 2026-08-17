@@ -409,14 +409,11 @@ func printDetail(b *strings.Builder, g wayland.RegistryGlobalEvent, cd *collecte
 	switch g.Interface {
 	case wayland.InterfaceShm:
 		for _, f := range cd.shmFormats {
-			line := fmt.Sprintf("    format 0x%08x", f)
-			switch f {
-			case 0:
-				line = "    format AR24 (0)"
-			case 1:
-				line = "    format XR24 (1)"
+			if name, ok := drmFourccNames[uint32(f)]; ok {
+				fmt.Fprintf(b, "    format %s (0x%08x)\n", name, f)
+			} else {
+				fmt.Fprintf(b, "    format 0x%08x\n", f)
 			}
-			fmt.Fprintln(b, line)
 		}
 
 	case wayland.InterfaceOutput:
@@ -521,6 +518,63 @@ func capsString(caps wayland.SeatCapability) string {
 		return "none"
 	}
 	return strings.Join(parts, " ")
+}
+
+// fourcc packs four ASCII characters into the little-endian uint32 that the
+// DRM/wl_shm format values use on the wire.
+func fourcc(a, b, c, d byte) uint32 {
+	return uint32(a) | uint32(b)<<8 | uint32(c)<<16 | uint32(d)<<24
+}
+
+// drmFourccNames maps common DRM fourcc values to their canonical names from
+// drm_fourcc.h. Unknown formats fall back to a raw hex listing.
+var drmFourccNames = map[uint32]string{
+	fourcc('R', '8', ' ', ' '): "R8",
+	fourcc('R', '1', '6', ' '): "R16",
+	fourcc('R', 'G', '8', '8'): "RG88",
+	fourcc('G', 'R', '8', '8'): "GR88",
+	fourcc('R', 'G', '1', '6'): "RG1616",
+	fourcc('G', 'R', '1', '6'): "GR1616",
+	fourcc('A', 'R', '2', '4'): "AR24",
+	fourcc('X', 'R', '2', '4'): "XR24",
+	fourcc('A', 'B', '2', '4'): "AB24",
+	fourcc('X', 'B', '2', '4'): "XB24",
+	fourcc('A', 'R', '3', '0'): "AR30",
+	fourcc('X', 'R', '3', '0'): "XR30",
+	fourcc('A', 'B', '3', '0'): "AB30",
+	fourcc('X', 'B', '3', '0'): "XB30",
+	fourcc('A', 'R', '1', '5'): "AR15",
+	fourcc('X', 'R', '1', '5'): "XR15",
+	fourcc('A', 'B', '1', '5'): "AB15",
+	fourcc('X', 'B', '1', '5'): "XB15",
+	fourcc('A', 'R', '1', '2'): "AR12",
+	fourcc('X', 'R', '1', '2'): "XR12",
+	fourcc('A', 'B', '1', '2'): "AB12",
+	fourcc('X', 'B', '1', '2'): "XB12",
+	fourcc('A', 'R', '1', '0'): "AR10",
+	fourcc('X', 'R', '1', '0'): "XR10",
+	fourcc('A', 'B', '1', '0'): "AB10",
+	fourcc('X', 'B', '1', '0'): "XB10",
+	fourcc('A', 'R', '1', '6'): "AR16",
+	fourcc('X', 'R', '1', '6'): "XR16",
+	fourcc('A', 'B', '1', '6'): "AB16",
+	fourcc('X', 'B', '1', '6'): "XB16",
+	fourcc('Y', 'U', 'Y', 'V'): "YUYV",
+	fourcc('U', 'Y', 'V', 'Y'): "UYVY",
+	fourcc('Y', 'V', 'Y', 'U'): "YVYU",
+	fourcc('N', 'V', '1', '2'): "NV12",
+	fourcc('N', 'V', '2', '1'): "NV21",
+	fourcc('N', 'V', '1', '6'): "NV16",
+	fourcc('N', 'V', '6', '1'): "NV61",
+	fourcc('P', '0', '1', '0'): "P010",
+	fourcc('P', '0', '1', '2'): "P012",
+	fourcc('P', '0', '1', '6'): "P016",
+	fourcc('Y', '2', '1', '0'): "Y210",
+	fourcc('Y', '2', '1', '2'): "Y212",
+	fourcc('Y', '2', '1', '6'): "Y216",
+	fourcc('Y', '4', '1', '0'): "Y410",
+	fourcc('Y', '4', '1', '2'): "Y412",
+	fourcc('Y', '4', '1', '6'): "Y416",
 }
 
 func fourccStr(v uint32) string {

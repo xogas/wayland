@@ -90,6 +90,17 @@ No `// Deprecated:` Go annotations are emitted.
 All protocol elements (including deprecated ones) are generated and handled identically.
 Refer to the protocol protocol XML descriptions to determine deprecation status.
 
+## Stability
+
+The library follows Go's compatibility promise starting with v1.0.0: within
+the 1.x line, existing call sites keep compiling and behaving identically.
+Protocol support only grows — new interfaces, requests, and events are added
+as wayland-protocols evolves, and regenerating with `make gen` is
+deterministic (byte-identical output for the same XML inputs).
+
+Releases before v1.0.0 (the 0.0.x tags) are snapshots of the API as it
+matures and carry no compatibility guarantee.
+
 ## License
 
 MIT - see [license](./license) for details.
