@@ -23,6 +23,16 @@ const (
 	DataControlDeviceV1EventPrimarySelection uint16 = 3
 )
 
+// datacontroldevicev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var datacontroldevicev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+}
+
 type DataControlDeviceV1Error uint32
 
 const (
@@ -142,6 +152,7 @@ type DataControlDeviceV1 struct {
 }
 
 func NewDataControlDeviceV1(p *wayland.Proxy) *DataControlDeviceV1 {
+	p.SetEventFDCounts(datacontroldevicev1EventFDCounts)
 	return &DataControlDeviceV1{proxy: p}
 }
 

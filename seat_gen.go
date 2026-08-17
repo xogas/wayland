@@ -21,6 +21,14 @@ const (
 	SeatEventName         uint16 = 1
 )
 
+// seatEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var seatEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 // SeatCapability is a bitfield of flags.
 type SeatCapability uint32
 
@@ -135,6 +143,7 @@ type Seat struct {
 }
 
 func NewSeat(p *Proxy) *Seat {
+	p.SetEventFDCounts(seatEventFDCounts)
 	return &Seat{proxy: p}
 }
 

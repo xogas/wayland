@@ -13,6 +13,13 @@ const (
 	CallbackEventDone uint16 = 0
 )
 
+// callbackEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var callbackEventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type CallbackDoneEvent struct {
 	CallbackData uint32
 }
@@ -37,6 +44,7 @@ type Callback struct {
 }
 
 func NewCallback(p *Proxy) *Callback {
+	p.SetEventFDCounts(callbackEventFDCounts)
 	return &Callback{proxy: p}
 }
 

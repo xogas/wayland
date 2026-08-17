@@ -25,6 +25,17 @@ const (
 	ImageCopyCaptureFrameV1EventFailed           uint16 = 4
 )
 
+// imagecopycaptureframev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var imagecopycaptureframev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+}
+
 type ImageCopyCaptureFrameV1Error uint32
 
 const (
@@ -245,6 +256,7 @@ type ImageCopyCaptureFrameV1 struct {
 }
 
 func NewImageCopyCaptureFrameV1(p *wayland.Proxy) *ImageCopyCaptureFrameV1 {
+	p.SetEventFDCounts(imagecopycaptureframev1EventFDCounts)
 	return &ImageCopyCaptureFrameV1{proxy: p}
 }
 

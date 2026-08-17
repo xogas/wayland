@@ -18,6 +18,14 @@ const (
 	RegistryEventGlobalRemove uint16 = 1
 )
 
+// registryEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var registryEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type RegistryBindRequest struct {
 	Name      uint32
 	Interface string
@@ -100,6 +108,7 @@ type Registry struct {
 }
 
 func NewRegistry(p *Proxy) *Registry {
+	p.SetEventFDCounts(registryEventFDCounts)
 	return &Registry{proxy: p}
 }
 

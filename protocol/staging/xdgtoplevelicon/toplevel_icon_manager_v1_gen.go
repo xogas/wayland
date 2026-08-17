@@ -21,6 +21,14 @@ const (
 	ToplevelIconManagerV1EventDone     uint16 = 1
 )
 
+// topleveliconmanagerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var topleveliconmanagerv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type ToplevelIconManagerV1DestroyRequest struct {
 }
 
@@ -111,6 +119,7 @@ type ToplevelIconManagerV1 struct {
 }
 
 func NewToplevelIconManagerV1(p *wayland.Proxy) *ToplevelIconManagerV1 {
+	p.SetEventFDCounts(topleveliconmanagerv1EventFDCounts)
 	return &ToplevelIconManagerV1{proxy: p}
 }
 

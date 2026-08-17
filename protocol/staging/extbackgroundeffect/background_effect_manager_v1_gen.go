@@ -19,6 +19,13 @@ const (
 	BackgroundEffectManagerV1EventCapabilities uint16 = 0
 )
 
+// backgroundeffectmanagerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var backgroundeffectmanagerv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type BackgroundEffectManagerV1Error uint32
 
 const (
@@ -92,6 +99,7 @@ type BackgroundEffectManagerV1 struct {
 }
 
 func NewBackgroundEffectManagerV1(p *wayland.Proxy) *BackgroundEffectManagerV1 {
+	p.SetEventFDCounts(backgroundeffectmanagerv1EventFDCounts)
 	return &BackgroundEffectManagerV1{proxy: p}
 }
 

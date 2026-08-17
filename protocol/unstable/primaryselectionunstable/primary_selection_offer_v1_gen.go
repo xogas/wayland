@@ -19,6 +19,13 @@ const (
 	PrimarySelectionOfferV1EventOffer uint16 = 0
 )
 
+// primaryselectionofferv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var primaryselectionofferv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type PrimarySelectionOfferV1ReceiveRequest struct {
 	MimeType string
 	Fd       int
@@ -77,6 +84,7 @@ type PrimarySelectionOfferV1 struct {
 }
 
 func NewPrimarySelectionOfferV1(p *wayland.Proxy) *PrimarySelectionOfferV1 {
+	p.SetEventFDCounts(primaryselectionofferv1EventFDCounts)
 	return &PrimarySelectionOfferV1{proxy: p}
 }
 

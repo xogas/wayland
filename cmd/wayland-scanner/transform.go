@@ -18,8 +18,8 @@ type GoInterface struct {
 	Requests []GoRequest
 	Events   []GoEvent
 
-	EventFDCounts map[uint16]int
-	HasFDEvent    bool
+	EventFDCounts map[uint16]int // full event table: opcode -> fd count (0 = no fds)
+	HasEvents     bool
 	WaylandPkg    string // "wayland." for sub-pkgs, "" for root
 }
 
@@ -120,7 +120,8 @@ func convertInterface(iface *Interface, pkg, prefix string, knownIface map[strin
 
 	g.Enums = buildEnums(iface, tn)
 	g.Requests = buildRequests(iface, tn, prefix, knownIface, em)
-	g.Events, g.EventFDCounts, g.HasFDEvent = buildEvents(iface, tn, prefix, knownIface, em)
+	g.Events, g.EventFDCounts = buildEvents(iface, tn, prefix, knownIface, em)
+	g.HasEvents = len(g.Events) > 0
 
 	hasWire := len(g.Requests) > 0 || len(g.Events) > 0
 	g.Imports = buildImports(hasWire, isRoot)
@@ -194,11 +195,13 @@ func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bo
 	return out
 }
 
-// buildEvents converts Interface events to GoEvents and returns fd count info.
-func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) ([]GoEvent, map[uint16]int, bool) {
+// buildEvents converts Interface events to GoEvents and returns the full
+// event table (opcode -> fd count, 0 for events without fds). The table is
+// generated for every interface that has events: dispatch uses it both to
+// drain fds and to distinguish known opcodes from stream violations.
+func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) ([]GoEvent, map[uint16]int) {
 	var events []GoEvent
-	var fdCounts map[uint16]int
-	hasFD := false
+	fdCounts := make(map[uint16]int, len(iface.Events))
 	for opcode := range iface.Events {
 		e := &iface.Events[opcode]
 		evtName := pascal(e.Name)
@@ -226,16 +229,10 @@ func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool
 				ed.HasFD = true
 			}
 		}
-		if fdCount > 0 {
-			if fdCounts == nil {
-				fdCounts = make(map[uint16]int)
-			}
-			fdCounts[uint16(opcode)] = fdCount
-			hasFD = true
-		}
+		fdCounts[uint16(opcode)] = fdCount
 		events = append(events, ed)
 	}
-	return events, fdCounts, hasFD
+	return events, fdCounts
 }
 
 // buildArg maps a parsed Arg to its Go-specific view.

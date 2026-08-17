@@ -19,6 +19,13 @@ const (
 	SessionLockSurfaceV1EventConfigure uint16 = 0
 )
 
+// sessionlocksurfacev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var sessionlocksurfacev1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type SessionLockSurfaceV1Error uint32
 
 const (
@@ -96,6 +103,7 @@ type SessionLockSurfaceV1 struct {
 }
 
 func NewSessionLockSurfaceV1(p *wayland.Proxy) *SessionLockSurfaceV1 {
+	p.SetEventFDCounts(sessionlocksurfacev1EventFDCounts)
 	return &SessionLockSurfaceV1{proxy: p}
 }
 

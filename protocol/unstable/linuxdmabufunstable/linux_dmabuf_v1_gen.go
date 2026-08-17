@@ -22,6 +22,14 @@ const (
 	LinuxDmabufV1EventModifier uint16 = 1
 )
 
+// linuxdmabufv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var linuxdmabufv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type LinuxDmabufV1DestroyRequest struct {
 }
 
@@ -141,6 +149,7 @@ type LinuxDmabufV1 struct {
 }
 
 func NewLinuxDmabufV1(p *wayland.Proxy) *LinuxDmabufV1 {
+	p.SetEventFDCounts(linuxdmabufv1EventFDCounts)
 	return &LinuxDmabufV1{proxy: p}
 }
 

@@ -22,6 +22,17 @@ const (
 	OutputV1EventDescription     uint16 = 4
 )
 
+// outputv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var outputv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+}
+
 type OutputV1DestroyRequest struct {
 }
 
@@ -140,6 +151,7 @@ type OutputV1 struct {
 }
 
 func NewOutputV1(p *wayland.Proxy) *OutputV1 {
+	p.SetEventFDCounts(outputv1EventFDCounts)
 	return &OutputV1{proxy: p}
 }
 

@@ -21,6 +21,14 @@ const (
 	LockedPointerV1EventUnlocked uint16 = 1
 )
 
+// lockedpointerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var lockedpointerv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type LockedPointerV1DestroyRequest struct {
 }
 
@@ -99,6 +107,7 @@ type LockedPointerV1 struct {
 }
 
 func NewLockedPointerV1(p *wayland.Proxy) *LockedPointerV1 {
+	p.SetEventFDCounts(lockedpointerv1EventFDCounts)
 	return &LockedPointerV1{proxy: p}
 }
 

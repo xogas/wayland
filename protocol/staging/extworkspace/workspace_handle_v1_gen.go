@@ -27,6 +27,18 @@ const (
 	WorkspaceHandleV1EventRemoved      uint16 = 5
 )
 
+// workspacehandlev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var workspacehandlev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+}
+
 // WorkspaceHandleV1State is a bitfield of flags.
 type WorkspaceHandleV1State uint32
 
@@ -222,6 +234,7 @@ type WorkspaceHandleV1 struct {
 }
 
 func NewWorkspaceHandleV1(p *wayland.Proxy) *WorkspaceHandleV1 {
+	p.SetEventFDCounts(workspacehandlev1EventFDCounts)
 	return &WorkspaceHandleV1{proxy: p}
 }
 

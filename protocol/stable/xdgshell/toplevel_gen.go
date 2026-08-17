@@ -34,6 +34,16 @@ const (
 	ToplevelEventWmCapabilities  uint16 = 3
 )
 
+// toplevelEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var toplevelEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+}
+
 type ToplevelError uint32
 
 const (
@@ -398,6 +408,7 @@ type Toplevel struct {
 }
 
 func NewToplevel(p *wayland.Proxy) *Toplevel {
+	p.SetEventFDCounts(toplevelEventFDCounts)
 	return &Toplevel{proxy: p}
 }
 

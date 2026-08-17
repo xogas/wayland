@@ -19,6 +19,13 @@ const (
 	ImportedV1EventDestroyed uint16 = 0
 )
 
+// importedv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var importedv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ImportedV1DestroyRequest struct {
 }
 
@@ -63,6 +70,7 @@ type ImportedV1 struct {
 }
 
 func NewImportedV1(p *wayland.Proxy) *ImportedV1 {
+	p.SetEventFDCounts(importedv1EventFDCounts)
 	return &ImportedV1{proxy: p}
 }
 

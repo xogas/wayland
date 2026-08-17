@@ -22,6 +22,13 @@ const (
 	ActivationTokenV1EventDone uint16 = 0
 )
 
+// activationtokenv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var activationtokenv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ActivationTokenV1Error uint32
 
 const (
@@ -125,6 +132,7 @@ type ActivationTokenV1 struct {
 }
 
 func NewActivationTokenV1(p *wayland.Proxy) *ActivationTokenV1 {
+	p.SetEventFDCounts(activationtokenv1EventFDCounts)
 	return &ActivationTokenV1{proxy: p}
 }
 

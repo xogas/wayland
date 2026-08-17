@@ -15,8 +15,12 @@ const (
 	LinuxBufferReleaseV1EventImmediateRelease uint16 = 1
 )
 
+// linuxbufferreleasev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
 var linuxbufferreleasev1EventFDCounts = map[uint16]int{
 	0: 1,
+	1: 0,
 }
 
 type LinuxBufferReleaseV1FencedReleaseEvent struct {

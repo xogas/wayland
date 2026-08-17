@@ -16,6 +16,15 @@ const (
 	FullscreenShellModeFeedbackV1EventPresentCancelled uint16 = 2
 )
 
+// fullscreenshellmodefeedbackv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var fullscreenshellmodefeedbackv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 type FullscreenShellModeFeedbackV1ModeSuccessfulEvent struct {
 }
 
@@ -66,6 +75,7 @@ type FullscreenShellModeFeedbackV1 struct {
 }
 
 func NewFullscreenShellModeFeedbackV1(p *wayland.Proxy) *FullscreenShellModeFeedbackV1 {
+	p.SetEventFDCounts(fullscreenshellmodefeedbackv1EventFDCounts)
 	return &FullscreenShellModeFeedbackV1{proxy: p}
 }
 

@@ -19,6 +19,13 @@ const (
 	ToplevelSessionV1EventRestored uint16 = 0
 )
 
+// toplevelsessionv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var toplevelsessionv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ToplevelSessionV1DestroyRequest struct {
 }
 
@@ -63,6 +70,7 @@ type ToplevelSessionV1 struct {
 }
 
 func NewToplevelSessionV1(p *wayland.Proxy) *ToplevelSessionV1 {
+	p.SetEventFDCounts(toplevelsessionv1EventFDCounts)
 	return &ToplevelSessionV1{proxy: p}
 }
 

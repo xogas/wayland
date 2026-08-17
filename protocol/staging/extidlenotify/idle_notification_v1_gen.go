@@ -19,6 +19,14 @@ const (
 	IdleNotificationV1EventResumed uint16 = 1
 )
 
+// idlenotificationv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var idlenotificationv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type IdleNotificationV1DestroyRequest struct {
 }
 
@@ -61,6 +69,7 @@ type IdleNotificationV1 struct {
 }
 
 func NewIdleNotificationV1(p *wayland.Proxy) *IdleNotificationV1 {
+	p.SetEventFDCounts(idlenotificationv1EventFDCounts)
 	return &IdleNotificationV1{proxy: p}
 }
 

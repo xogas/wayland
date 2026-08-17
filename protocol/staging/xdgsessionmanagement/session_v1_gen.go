@@ -24,6 +24,15 @@ const (
 	SessionV1EventReplaced uint16 = 2
 )
 
+// sessionv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var sessionv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 type SessionV1Error uint32
 
 const (
@@ -166,6 +175,7 @@ type SessionV1 struct {
 }
 
 func NewSessionV1(p *wayland.Proxy) *SessionV1 {
+	p.SetEventFDCounts(sessionv1EventFDCounts)
 	return &SessionV1{proxy: p}
 }
 

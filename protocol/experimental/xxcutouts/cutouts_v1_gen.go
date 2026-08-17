@@ -21,6 +21,15 @@ const (
 	CutoutsV1EventConfigure    uint16 = 2
 )
 
+// cutoutsv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var cutoutsv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 type CutoutsV1Type uint32
 
 const (
@@ -168,6 +177,7 @@ type CutoutsV1 struct {
 }
 
 func NewCutoutsV1(p *wayland.Proxy) *CutoutsV1 {
+	p.SetEventFDCounts(cutoutsv1EventFDCounts)
 	return &CutoutsV1{proxy: p}
 }
 

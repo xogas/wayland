@@ -19,6 +19,14 @@ const (
 	KeyboardShortcutsInhibitorV1EventInactive uint16 = 1
 )
 
+// keyboardshortcutsinhibitorv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var keyboardshortcutsinhibitorv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type KeyboardShortcutsInhibitorV1DestroyRequest struct {
 }
 
@@ -67,6 +75,7 @@ type KeyboardShortcutsInhibitorV1 struct {
 }
 
 func NewKeyboardShortcutsInhibitorV1(p *wayland.Proxy) *KeyboardShortcutsInhibitorV1 {
+	p.SetEventFDCounts(keyboardshortcutsinhibitorv1EventFDCounts)
 	return &KeyboardShortcutsInhibitorV1{proxy: p}
 }
 

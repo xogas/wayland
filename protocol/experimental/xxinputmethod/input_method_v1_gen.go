@@ -34,6 +34,22 @@ const (
 	InputMethodV1EventUnavailable               uint16 = 9
 )
 
+// inputmethodv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var inputmethodv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+	6: 0,
+	7: 0,
+	8: 0,
+	9: 0,
+}
+
 type InputMethodV1Error uint32
 
 const (
@@ -389,6 +405,7 @@ type InputMethodV1 struct {
 }
 
 func NewInputMethodV1(p *wayland.Proxy) *InputMethodV1 {
+	p.SetEventFDCounts(inputmethodv1EventFDCounts)
 	return &InputMethodV1{proxy: p}
 }
 

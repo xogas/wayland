@@ -37,6 +37,31 @@ const (
 	TabletToolV2EventFrame           uint16 = 18
 )
 
+// tablettoolv2EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var tablettoolv2EventFDCounts = map[uint16]int{
+	0:  0,
+	1:  0,
+	2:  0,
+	3:  0,
+	4:  0,
+	5:  0,
+	6:  0,
+	7:  0,
+	8:  0,
+	9:  0,
+	10: 0,
+	11: 0,
+	12: 0,
+	13: 0,
+	14: 0,
+	15: 0,
+	16: 0,
+	17: 0,
+	18: 0,
+}
+
 type TabletToolV2Type uint32
 
 const (
@@ -508,6 +533,7 @@ type TabletToolV2 struct {
 }
 
 func NewTabletToolV2(p *wayland.Proxy) *TabletToolV2 {
+	p.SetEventFDCounts(tablettoolv2EventFDCounts)
 	return &TabletToolV2{proxy: p}
 }
 

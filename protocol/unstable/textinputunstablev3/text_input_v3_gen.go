@@ -36,6 +36,21 @@ const (
 	TextInputV3EventPreeditHint           uint16 = 8
 )
 
+// textinputv3EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var textinputv3EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+	6: 0,
+	7: 0,
+	8: 0,
+}
+
 type TextInputV3ChangeCause uint32
 
 const (
@@ -494,6 +509,7 @@ type TextInputV3 struct {
 }
 
 func NewTextInputV3(p *wayland.Proxy) *TextInputV3 {
+	p.SetEventFDCounts(textinputv3EventFDCounts)
 	return &TextInputV3{proxy: p}
 }
 

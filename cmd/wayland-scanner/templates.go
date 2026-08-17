@@ -51,7 +51,10 @@ const (
 {{range .Events}}	{{.OpName}} uint16 = {{.Opcode}}
 {{end}})
 {{end}}
-{{if .HasFDEvent}}
+{{if .HasEvents}}
+// {{lower .TypeName}}EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
 var {{lower .TypeName}}EventFDCounts = map[uint16]int{
 {{range $opcode, $count := .EventFDCounts}}	{{$opcode}}: {{$count}},
 {{end}}}
@@ -111,7 +114,7 @@ type {{.TypeName}} struct {
 }
 
 func New{{.TypeName}}(p *{{.WaylandPkg}}Proxy) *{{.TypeName}} {
-{{if .HasFDEvent}}	p.SetEventFDCounts({{lower .TypeName}}EventFDCounts)
+{{if .HasEvents}}	p.SetEventFDCounts({{lower .TypeName}}EventFDCounts)
 {{end}}	return &{{.TypeName}}{proxy: p}
 }
 

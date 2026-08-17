@@ -19,6 +19,13 @@ const (
 	DataControlOfferV1EventOffer uint16 = 0
 )
 
+// datacontrolofferv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var datacontrolofferv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type DataControlOfferV1ReceiveRequest struct {
 	MimeType string
 	Fd       int
@@ -73,6 +80,7 @@ type DataControlOfferV1 struct {
 }
 
 func NewDataControlOfferV1(p *wayland.Proxy) *DataControlOfferV1 {
+	p.SetEventFDCounts(datacontrolofferv1EventFDCounts)
 	return &DataControlOfferV1{proxy: p}
 }
 

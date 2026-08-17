@@ -19,6 +19,14 @@ const (
 	TransientSeatV1EventDenied uint16 = 1
 )
 
+// transientseatv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var transientseatv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type TransientSeatV1DestroyRequest struct {
 }
 
@@ -67,6 +75,7 @@ type TransientSeatV1 struct {
 }
 
 func NewTransientSeatV1(p *wayland.Proxy) *TransientSeatV1 {
+	p.SetEventFDCounts(transientseatv1EventFDCounts)
 	return &TransientSeatV1{proxy: p}
 }
 

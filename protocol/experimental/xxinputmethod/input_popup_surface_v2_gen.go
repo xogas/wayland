@@ -21,6 +21,14 @@ const (
 	InputPopupSurfaceV2EventRepositioned   uint16 = 1
 )
 
+// inputpopupsurfacev2EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var inputpopupsurfacev2EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type InputPopupSurfaceV2Error uint32
 
 const (
@@ -159,6 +167,7 @@ type InputPopupSurfaceV2 struct {
 }
 
 func NewInputPopupSurfaceV2(p *wayland.Proxy) *InputPopupSurfaceV2 {
+	p.SetEventFDCounts(inputpopupsurfacev2EventFDCounts)
 	return &InputPopupSurfaceV2{proxy: p}
 }
 

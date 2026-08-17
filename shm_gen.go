@@ -18,6 +18,13 @@ const (
 	ShmEventFormat uint16 = 0
 )
 
+// shmEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var shmEventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ShmError uint32
 
 const (
@@ -232,6 +239,7 @@ type Shm struct {
 }
 
 func NewShm(p *Proxy) *Shm {
+	p.SetEventFDCounts(shmEventFDCounts)
 	return &Shm{proxy: p}
 }
 

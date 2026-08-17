@@ -20,6 +20,13 @@ const (
 	ToplevelDecorationV1EventConfigure uint16 = 0
 )
 
+// topleveldecorationv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var topleveldecorationv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ToplevelDecorationV1Error uint32
 
 const (
@@ -105,6 +112,7 @@ type ToplevelDecorationV1 struct {
 }
 
 func NewToplevelDecorationV1(p *wayland.Proxy) *ToplevelDecorationV1 {
+	p.SetEventFDCounts(topleveldecorationv1EventFDCounts)
 	return &ToplevelDecorationV1{proxy: p}
 }
 

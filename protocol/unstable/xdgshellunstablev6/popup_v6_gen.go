@@ -20,6 +20,14 @@ const (
 	PopupV6EventPopupDone uint16 = 1
 )
 
+// popupv6EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var popupv6EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type PopupV6Error uint32
 
 const (
@@ -111,6 +119,7 @@ type PopupV6 struct {
 }
 
 func NewPopupV6(p *wayland.Proxy) *PopupV6 {
+	p.SetEventFDCounts(popupv6EventFDCounts)
 	return &PopupV6{proxy: p}
 }
 

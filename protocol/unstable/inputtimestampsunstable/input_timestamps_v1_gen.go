@@ -18,6 +18,13 @@ const (
 	InputTimestampsV1EventTimestamp uint16 = 0
 )
 
+// inputtimestampsv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var inputtimestampsv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type InputTimestampsV1DestroyRequest struct {
 }
 
@@ -65,6 +72,7 @@ type InputTimestampsV1 struct {
 }
 
 func NewInputTimestampsV1(p *wayland.Proxy) *InputTimestampsV1 {
+	p.SetEventFDCounts(inputtimestampsv1EventFDCounts)
 	return &InputTimestampsV1{proxy: p}
 }
 

@@ -40,6 +40,25 @@ const (
 	TextInputV1EventTextDirection         uint16 = 12
 )
 
+// textinputv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var textinputv1EventFDCounts = map[uint16]int{
+	0:  0,
+	1:  0,
+	2:  0,
+	3:  0,
+	4:  0,
+	5:  0,
+	6:  0,
+	7:  0,
+	8:  0,
+	9:  0,
+	10: 0,
+	11: 0,
+	12: 0,
+}
+
 // TextInputV1ContentHint is a bitfield of flags.
 type TextInputV1ContentHint uint32
 
@@ -615,6 +634,7 @@ type TextInputV1 struct {
 }
 
 func NewTextInputV1(p *wayland.Proxy) *TextInputV1 {
+	p.SetEventFDCounts(textinputv1EventFDCounts)
 	return &TextInputV1{proxy: p}
 }
 

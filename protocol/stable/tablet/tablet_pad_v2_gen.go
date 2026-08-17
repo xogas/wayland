@@ -26,6 +26,20 @@ const (
 	TabletPadV2EventRemoved uint16 = 7
 )
 
+// tabletpadv2EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var tabletpadv2EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+	6: 0,
+	7: 0,
+}
+
 type TabletPadV2ButtonState uint32
 
 const (
@@ -233,6 +247,7 @@ type TabletPadV2 struct {
 }
 
 func NewTabletPadV2(p *wayland.Proxy) *TabletPadV2 {
+	p.SetEventFDCounts(tabletpadv2EventFDCounts)
 	return &TabletPadV2{proxy: p}
 }
 

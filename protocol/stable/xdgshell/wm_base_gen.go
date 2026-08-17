@@ -21,6 +21,13 @@ const (
 	WmBaseEventPing uint16 = 0
 )
 
+// wmbaseEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var wmbaseEventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type WmBaseError uint32
 
 const (
@@ -117,6 +124,7 @@ type WmBase struct {
 }
 
 func NewWmBase(p *wayland.Proxy) *WmBase {
+	p.SetEventFDCounts(wmbaseEventFDCounts)
 	return &WmBase{proxy: p}
 }
 

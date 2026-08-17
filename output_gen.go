@@ -22,6 +22,18 @@ const (
 	OutputEventDescription uint16 = 5
 )
 
+// outputEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var outputEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+}
+
 type OutputSubpixel uint32
 
 const (
@@ -238,6 +250,7 @@ type Output struct {
 }
 
 func NewOutput(p *Proxy) *Output {
+	p.SetEventFDCounts(outputEventFDCounts)
 	return &Output{proxy: p}
 }
 

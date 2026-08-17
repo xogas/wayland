@@ -20,8 +20,12 @@ const (
 	PrimarySelectionSourceV1EventCancelled uint16 = 1
 )
 
+// primaryselectionsourcev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
 var primaryselectionsourcev1EventFDCounts = map[uint16]int{
 	0: 1,
+	1: 0,
 }
 
 type PrimarySelectionSourceV1OfferRequest struct {

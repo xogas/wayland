@@ -25,6 +25,18 @@ const (
 	ZoneV1EventItemLeft    uint16 = 5
 )
 
+// zonev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var zonev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+}
+
 type ZoneV1Error uint32
 
 const (
@@ -191,6 +203,7 @@ type ZoneV1 struct {
 }
 
 func NewZoneV1(p *wayland.Proxy) *ZoneV1 {
+	p.SetEventFDCounts(zonev1EventFDCounts)
 	return &ZoneV1{proxy: p}
 }
 

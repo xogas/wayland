@@ -23,6 +23,19 @@ const (
 	TouchEventOrientation uint16 = 6
 )
 
+// touchEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var touchEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
+	6: 0,
+}
+
 type TouchReleaseRequest struct {
 }
 
@@ -238,6 +251,7 @@ type Touch struct {
 }
 
 func NewTouch(p *Proxy) *Touch {
+	p.SetEventFDCounts(touchEventFDCounts)
 	return &Touch{proxy: p}
 }
 

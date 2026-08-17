@@ -105,26 +105,44 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 	p := c.LookupProxy(objID)
 	if p == nil {
 		// Zombie object: destroyed by the client but still receiving
-		// in-flight events. Drain and close any fds they carry; the zombie
-		// entry itself is removed when delete_id arrives (removeProxy).
+		// in-flight events. The zombie keeps the destroyed interface's event
+		// table so fds can be drained and closed; the zombie entry itself is
+		// removed when delete_id arrives (removeProxy).
 		c.objectsMu.RLock()
-		n, isZombie := c.zombies[objID][opcode]
+		fdCounts, isZombie := c.zombies[objID]
 		c.objectsMu.RUnlock()
 		if !isZombie {
+			// The object never existed, or the server already confirmed its
+			// destruction with delete_id: per the protocol no further events
+			// may reference it, so this is a stream-level violation.
+			c.failStream("event for unknown object", objID, opcode)
 			return
 		}
-		if n > 0 {
-			for _, fd := range c.wc.TakeFDs(n) {
-				_ = syscall.Close(fd)
+		if fdCounts != nil {
+			n, known := fdCounts[opcode]
+			if !known {
+				// An opcode the destroyed interface does not define could
+				// carry an unknowable number of fds: same reasoning as above.
+				c.failStream("event for unknown opcode on destroyed object", objID, opcode)
+				return
 			}
+			if n > 0 {
+				for _, fd := range c.wc.TakeFDs(n) {
+					_ = syscall.Close(fd)
+				}
+			}
+			c.loggerOf().Warn("receiving event for destroyed object", "id", objID, "opcode", opcode)
 		}
-		c.connMu.Lock()
-		logger := c.logger
-		c.connMu.Unlock()
-		logger.Warn("receiving event for unknown object", "id", objID, "opcode", opcode)
 		return
 	}
-	n := p.fdCountForOpcode(opcode)
+	n, known := p.fdCountForOpcode(opcode)
+	if p.fdCounts != nil && !known {
+		// The bound interface does not define this opcode (the server sent an
+		// event beyond the bound version or outside the interface). Fatal for
+		// the same fd-queue-safety reason.
+		c.failStream("event for unknown opcode", objID, opcode)
+		return
+	}
 	if n > 0 {
 		fds := c.wc.TakeFDs(n)
 		r.SetFDs(fds)

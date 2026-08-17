@@ -20,6 +20,14 @@ const (
 	PrimarySelectionDeviceV1EventSelection uint16 = 1
 )
 
+// primaryselectiondevicev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var primaryselectiondevicev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type PrimarySelectionDeviceV1SetSelectionRequest struct {
 	Source wire.ObjectID // nullable
 	Serial uint32
@@ -92,6 +100,7 @@ type PrimarySelectionDeviceV1 struct {
 }
 
 func NewPrimarySelectionDeviceV1(p *wayland.Proxy) *PrimarySelectionDeviceV1 {
+	p.SetEventFDCounts(primaryselectiondevicev1EventFDCounts)
 	return &PrimarySelectionDeviceV1{proxy: p}
 }
 

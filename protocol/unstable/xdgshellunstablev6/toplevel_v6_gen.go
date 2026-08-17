@@ -32,6 +32,14 @@ const (
 	ToplevelV6EventClose     uint16 = 1
 )
 
+// toplevelv6EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var toplevelv6EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type ToplevelV6ResizeEdge uint32
 
 const (
@@ -326,6 +334,7 @@ type ToplevelV6 struct {
 }
 
 func NewToplevelV6(p *wayland.Proxy) *ToplevelV6 {
+	p.SetEventFDCounts(toplevelv6EventFDCounts)
 	return &ToplevelV6{proxy: p}
 }
 

@@ -20,6 +20,14 @@ const (
 	ConfinedPointerV1EventUnconfined uint16 = 1
 )
 
+// confinedpointerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var confinedpointerv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type ConfinedPointerV1DestroyRequest struct {
 }
 
@@ -77,6 +85,7 @@ type ConfinedPointerV1 struct {
 }
 
 func NewConfinedPointerV1(p *wayland.Proxy) *ConfinedPointerV1 {
+	p.SetEventFDCounts(confinedpointerv1EventFDCounts)
 	return &ConfinedPointerV1{proxy: p}
 }
 

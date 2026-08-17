@@ -22,6 +22,17 @@ const (
 	ForeignToplevelHandleV1EventIdentifier uint16 = 4
 )
 
+// foreigntoplevelhandlev1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var foreigntoplevelhandlev1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+}
+
 type ForeignToplevelHandleV1DestroyRequest struct {
 }
 
@@ -127,6 +138,7 @@ type ForeignToplevelHandleV1 struct {
 }
 
 func NewForeignToplevelHandleV1(p *wayland.Proxy) *ForeignToplevelHandleV1 {
+	p.SetEventFDCounts(foreigntoplevelhandlev1EventFDCounts)
 	return &ForeignToplevelHandleV1{proxy: p}
 }
 

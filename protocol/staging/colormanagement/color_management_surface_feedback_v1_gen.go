@@ -21,6 +21,14 @@ const (
 	ColorManagementSurfaceFeedbackV1EventPreferredChanged2 uint16 = 1
 )
 
+// colormanagementsurfacefeedbackv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var colormanagementsurfacefeedbackv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type ColorManagementSurfaceFeedbackV1Error uint32
 
 const (
@@ -129,6 +137,7 @@ type ColorManagementSurfaceFeedbackV1 struct {
 }
 
 func NewColorManagementSurfaceFeedbackV1(p *wayland.Proxy) *ColorManagementSurfaceFeedbackV1 {
+	p.SetEventFDCounts(colormanagementsurfacefeedbackv1EventFDCounts)
 	return &ColorManagementSurfaceFeedbackV1{proxy: p}
 }
 

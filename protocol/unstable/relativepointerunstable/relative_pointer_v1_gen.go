@@ -18,6 +18,13 @@ const (
 	RelativePointerV1EventRelativeMotion uint16 = 0
 )
 
+// relativepointerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var relativepointerv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type RelativePointerV1DestroyRequest struct {
 }
 
@@ -85,6 +92,7 @@ type RelativePointerV1 struct {
 }
 
 func NewRelativePointerV1(p *wayland.Proxy) *RelativePointerV1 {
+	p.SetEventFDCounts(relativepointerv1EventFDCounts)
 	return &RelativePointerV1{proxy: p}
 }
 

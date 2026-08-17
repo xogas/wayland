@@ -28,6 +28,15 @@ const (
 	ShellSurfaceEventPopupDone uint16 = 2
 )
 
+// shellsurfaceEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var shellsurfaceEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 // ShellSurfaceResize is a bitfield of flags.
 type ShellSurfaceResize uint32
 
@@ -325,6 +334,7 @@ type ShellSurface struct {
 }
 
 func NewShellSurface(p *Proxy) *ShellSurface {
+	p.SetEventFDCounts(shellsurfaceEventFDCounts)
 	return &ShellSurface{proxy: p}
 }
 

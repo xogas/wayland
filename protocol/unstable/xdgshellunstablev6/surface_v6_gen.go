@@ -22,6 +22,13 @@ const (
 	SurfaceV6EventConfigure uint16 = 0
 )
 
+// surfacev6EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var surfacev6EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type SurfaceV6Error uint32
 
 const (
@@ -145,6 +152,7 @@ type SurfaceV6 struct {
 }
 
 func NewSurfaceV6(p *wayland.Proxy) *SurfaceV6 {
+	p.SetEventFDCounts(surfacev6EventFDCounts)
 	return &SurfaceV6{proxy: p}
 }
 

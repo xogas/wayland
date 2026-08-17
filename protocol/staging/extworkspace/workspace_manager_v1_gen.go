@@ -22,6 +22,16 @@ const (
 	WorkspaceManagerV1EventFinished       uint16 = 3
 )
 
+// workspacemanagerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var workspacemanagerv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+}
+
 type WorkspaceManagerV1CommitRequest struct {
 }
 
@@ -97,6 +107,7 @@ type WorkspaceManagerV1 struct {
 }
 
 func NewWorkspaceManagerV1(p *wayland.Proxy) *WorkspaceManagerV1 {
+	p.SetEventFDCounts(workspacemanagerv1EventFDCounts)
 	return &WorkspaceManagerV1{proxy: p}
 }
 

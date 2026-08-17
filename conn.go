@@ -84,17 +84,15 @@ func (c *Conn) RegisterProxyWithID(p *Proxy, id uint32) {
 	c.RegisterProxy(p)
 }
 
-// UnregisterProxy removes a proxy destroyed by the client. If the object had
-// fd-carrying events, a zombie entry is kept so that events already in flight
-// can have their fds drained and closed. The zombie lives until the server
-// confirms the destruction with wl_display.delete_id (see removeProxy).
+// UnregisterProxy removes a proxy destroyed by the client. A zombie entry is
+// kept so that events already in flight can be dropped safely: fds carried by
+// known fd-carrying events are drained and closed. The zombie lives until the
+// server confirms the destruction with wl_display.delete_id (see removeProxy).
 func (c *Conn) UnregisterProxy(id uint32) {
 	c.objectsMu.Lock()
 	if p, ok := c.objects[id]; ok {
 		p.deleted.Store(true)
-		if fdCounts := p.FDCounts(); fdCounts != nil {
-			c.zombies[id] = maps.Clone(fdCounts)
-		}
+		c.zombies[id] = maps.Clone(p.FDCounts())
 		delete(c.objects, id)
 	}
 	c.objectsMu.Unlock()
@@ -156,12 +154,29 @@ func (c *Conn) setProtoErr(err error) {
 // connection-level fd queue. The failure surfaces to the application as the
 // error returned by Dispatch / DispatchPending.
 func (c *Conn) FailEvent(event string, err error) {
-	c.connMu.Lock()
-	logger := c.logger
-	c.connMu.Unlock()
-	logger.Error("event unmarshal error", "event", event, "error", err)
+	c.loggerOf().Error("event unmarshal error", "event", event, "error", err)
 	c.setProtoErr(fmt.Errorf("wayland: decode event %s: %w", event, err))
 	c.Close()
+}
+
+// failStream records a stream-level protocol violation (an event for an
+// object that never existed or was already confirmed deleted, or an opcode
+// the bound interface does not define) as the connection's fatal error. The
+// fd count of such an event is unknowable, so skipping it could leave stale
+// fds in the connection queue and desynchronize every subsequent event;
+// terminating the connection is the only safe response.
+func (c *Conn) failStream(reason string, objID uint32, opcode uint16) {
+	c.loggerOf().Error(reason, "id", objID, "opcode", opcode)
+	c.setProtoErr(fmt.Errorf("wayland: %s (object %d, opcode %d)", reason, objID, opcode))
+	c.Close()
+}
+
+// loggerOf returns the current logger.
+func (c *Conn) loggerOf() *slog.Logger {
+	c.connMu.Lock()
+	l := c.logger
+	c.connMu.Unlock()
+	return l
 }
 
 // stickyErr reports the connection's fatal state, in priority order: a

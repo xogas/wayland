@@ -30,6 +30,17 @@ const (
 	ColorManagerV1EventDone                    uint16 = 4
 )
 
+// colormanagerv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var colormanagerv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+	3: 0,
+	4: 0,
+}
+
 type ColorManagerV1Error uint32
 
 const (
@@ -357,6 +368,7 @@ type ColorManagerV1 struct {
 }
 
 func NewColorManagerV1(p *wayland.Proxy) *ColorManagerV1 {
+	p.SetEventFDCounts(colormanagerv1EventFDCounts)
 	return &ColorManagerV1{proxy: p}
 }
 

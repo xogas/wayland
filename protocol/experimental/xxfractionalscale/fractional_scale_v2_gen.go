@@ -19,6 +19,13 @@ const (
 	FractionalScaleV2EventScaleFactor uint16 = 0
 )
 
+// fractionalscalev2EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var fractionalscalev2EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type FractionalScaleV2Error uint32
 
 const (
@@ -77,6 +84,7 @@ type FractionalScaleV2 struct {
 }
 
 func NewFractionalScaleV2(p *wayland.Proxy) *FractionalScaleV2 {
+	p.SetEventFDCounts(fractionalscalev2EventFDCounts)
 	return &FractionalScaleV2{proxy: p}
 }
 

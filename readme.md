@@ -61,12 +61,16 @@ More runnable examples in [example/](./example/readme.md).
   and `DispatchPending` run your event handlers on the calling goroutine.
   Call `Dispatch` from a single goroutine (typically your main loop), and do
   not call `Dispatch` or `Roundtrip` from inside an event handler.
-- **Failures are fatal**: a `wl_display.error` event or an event that cannot be
-  decoded from the wire terminates the connection. `Dispatch` returns the
-  error — a `*ProtocolError` for compositor-reported errors — and every
-  subsequent call fails fast with the same sticky error. Detect protocol
-  errors with `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` is an
-  optional notification hook that fires before the connection closes.
+- **Failures are fatal**: a `wl_display.error` event, an event that cannot be
+  decoded from the wire, or a stream-level violation (an event for an object
+  that never existed, or an opcode the bound interface does not define)
+  terminates the connection. `Dispatch` returns the error — a
+  `*ProtocolError` for compositor-reported errors — and every subsequent
+  call fails fast with the same sticky error. Detect protocol errors with
+  `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` is an optional
+  notification hook that fires before the connection closes. Unknown-opcode
+  and unknown-object events are fatal because their fd count is unknowable:
+  skipping them could desynchronize the connection-level fd queue.
 - **Destroy race**: events already in flight for a client-destroyed object are
   dropped (any fds they carry are drained and closed). This is normal
   protocol operation, not an error.

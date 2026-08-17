@@ -19,6 +19,13 @@ const (
 	ColorManagementOutputV1EventImageDescriptionChanged uint16 = 0
 )
 
+// colormanagementoutputv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var colormanagementoutputv1EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ColorManagementOutputV1DestroyRequest struct {
 }
 
@@ -69,6 +76,7 @@ type ColorManagementOutputV1 struct {
 }
 
 func NewColorManagementOutputV1(p *wayland.Proxy) *ColorManagementOutputV1 {
+	p.SetEventFDCounts(colormanagementoutputv1EventFDCounts)
 	return &ColorManagementOutputV1{proxy: p}
 }
 

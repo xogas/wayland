@@ -68,11 +68,16 @@ func (p *Proxy) SetEventFDCounts(fdCounts map[uint16]int) {
 	p.fdCounts = fdCounts
 }
 
-func (p *Proxy) fdCountForOpcode(opcode uint16) int {
+// fdCountForOpcode returns the number of fds carried by an event opcode and
+// whether the opcode exists in the interface at all. A nil table means the
+// interface's event set is unknown (raw proxies); callers must then fall back
+// to lenient handling because the fd count of an event cannot be determined.
+func (p *Proxy) fdCountForOpcode(opcode uint16) (n int, known bool) {
 	if p.fdCounts == nil {
-		return 0
+		return 0, false
 	}
-	return p.fdCounts[opcode]
+	n, known = p.fdCounts[opcode]
+	return n, known
 }
 
 func (p *Proxy) hasEvent(opcode uint16) bool {

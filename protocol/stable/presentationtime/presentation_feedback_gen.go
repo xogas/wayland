@@ -16,6 +16,15 @@ const (
 	PresentationFeedbackEventDiscarded  uint16 = 2
 )
 
+// presentationfeedbackEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var presentationfeedbackEventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 // PresentationFeedbackKind is a bitfield of flags.
 type PresentationFeedbackKind uint32
 
@@ -124,6 +133,7 @@ type PresentationFeedback struct {
 }
 
 func NewPresentationFeedback(p *wayland.Proxy) *PresentationFeedback {
+	p.SetEventFDCounts(presentationfeedbackEventFDCounts)
 	return &PresentationFeedback{proxy: p}
 }
 

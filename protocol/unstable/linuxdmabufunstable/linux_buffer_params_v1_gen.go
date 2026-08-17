@@ -22,6 +22,14 @@ const (
 	LinuxBufferParamsV1EventFailed  uint16 = 1
 )
 
+// linuxbufferparamsv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var linuxbufferparamsv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+}
+
 type LinuxBufferParamsV1Error uint32
 
 const (
@@ -187,6 +195,7 @@ type LinuxBufferParamsV1 struct {
 }
 
 func NewLinuxBufferParamsV1(p *wayland.Proxy) *LinuxBufferParamsV1 {
+	p.SetEventFDCounts(linuxbufferparamsv1EventFDCounts)
 	return &LinuxBufferParamsV1{proxy: p}
 }
 

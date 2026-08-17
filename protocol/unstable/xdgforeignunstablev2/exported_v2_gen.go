@@ -18,6 +18,13 @@ const (
 	ExportedV2EventHandle uint16 = 0
 )
 
+// exportedv2EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var exportedv2EventFDCounts = map[uint16]int{
+	0: 0,
+}
+
 type ExportedV2DestroyRequest struct {
 }
 
@@ -53,6 +60,7 @@ type ExportedV2 struct {
 }
 
 func NewExportedV2(p *wayland.Proxy) *ExportedV2 {
+	p.SetEventFDCounts(exportedv2EventFDCounts)
 	return &ExportedV2{proxy: p}
 }
 

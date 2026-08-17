@@ -21,6 +21,15 @@ const (
 	ImageDescriptionV1EventReady2 uint16 = 2
 )
 
+// imagedescriptionv1EventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
+var imagedescriptionv1EventFDCounts = map[uint16]int{
+	0: 0,
+	1: 0,
+	2: 0,
+}
+
 type ImageDescriptionV1Error uint32
 
 const (
@@ -140,6 +149,7 @@ type ImageDescriptionV1 struct {
 }
 
 func NewImageDescriptionV1(p *wayland.Proxy) *ImageDescriptionV1 {
+	p.SetEventFDCounts(imagedescriptionv1EventFDCounts)
 	return &ImageDescriptionV1{proxy: p}
 }
 

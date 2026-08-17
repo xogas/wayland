@@ -24,8 +24,16 @@ const (
 	DataSourceEventAction           uint16 = 5
 )
 
+// datasourceEventFDCounts maps every event opcode of this interface
+// to the number of fds it carries (0 for events without fds). Dispatch uses it
+// to drain fds and to reject unknown opcodes as stream violations.
 var datasourceEventFDCounts = map[uint16]int{
+	0: 0,
 	1: 1,
+	2: 0,
+	3: 0,
+	4: 0,
+	5: 0,
 }
 
 type DataSourceError uint32
