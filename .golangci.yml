@@ -1,12 +1,5 @@
 version: "2"
 
-linters-settings:
-  errcheck:
-    exclude-functions:
-      - fmt.Fprintf
-      - fmt.Fprintln
-      - fmt.Fprint
-
 linters:
   enable:
     - errcheck
@@ -17,3 +10,9 @@ linters:
     - misspell
     - unconvert
     - nilerr
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Fprint
