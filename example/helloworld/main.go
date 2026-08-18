@@ -113,6 +113,9 @@ func main() {
 	var cfgSerial uint32
 	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
 		cfgSerial = ev.Serial
+		// Ack immediately: the window is static, but every configure must be
+		// acked before the next commit, so handle it here.
+		_ = xdgSurface.AckConfigure(ev.Serial)
 	})
 	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
 
@@ -138,7 +141,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "no configure event received")
 		os.Exit(1)
 	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
 
 	stride := winW * 4
 	bufSize := int64(winH) * int64(stride)

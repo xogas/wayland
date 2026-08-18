@@ -8,13 +8,14 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/xogas/wayland"
+	"github.com/xogas/wayland/example/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/presentationtime"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
 	"github.com/xogas/wayland/wire"
 )
 
@@ -22,12 +23,6 @@ const (
 	winWidth  = 256
 	winHeight = 256
 )
-
-type bufSlot struct {
-	id   wire.ObjectID
-	wl   *wayland.Buffer
-	base []byte
-}
 
 type latencyStats struct {
 	mu        sync.Mutex
@@ -110,13 +105,24 @@ func flagsString(f presentationtime.PresentationFeedbackKind) string {
 	return s[:len(s)-1]
 }
 
+// monotonicNow reads the compositor's presentation clock (CLOCK_MONOTONIC by
+// default; use the clock_id reported by wp_presentation for the exact clock).
+func monotonicNow(clkID int32) int64 {
+	var ts syscall.Timespec
+	_, _, e1 := syscall.Syscall(syscall.SYS_CLOCK_GETTIME, uintptr(clkID), uintptr(unsafe.Pointer(&ts)), 0)
+	if e1 != 0 {
+		return 0
+	}
+	return ts.Sec*1e9 + ts.Nsec
+}
+
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -125,58 +131,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	var (
-		compG wayland.RegistryGlobalEvent
-		shmG  wayland.RegistryGlobalEvent
-		wmG   wayland.RegistryGlobalEvent
-		presG wayland.RegistryGlobalEvent
-	)
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
-	}
-
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case presentationtime.InterfacePresentation:
-			presG = g
-		}
-	}
-	if compG.Interface == "" || shmG.Interface == "" || wmG.Interface == "" || presG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "missing required globals (compositor, shm, xdg_wm_base, wp_presentation)")
-		os.Exit(1)
-	}
-
-	compositor, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
+	presG, ok := globals.Find(presentationtime.InterfacePresentation)
+	if !ok {
+		fmt.Fprintln(os.Stderr, "wp_presentation not available")
 		os.Exit(1)
 	}
 	presentation, err := presentationtime.BindPresentation(reg, presG.Name, min(presG.Version, presentationtime.VersionPresentation))
@@ -185,140 +148,49 @@ func main() {
 		os.Exit(1)
 	}
 
+	var clkID atomic.Int32 // default CLOCK_MONOTONIC, overridden by the clock_id event
+	clkID.Store(1)
 	presentation.OnClockID(func(ev presentationtime.PresentationClockIDEvent) {
+		clkID.Store(int32(ev.ClkID))
 		fmt.Printf("wp_presentation: clock_id = %d\n", ev.ClkID)
 	})
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) {
-		_ = wmBase.Pong(ev.Serial)
-	})
-
-	surface, err := compositor.CreateSurface()
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "presentation-shm", "presentationshm", winWidth, winHeight, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
-		os.Exit(1)
-	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	shutdown := make(chan struct{})
-	var cfgSerial uint32
-	cfgDone := false
-
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {
-		cfgDone = true
-	})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) {
-		close(shutdown)
-	})
-
-	_ = toplevel.SetTitle("presentation-shm")
-	_ = toplevel.SetAppID("presentationshm")
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 || !cfgDone {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure events")
-				return
-			}
-			break
-		}
-	}
-	if cfgSerial == 0 {
-		fmt.Fprintln(os.Stderr, "no configure serial received")
-		return
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	stride := int32(winWidth * 4)
-	bufH := int32(winHeight)
-	oneSize := int64(bufH * stride)
-	poolSize := oneSize * 2
-
-	fd, closeFd, err := shmFile(poolSize)
+	db, err := shared.NewDoubleBuffer(core.Shm, winWidth, winHeight)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	defer closeFd()
+	defer db.Close()
 
-	data, err := syscall.Mmap(fd, 0, int(poolSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
-
-	pool, err := shm.CreatePool(fd, int32(poolSize))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	bufs := [2]bufSlot{}
-	for i := 0; i < 2; i++ {
-		off := int32(i) * int32(oneSize)
-		wlBuf, err := pool.CreateBuffer(off, int32(winWidth), bufH, stride, wayland.ShmFormatXrgb8888)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "create_buffer %d: %v\n", i, err)
-			os.Exit(1)
-		}
-		bufs[i] = bufSlot{
-			id:   wire.ObjectID(wlBuf.Proxy().ID()),
-			wl:   wlBuf,
-			base: data[off : off+int32(oneSize)],
-		}
-	}
-
-	freeCh := make(chan int, 2)
-	bufs[0].wl.OnRelease(func(ev wayland.BufferReleaseEvent) {
-		freeCh <- 0
-	})
-	bufs[1].wl.OnRelease(func(ev wayland.BufferReleaseEvent) {
-		freeCh <- 1
-	})
-	freeCh <- 0
-	freeCh <- 1
-
-	go func() {
-		for {
-			if err := dpy.Dispatch(ctx); err != nil {
-				return
-			}
-		}
-	}()
-
+	errCh := shared.DispatchLoop(ctx, dpy)
 	var stats latencyStats
 	frames := 0
 
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			stats.report()
 			return
 		case <-ctx.Done():
 			stats.report()
 			return
-		case idx := <-freeCh:
-			drawFrame(bufs[idx].base, winWidth, winHeight, int(stride), frames)
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+			}
+			stats.report()
+			return
+		case idx := <-db.Free():
+			drawFrame(db.Pixels[idx], int(db.Stride), frames)
 
 			done := make(chan struct{})
-			cb, err := surface.Frame()
+			cb, err := toplevel.Surface.Frame()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "frame: %v\n", err)
 				return
@@ -327,15 +199,8 @@ func main() {
 				close(done)
 			})
 
-			var ts syscall.Timespec
-			_, _, e1 := syscall.Syscall(syscall.SYS_CLOCK_GETTIME, 1, uintptr(unsafe.Pointer(&ts)), 0)
-			if e1 != 0 {
-				fmt.Fprintf(os.Stderr, "clock_gettime: %v\n", e1)
-				return
-			}
-			commitNS := ts.Sec*1e9 + ts.Nsec
-
-			feedback, err := presentation.Feedback(wire.ObjectID(surface.Proxy().ID()))
+			commitNS := monotonicNow(clkID.Load())
+			feedback, err := presentation.Feedback(wire.ObjectID(toplevel.Surface.Proxy().ID()))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "presentation feedback: %v\n", err)
 				return
@@ -348,23 +213,21 @@ func main() {
 				stats.discard()
 			})
 
-			if err := surface.Attach(bufs[idx].id, 0, 0); err != nil {
-				fmt.Fprintf(os.Stderr, "attach: %v\n", err)
-				return
-			}
-			if err := surface.Damage(0, 0, int32(winWidth), bufH); err != nil {
-				fmt.Fprintf(os.Stderr, "damage: %v\n", err)
-				return
-			}
-			if err := surface.Commit(); err != nil {
-				fmt.Fprintf(os.Stderr, "commit: %v\n", err)
-				return
-			}
+			_ = toplevel.Surface.Attach(db.IDs[idx], 0, 0)
+			_ = toplevel.Surface.Damage(0, 0, db.W, db.H)
+			_ = toplevel.Surface.Commit()
+
 			select {
-			case <-shutdown:
+			case <-toplevel.Closed:
 				stats.report()
 				return
 			case <-ctx.Done():
+				stats.report()
+				return
+			case err := <-errCh:
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+				}
 				stats.report()
 				return
 			case <-done:
@@ -377,10 +240,10 @@ func main() {
 	}
 }
 
-func drawFrame(data []byte, w, h, stride, frame int) {
-	for y := 0; y < h; y++ {
+func drawFrame(data []byte, stride, frame int) {
+	for y := 0; y < winHeight; y++ {
 		rowOff := y * stride
-		for x := 0; x < w; x++ {
+		for x := 0; x < winWidth; x++ {
 			off := rowOff + x*4
 			data[off+0] = 0x18
 			data[off+1] = 0x18
@@ -392,20 +255,20 @@ func drawFrame(data []byte, w, h, stride, frame int) {
 	blockSize := 64
 	cycle := 200
 	phase := frame % cycle
-	bx := phase * (w - blockSize) / cycle
-	by := phase * (h - blockSize) / cycle
+	bx := phase * (winWidth - blockSize) / cycle
+	by := phase * (winHeight - blockSize) / cycle
 
 	r := uint8((frame * 3) % 256)
 	g := uint8((frame*3 + 85) % 256)
 	b := uint8((frame*3 + 170) % 256)
 
 	yEnd := by + blockSize
-	if yEnd > h {
-		yEnd = h
+	if yEnd > winHeight {
+		yEnd = winHeight
 	}
 	xEnd := bx + blockSize
-	if xEnd > w {
-		xEnd = w
+	if xEnd > winWidth {
+		xEnd = winWidth
 	}
 	for y := by; y < yEnd; y++ {
 		rowOff := y * stride
@@ -417,17 +280,4 @@ func drawFrame(data []byte, w, h, stride, frame int) {
 			data[off+3] = 0xff
 		}
 	}
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }

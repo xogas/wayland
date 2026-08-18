@@ -2,6 +2,11 @@
 
 本目录包含多个独立可运行的 Wayland 客户端示例, 演示 github.com/xogas/wayland 库的各种用法.
 
+除 helloworld (保持完全自包含, 作为最小可抄起点) 外, 其余示例共用
+[internal/shared](./internal/shared) 帮助包: 显示连接与 global 发现、toplevel
+窗口创建 (自动应答 configure)、shm 双缓冲、派发循环和绘制工具. 该包仅服务于
+示例, 不属于库的公开 API.
+
 ## 运行要求
 
 - Linux 系统, 运行中的 Wayland compositor (KDE/KWin, GNOME/Mutter, Sway, Weston 等)
@@ -58,15 +63,15 @@ go run ./example/damage
 
 按 D 键切换增量 damage / 全量 damage 模式, 终端可见比率为 0.007 vs 1.0.
 
-### viewport -- wp_viewporter 裁剪与缩放
+### viewport -- wp_viewporter 裁剪与缩放 + HiDPI
 
-512x512 大缓冲区, 通过 wp_viewport 设定 256x256 源矩形旋转描画区, 目标尺寸可调. 演示不重新 attach buffer 即改变显示区域.
+512x512 逻辑缓冲区, 通过 wp_viewport 设定 256x256 源矩形旋转描画区, 目标尺寸可调. 演示不重新 attach buffer 即改变显示区域; 同时演示 wl_shm.format 格式协商 (启动时校验 xrgb8888) 与 buffer-scale 高 DPI 渲染 (按物理分辨率重建缓冲区并调用 wl_surface.set_buffer_scale, 可选监听 wp_fractional_scale 的 preferred_scale).
 
 ```sh
 go run ./example/viewport
 ```
 
-空格暂停/恢复; -/= 缩小/放大目标尺寸.
+空格暂停/恢复; -/= 缩小/放大目标尺寸; S 在 1x / 2x 缓冲区缩放间切换.
 
 ### presentation -- presentation-time 反馈
 

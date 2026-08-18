@@ -1,6 +1,8 @@
 //go:build linux
 
-// Package main implements a simple Wayland image viewer.
+// A simple Wayland image viewer: decodes PNG/JPEG/GIF with the standard
+// library, scales down images larger than 1600x1000, and shows them in an
+// xdg toplevel window.
 package main
 
 import (
@@ -13,16 +15,16 @@ import (
 	_ "image/png"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
-	"github.com/xogas/wayland/wire"
+	"github.com/xogas/wayland/example/internal/shared"
 )
 
-const maxWidth = 1600
-const maxHeight = 1000
+const (
+	maxWidth  = 1600
+	maxHeight = 1000
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -43,19 +45,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "decode: %v\n", err)
 		os.Exit(1)
 	}
-
-	srcBounds := img.Bounds()
-	srcW := srcBounds.Dx()
-	srcH := srcBounds.Dy()
-
+	srcW := img.Bounds().Dx()
+	srcH := img.Bounds().Dy()
 	dstW, dstH := fitSize(srcW, srcH)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -64,177 +63,46 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
-	}
-
-	var (
-		compositorGlobal wayland.RegistryGlobalEvent
-		shmGlobal        wayland.RegistryGlobalEvent
-		wmBaseGlobal     wayland.RegistryGlobalEvent
-	)
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compositorGlobal = g
-		case wayland.InterfaceShm:
-			shmGlobal = g
-		case xdgshell.InterfaceWmBase:
-			wmBaseGlobal = g
-		}
-	}
-	if compositorGlobal.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_compositor global found")
-		os.Exit(1)
-	}
-	if shmGlobal.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_shm global found")
-		os.Exit(1)
-	}
-	if wmBaseGlobal.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no xdg_wm_base global found")
-		os.Exit(1)
-	}
-
-	compositor, err := wayland.BindCompositor(reg, compositorGlobal.Name, min(compositorGlobal.Version, wayland.VersionCompositor))
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, filepath.Base(imagePath), "go-wayland-imageviewer", int32(dstW), int32(dstH), nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	shm, err := wayland.BindShm(reg, shmGlobal.Name, min(shmGlobal.Version, wayland.VersionShm))
+
+	bufID, data, cleanup, err := shared.NewBuffer(core.Shm, int32(dstW), int32(dstH), wayland.ShmFormatXrgb8888)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
+		fmt.Fprintf(os.Stderr, "buffer: %v\n", err)
 		os.Exit(1)
 	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmBaseGlobal.Name, min(wmBaseGlobal.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
-		os.Exit(1)
-	}
+	defer cleanup()
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) {
-		_ = wmBase.Pong(ev.Serial)
-	})
-
-	surface, err := compositor.CreateSurface()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
-		os.Exit(1)
-	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
-	}
-
-	shutdown := make(chan struct{})
-	var cfgSerial uint32
-
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
-
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
-
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) {
-		close(shutdown)
-	})
-
-	title := filepath.Base(imagePath)
-	_ = toplevel.SetTitle(title)
-	_ = toplevel.SetAppID("go-wayland-imageviewer")
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				return
-			}
-			break
-		}
-	}
-	if cfgSerial == 0 {
-		fmt.Fprintln(os.Stderr, "no configure event received")
-		os.Exit(1)
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	stride := int32(dstW * 4)
-	bufSize := int64(int32(dstH) * stride)
-
-	fd, closeFd, err := shmFile(bufSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeFd()
-
-	data, err := syscall.Mmap(fd, 0, int(bufSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
-
-	drawImage(data, img, dstW, dstH, int(stride))
-
-	pool, err := shm.CreatePool(fd, int32(bufSize))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	buf, err := pool.CreateBuffer(0, int32(dstW), int32(dstH), stride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
-		os.Exit(1)
-	}
-	defer buf.Destroy() //nolint: errcheck
-
-	_ = surface.Attach(wire.ObjectID(buf.Proxy().ID()), 0, 0)
-	_ = surface.Damage(0, 0, int32(dstW), int32(dstH))
-	_ = surface.Commit()
+	drawImage(data, img, dstW, dstH, dstW*4)
+	_ = toplevel.Surface.Attach(bufID, 0, 0)
+	_ = toplevel.Surface.Damage(0, 0, int32(dstW), int32(dstH))
+	_ = toplevel.Surface.Commit()
 
 	fmt.Printf("imageviewer: %dx%d %s, waiting for close or 60s timeout.\n", dstW, dstH, imagePath)
 
+	errCh := shared.DispatchLoop(ctx, dpy)
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
 			return
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
 			return
-		default:
-		}
-		if err := dpy.Dispatch(ctx); err != nil {
-			if ctx.Err() != nil {
-				fmt.Println("timeout reached.")
-				return
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch error: %v\n", err)
 			}
-			fmt.Fprintf(os.Stderr, "dispatch error: %v\n", err)
-			break
+			return
 		}
 	}
 }
@@ -288,17 +156,4 @@ func drawImage(data []byte, img image.Image, dstW, dstH, stride int) {
 			data[off+3] = 0xff
 		}
 	}
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }

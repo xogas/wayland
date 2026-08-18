@@ -13,20 +13,17 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
-	"github.com/xogas/wayland/wire"
+	"github.com/xogas/wayland/example/internal/shared"
 )
 
 const (
-	winW      = 480
-	winH      = 480
-	stride    = winW * 4
-	bufBytes  = stride * winH
-	poolBytes = 2 * bufBytes
-	focal     = 300.0
-	cubeDist  = 4.0
-	speedY    = 0.9
-	speedX    = 0.6
+	winW     = 480
+	winH     = 480
+	stride   = winW * 4
+	focal    = 300.0
+	cubeDist = 4.0
+	speedY   = 0.9
+	speedX   = 0.6
 )
 
 type vec3 [3]float64
@@ -145,6 +142,7 @@ func renderCube(data []byte, ay, ax float64) {
 		visible = append(visible, fi)
 	}
 
+	// Painter's algorithm: far faces first.
 	for i := 0; i < len(visible); i++ {
 		for j := i + 1; j < len(visible); j++ {
 			if visible[i].depth > visible[j].depth {
@@ -160,26 +158,13 @@ func renderCube(data []byte, ay, ax float64) {
 	}
 }
 
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
-}
-
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -188,68 +173,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
-		os.Exit(1)
-	}
-	var compG, shmG, wmG wayland.RegistryGlobalEvent
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		}
-	}
-	if compG.Interface == "" || shmG.Interface == "" || wmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "missing required globals")
-		os.Exit(1)
-	}
-
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "Rotating Cube", "go-wayland-cube", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
-		os.Exit(1)
-	}
-
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) { _ = wmBase.Pong(ev.Serial) })
-
-	surface, err := comp.CreateSurface()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
-		os.Exit(1)
-	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
@@ -265,95 +197,24 @@ func main() {
 		cancel()
 	}()
 
-	var cfgSerial uint32
-	var cfgDone bool
-
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) { cfgSerial = ev.Serial })
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) { cfgDone = true })
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) { close(shutdown) })
-
-	_ = toplevel.SetTitle("Rotating Cube")
-	_ = toplevel.SetAppID("go-wayland-cube")
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 || !cfgDone {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				return
-			}
-			break
-		}
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	fd, closeFd, err := shmFile(poolBytes)
+	db, err := shared.NewDoubleBuffer(core.Shm, winW, winH)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	defer closeFd()
+	defer db.Close()
 
-	data, err := syscall.Mmap(fd, 0, int(poolBytes), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
-
-	pool, err := shm.CreatePool(fd, int32(poolBytes))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	buf0, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
-		os.Exit(1)
-	}
-	buf1, err := pool.CreateBuffer(int32(bufBytes), winW, winH, stride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
-		os.Exit(1)
-	}
-	defer buf0.Destroy() //nolint: errcheck
-	defer buf1.Destroy() //nolint: errcheck
-
-	freeBufs := make(chan int, 2)
-	freeBufs <- 0
-	freeBufs <- 1
-	buf0.OnRelease(func(ev wayland.BufferReleaseEvent) { freeBufs <- 0 })
-	buf1.OnRelease(func(ev wayland.BufferReleaseEvent) { freeBufs <- 1 })
-
-	bufObj := [2]wire.ObjectID{wire.ObjectID(buf0.Proxy().ID()), wire.ObjectID(buf1.Proxy().ID())}
-	bufData := [2][]byte{data[0:bufBytes], data[bufBytes:poolBytes]}
-
-	// dedicated event dispatch goroutine
-	go func() {
-		for {
-			if err := dpy.Dispatch(ctx); err != nil {
-				if ctx.Err() != nil {
-					return
-				}
-				return
-			}
-		}
-	}()
-
+	errCh := shared.DispatchLoop(ctx, dpy)
 	frameReady := make(chan struct{}, 1)
 
-	// first frame
-	bi := <-freeBufs
-	clearBlack(bufData[bi])
-	renderCube(bufData[bi], 0, 0)
-	cb, err := surface.Frame()
+	start := time.Now()
+	frames := 0
+	bi := db.Next()
+
+	cb, err := toplevel.Surface.Frame()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "frame: %v\n", err)
-		return
+		os.Exit(1)
 	}
 	cb.OnDone(func(ev wayland.CallbackDoneEvent) {
 		select {
@@ -361,40 +222,51 @@ func main() {
 		default:
 		}
 	})
-	_ = surface.Attach(bufObj[bi], 0, 0)
-	_ = surface.Damage(0, 0, winW, winH)
-	_ = surface.Commit()
-
-	start := time.Now()
-	frames := 1
+	clearBlack(db.Pixels[bi])
+	renderCube(db.Pixels[bi], 0, 0)
+	_ = toplevel.Surface.Attach(db.IDs[bi], 0, 0)
+	_ = toplevel.Surface.Damage(0, 0, winW, winH)
+	_ = toplevel.Surface.Commit()
+	frames = 1
 
 	fmt.Printf("cube: %dx%d, animating...\n", winW, winH)
 
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			goto report
 		case <-ctx.Done():
+			goto report
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+			}
 			goto report
 		case <-frameReady:
 		case <-time.After(time.Second):
+			// No frame callback (window hidden): keep rendering, throttled by
+			// buffer release.
 		}
 
 		select {
-		case bi = <-freeBufs:
-		case <-shutdown:
+		case bi = <-db.Free():
+		case <-toplevel.Closed:
 			goto report
 		case <-ctx.Done():
+			goto report
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+			}
 			goto report
 		case <-time.After(time.Second):
 			continue
 		}
 
 		elapsed := time.Since(start).Seconds()
-		clearBlack(bufData[bi])
-		renderCube(bufData[bi], elapsed*speedY, elapsed*speedX)
-
-		cb, err = surface.Frame()
+		clearBlack(db.Pixels[bi])
+		renderCube(db.Pixels[bi], elapsed*speedY, elapsed*speedX)
+		cb, err := toplevel.Surface.Frame()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "frame: %v\n", err)
 			goto report
@@ -405,9 +277,9 @@ func main() {
 			default:
 			}
 		})
-		_ = surface.Attach(bufObj[bi], 0, 0)
-		_ = surface.Damage(0, 0, winW, winH)
-		_ = surface.Commit()
+		_ = toplevel.Surface.Attach(db.IDs[bi], 0, 0)
+		_ = toplevel.Surface.Damage(0, 0, winW, winH)
+		_ = toplevel.Surface.Commit()
 
 		frames++
 	}

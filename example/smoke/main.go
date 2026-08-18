@@ -10,12 +10,10 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
-	"github.com/xogas/wayland/wire"
+	"github.com/xogas/wayland/example/internal/shared"
 )
 
 const (
@@ -269,74 +267,13 @@ func render(data []byte, sim *Sim) {
 	}
 }
 
-type bbuf struct {
-	data  []byte
-	pool  *wayland.ShmPool
-	buf   *wayland.Buffer
-	file  *os.File
-	ready chan struct{}
-}
-
-func newBBuf(shm *wayland.Shm, size int64) (*bbuf, error) {
-	f, err := os.CreateTemp("", "wayland-smoke-*")
-	if err != nil {
-		return nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	fd := int(f.Fd())
-	data, err := syscall.Mmap(fd, 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	pool, err := shm.CreatePool(fd, int32(size))
-	if err != nil {
-		_ = syscall.Munmap(data)
-		_ = f.Close()
-		return nil, err
-	}
-	buf, err := pool.CreateBuffer(0, int32(winW), int32(winH), int32(stride), pixFmt)
-	if err != nil {
-		_ = pool.Destroy()
-		_ = syscall.Munmap(data)
-		_ = f.Close()
-		return nil, err
-	}
-	bb := &bbuf{
-		data:  data,
-		pool:  pool,
-		buf:   buf,
-		file:  f,
-		ready: make(chan struct{}, 1),
-	}
-	bb.ready <- struct{}{}
-	bb.buf.OnRelease(func(ev wayland.BufferReleaseEvent) {
-		select {
-		case bb.ready <- struct{}{}:
-		default:
-		}
-	})
-	return bb, nil
-}
-
-func (bb *bbuf) close() {
-	_ = bb.buf.Destroy()
-	_ = bb.pool.Destroy()
-	_ = syscall.Munmap(bb.data)
-	_ = bb.file.Close()
-}
-
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -345,186 +282,71 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: obj=%d code=%d msg=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
-		os.Exit(1)
-	}
-	var (
-		compG wayland.RegistryGlobalEvent
-		shmG  wayland.RegistryGlobalEvent
-		wmG   wayland.RegistryGlobalEvent
-		seatG wayland.RegistryGlobalEvent
-	)
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case wayland.InterfaceSeat:
-			seatG = g
-		}
-	}
-	if compG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_compositor global")
-		os.Exit(1)
-	}
-	if shmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_shm global")
-		os.Exit(1)
-	}
-	if wmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no xdg_wm_base global")
-		os.Exit(1)
-	}
-
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "Smoke", "go-wayland-smoke", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) {
-		_ = wmBase.Pong(ev.Serial)
-	})
-
-	surface, err := comp.CreateSurface()
+	db, err := shared.NewDoubleBuffer(core.Shm, winW, winH)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "buffers: %v\n", err)
 		os.Exit(1)
 	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
-	}
-
-	cfgAcked := false
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		_ = xdgSurface.AckConfigure(ev.Serial)
-		cfgAcked = true
-	})
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
-
-	shutdown := make(chan struct{})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) {
-		close(shutdown)
-	})
-
-	_ = toplevel.SetTitle("Smoke")
-	_ = toplevel.SetAppID("go-wayland-smoke")
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for !cfgAcked {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				os.Exit(1)
-			}
-			break
-		}
-	}
-	if !cfgAcked {
-		fmt.Fprintln(os.Stderr, "configure not acked")
-		os.Exit(1)
-	}
-
-	bufSize := int64(winH) * int64(stride)
-	bb0, err := newBBuf(shm, bufSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "buffer 0: %v\n", err)
-		os.Exit(1)
-	}
-	defer bb0.close()
-	bb1, err := newBBuf(shm, bufSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "buffer 1: %v\n", err)
-		os.Exit(1)
-	}
-	defer bb1.close()
-	bbs := [2]*bbuf{bb0, bb1}
+	defer db.Close()
 
 	sim := newSim()
 	sim.injectRandom()
 
 	var ptrPX, ptrPY float64
 	var ptrEntered bool
-	if seatG.Interface != "" {
-		seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
+	if seat, err := shared.BindSeat(reg, globals); err == nil {
+		ptr, err := seat.GetPointer()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
+			fmt.Fprintf(os.Stderr, "get_pointer: %v\n", err)
 		} else {
-			ptr, err := seat.GetPointer()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "get_pointer: %v\n", err)
-			} else {
-				ptr.OnEnter(func(ev wayland.PointerEnterEvent) {
-					ptrEntered = true
-					ptrPX = ev.SurfaceX.Float64()
-					ptrPY = ev.SurfaceY.Float64()
-				})
-				ptr.OnLeave(func(ev wayland.PointerLeaveEvent) {
-					ptrEntered = false
-				})
-				ptr.OnMotion(func(ev wayland.PointerMotionEvent) {
-					if !ptrEntered {
-						return
-					}
-					nx := ev.SurfaceX.Float64()
-					ny := ev.SurfaceY.Float64()
-					dx := nx - ptrPX
-					dy := ny - ptrPY
-					ptrPX = nx
-					ptrPY = ny
-					if dx == 0 && dy == 0 {
-						return
-					}
-					sx := int(nx) / simScale
-					sy := int(ny) / simScale
-					sim.injectMotion(sx, sy, dx, dy)
-				})
-			}
+			ptr.OnEnter(func(ev wayland.PointerEnterEvent) {
+				ptrEntered = true
+				ptrPX = ev.SurfaceX.Float64()
+				ptrPY = ev.SurfaceY.Float64()
+			})
+			ptr.OnLeave(func(ev wayland.PointerLeaveEvent) {
+				ptrEntered = false
+			})
+			ptr.OnMotion(func(ev wayland.PointerMotionEvent) {
+				if !ptrEntered {
+					return
+				}
+				nx := ev.SurfaceX.Float64()
+				ny := ev.SurfaceY.Float64()
+				dx := nx - ptrPX
+				dy := ny - ptrPY
+				ptrPX = nx
+				ptrPY = ny
+				if dx == 0 && dy == 0 {
+					return
+				}
+				sx := int(nx) / simScale
+				sy := int(ny) / simScale
+				sim.injectMotion(sx, sy, dx, dy)
+			})
 		}
 	}
 
 	frameCount := 0
 	start := time.Now()
-	bufIdx := 0
+	bi := 0
 	var frameDone chan struct{}
 
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			elapsed := time.Since(start)
 			fmt.Printf("closed. frames=%d fps=%.1f\n", frameCount, float64(frameCount)/elapsed.Seconds())
 			return
@@ -557,7 +379,7 @@ func main() {
 		}
 
 		select {
-		case <-bbs[bufIdx].ready:
+		case bi = <-db.Free():
 		default:
 			dctx, dcancel := context.WithTimeout(ctx, 5*time.Millisecond)
 			err := dpy.Dispatch(dctx)
@@ -576,10 +398,10 @@ func main() {
 		}
 
 		sim.step(simDt)
-		render(bbs[bufIdx].data, sim)
+		render(db.Pixels[bi], sim)
 
 		frameDone = make(chan struct{})
-		cb, err := surface.Frame()
+		cb, err := toplevel.Surface.Frame()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "frame: %v\n", err)
 			continue
@@ -588,17 +410,17 @@ func main() {
 			close(frameDone)
 		})
 
-		_ = surface.Attach(wire.ObjectID(bbs[bufIdx].buf.Proxy().ID()), 0, 0)
-		_ = surface.Damage(0, 0, int32(winW), int32(winH))
-		_ = surface.Commit()
+		_ = toplevel.Surface.Attach(db.IDs[bi], 0, 0)
+		_ = toplevel.Surface.Damage(0, 0, winW, winH)
+		_ = toplevel.Surface.Commit()
 
 		frameCount++
-		bufIdx = 1 - bufIdx
 
 		if frameCount%60 == 0 {
 			elapsed := time.Since(start)
 			fmt.Printf("frames=%d elapsed=%.1fs fps=%.1f\n", frameCount, elapsed.Seconds(), float64(frameCount)/elapsed.Seconds())
 		}
 	}
+
 loopExit:
 }

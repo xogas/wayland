@@ -1,7 +1,6 @@
-// font8x8 glyphs by https://github.com/dhepper/font8x8.
-// Bit 0 of each row byte is the leftmost pixel.
-
-package main
+// Code generated for the shared example helpers; font8x8 glyphs by
+// https://github.com/dhepper/font8x8. Bit 0 of each row byte is the leftmost pixel.
+package shared
 
 const (
 	glyphWidth  = 8
@@ -106,15 +105,18 @@ var font = map[rune][8]byte{
 	'~':  {0x6E, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 }
 
-func textWidth(text string, scale int) int {
+// TextWidth returns the pixel width of text at the given scale.
+func TextWidth(text string, scale int) int {
 	return len(text) * glyphWidth * scale
 }
 
-func textHeight(scale int) int {
+// TextHeight returns the pixel height of one text line at the given scale.
+func TextHeight(scale int) int {
 	return glyphHeight * scale
 }
 
-func drawText(dst []byte, stride, width, height int, text string, x, y, scale int, color uint32) {
+// DrawText renders text into an XRGB8888 buffer with the embedded 8x8 font.
+func DrawText(dst []byte, stride, width, height int, text string, x, y, scale int, color uint32) {
 	r := byte(color >> 16)
 	g := byte(color >> 8)
 	b := byte(color)
@@ -154,5 +156,46 @@ func drawText(dst []byte, stride, width, height int, text string, x, y, scale in
 			}
 		}
 		penX += glyphWidth * scale
+	}
+}
+
+// FillSolid fills the whole buffer with one color.
+func FillSolid(data []byte, r, g, b byte) {
+	for i := 0; i < len(data); i += 4 {
+		data[i+0] = b
+		data[i+1] = g
+		data[i+2] = r
+		data[i+3] = 0xff
+	}
+}
+
+// FillRect fills a rectangle clipped to the buffer bounds.
+func FillRect(data []byte, stride, w, h, x, y, rw, rh int, r, g, b byte) {
+	if x < 0 {
+		rw += x
+		x = 0
+	}
+	if y < 0 {
+		rh += y
+		y = 0
+	}
+	if x+rw > w {
+		rw = w - x
+	}
+	if y+rh > h {
+		rh = h - y
+	}
+	if rw <= 0 || rh <= 0 {
+		return
+	}
+	for row := y; row < y+rh; row++ {
+		off := row*stride + x*4
+		for col := 0; col < rw; col++ {
+			data[off+0] = b
+			data[off+1] = g
+			data[off+2] = r
+			data[off+3] = 0xff
+			off += 4
+		}
 	}
 }

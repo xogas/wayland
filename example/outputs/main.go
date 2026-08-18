@@ -12,34 +12,19 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
+	"github.com/xogas/wayland/example/internal/shared"
 )
 
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
-
-	reg, err := dpy.GetRegistry()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
-		os.Exit(1)
-	}
-
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
-	}
 
 	type modeInfo struct {
 		width   int32
@@ -55,7 +40,7 @@ func main() {
 	}
 
 	var outputs []*outputInfo
-	for _, g := range globals {
+	for _, g := range globals.All() {
 		if g.Interface != wayland.InterfaceOutput {
 			continue
 		}
@@ -119,16 +104,17 @@ func main() {
 		fmt.Printf("global removed: name %d\n", ev.Name)
 	})
 
+	// Monitor for 5 seconds, then exit (matching the original behavior).
 	monitorCtx, monitorCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer monitorCancel()
-	for monitorCtx.Err() == nil {
-		if err := dpy.Dispatch(monitorCtx); err != nil {
-			if monitorCtx.Err() != nil {
-				break
-			}
+	errCh := shared.DispatchLoop(monitorCtx, dpy)
+	select {
+	case err := <-errCh:
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			break
+			os.Exit(1)
 		}
+	case <-monitorCtx.Done():
 	}
 	fmt.Println("monitoring finished.")
 }

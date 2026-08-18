@@ -7,11 +7,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
+	"github.com/xogas/wayland/example/internal/shared"
 	"github.com/xogas/wayland/protocol/staging/cursorshape"
 	"github.com/xogas/wayland/wire"
 )
@@ -24,6 +23,9 @@ const (
 	key2     = 3
 	keyLeft  = 105
 	keyRight = 106
+
+	cursorSize int32 = 32
+	hotspot    int32 = 16
 )
 
 var shapeCycle = []cursorshape.CursorShapeDeviceV1Shape{
@@ -54,9 +56,6 @@ type app struct {
 	shapeIdx       int
 }
 
-const cursorSize int32 = 32
-const hotspot int32 = 16
-
 func (a *app) applyCursor() {
 	if a.mode == modeCustom {
 		_ = a.pointer.SetCursor(a.lastSerial, wire.ObjectID(a.cursorSurface.Proxy().ID()), hotspot, hotspot)
@@ -69,165 +68,63 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
-
-	reg, err := dpy.GetRegistry()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
-		os.Exit(1)
-	}
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
 
 	dpy.SetOnError(func(pe *wayland.ProtocolError) {
 		fmt.Fprintf(os.Stderr, "protocol error: %v\n", pe)
 		os.Exit(1)
 	})
 
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+	core, err := shared.BindCore(reg, globals)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	seat, err := shared.BindSeat(reg, globals)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	var compG, shmG, seatG, wmG, cursorShapeG wayland.RegistryGlobalEvent
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case wayland.InterfaceSeat:
-			seatG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case cursorshape.InterfaceCursorShapeManagerV1:
-			cursorShapeG = g
+	// Optional cursor-shape-v1: bind once, use it for GetPointer below.
+	var csMgr *cursorshape.CursorShapeManagerV1
+	var csDevice *cursorshape.CursorShapeDeviceV1
+	hasCursorShape := false
+	if csMgrG, ok := globals.Find(cursorshape.InterfaceCursorShapeManagerV1); ok {
+		csMgr, err = cursorshape.BindCursorShapeManagerV1(reg, csMgrG.Name, min(csMgrG.Version, cursorshape.VersionCursorShapeManagerV1))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "bind cursor_shape_manager: %v\n", err)
+		} else {
+			hasCursorShape = true
+			defer csMgr.Destroy() //nolint: errcheck
 		}
 	}
-
-	hasCursorShape := cursorShapeG.Interface != ""
 	if !hasCursorShape {
 		fmt.Println("wp_cursor_shape_manager_v1 not available, mode B disabled (custom cursor surface only).")
 	}
 
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "Cursor Demo", "cursor-demo", 400, 300, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) { _ = wmBase.Pong(ev.Serial) })
-
-	surface, err := comp.CreateSurface()
+	// Static blue window content.
+	winID, winData, winCleanup, err := shared.NewBuffer(core.Shm, 400, 300, wayland.ShmFormatXrgb8888)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "window buffer: %v\n", err)
 		os.Exit(1)
 	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
-	}
-
-	const winW, winH = 400, 300
-
-	var cfgSerial uint32
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
-
-	shutdown := make(chan struct{})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) { close(shutdown) })
-
-	_ = toplevel.SetTitle("Cursor Demo")
-	_ = toplevel.SetAppID("cursor-demo")
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				os.Exit(1)
-			}
-			break
-		}
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	stride := int32(winW * 4)
-	bufSize := int64(winH) * int64(stride)
-
-	fd, closeFd, err := shmFile(bufSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeFd()
-
-	data, err := syscall.Mmap(fd, 0, int(bufSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
-
-	for y := range int32(winH) {
-		for x := range int32(winW) {
-			off := int(y*stride + x*4)
-			data[off+0] = 0x40
-			data[off+1] = 0x60
-			data[off+2] = 0x80
-			data[off+3] = 0xFF
-		}
-	}
-
-	pool, err := shm.CreatePool(fd, int32(bufSize))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	winBuf, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
-		os.Exit(1)
-	}
-	defer winBuf.Destroy() //nolint: errcheck
-
-	_ = surface.Attach(wire.ObjectID(winBuf.Proxy().ID()), 0, 0)
-	_ = surface.Damage(0, 0, winW, winH)
-	_ = surface.Commit()
+	defer winCleanup()
+	shared.FillSolid(winData, 0x80, 0x60, 0x40)
+	_ = toplevel.Surface.Attach(winID, 0, 0)
+	_ = toplevel.Surface.Damage(0, 0, 400, 300)
+	_ = toplevel.Surface.Commit()
 
 	pointer, err := seat.GetPointer()
 	if err != nil {
@@ -235,73 +132,39 @@ func main() {
 		os.Exit(1)
 	}
 
-	cursorFd, cursorCloseFd, err := shmFile(int64(cursorSize) * int64(cursorSize) * 4)
+	// Self-drawn crosshair cursor surface (ARGB, transparent outside the bars).
+	cursorID, cursorData, cursorCleanup, err := shared.NewBuffer(core.Shm, cursorSize, cursorSize, wayland.ShmFormatArgb8888)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm cursor: %v\n", err)
+		fmt.Fprintf(os.Stderr, "cursor buffer: %v\n", err)
 		os.Exit(1)
 	}
-	defer cursorCloseFd()
-
-	cursorData, err := syscall.Mmap(cursorFd, 0, int(cursorSize*cursorSize*4), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap cursor: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(cursorData) //nolint: errcheck
-
-	cursorStride := cursorSize * 4
-	for i := 0; i < len(cursorData); i += 4 {
-		cursorData[i+0] = 0x00
-		cursorData[i+1] = 0x00
-		cursorData[i+2] = 0x00
-		cursorData[i+3] = 0x00
-	}
+	defer cursorCleanup()
+	shared.FillSolid(cursorData, 0, 0, 0)
 	for x := range cursorSize {
-		off := hotspot*cursorStride + x*4
+		off := int(hotspot*int32(4)*cursorSize + x*4)
 		cursorData[off+0] = 0xFF
 		cursorData[off+1] = 0xFF
 		cursorData[off+2] = 0xFF
 		cursorData[off+3] = 0xFF
 	}
 	for y := range cursorSize {
-		off := y*cursorStride + hotspot*4
+		off := int(y*4*cursorSize + hotspot*4)
 		cursorData[off+0] = 0xFF
 		cursorData[off+1] = 0xFF
 		cursorData[off+2] = 0xFF
 		cursorData[off+3] = 0xFF
 	}
 
-	cursorPool, err := shm.CreatePool(cursorFd, int32(len(cursorData)))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cursor create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer cursorPool.Destroy() //nolint: errcheck
-
-	cursorBuf, err := cursorPool.CreateBuffer(0, cursorSize, cursorSize, cursorStride, wayland.ShmFormatArgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cursor create_buffer: %v\n", err)
-		os.Exit(1)
-	}
-	defer cursorBuf.Destroy() //nolint: errcheck
-
-	cursorSurface, err := comp.CreateSurface()
+	cursorSurface, err := core.Compositor.CreateSurface()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cursor create_surface: %v\n", err)
 		os.Exit(1)
 	}
-	_ = cursorSurface.Attach(wire.ObjectID(cursorBuf.Proxy().ID()), 0, 0)
+	_ = cursorSurface.Attach(cursorID, 0, 0)
 	_ = cursorSurface.Damage(0, 0, cursorSize, cursorSize)
 	_ = cursorSurface.Commit()
 
-	var csDevice *cursorshape.CursorShapeDeviceV1
 	if hasCursorShape {
-		csMgr, err := cursorshape.BindCursorShapeManagerV1(reg, cursorShapeG.Name, min(cursorShapeG.Version, cursorshape.VersionCursorShapeManagerV1))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "bind cursor_shape_manager: %v\n", err)
-			os.Exit(1)
-		}
-		defer csMgr.Destroy() //nolint: errcheck
 		csDevice, err = csMgr.GetPointer(wire.ObjectID(pointer.Proxy().ID()))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "cursor_shape get_pointer: %v\n", err)
@@ -371,39 +234,20 @@ func main() {
 		fmt.Println("Mode B not available: wp_cursor_shape_manager_v1 not advertised by compositor")
 	}
 
+	errCh := shared.DispatchLoop(ctx, dpy)
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
 			return
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
 			return
-		default:
-		}
-		if err := dpy.Dispatch(ctx); err != nil {
-			if ctx.Err() != nil {
-				fmt.Println("timeout reached.")
-				return
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
 			}
-			if err == wayland.ErrConnClosed {
-				return
-			}
-			fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			break
+			return
 		}
 	}
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }

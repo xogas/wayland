@@ -9,11 +9,10 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
+	"github.com/xogas/wayland/example/internal/shared"
 	"github.com/xogas/wayland/wire"
 )
 
@@ -26,19 +25,13 @@ const (
 	keyR  = 19
 )
 
-type subBufSlot struct {
-	id   wire.ObjectID
-	wl   *wayland.Buffer
-	base []byte
-}
-
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -47,63 +40,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-
-	var compG, shmG, wmG, subcompG, seatG wayland.RegistryGlobalEvent
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
-	}
-
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case wayland.InterfaceSubcompositor:
-			subcompG = g
-		case wayland.InterfaceSeat:
-			seatG = g
-		}
-	}
-	if compG.Interface == "" || shmG.Interface == "" || wmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "missing required globals (compositor, shm, xdg_wm_base)")
-		os.Exit(1)
-	}
-	if subcompG.Interface == "" {
+	subcompG, ok := globals.Find(wayland.InterfaceSubcompositor)
+	if !ok {
 		fmt.Fprintln(os.Stderr, "no wl_subcompositor global")
-		os.Exit(1)
-	}
-	if seatG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_seat global")
-		os.Exit(1)
-	}
-
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
 		os.Exit(1)
 	}
 	subcomp, err := wayland.BindSubcompositor(reg, subcompG.Name, min(subcompG.Version, wayland.VersionSubcompositor))
@@ -111,158 +55,55 @@ func main() {
 		fmt.Fprintf(os.Stderr, "bind subcompositor: %v\n", err)
 		os.Exit(1)
 	}
-	seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
+	seat, err := shared.BindSeat(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) {
-		_ = wmBase.Pong(ev.Serial)
-	})
-
-	mainSurface, err := comp.CreateSurface()
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "subsurfaces", "subsurfaces-demo", mainW, mainH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	mainID := wire.ObjectID(mainSurface.Proxy().ID())
+	mainSurface := toplevel.Surface
 
-	xdgSurface, err := wmBase.GetXdgSurface(mainID)
+	// Static gradient main buffer.
+	mainID, mainData, mainCleanup, err := shared.NewBuffer(core.Shm, mainW, mainH, wayland.ShmFormatXrgb8888)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "main buffer: %v\n", err)
 		os.Exit(1)
 	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
-	}
+	defer mainCleanup()
+	drawGradient(mainData, int(mainW), int(mainH), int(mainW*4))
 
-	shutdown := make(chan struct{})
-	var cfgSerial uint32
-
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) {
-		close(shutdown)
-	})
-
-	_ = toplevel.SetTitle("subsurfaces")
-	_ = toplevel.SetAppID("subsurfaces-demo")
-	_ = mainSurface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				return
-			}
-			break
-		}
-	}
-	if cfgSerial == 0 {
-		fmt.Fprintln(os.Stderr, "no configure serial received")
-		return
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	mainStride := int32(mainW * 4)
-	subStride := int32(subW * 4)
-	mainBufSize := int64(mainH * mainStride)
-	subBufSize := int64(subH * subStride)
-	poolSize := mainBufSize + subBufSize*2
-
-	fd, closeFd, err := shmFile(poolSize)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "shm: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeFd()
-
-	data, err := syscall.Mmap(fd, 0, int(poolSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-		os.Exit(1)
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
-
-	pool, err := shm.CreatePool(fd, int32(poolSize))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-		os.Exit(1)
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	mainBuf, err := pool.CreateBuffer(0, mainW, mainH, mainStride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_buffer main: %v\n", err)
-		os.Exit(1)
-	}
-	defer mainBuf.Destroy() //nolint: errcheck
-	mainBufID := wire.ObjectID(mainBuf.Proxy().ID())
-
-	drawGradient(data[0:mainBufSize], int(mainW), int(mainH), int(mainStride))
-
-	subSurfaceWL, err := comp.CreateSurface()
+	// Child surface + wl_subsurface role.
+	subSurface, err := core.Compositor.CreateSurface()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create_surface sub: %v\n", err)
 		os.Exit(1)
 	}
-	subSurfaceID := wire.ObjectID(subSurfaceWL.Proxy().ID())
-
-	subsurface, err := subcomp.GetSubsurface(subSurfaceID, mainID)
+	subsurface, err := subcomp.GetSubsurface(wire.ObjectID(subSurface.Proxy().ID()), wire.ObjectID(mainSurface.Proxy().ID()))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "get_subsurface: %v\n", err)
 		os.Exit(1)
 	}
 	_ = subsurface.SetPosition(int32((mainW-subW)/2), int32((mainH-subH)/2))
 
-	subBufs := [2]subBufSlot{}
-	subBufOff0 := int32(mainBufSize)
-	subBufOff1 := int32(mainBufSize + subBufSize)
-	for i := 0; i < 2; i++ {
-		off := int32(i)
-		switch off {
-		case 0:
-			off = subBufOff0
-		case 1:
-			off = subBufOff1
-		}
-		wlBuf, err := pool.CreateBuffer(off, subW, subH, subStride, wayland.ShmFormatXrgb8888)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "create_buffer sub %d: %v\n", i, err)
-			os.Exit(1)
-		}
-		subBufs[i] = subBufSlot{
-			id:   wire.ObjectID(wlBuf.Proxy().ID()),
-			wl:   wlBuf,
-			base: data[off : off+int32(subBufSize)],
-		}
+	subBufs, err := shared.NewDoubleBuffer(core.Shm, subW, subH)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "sub buffers: %v\n", err)
+		os.Exit(1)
 	}
-
-	freeCh := make(chan int, 2)
-	subBufs[0].wl.OnRelease(func(ev wayland.BufferReleaseEvent) {
-		freeCh <- 0
-	})
-	subBufs[1].wl.OnRelease(func(ev wayland.BufferReleaseEvent) {
-		freeCh <- 1
-	})
-	freeCh <- 0
-	freeCh <- 1
-
-	desyncMode := false
-	placeAbove := true
+	defer subBufs.Close()
 
 	kbd, err := seat.GetKeyboard()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "get_keyboard: %v\n", err)
 		os.Exit(1)
 	}
+	desyncMode := false
+	placeAbove := true
 	kbd.OnKey(func(ev wayland.KeyboardKeyEvent) {
 		if ev.State != wayland.KeyboardKeyStatePressed {
 			return
@@ -280,42 +121,41 @@ func main() {
 			}
 		case keyR:
 			if placeAbove {
-				_ = subsurface.PlaceBelow(mainID)
+				_ = subsurface.PlaceBelow(wire.ObjectID(mainSurface.Proxy().ID()))
 				placeAbove = false
 				fmt.Println("place_below parent")
 			} else {
-				_ = subsurface.PlaceAbove(mainID)
+				_ = subsurface.PlaceAbove(wire.ObjectID(mainSurface.Proxy().ID()))
 				placeAbove = true
 				fmt.Println("place_above parent")
 			}
 		}
 	})
 
-	_ = mainSurface.Attach(mainBufID, 0, 0)
+	_ = mainSurface.Attach(mainID, 0, 0)
 	_ = mainSurface.Damage(0, 0, mainW, mainH)
 	_ = mainSurface.Commit()
 
-	go func() {
-		for {
-			if err := dpy.Dispatch(ctx); err != nil {
-				return
-			}
-		}
-	}()
-
+	errCh := shared.DispatchLoop(ctx, dpy)
 	start := time.Now()
 	frames := 0
 
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			printStats(start, frames)
 			return
 		case <-ctx.Done():
 			printStats(start, frames)
 			return
-		case idx := <-freeCh:
-			drawSub(subBufs[idx].base, subW, subH, int(subStride), frames)
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+			}
+			printStats(start, frames)
+			return
+		case idx := <-subBufs.Free():
+			drawSub(subBufs.Pixels[idx], int(subBufs.Stride), frames)
 			px, py := subPosition(frames)
 			_ = subsurface.SetPosition(int32(px), int32(py))
 
@@ -329,29 +169,22 @@ func main() {
 				close(done)
 			})
 
-			if err := subSurfaceWL.Attach(subBufs[idx].id, 0, 0); err != nil {
-				fmt.Fprintf(os.Stderr, "sub attach: %v\n", err)
-				return
-			}
-			if err := subSurfaceWL.Damage(0, 0, subW, subH); err != nil {
-				fmt.Fprintf(os.Stderr, "sub damage: %v\n", err)
-				return
-			}
-			if err := subSurfaceWL.Commit(); err != nil {
-				fmt.Fprintf(os.Stderr, "sub commit: %v\n", err)
-				return
-			}
-
-			if err := mainSurface.Commit(); err != nil {
-				fmt.Fprintf(os.Stderr, "main commit: %v\n", err)
-				return
-			}
+			_ = subSurface.Attach(subBufs.IDs[idx], 0, 0)
+			_ = subSurface.Damage(0, 0, subW, subH)
+			_ = subSurface.Commit()
+			_ = mainSurface.Commit()
 
 			select {
-			case <-shutdown:
+			case <-toplevel.Closed:
 				printStats(start, frames)
 				return
 			case <-ctx.Done():
+				printStats(start, frames)
+				return
+			case err := <-errCh:
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
+				}
 				printStats(start, frames)
 				return
 			case <-done:
@@ -378,15 +211,15 @@ func drawGradient(data []byte, w, h, stride int) {
 	}
 }
 
-func drawSub(data []byte, w, h, stride, frame int) {
-	cx := float64(w) * 0.5
-	cy := float64(h) * 0.5
+func drawSub(data []byte, stride, frame int) {
+	cx := float64(subW) * 0.5
+	cy := float64(subH) * 0.5
 	t := float64(frame) * 0.06
 
-	for y := 0; y < h; y++ {
+	for y := 0; y < subH; y++ {
 		rowOff := y * stride
 		dy := float64(y) - cy
-		for x := 0; x < w; x++ {
+		for x := 0; x < subW; x++ {
 			dx := float64(x) - cx
 			d := math.Sqrt(dx*dx + dy*dy)
 			rMax := 40.0 + 20.0*math.Sin(t*1.3)
@@ -424,17 +257,4 @@ func printStats(start time.Time, frames int) {
 	if elapsed > 0 {
 		fmt.Printf("%d frames in %.1fs (%.1f fps)\n", frames, elapsed, float64(frames)/elapsed)
 	}
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }

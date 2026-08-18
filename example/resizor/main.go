@@ -1,34 +1,32 @@
 //go:build linux
 
-// Interactive window management demo: pointer move/resize, keyboard state toggles, configure-driven buffer resizing.
+// Interactive window management demo: pointer move/resize, keyboard state
+// toggles, configure-driven buffer resizing, optional server-side decoration.
 package main
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/xogas/wayland"
+	"github.com/xogas/wayland/example/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/xdgshell"
 	"github.com/xogas/wayland/protocol/unstable/xdgdecorationunstable"
 	"github.com/xogas/wayland/wire"
 )
 
-func parseStates(data []byte) []xdgshell.ToplevelState {
-	if len(data) < 4 {
-		return nil
-	}
-	n := len(data) / 4
-	out := make([]xdgshell.ToplevelState, 0, n)
-	for i := 0; i < n; i++ {
-		v := binary.LittleEndian.Uint32(data[i*4 : (i+1)*4])
-		out = append(out, xdgshell.ToplevelState(v))
-	}
-	return out
-}
+const (
+	keyQ    = 16
+	keyM    = 50
+	keyF    = 33
+	keyN    = 49
+	keyUp   = 103
+	keyDown = 108
+
+	btnLeft = 272
+)
 
 func stateName(s xdgshell.ToplevelState) string {
 	switch s {
@@ -94,106 +92,61 @@ func diffStates(old, new []xdgshell.ToplevelState) (added, removed []xdgshell.To
 	return
 }
 
-func fillRect(data []byte, stride int, rx, ry, rw, rh int, b, g, r, a byte) {
-	for y := ry; y < ry+rh; y++ {
-		off := y*stride + rx*4
-		for x := 0; x < rw; x++ {
-			o := off + x*4
-			data[o+0] = b
-			data[o+1] = g
-			data[o+2] = r
-			data[o+3] = a
-		}
-	}
-}
-
-func redraw(surface *wayland.Surface, shm *wayland.Shm, w, h int32, states []xdgshell.ToplevelState) error {
-	stride := w * 4
-	bufSize := int64(h) * int64(stride)
-	fd, closeFd, err := shmFile(bufSize)
+// redraw renders the background, a state-colored border, the size label and
+// the current toplevel states into a fresh buffer and commits it.
+func redraw(t *shared.Toplevel, core *shared.Core, w, h int32, states []xdgshell.ToplevelState) error {
+	bufID, data, cleanup, err := shared.NewBuffer(core.Shm, w, h, wayland.ShmFormatXrgb8888)
 	if err != nil {
 		return err
 	}
-	defer closeFd()
-	data, err := syscall.Mmap(fd, 0, int(bufSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		return err
-	}
-	defer syscall.Munmap(data) //nolint: errcheck
+	defer cleanup()
 
-	fillRect(data, int(stride), 0, 0, int(w), int(h), 0xCC, 0xCC, 0xDD, 0xFF)
+	stride := int(w) * 4
+	shared.FillRect(data, stride, int(w), int(h), 0, 0, int(w), int(h), 0xDD, 0xCC, 0xCC)
 	const border = 4
-	borderColor := [4]byte{0x88, 0x88, 0x99, 0xFF}
+	borderColor := [3]byte{0x99, 0x88, 0x88}
 	if hasState(states, xdgshell.ToplevelStateActivated) {
-		borderColor = [4]byte{0x44, 0x88, 0xCC, 0xFF}
+		borderColor = [3]byte{0xCC, 0x88, 0x44}
 	}
 	if hasState(states, xdgshell.ToplevelStateResizing) {
-		borderColor = [4]byte{0xCC, 0x88, 0x44, 0xFF}
+		borderColor = [3]byte{0x44, 0x88, 0xCC}
 	}
-	fillRect(data, int(stride), 0, 0, int(w), border, borderColor[0], borderColor[1], borderColor[2], borderColor[3])
-	fillRect(data, int(stride), 0, int(h)-border, int(w), border, borderColor[0], borderColor[1], borderColor[2], borderColor[3])
-	fillRect(data, int(stride), 0, 0, border, int(h), borderColor[0], borderColor[1], borderColor[2], borderColor[3])
-	fillRect(data, int(stride), int(w)-border, 0, border, int(h), borderColor[0], borderColor[1], borderColor[2], borderColor[3])
+	shared.FillRect(data, stride, int(w), int(h), 0, 0, int(w), border, borderColor[0], borderColor[1], borderColor[2])
+	shared.FillRect(data, stride, int(w), int(h), 0, int(h)-border, int(w), border, borderColor[0], borderColor[1], borderColor[2])
+	shared.FillRect(data, stride, int(w), int(h), 0, 0, border, int(h), borderColor[0], borderColor[1], borderColor[2])
+	shared.FillRect(data, stride, int(w), int(h), int(w)-border, 0, border, int(h), borderColor[0], borderColor[1], borderColor[2])
 
 	const scale = 3
 	textSize := fmt.Sprintf("%dx%d", w, h)
-	textW := textWidth(textSize, scale)
-	textH := textHeight(scale)
+	textW := shared.TextWidth(textSize, scale)
+	textH := shared.TextHeight(scale)
 	centerX := (int(w) - textW) / 2
 	centerY := (int(h) - textH) / 2
-	drawText(data, int(stride), int(w), int(h), textSize, centerX, centerY, scale, 0x000000)
+	shared.DrawText(data, stride, int(w), int(h), textSize, centerX, centerY, scale, 0x000000)
 
 	stY := centerY + textH + 2*scale
 	lineH := textH + scale
 	for i, s := range states {
 		label := stateName(s)
-		if label == "" {
-			continue
-		}
-		lw := textWidth(label, scale)
+		lw := shared.TextWidth(label, scale)
 		lx := (int(w) - lw) / 2
 		ly := stY + i*lineH
-		drawText(data, int(stride), int(w), int(h), label, lx, ly, scale, 0x000000)
+		shared.DrawText(data, stride, int(w), int(h), label, lx, ly, scale, 0x000000)
 	}
 
-	pool, err := shm.CreatePool(fd, int32(bufSize))
-	if err != nil {
-		return err
-	}
-	defer pool.Destroy() //nolint: errcheck
-
-	buf, err := pool.CreateBuffer(0, w, h, stride, wayland.ShmFormatXrgb8888)
-	if err != nil {
-		return err
-	}
-	defer buf.Destroy() //nolint: errcheck
-
-	_ = surface.Attach(wire.ObjectID(buf.Proxy().ID()), 0, 0)
-	_ = surface.Damage(0, 0, w, h)
-	_ = surface.Commit()
+	_ = t.Surface.Attach(bufID, 0, 0)
+	_ = t.Surface.Damage(0, 0, w, h)
+	_ = t.Surface.Commit()
 	return nil
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }
 
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -202,134 +155,49 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: obj=%d code=%d msg=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
-	}
-
-	var compG, shmG, wmG, seatG, decoG wayland.RegistryGlobalEvent
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case wayland.InterfaceSeat:
-			if seatG.Interface == "" {
-				seatG = g
-			}
-		case xdgdecorationunstable.InterfaceDecorationManagerV1:
-			decoG = g
-		}
-	}
-	if compG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_compositor global")
-		os.Exit(1)
-	}
-	if shmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_shm global")
-		os.Exit(1)
-	}
-	if wmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no xdg_wm_base global")
-		os.Exit(1)
-	}
-
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
-		os.Exit(1)
-	}
-
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) { _ = wmBase.Pong(ev.Serial) })
-
-	surface, err := comp.CreateSurface()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
-		os.Exit(1)
-	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
-		os.Exit(1)
-	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
-	}
-
+	quit := make(chan struct{}, 1)
 	winW := int32(400)
 	winH := int32(300)
 	var currentStates []xdgshell.ToplevelState
-	var cfgSerial uint32
-	cfgAcked := false
 
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {
-		prevStates := currentStates
-		currentStates = parseStates(ev.States)
-		added, removed := diffStates(prevStates, currentStates)
-		for _, s := range removed {
-			fmt.Printf("  -%s\n", stateName(s))
-		}
-		for _, s := range added {
-			fmt.Printf("  +%s\n", stateName(s))
-		}
-		if ev.Width > 0 && ev.Height > 0 {
-			if ev.Width != winW || ev.Height != winH {
-				fmt.Printf("configure: %dx%d -> %dx%d\n", winW, winH, ev.Width, ev.Height)
-				winW = ev.Width
-				winH = ev.Height
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "resizor", "go-wayland-resizor", winW, winH,
+		func(t *shared.Toplevel, w, h int32, states []xdgshell.ToplevelState) {
+			prevStates := currentStates
+			currentStates = states
+			added, removed := diffStates(prevStates, currentStates)
+			for _, s := range removed {
+				fmt.Printf("  -%s\n", stateName(s))
 			}
-		}
-		if cfgSerial != 0 {
-			_ = xdgSurface.AckConfigure(cfgSerial)
-			cfgSerial = 0
-			if err := redraw(surface, shm, winW, winH, currentStates); err != nil {
+			for _, s := range added {
+				fmt.Printf("  +%s\n", stateName(s))
+			}
+			if w != winW || h != winH {
+				fmt.Printf("configure: %dx%d -> %dx%d\n", winW, winH, w, h)
+				winW, winH = w, h
+			}
+			if err := redraw(t, core, winW, winH, currentStates); err != nil {
 				fmt.Fprintf(os.Stderr, "redraw: %v\n", err)
 			}
-		}
-	})
+		})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
+	// Double-buffered state: applies at the next commit.
+	_ = toplevel.Toplevel.SetMinSize(200, 150)
+	_ = toplevel.Toplevel.SetMaxSize(1280, 1024)
 
-	shutdown := make(chan struct{})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) { close(shutdown) })
-
-	_ = toplevel.SetTitle("resizor")
-	_ = toplevel.SetAppID("go-wayland-resizor")
-	_ = toplevel.SetMinSize(200, 150)
-	_ = toplevel.SetMaxSize(1280, 1024)
-
-	if decoG.Interface != "" {
+	if decoG, ok := globals.Find(xdgdecorationunstable.InterfaceDecorationManagerV1); ok {
 		decoMan, err := xdgdecorationunstable.BindDecorationManagerV1(reg, decoG.Name, min(decoG.Version, xdgdecorationunstable.VersionDecorationManagerV1))
 		if err == nil {
-			td, err := decoMan.GetToplevelDecoration(wire.ObjectID(toplevel.Proxy().ID()))
+			td, err := decoMan.GetToplevelDecoration(wire.ObjectID(toplevel.Toplevel.Proxy().ID()))
 			if err == nil {
 				_ = td.SetMode(xdgdecorationunstable.ToplevelDecorationV1ModeServerSide)
 				fmt.Println("requested server-side decoration")
@@ -339,123 +207,89 @@ func main() {
 		fmt.Println("zxdg_decoration_manager_v1 not available, using client-side decoration")
 	}
 
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for !cfgAcked {
-		if cfgSerial != 0 {
-			_ = xdgSurface.AckConfigure(cfgSerial)
-			cfgSerial = 0
-			cfgAcked = true
-		} else {
-			if err := dpy.Dispatch(waitCtx); err != nil {
-				if waitCtx.Err() != nil {
-					fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-					os.Exit(1)
-				}
-				break
-			}
-		}
-	}
-	if !cfgAcked {
-		fmt.Fprintln(os.Stderr, "no configure event received")
-		os.Exit(1)
-	}
-
-	if err := redraw(surface, shm, winW, winH, currentStates); err != nil {
-		fmt.Fprintf(os.Stderr, "initial redraw: %v\n", err)
-		os.Exit(1)
-	}
-
-	var seat *wayland.Seat
 	var kb *wayland.Keyboard
 	var ptr *wayland.Pointer
 	var ptrX, ptrY int32
-
-	if seatG.Interface != "" {
-		seat, err = wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
-		} else {
-			seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
-				if ev.Capabilities&wayland.SeatCapabilityKeyboard != 0 && kb == nil {
-					k, err := seat.GetKeyboard()
-					if err == nil {
-						kb = k
-						k.OnKey(func(ev wayland.KeyboardKeyEvent) {
-							if ev.State != 1 {
-								return
+	if seat, err := shared.BindSeat(reg, globals); err == nil {
+		seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
+			if ev.Capabilities&wayland.SeatCapabilityKeyboard != 0 && kb == nil {
+				k, err := seat.GetKeyboard()
+				if err == nil {
+					kb = k
+					k.OnKey(func(ev wayland.KeyboardKeyEvent) {
+						if ev.State != wayland.KeyboardKeyStatePressed {
+							return
+						}
+						switch ev.Key {
+						case keyQ:
+							select {
+							case quit <- struct{}{}:
+							default:
 							}
-							switch ev.Key {
-							case 16:
-								close(shutdown)
-							case 50:
-								if hasState(currentStates, xdgshell.ToplevelStateMaximized) {
-									_ = toplevel.UnsetMaximized()
-								} else {
-									_ = toplevel.SetMaximized()
-								}
-							case 33:
-								if hasState(currentStates, xdgshell.ToplevelStateFullscreen) {
-									_ = toplevel.UnsetFullscreen()
-								} else {
-									_ = toplevel.SetFullscreen(0)
-								}
-							case 49:
-								_ = toplevel.SetMinimized()
-							case 103:
-								winH += 30
-								if winH > 1280 {
-									winH = 1280
-								}
-								_ = xdgSurface.SetWindowGeometry(0, 0, winW, winH)
-								if err := redraw(surface, shm, winW, winH, currentStates); err != nil {
-									fmt.Fprintf(os.Stderr, "redraw up: %v\n", err)
-								}
-							case 108:
-								winH -= 30
-								if winH < 150 {
-									winH = 150
-								}
-								_ = xdgSurface.SetWindowGeometry(0, 0, winW, winH)
-								if err := redraw(surface, shm, winW, winH, currentStates); err != nil {
-									fmt.Fprintf(os.Stderr, "redraw down: %v\n", err)
-								}
-							}
-						})
-					}
-				}
-				if ev.Capabilities&wayland.SeatCapabilityPointer != 0 && ptr == nil {
-					p, err := seat.GetPointer()
-					if err == nil {
-						ptr = p
-						p.OnMotion(func(ev wayland.PointerMotionEvent) {
-							ptrX = int32(ev.SurfaceX.Float64())
-							ptrY = int32(ev.SurfaceY.Float64())
-						})
-						p.OnButton(func(ev wayland.PointerButtonEvent) {
-							if ev.Button != 272 || ev.State != 1 {
-								return
-							}
-							edge := edgeFromCoords(ptrX, ptrY, winW, winH)
-							seatID := wire.ObjectID(seat.Proxy().ID())
-							if edge == xdgshell.ToplevelResizeEdgeNone {
-								_ = toplevel.Move(seatID, ev.Serial)
+						case keyM:
+							if hasState(currentStates, xdgshell.ToplevelStateMaximized) {
+								_ = toplevel.Toplevel.UnsetMaximized()
 							} else {
-								_ = toplevel.Resize(seatID, ev.Serial, edge)
+								_ = toplevel.Toplevel.SetMaximized()
 							}
-						})
-					}
+						case keyF:
+							if hasState(currentStates, xdgshell.ToplevelStateFullscreen) {
+								_ = toplevel.Toplevel.UnsetFullscreen()
+							} else {
+								_ = toplevel.Toplevel.SetFullscreen(0)
+							}
+						case keyN:
+							_ = toplevel.Toplevel.SetMinimized()
+						case keyUp:
+							winH += 30
+							if winH > 1280 {
+								winH = 1280
+							}
+							_ = toplevel.XdgSurface.SetWindowGeometry(0, 0, winW, winH)
+							if err := redraw(toplevel, core, winW, winH, currentStates); err != nil {
+								fmt.Fprintf(os.Stderr, "redraw up: %v\n", err)
+							}
+						case keyDown:
+							winH -= 30
+							if winH < 150 {
+								winH = 150
+							}
+							_ = toplevel.XdgSurface.SetWindowGeometry(0, 0, winW, winH)
+							if err := redraw(toplevel, core, winW, winH, currentStates); err != nil {
+								fmt.Fprintf(os.Stderr, "redraw down: %v\n", err)
+							}
+						}
+					})
 				}
-			})
-		}
-	}
-
-	if seat != nil {
+			}
+			if ev.Capabilities&wayland.SeatCapabilityPointer != 0 && ptr == nil {
+				p, err := seat.GetPointer()
+				if err == nil {
+					ptr = p
+					p.OnMotion(func(ev wayland.PointerMotionEvent) {
+						ptrX = ev.SurfaceX.Int()
+						ptrY = ev.SurfaceY.Int()
+					})
+					p.OnButton(func(ev wayland.PointerButtonEvent) {
+						if ev.Button != btnLeft || ev.State != wayland.PointerButtonStatePressed {
+							return
+						}
+						edge := edgeFromCoords(ptrX, ptrY, winW, winH)
+						seatID := wire.ObjectID(seat.Proxy().ID())
+						if edge == xdgshell.ToplevelResizeEdgeNone {
+							_ = toplevel.Toplevel.Move(seatID, ev.Serial)
+						} else {
+							_ = toplevel.Toplevel.Resize(seatID, ev.Serial, edge)
+						}
+					})
+				}
+			}
+		})
 		if err := dpy.Roundtrip(ctx); err != nil {
 			fmt.Fprintf(os.Stderr, "seat roundtrip: %v\n", err)
 		}
+	} else {
+		fmt.Println("no wl_seat global: keyboard and pointer interaction disabled")
 	}
 
 	fmt.Printf("resizor: %dx%d, keys: m=Max f=Full n=Min Up/Dn=Resize q=Quit, mouse: drag=Move edge=Resize\n", winW, winH)
@@ -465,55 +299,53 @@ func main() {
 	}
 	fmt.Println()
 
+	// Print happens before the dispatch goroutine starts, so the snapshot of
+	// winW/winH/currentStates above is race-free.
+	errCh := shared.DispatchLoop(ctx, dpy)
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			fmt.Println("closed by compositor.")
+			return
+		case <-quit:
+			fmt.Println("quit.")
 			return
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
 			return
-		default:
-		}
-		if err := dpy.Dispatch(ctx); err != nil {
-			if ctx.Err() != nil {
-				fmt.Println("timeout reached.")
-				return
+		case err := <-errCh:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
 			}
-			fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			break
+			return
 		}
 	}
 }
 
 func edgeFromCoords(x, y, w, h int32) xdgshell.ToplevelResizeEdge {
 	const margin int32 = 20
-	top := y < margin
-	bottom := y >= h-margin
-	left := x < margin
-	right := x >= w-margin
-	if top && left {
+	if x < margin && y < margin {
 		return xdgshell.ToplevelResizeEdgeTopLeft
 	}
-	if top && right {
+	if x >= w-margin && y < margin {
 		return xdgshell.ToplevelResizeEdgeTopRight
 	}
-	if bottom && left {
+	if x < margin && y >= h-margin {
 		return xdgshell.ToplevelResizeEdgeBottomLeft
 	}
-	if bottom && right {
+	if x >= w-margin && y >= h-margin {
 		return xdgshell.ToplevelResizeEdgeBottomRight
 	}
-	if top {
+	if y < margin {
 		return xdgshell.ToplevelResizeEdgeTop
 	}
-	if bottom {
+	if y >= h-margin {
 		return xdgshell.ToplevelResizeEdgeBottom
 	}
-	if left {
+	if x < margin {
 		return xdgshell.ToplevelResizeEdgeLeft
 	}
-	if right {
+	if x >= w-margin {
 		return xdgshell.ToplevelResizeEdgeRight
 	}
 	return xdgshell.ToplevelResizeEdgeNone

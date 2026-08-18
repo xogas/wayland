@@ -11,8 +11,18 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/protocol/stable/xdgshell"
+	"github.com/xogas/wayland/example/internal/shared"
 	"github.com/xogas/wayland/wire"
+)
+
+const (
+	keyC = 46
+	keyV = 47
+
+	btnLeft = 272
+
+	winW = 500
+	winH = 300
 )
 
 type colorBox struct {
@@ -36,31 +46,6 @@ func boxAt(x, y int32) *colorBox {
 		}
 	}
 	return nil
-}
-
-func fillRect(data []byte, stride int, x, y, w, h int, r, g, b byte) {
-	for dy := range h {
-		for dx := range w {
-			off := (y+dy)*stride + (x+dx)*4
-			data[off+0] = b
-			data[off+1] = g
-			data[off+2] = r
-			data[off+3] = 0xFF
-		}
-	}
-}
-
-func shmFile(size int64) (fd int, closeFn func(), err error) {
-	f, err := os.CreateTemp("", "wayland-shm-*")
-	if err != nil {
-		return 0, nil, err
-	}
-	_ = os.Remove(f.Name())
-	if err := f.Truncate(size); err != nil {
-		_ = f.Close()
-		return 0, nil, err
-	}
-	return int(f.Fd()), func() { _ = f.Close() }, nil
 }
 
 func pipe2() (rfd, wfd int, err error) {
@@ -93,13 +78,37 @@ func readAndClose(fd int) string {
 	return string(buf[:n])
 }
 
+// transferReq is a queued clipboard/drop receive: the actual Receive + sync
+// roundtrip happens in the main loop, never inside an event handler.
+type transferReq struct {
+	offer *wayland.DataOffer
+	mime  string
+	rfd   int
+	wfd   int
+	drop  bool // finish and destroy the offer after the transfer
+}
+
+func pickMime(mimes []string, preferred []string) string {
+	for _, m := range mimes {
+		for _, p := range preferred {
+			if m == p {
+				return m
+			}
+		}
+	}
+	if len(mimes) > 0 {
+		return mimes[0]
+	}
+	return ""
+}
+
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	dpy, err := wayland.Connect(ctx)
+	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "connect: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	defer dpy.Close() //nolint: errcheck
@@ -108,82 +117,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "protocol error: obj=%d code=%d msg=%q\n", pe.ObjectID, pe.Code, pe.Message)
 	})
 
-	reg, err := dpy.GetRegistry()
+	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_registry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-
-	var globals []wayland.RegistryGlobalEvent
-	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
-		globals = append(globals, ev)
-	})
-
-	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
+	seat, err := shared.BindSeat(reg, globals)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-
-	var compG, shmG, wmG, seatG, ddmG wayland.RegistryGlobalEvent
-	for _, g := range globals {
-		switch g.Interface {
-		case wayland.InterfaceCompositor:
-			compG = g
-		case wayland.InterfaceShm:
-			shmG = g
-		case xdgshell.InterfaceWmBase:
-			wmG = g
-		case wayland.InterfaceSeat:
-			if seatG.Interface == "" {
-				seatG = g
-			}
-		case wayland.InterfaceDataDeviceManager:
-			ddmG = g
-		}
-	}
-	if compG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_compositor global")
-		os.Exit(1)
-	}
-	if shmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_shm global")
-		os.Exit(1)
-	}
-	if wmG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no xdg_wm_base global")
-		os.Exit(1)
-	}
-	if seatG.Interface == "" {
-		fmt.Fprintln(os.Stderr, "no wl_seat global")
-		os.Exit(1)
-	}
-	if ddmG.Interface == "" {
+	ddmG, ok := globals.Find(wayland.InterfaceDataDeviceManager)
+	if !ok {
 		fmt.Fprintln(os.Stderr, "no wl_data_device_manager global")
 		os.Exit(1)
 	}
-
 	ddmVersion := ddmG.Version
-
-	comp, err := wayland.BindCompositor(reg, compG.Name, min(compG.Version, wayland.VersionCompositor))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind compositor: %v\n", err)
-		os.Exit(1)
-	}
-	shm, err := wayland.BindShm(reg, shmG.Name, min(shmG.Version, wayland.VersionShm))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind shm: %v\n", err)
-		os.Exit(1)
-	}
-	wmBase, err := xdgshell.BindWmBase(reg, wmG.Name, min(wmG.Version, xdgshell.VersionWmBase))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wm_base: %v\n", err)
-		os.Exit(1)
-	}
-	seat, err := wayland.BindSeat(reg, seatG.Name, min(seatG.Version, wayland.VersionSeat))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind seat: %v\n", err)
-		os.Exit(1)
-	}
 	ddm, err := wayland.BindDataDeviceManager(reg, ddmG.Name, min(ddmG.Version, wayland.VersionDataDeviceManager))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bind data_device_manager: %v\n", err)
@@ -194,18 +143,12 @@ func main() {
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
-
 	if err := dpy.Roundtrip(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
 		os.Exit(1)
 	}
-
-	if caps&wayland.SeatCapabilityKeyboard == 0 {
-		fmt.Fprintln(os.Stderr, "seat has no keyboard capability")
-		os.Exit(1)
-	}
-	if caps&wayland.SeatCapabilityPointer == 0 {
-		fmt.Fprintln(os.Stderr, "seat has no pointer capability")
+	if caps&wayland.SeatCapabilityKeyboard == 0 || caps&wayland.SeatCapabilityPointer == 0 {
+		fmt.Fprintln(os.Stderr, "seat needs keyboard and pointer capabilities")
 		os.Exit(1)
 	}
 
@@ -217,119 +160,37 @@ func main() {
 	kb.OnKeymap(func(ev wayland.KeyboardKeymapEvent) {
 		_ = syscall.Close(ev.Fd)
 	})
-
 	ptr, err := seat.GetPointer()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "get_pointer: %v\n", err)
 		os.Exit(1)
 	}
-
 	dd, err := ddm.GetDataDevice(wire.ObjectID(seat.Proxy().ID()))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "get_data_device: %v\n", err)
 		os.Exit(1)
 	}
 
-	wmBase.OnPing(func(ev xdgshell.WmBasePingEvent) { _ = wmBase.Pong(ev.Serial) })
-
-	surface, err := comp.CreateSurface()
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "wayland-dnd", "wayland-dnd", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	xdgSurface, err := wmBase.GetXdgSurface(wire.ObjectID(surface.Proxy().ID()))
+
+	// Static window content: four color boxes.
+	winID, data, winCleanup, err := shared.NewBuffer(core.Shm, winW, winH, wayland.ShmFormatXrgb8888)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_xdg_surface: %v\n", err)
+		fmt.Fprintf(os.Stderr, "window buffer: %v\n", err)
 		os.Exit(1)
 	}
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_toplevel: %v\n", err)
-		os.Exit(1)
+	defer winCleanup()
+	shared.FillSolid(data, 0xFF, 0xFF, 0xFF)
+	for _, b := range boxes {
+		shared.FillRect(data, int(winW)*4, winW, winH, int(b.x), int(b.y), int(b.w), int(b.h), b.r, b.g, b.b)
 	}
-
-	const (
-		winW = 500
-		winH = 300
-	)
-
-	_ = toplevel.SetTitle("wayland-dnd")
-	_ = toplevel.SetAppID("wayland-dnd")
-
-	var cfgSerial uint32
-	xdgSurface.OnConfigure(func(ev xdgshell.SurfaceConfigureEvent) {
-		cfgSerial = ev.Serial
-	})
-	toplevel.OnConfigure(func(ev xdgshell.ToplevelConfigureEvent) {})
-
-	shutdown := make(chan struct{})
-	toplevel.OnClose(func(ev xdgshell.ToplevelCloseEvent) { close(shutdown) })
-
-	_ = surface.Commit()
-
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer waitCancel()
-	for cfgSerial == 0 {
-		if err := dpy.Dispatch(waitCtx); err != nil {
-			if waitCtx.Err() != nil {
-				fmt.Fprintln(os.Stderr, "timeout waiting for configure")
-				os.Exit(1)
-			}
-			break
-		}
-	}
-	if cfgSerial == 0 {
-		fmt.Fprintln(os.Stderr, "no configure event received")
-		os.Exit(1)
-	}
-	_ = xdgSurface.AckConfigure(cfgSerial)
-
-	stride := int32(winW * 4)
-	bufSize := int64(winH) * int64(stride)
-	{
-		fd, closeFd, err := shmFile(bufSize)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "shm: %v\n", err)
-			os.Exit(1)
-		}
-		data, err := syscall.Mmap(fd, 0, int(bufSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "mmap: %v\n", err)
-			closeFd()
-			os.Exit(1)
-		}
-		for i := 0; i < len(data); i += 4 {
-			data[i+0] = 0xFF
-			data[i+1] = 0xFF
-			data[i+2] = 0xFF
-			data[i+3] = 0xFF
-		}
-		for _, b := range boxes {
-			fillRect(data, int(stride), int(b.x), int(b.y), int(b.w), int(b.h), b.r, b.g, b.b)
-		}
-		pool, err := shm.CreatePool(fd, int32(bufSize))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "create_pool: %v\n", err)
-			_ = syscall.Munmap(data)
-			closeFd()
-			os.Exit(1)
-		}
-		buf, err := pool.CreateBuffer(0, winW, winH, stride, wayland.ShmFormatXrgb8888)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "create_buffer: %v\n", err)
-			_ = pool.Destroy()
-			_ = syscall.Munmap(data)
-			closeFd()
-			os.Exit(1)
-		}
-		_ = surface.Attach(wire.ObjectID(buf.Proxy().ID()), 0, 0)
-		_ = surface.Damage(0, 0, winW, winH)
-		_ = surface.Commit()
-		_ = buf.Destroy()
-		_ = pool.Destroy()
-		_ = syscall.Munmap(data)
-		closeFd()
-	}
+	_ = toplevel.Surface.Attach(winID, 0, 0)
+	_ = toplevel.Surface.Damage(0, 0, winW, winH)
+	_ = toplevel.Surface.Commit()
 
 	var kbSerial uint32
 	var ptrX, ptrY int32
@@ -338,6 +199,7 @@ func main() {
 	var selectionOffer *wayland.DataOffer
 	var clipboardSource *wayland.DataSource
 	var activeOfferID uint32
+	var transferCh chan *transferReq
 
 	kb.OnEnter(func(ev wayland.KeyboardEnterEvent) {
 		kbSerial = ev.Serial
@@ -351,7 +213,7 @@ func main() {
 			return
 		}
 		switch ev.Key {
-		case 46:
+		case keyC:
 			if clipboardSource != nil {
 				_ = clipboardSource.Destroy()
 				clipboardSource = nil
@@ -382,19 +244,13 @@ func main() {
 			}
 			_ = dd.SetSelection(wire.ObjectID(src.Proxy().ID()), kbSerial)
 			fmt.Println("clipboard: copy (set_selection)")
-
-		case 47:
+		case keyV:
 			if selectionOffer == nil {
 				fmt.Println("clipboard: no selection offer to paste")
 				return
 			}
-			mime := ""
-			for _, m := range offerMimes[selectionOffer.Proxy().ID()] {
-				if m == "text/plain;charset=utf-8" || m == "text/plain" {
-					mime = m
-					break
-				}
-			}
+			mime := pickMime(offerMimes[selectionOffer.Proxy().ID()],
+				[]string{"text/plain;charset=utf-8", "text/plain"})
 			if mime == "" {
 				mime = "text/plain;charset=utf-8"
 			}
@@ -403,34 +259,26 @@ func main() {
 				fmt.Fprintf(os.Stderr, "pipe: %v\n", err)
 				return
 			}
-			if err := selectionOffer.Receive(mime, wfd); err != nil {
-				fmt.Fprintf(os.Stderr, "receive: %v\n", err)
+			select {
+			case transferCh <- &transferReq{offer: selectionOffer, mime: mime, rfd: rfd, wfd: wfd}:
+			default:
 				_ = syscall.Close(rfd)
 				_ = syscall.Close(wfd)
-				return
 			}
-			_ = syscall.Close(wfd)
-			if err := dpy.Roundtrip(ctx); err != nil {
-				fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-				_ = syscall.Close(rfd)
-				return
-			}
-			data := readAndClose(rfd)
-			fmt.Printf("clipboard: paste mime=%q data=%q\n", mime, data)
 		}
 	})
 
 	ptr.OnEnter(func(ev wayland.PointerEnterEvent) {
-		ptrX = int32(ev.SurfaceX.Float64())
-		ptrY = int32(ev.SurfaceY.Float64())
+		ptrX = ev.SurfaceX.Int()
+		ptrY = ev.SurfaceY.Int()
 		fmt.Printf("pointer: enter serial=%d x=%d y=%d\n", ev.Serial, ptrX, ptrY)
 	})
 	ptr.OnLeave(func(ev wayland.PointerLeaveEvent) {
 		fmt.Printf("pointer: leave serial=%d\n", ev.Serial)
 	})
 	ptr.OnMotion(func(ev wayland.PointerMotionEvent) {
-		ptrX = int32(ev.SurfaceX.Float64())
-		ptrY = int32(ev.SurfaceY.Float64())
+		ptrX = ev.SurfaceX.Int()
+		ptrY = ev.SurfaceY.Int()
 	})
 	ptr.OnButton(func(ev wayland.PointerButtonEvent) {
 		st := "release"
@@ -438,7 +286,7 @@ func main() {
 			st = "press"
 		}
 		fmt.Printf("pointer: button=%d state=%s serial=%d\n", ev.Button, st, ev.Serial)
-		if ev.State == wayland.PointerButtonStatePressed && ev.Button == 272 {
+		if ev.State == wayland.PointerButtonStatePressed && ev.Button == btnLeft {
 			b := boxAt(ptrX, ptrY)
 			if b != nil {
 				fmt.Printf("dnd: start_drag color=%s\n", b.colorHex)
@@ -473,7 +321,7 @@ func main() {
 				if ddmVersion >= 3 {
 					_ = src.SetActions(wayland.DataDeviceManagerDndActionCopy)
 				}
-				_ = dd.StartDrag(wire.ObjectID(src.Proxy().ID()), wire.ObjectID(surface.Proxy().ID()), 0, ev.Serial)
+				_ = dd.StartDrag(wire.ObjectID(src.Proxy().ID()), wire.ObjectID(toplevel.Surface.Proxy().ID()), 0, ev.Serial)
 			}
 		}
 	})
@@ -521,17 +369,7 @@ func main() {
 		if offer == nil {
 			return
 		}
-		mimes := offerMimes[activeOfferID]
-		mime := ""
-		for _, m := range mimes {
-			if m == "application/x-color" {
-				mime = m
-				break
-			}
-		}
-		if mime == "" && len(mimes) > 0 {
-			mime = mimes[0]
-		}
+		mime := pickMime(offerMimes[activeOfferID], []string{"application/x-color"})
 		if mime == "" {
 			return
 		}
@@ -540,27 +378,12 @@ func main() {
 			fmt.Fprintf(os.Stderr, "pipe: %v\n", err)
 			return
 		}
-		if err := offer.Receive(mime, wfd); err != nil {
-			fmt.Fprintf(os.Stderr, "receive: %v\n", err)
+		select {
+		case transferCh <- &transferReq{offer: offer, mime: mime, rfd: rfd, wfd: wfd, drop: true}:
+		default:
 			_ = syscall.Close(rfd)
 			_ = syscall.Close(wfd)
-			return
 		}
-		_ = syscall.Close(wfd)
-		if err := dpy.Roundtrip(ctx); err != nil {
-			fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-			_ = syscall.Close(rfd)
-			return
-		}
-		data := readAndClose(rfd)
-		fmt.Printf("dnd: drop data=%q\n", data)
-		if ddmVersion >= 3 {
-			_ = offer.Finish()
-		}
-		_ = offer.Destroy()
-		delete(offerMap, activeOfferID)
-		delete(offerMimes, activeOfferID)
-		activeOfferID = 0
 	})
 	dd.OnLeave(func(ev wayland.DataDeviceLeaveEvent) {
 		fmt.Println("data_device: leave")
@@ -588,9 +411,12 @@ func main() {
 
 	fmt.Printf("wayland-dnd: window %dx%d, 120s timeout. c=copy v=paste, drag boxes with left mouse.\n", winW, winH)
 
+	transferCh = make(chan *transferReq, 4)
+
+	// Main loop: dispatch, then run queued transfers (never inside a handler).
 	for {
 		select {
-		case <-shutdown:
+		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
 			return
 		case <-ctx.Done():
@@ -604,7 +430,45 @@ func main() {
 				return
 			}
 			fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			break
+			return
 		}
+		for len(transferCh) > 0 {
+			req := <-transferCh
+			doTransfer(dpy, ctx, req, ddmVersion, offerMap, offerMimes, &activeOfferID)
+		}
+	}
+}
+
+func doTransfer(dpy *wayland.Display, ctx context.Context, req *transferReq, ddmVersion uint32,
+	offerMap map[uint32]*wayland.DataOffer, offerMimes map[uint32][]string, activeOfferID *uint32) {
+	kind := "clipboard"
+	if req.drop {
+		kind = "dnd"
+	}
+	if err := req.offer.Receive(req.mime, req.wfd); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: receive: %v\n", kind, err)
+		_ = syscall.Close(req.rfd)
+		_ = syscall.Close(req.wfd)
+		return
+	}
+	_ = syscall.Close(req.wfd)
+	if err := dpy.Roundtrip(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: roundtrip: %v\n", kind, err)
+		_ = syscall.Close(req.rfd)
+		return
+	}
+	data := readAndClose(req.rfd)
+	if req.drop {
+		fmt.Printf("dnd: drop data=%q\n", data)
+		if ddmVersion >= 3 {
+			_ = req.offer.Finish()
+		}
+		_ = req.offer.Destroy()
+		id := req.offer.Proxy().ID()
+		delete(offerMap, id)
+		delete(offerMimes, id)
+		*activeOfferID = 0
+	} else {
+		fmt.Printf("clipboard: paste mime=%q data=%q\n", req.mime, data)
 	}
 }
