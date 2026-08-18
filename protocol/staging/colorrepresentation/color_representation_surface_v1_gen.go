@@ -23,12 +23,16 @@ type ColorRepresentationSurfaceV1Error uint32
 const (
 	// ColorRepresentationSurfaceV1ErrorAlphaMode unsupported alpha mode.
 	ColorRepresentationSurfaceV1ErrorAlphaMode ColorRepresentationSurfaceV1Error = 1
+
 	// ColorRepresentationSurfaceV1ErrorCoefficients unsupported coefficients.
 	ColorRepresentationSurfaceV1ErrorCoefficients ColorRepresentationSurfaceV1Error = 2
+
 	// ColorRepresentationSurfaceV1ErrorPixelFormat the pixel format and a set value are incompatible.
 	ColorRepresentationSurfaceV1ErrorPixelFormat ColorRepresentationSurfaceV1Error = 3
+
 	// ColorRepresentationSurfaceV1ErrorInert forbidden request on inert object.
 	ColorRepresentationSurfaceV1ErrorInert ColorRepresentationSurfaceV1Error = 4
+
 	// ColorRepresentationSurfaceV1ErrorChromaLocation invalid chroma location.
 	ColorRepresentationSurfaceV1ErrorChromaLocation ColorRepresentationSurfaceV1Error = 5
 )
@@ -44,11 +48,13 @@ const (
 	// Electrical color channel values (after transfer function encoding)
 	// are already multiplied with the alpha channel value.
 	ColorRepresentationSurfaceV1AlphaModePremultipliedElectrical ColorRepresentationSurfaceV1AlphaMode = 0
+
 	// ColorRepresentationSurfaceV1AlphaModePremultipliedOptical.
 	//
 	// Optical color channel values (before transfer function encoding)
 	// are already multiplied with the alpha channel value.
 	ColorRepresentationSurfaceV1AlphaModePremultipliedOptical ColorRepresentationSurfaceV1AlphaMode = 1
+
 	// ColorRepresentationSurfaceV1AlphaModeStraight.
 	//
 	// Alpha channel has not been pre-multiplied into color channels.
@@ -77,6 +83,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 0.
 	// Compatible with pixel formats of the RGB family.
 	ColorRepresentationSurfaceV1CoefficientsIdentity ColorRepresentationSurfaceV1Coefficients = 1
+
 	// ColorRepresentationSurfaceV1CoefficientsBt709.
 	//
 	// Coefficients as defined by
@@ -90,6 +97,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 1.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsBt709 ColorRepresentationSurfaceV1Coefficients = 2
+
 	// ColorRepresentationSurfaceV1CoefficientsFcc.
 	//
 	// Coefficients as defined by
@@ -99,6 +107,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 4.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsFcc ColorRepresentationSurfaceV1Coefficients = 3
+
 	// ColorRepresentationSurfaceV1CoefficientsBt601.
 	//
 	// Coefficients as defined by
@@ -116,6 +125,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 5, 6.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsBt601 ColorRepresentationSurfaceV1Coefficients = 4
+
 	// ColorRepresentationSurfaceV1CoefficientsSmpte240.
 	//
 	// Coefficients as defined by
@@ -124,6 +134,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 7.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsSmpte240 ColorRepresentationSurfaceV1Coefficients = 5
+
 	// ColorRepresentationSurfaceV1CoefficientsBt2020.
 	//
 	// Coefficients as defined by
@@ -133,6 +144,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 9.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsBt2020 ColorRepresentationSurfaceV1Coefficients = 6
+
 	// ColorRepresentationSurfaceV1CoefficientsBt2020Cl.
 	//
 	// Coefficients as defined by
@@ -141,6 +153,7 @@ const (
 	// Equivalent to H.273 MatrixCoefficients code point 10.
 	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsBt2020Cl ColorRepresentationSurfaceV1Coefficients = 7
+
 	// ColorRepresentationSurfaceV1CoefficientsIctcp.
 	//
 	// Coefficients as defined by
@@ -161,6 +174,7 @@ type ColorRepresentationSurfaceV1Range uint32
 const (
 	// ColorRepresentationSurfaceV1RangeFull full color range.
 	ColorRepresentationSurfaceV1RangeFull ColorRepresentationSurfaceV1Range = 1
+
 	// ColorRepresentationSurfaceV1RangeLimited limited color range.
 	ColorRepresentationSurfaceV1RangeLimited ColorRepresentationSurfaceV1Range = 2
 )
@@ -184,6 +198,7 @@ const (
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 0.
 	ColorRepresentationSurfaceV1ChromaLocationType0 ColorRepresentationSurfaceV1ChromaLocation = 1
+
 	// ColorRepresentationSurfaceV1ChromaLocationType1.
 	//
 	// Corresponding to VkChromaLocations:
@@ -192,6 +207,7 @@ const (
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 1.
 	ColorRepresentationSurfaceV1ChromaLocationType1 ColorRepresentationSurfaceV1ChromaLocation = 2
+
 	// ColorRepresentationSurfaceV1ChromaLocationType2.
 	//
 	// Corresponding to VkChromaLocations:
@@ -200,6 +216,7 @@ const (
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 2.
 	ColorRepresentationSurfaceV1ChromaLocationType2 ColorRepresentationSurfaceV1ChromaLocation = 3
+
 	// ColorRepresentationSurfaceV1ChromaLocationType3.
 	//
 	// Corresponding to VkChromaLocations:
@@ -208,10 +225,12 @@ const (
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 3.
 	ColorRepresentationSurfaceV1ChromaLocationType3 ColorRepresentationSurfaceV1ChromaLocation = 4
+
 	// ColorRepresentationSurfaceV1ChromaLocationType4.
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 4.
 	ColorRepresentationSurfaceV1ChromaLocationType4 ColorRepresentationSurfaceV1ChromaLocation = 5
+
 	// ColorRepresentationSurfaceV1ChromaLocationType5.
 	//
 	// Equivalent to H.273 Chroma420SampleLocType 5.

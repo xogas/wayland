@@ -48,6 +48,10 @@ var textinputv3EventFDCounts = map[uint16]int{
 	7: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTextInputV3, textinputv3EventFDCounts)
+}
+
 // TextInputV3ChangeCause text change reason.
 //
 // Reason for the change of surrounding text or cursor posision.
@@ -56,6 +60,7 @@ type TextInputV3ChangeCause uint32
 const (
 	// TextInputV3ChangeCauseInputMethod input method caused the change.
 	TextInputV3ChangeCauseInputMethod TextInputV3ChangeCause = 0
+
 	// TextInputV3ChangeCauseOther something else than the input method caused the change.
 	TextInputV3ChangeCauseOther TextInputV3ChangeCause = 1
 )
@@ -71,24 +76,34 @@ type TextInputV3ContentHint uint32
 const (
 	// TextInputV3ContentHintNone no special behavior.
 	TextInputV3ContentHintNone TextInputV3ContentHint = 0
+
 	// TextInputV3ContentHintCompletion suggest word completions.
 	TextInputV3ContentHintCompletion TextInputV3ContentHint = 1
+
 	// TextInputV3ContentHintSpellcheck suggest word corrections.
 	TextInputV3ContentHintSpellcheck TextInputV3ContentHint = 2
+
 	// TextInputV3ContentHintAutoCapitalization switch to uppercase letters at the start of a sentence.
 	TextInputV3ContentHintAutoCapitalization TextInputV3ContentHint = 4
+
 	// TextInputV3ContentHintLowercase prefer lowercase letters.
 	TextInputV3ContentHintLowercase TextInputV3ContentHint = 8
+
 	// TextInputV3ContentHintUppercase prefer uppercase letters.
 	TextInputV3ContentHintUppercase TextInputV3ContentHint = 16
+
 	// TextInputV3ContentHintTitlecase prefer casing for titles and headings (can be language dependent).
 	TextInputV3ContentHintTitlecase TextInputV3ContentHint = 32
+
 	// TextInputV3ContentHintHiddenText characters should be hidden.
 	TextInputV3ContentHintHiddenText TextInputV3ContentHint = 64
+
 	// TextInputV3ContentHintSensitiveData typed text should not be stored.
 	TextInputV3ContentHintSensitiveData TextInputV3ContentHint = 128
+
 	// TextInputV3ContentHintLatin just Latin characters should be entered.
 	TextInputV3ContentHintLatin TextInputV3ContentHint = 256
+
 	// TextInputV3ContentHintMultiline the text input is multiline.
 	TextInputV3ContentHintMultiline TextInputV3ContentHint = 512
 )
@@ -105,30 +120,43 @@ type TextInputV3ContentPurpose uint32
 const (
 	// TextInputV3ContentPurposeNormal default input, allowing all characters.
 	TextInputV3ContentPurposeNormal TextInputV3ContentPurpose = 0
+
 	// TextInputV3ContentPurposeAlpha allow only alphabetic characters.
 	TextInputV3ContentPurposeAlpha TextInputV3ContentPurpose = 1
+
 	// TextInputV3ContentPurposeDigits allow only digits.
 	TextInputV3ContentPurposeDigits TextInputV3ContentPurpose = 2
+
 	// TextInputV3ContentPurposeNumber input a number (including decimal separator and sign).
 	TextInputV3ContentPurposeNumber TextInputV3ContentPurpose = 3
+
 	// TextInputV3ContentPurposePhone input a phone number.
 	TextInputV3ContentPurposePhone TextInputV3ContentPurpose = 4
+
 	// TextInputV3ContentPurposeUrl input an URL.
 	TextInputV3ContentPurposeUrl TextInputV3ContentPurpose = 5
+
 	// TextInputV3ContentPurposeEmail input an email address.
 	TextInputV3ContentPurposeEmail TextInputV3ContentPurpose = 6
+
 	// TextInputV3ContentPurposeName input a name of a person.
 	TextInputV3ContentPurposeName TextInputV3ContentPurpose = 7
+
 	// TextInputV3ContentPurposePassword input a password (combine with sensitive_data hint).
 	TextInputV3ContentPurposePassword TextInputV3ContentPurpose = 8
+
 	// TextInputV3ContentPurposePin input is a numeric password (combine with sensitive_data hint).
 	TextInputV3ContentPurposePin TextInputV3ContentPurpose = 9
+
 	// TextInputV3ContentPurposeDate input a date.
 	TextInputV3ContentPurposeDate TextInputV3ContentPurpose = 10
+
 	// TextInputV3ContentPurposeTime input a time.
 	TextInputV3ContentPurposeTime TextInputV3ContentPurpose = 11
+
 	// TextInputV3ContentPurposeDatetime input a date and time.
 	TextInputV3ContentPurposeDatetime TextInputV3ContentPurpose = 12
+
 	// TextInputV3ContentPurposeTerminal input for a terminal.
 	TextInputV3ContentPurposeTerminal TextInputV3ContentPurpose = 13
 )
@@ -143,6 +171,7 @@ const (
 	//
 	// This enum value exists only to provide a default to make double-buffering implementation easier. It should not be used explicitly.
 	TextInputV3ActionNone TextInputV3Action = 1
+
 	// TextInputV3ActionFinish.
 	//
 	// This should be triggered when the user is done with editing the field and wants to move on. For example, the query was typed and the user wants the search result. Or the name was entered and the address needs to be typed next.
@@ -169,6 +198,7 @@ type TextInputV3SupportedFeatures uint32
 const (
 	// TextInputV3SupportedFeaturesNone no extra functionality supported.
 	TextInputV3SupportedFeaturesNone TextInputV3SupportedFeatures = 0
+
 	// TextInputV3SupportedFeaturesMoveCursor the move_cursor request.
 	TextInputV3SupportedFeaturesMoveCursor TextInputV3SupportedFeatures = 1
 )

@@ -28,6 +28,10 @@ var datacontrolsourcev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDataControlSourceV1, datacontrolsourcev1EventFDCounts)
+}
+
 type DataControlSourceV1Error uint32
 
 const (

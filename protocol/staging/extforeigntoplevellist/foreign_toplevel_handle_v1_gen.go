@@ -33,6 +33,10 @@ var foreigntoplevelhandlev1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceForeignToplevelHandleV1, foreigntoplevelhandlev1EventFDCounts)
+}
+
 // ForeignToplevelHandleV1DestroyRequest destroy the ext_foreign_toplevel_handle_v1 object.
 //
 // This request should be used when the client will no longer use the handle

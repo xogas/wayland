@@ -24,6 +24,10 @@ var bufferEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceBuffer, bufferEventFDCounts)
+}
+
 // BufferDestroyRequest destroy a buffer.
 //
 // Destroy a buffer. If and how you need to release the backing

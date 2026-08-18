@@ -21,12 +21,16 @@ type ImageDescriptionCreatorIccV1Error uint32
 const (
 	// ImageDescriptionCreatorIccV1ErrorIncompleteSet incomplete parameter set.
 	ImageDescriptionCreatorIccV1ErrorIncompleteSet ImageDescriptionCreatorIccV1Error = 0
+
 	// ImageDescriptionCreatorIccV1ErrorAlreadySet property already set.
 	ImageDescriptionCreatorIccV1ErrorAlreadySet ImageDescriptionCreatorIccV1Error = 1
+
 	// ImageDescriptionCreatorIccV1ErrorBadFd fd not seekable and readable.
 	ImageDescriptionCreatorIccV1ErrorBadFd ImageDescriptionCreatorIccV1Error = 2
+
 	// ImageDescriptionCreatorIccV1ErrorBadSize no or too much data.
 	ImageDescriptionCreatorIccV1ErrorBadSize ImageDescriptionCreatorIccV1Error = 3
+
 	// ImageDescriptionCreatorIccV1ErrorOutOfFile offset + length exceeds file size.
 	ImageDescriptionCreatorIccV1ErrorOutOfFile ImageDescriptionCreatorIccV1Error = 4
 )

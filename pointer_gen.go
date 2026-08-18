@@ -47,6 +47,10 @@ var pointerEventFDCounts = map[uint16]int{
 	11: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfacePointer, pointerEventFDCounts)
+}
+
 type PointerError uint32
 
 const (
@@ -63,6 +67,7 @@ type PointerButtonState uint32
 const (
 	// PointerButtonStateReleased the button is not pressed.
 	PointerButtonStateReleased PointerButtonState = 0
+
 	// PointerButtonStatePressed the button is pressed.
 	PointerButtonStatePressed PointerButtonState = 1
 )
@@ -75,6 +80,7 @@ type PointerAxis uint32
 const (
 	// PointerAxisVerticalScroll vertical axis.
 	PointerAxisVerticalScroll PointerAxis = 0
+
 	// PointerAxisHorizontalScroll horizontal axis.
 	PointerAxisHorizontalScroll PointerAxis = 1
 )
@@ -102,10 +108,13 @@ type PointerAxisSource uint32
 const (
 	// PointerAxisSourceWheel a physical wheel rotation.
 	PointerAxisSourceWheel PointerAxisSource = 0
+
 	// PointerAxisSourceFinger finger on a touch surface.
 	PointerAxisSourceFinger PointerAxisSource = 1
+
 	// PointerAxisSourceContinuous continuous coordinate space.
 	PointerAxisSourceContinuous PointerAxisSource = 2
+
 	// PointerAxisSourceWheelTilt a physical wheel tilt.
 	PointerAxisSourceWheelTilt PointerAxisSource = 3
 )
@@ -119,6 +128,7 @@ type PointerAxisRelativeDirection uint32
 const (
 	// PointerAxisRelativeDirectionIdentical physical motion matches axis direction.
 	PointerAxisRelativeDirectionIdentical PointerAxisRelativeDirection = 0
+
 	// PointerAxisRelativeDirectionInverted physical motion is the inverse of the axis direction.
 	PointerAxisRelativeDirectionInverted PointerAxisRelativeDirection = 1
 )

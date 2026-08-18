@@ -26,6 +26,10 @@ var backgroundeffectmanagerv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceBackgroundEffectManagerV1, backgroundeffectmanagerv1EventFDCounts)
+}
+
 type BackgroundEffectManagerV1Error uint32
 
 const (

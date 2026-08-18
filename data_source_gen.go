@@ -36,11 +36,16 @@ var datasourceEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceDataSource, datasourceEventFDCounts)
+}
+
 type DataSourceError uint32
 
 const (
 	// DataSourceErrorInvalidActionMask action mask contains invalid values.
 	DataSourceErrorInvalidActionMask DataSourceError = 0
+
 	// DataSourceErrorInvalidSource source doesn't accept this request.
 	DataSourceErrorInvalidSource DataSourceError = 1
 )

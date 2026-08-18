@@ -26,6 +26,10 @@ var toplevelsessionv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceToplevelSessionV1, toplevelsessionv1EventFDCounts)
+}
+
 // ToplevelSessionV1DestroyRequest destroy the object.
 //
 // Destroy the object. This has no effect window management of the

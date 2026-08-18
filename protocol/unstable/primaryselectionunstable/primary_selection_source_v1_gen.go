@@ -28,6 +28,10 @@ var primaryselectionsourcev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePrimarySelectionSourceV1, primaryselectionsourcev1EventFDCounts)
+}
+
 // PrimarySelectionSourceV1OfferRequest add an offered mime type.
 //
 // This request adds a mime type to the set of mime types advertised to

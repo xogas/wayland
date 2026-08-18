@@ -32,6 +32,10 @@ var tabletpadstripv2EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletPadStripV2, tabletpadstripv2EventFDCounts)
+}
+
 // TabletPadStripV2Source strip axis source.
 //
 // Describes the source types for strip events. This indicates to the

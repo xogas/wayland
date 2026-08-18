@@ -32,6 +32,10 @@ var drmleasedevicev1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDrmLeaseDeviceV1, drmleasedevicev1EventFDCounts)
+}
+
 // DrmLeaseDeviceV1CreateLeaseRequestRequest create a lease request object.
 //
 // Creates a lease request object.

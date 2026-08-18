@@ -40,6 +40,10 @@ var tabletpadv2EventFDCounts = map[uint16]int{
 	7: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletPadV2, tabletpadv2EventFDCounts)
+}
+
 // TabletPadV2ButtonState physical button state.
 //
 // Describes the physical state of a button that caused the button
@@ -49,6 +53,7 @@ type TabletPadV2ButtonState uint32
 const (
 	// TabletPadV2ButtonStateReleased the button is not pressed.
 	TabletPadV2ButtonStateReleased TabletPadV2ButtonState = 0
+
 	// TabletPadV2ButtonStatePressed the button is pressed.
 	TabletPadV2ButtonStatePressed TabletPadV2ButtonState = 1
 )

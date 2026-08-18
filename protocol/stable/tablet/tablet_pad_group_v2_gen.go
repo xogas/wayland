@@ -37,6 +37,10 @@ var tabletpadgroupv2EventFDCounts = map[uint16]int{
 	6: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletPadGroupV2, tabletpadgroupv2EventFDCounts)
+}
+
 // TabletPadGroupV2DestroyRequest destroy the pad object.
 //
 // Destroy the zwp_tablet_pad_group_v2 object. Objects created from this object

@@ -20,8 +20,10 @@ type DrmLeaseRequestV1Error uint32
 const (
 	// DrmLeaseRequestV1ErrorWrongDevice requested a connector from a different lease device.
 	DrmLeaseRequestV1ErrorWrongDevice DrmLeaseRequestV1Error = 0
+
 	// DrmLeaseRequestV1ErrorDuplicateConnector requested a connector twice.
 	DrmLeaseRequestV1ErrorDuplicateConnector DrmLeaseRequestV1Error = 1
+
 	// DrmLeaseRequestV1ErrorEmptyLease requested a lease without requesting a connector.
 	DrmLeaseRequestV1ErrorEmptyLease DrmLeaseRequestV1Error = 2
 )

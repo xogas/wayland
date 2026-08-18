@@ -37,6 +37,10 @@ var zonev1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceZoneV1, zonev1EventFDCounts)
+}
+
 type ZoneV1Error uint32
 
 const (

@@ -29,6 +29,10 @@ var lockedpointerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLockedPointerV1, lockedpointerv1EventFDCounts)
+}
+
 // LockedPointerV1DestroyRequest destroy the locked pointer object.
 //
 // Destroy the locked pointer object. If applicable, the compositor will

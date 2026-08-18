@@ -15,6 +15,34 @@ type Binder interface {
 	Bind(name uint32, iface string, version uint32) (*Proxy, error)
 }
 
+// interfaceFDCounts maps protocol interface names to their event fd-count
+// tables. Generated code registers every interface it defines from init;
+// Registry.Bind looks the table up so that raw proxies are as safe as
+// generated bindings. Without a table, fds carried by events on a raw proxy
+// would be left stuck in the connection-level queue, skewing every
+// subsequent fd-carrying message.
+var (
+	interfaceFDCountsMu sync.RWMutex
+	interfaceFDCounts   = map[string]map[uint16]int{}
+)
+
+// RegisterInterfaceFDCounts registers the per-opcode event fd-count table for
+// a protocol interface name. Generated code calls this from init; code that
+// binds custom protocols through Registry.Bind and handles events manually
+// should call it too, so dispatch can drain fds and reject unknown opcodes.
+func RegisterInterfaceFDCounts(name string, counts map[uint16]int) {
+	interfaceFDCountsMu.Lock()
+	interfaceFDCounts[name] = counts
+	interfaceFDCountsMu.Unlock()
+}
+
+func lookupInterfaceFDCounts(name string) (map[uint16]int, bool) {
+	interfaceFDCountsMu.RLock()
+	m, ok := interfaceFDCounts[name]
+	interfaceFDCountsMu.RUnlock()
+	return m, ok
+}
+
 type Proxy struct {
 	id       uint32
 	conn     *Conn
@@ -22,7 +50,7 @@ type Proxy struct {
 	version  atomic.Uint32
 	events   map[uint16][]func(*wire.Reader)
 	eventsMu sync.RWMutex
-	fdCounts map[uint16]int
+	fdCounts atomic.Pointer[map[uint16]int]
 }
 
 func NewProxy(conn *Conn) *Proxy {
@@ -62,21 +90,10 @@ func (p *Proxy) SetVersion(v uint32) {
 	p.version.Store(v)
 }
 
-// SetEventFDCounts sets the per-opcode file descriptor counts for incoming events.
+// SetEventFDCounts sets the per-opcode file descriptor counts for incoming
+// events. Safe for concurrent use with dispatch.
 func (p *Proxy) SetEventFDCounts(fdCounts map[uint16]int) {
-	p.fdCounts = fdCounts
-}
-
-// fdCountForOpcode returns the number of fds carried by an event opcode and
-// whether the opcode exists in the interface at all. A nil table means the
-// interface's event set is unknown (raw proxies); callers must then fall back
-// to lenient handling because the fd count of an event cannot be determined.
-func (p *Proxy) fdCountForOpcode(opcode uint16) (n int, known bool) {
-	if p.fdCounts == nil {
-		return 0, false
-	}
-	n, known = p.fdCounts[opcode]
-	return n, known
+	p.fdCounts.Store(&fdCounts)
 }
 
 func (p *Proxy) hasEvent(opcode uint16) bool {
@@ -86,13 +103,14 @@ func (p *Proxy) hasEvent(opcode uint16) bool {
 }
 
 func (p *Proxy) FDCounts() map[uint16]int {
-	return p.fdCounts
+	m := p.fdCounts.Load()
+	if m == nil {
+		return nil
+	}
+	return *m
 }
 
 func (p *Proxy) SendRequest(opcode uint16, m wire.Marshaler) error {
-	if p.conn.IsClosed() {
-		return ErrConnClosed
-	}
 	if p.deleted.Load() {
 		return ErrObjectDeleted
 	}

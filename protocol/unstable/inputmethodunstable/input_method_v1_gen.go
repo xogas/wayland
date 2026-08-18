@@ -23,6 +23,10 @@ var inputmethodv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceInputMethodV1, inputmethodv1EventFDCounts)
+}
+
 // InputMethodV1ActivateEvent activate event.
 //
 // A text input was activated. Creates an input method context object

@@ -20,6 +20,7 @@ type SecurityContextManagerV1Error uint32
 const (
 	// SecurityContextManagerV1ErrorInvalidListenFd listening socket FD is invalid.
 	SecurityContextManagerV1ErrorInvalidListenFd SecurityContextManagerV1Error = 1
+
 	// SecurityContextManagerV1ErrorNested nested security contexts are forbidden.
 	SecurityContextManagerV1ErrorNested SecurityContextManagerV1Error = 2
 )

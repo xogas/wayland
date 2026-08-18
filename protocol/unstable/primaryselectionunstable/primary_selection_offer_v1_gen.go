@@ -26,6 +26,10 @@ var primaryselectionofferv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePrimarySelectionOfferV1, primaryselectionofferv1EventFDCounts)
+}
+
 // PrimarySelectionOfferV1ReceiveRequest request that the data is transferred.
 //
 // To transfer the contents of the primary selection clipboard, the client

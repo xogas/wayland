@@ -36,6 +36,10 @@ var workspacegrouphandlev1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceWorkspaceGroupHandleV1, workspacegrouphandlev1EventFDCounts)
+}
+
 // This is a bitfield of flags.
 type WorkspaceGroupHandleV1GroupCapabilities uint32
 

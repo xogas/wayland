@@ -33,6 +33,10 @@ var datacontroldevicev1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDataControlDeviceV1, datacontroldevicev1EventFDCounts)
+}
+
 type DataControlDeviceV1Error uint32
 
 const (

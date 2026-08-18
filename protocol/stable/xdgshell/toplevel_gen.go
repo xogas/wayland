@@ -44,13 +44,19 @@ var toplevelEventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceToplevel, toplevelEventFDCounts)
+}
+
 type ToplevelError uint32
 
 const (
 	// ToplevelErrorInvalidResizeEdge provided value is not a valid variant of the resize_edge enum.
 	ToplevelErrorInvalidResizeEdge ToplevelError = 0
+
 	// ToplevelErrorInvalidParent invalid parent toplevel.
 	ToplevelErrorInvalidParent ToplevelError = 1
+
 	// ToplevelErrorInvalidSize client provided an invalid min or max size.
 	ToplevelErrorInvalidSize ToplevelError = 2
 )
@@ -62,14 +68,22 @@ const (
 type ToplevelResizeEdge uint32
 
 const (
-	ToplevelResizeEdgeNone        ToplevelResizeEdge = 0
-	ToplevelResizeEdgeTop         ToplevelResizeEdge = 1
-	ToplevelResizeEdgeBottom      ToplevelResizeEdge = 2
-	ToplevelResizeEdgeLeft        ToplevelResizeEdge = 4
-	ToplevelResizeEdgeTopLeft     ToplevelResizeEdge = 5
-	ToplevelResizeEdgeBottomLeft  ToplevelResizeEdge = 6
-	ToplevelResizeEdgeRight       ToplevelResizeEdge = 8
-	ToplevelResizeEdgeTopRight    ToplevelResizeEdge = 9
+	ToplevelResizeEdgeNone ToplevelResizeEdge = 0
+
+	ToplevelResizeEdgeTop ToplevelResizeEdge = 1
+
+	ToplevelResizeEdgeBottom ToplevelResizeEdge = 2
+
+	ToplevelResizeEdgeLeft ToplevelResizeEdge = 4
+
+	ToplevelResizeEdgeTopLeft ToplevelResizeEdge = 5
+
+	ToplevelResizeEdgeBottomLeft ToplevelResizeEdge = 6
+
+	ToplevelResizeEdgeRight ToplevelResizeEdge = 8
+
+	ToplevelResizeEdgeTopRight ToplevelResizeEdge = 9
+
 	ToplevelResizeEdgeBottomRight ToplevelResizeEdge = 10
 )
 
@@ -93,6 +107,7 @@ const (
 	// The client should draw without shadow or other
 	// decoration outside of the window geometry.
 	ToplevelStateMaximized ToplevelState = 1
+
 	// ToplevelStateFullscreen the surface is fullscreen.
 	//
 	// The surface is fullscreen. The window geometry specified in the
@@ -101,6 +116,7 @@ const (
 	// dimensions must be obeyed by the client. For more details, see
 	// xdg_toplevel.set_fullscreen.
 	ToplevelStateFullscreen ToplevelState = 2
+
 	// ToplevelStateResizing the surface is being resized.
 	//
 	// The surface is being resized. The window geometry specified in the
@@ -108,12 +124,14 @@ const (
 	// Clients that have aspect ratio or cell sizing configuration can use
 	// a smaller size, however.
 	ToplevelStateResizing ToplevelState = 3
+
 	// ToplevelStateActivated the surface is now activated.
 	//
 	// Client window decorations should be painted as if the window is
 	// active. Do not assume this means that the window actually has
 	// keyboard or pointer focus.
 	ToplevelStateActivated ToplevelState = 4
+
 	// ToplevelStateTiledLeft.
 	//
 	// The window is currently in a tiled layout and the left edge is
@@ -122,6 +140,7 @@ const (
 	// The client should draw without shadow or other decoration outside of
 	// the window geometry on the left edge.
 	ToplevelStateTiledLeft ToplevelState = 5
+
 	// ToplevelStateTiledRight.
 	//
 	// The window is currently in a tiled layout and the right edge is
@@ -130,6 +149,7 @@ const (
 	// The client should draw without shadow or other decoration outside of
 	// the window geometry on the right edge.
 	ToplevelStateTiledRight ToplevelState = 6
+
 	// ToplevelStateTiledTop.
 	//
 	// The window is currently in a tiled layout and the top edge is
@@ -138,6 +158,7 @@ const (
 	// The client should draw without shadow or other decoration outside of
 	// the window geometry on the top edge.
 	ToplevelStateTiledTop ToplevelState = 7
+
 	// ToplevelStateTiledBottom.
 	//
 	// The window is currently in a tiled layout and the bottom edge is
@@ -146,12 +167,14 @@ const (
 	// The client should draw without shadow or other decoration outside of
 	// the window geometry on the bottom edge.
 	ToplevelStateTiledBottom ToplevelState = 8
+
 	// ToplevelStateSuspended.
 	//
 	// The surface is currently not ordinarily being repainted; for
 	// example because its content is occluded by another window, or its
 	// outputs are switched off due to screen locking.
 	ToplevelStateSuspended ToplevelState = 9
+
 	// ToplevelStateConstrainedLeft.
 	//
 	// The left edge of the window is currently constrained, meaning it
@@ -159,6 +182,7 @@ const (
 	// it's tiled next to a monitor edge on the constrained side of the
 	// window.
 	ToplevelStateConstrainedLeft ToplevelState = 10
+
 	// ToplevelStateConstrainedRight.
 	//
 	// The right edge of the window is currently constrained, meaning it
@@ -166,6 +190,7 @@ const (
 	// it's tiled next to a monitor edge on the constrained side of the
 	// window.
 	ToplevelStateConstrainedRight ToplevelState = 11
+
 	// ToplevelStateConstrainedTop.
 	//
 	// The top edge of the window is currently constrained, meaning it
@@ -173,6 +198,7 @@ const (
 	// it's tiled next to a monitor edge on the constrained side of the
 	// window.
 	ToplevelStateConstrainedTop ToplevelState = 12
+
 	// ToplevelStateConstrainedBottom.
 	//
 	// The bottom edge of the window is currently constrained, meaning it
@@ -187,10 +213,13 @@ type ToplevelWmCapabilities uint32
 const (
 	// ToplevelWmCapabilitiesWindowMenu show_window_menu is available.
 	ToplevelWmCapabilitiesWindowMenu ToplevelWmCapabilities = 1
+
 	// ToplevelWmCapabilitiesMaximize set_maximized and unset_maximized are available.
 	ToplevelWmCapabilitiesMaximize ToplevelWmCapabilities = 2
+
 	// ToplevelWmCapabilitiesFullscreen set_fullscreen and unset_fullscreen are available.
 	ToplevelWmCapabilitiesFullscreen ToplevelWmCapabilities = 3
+
 	// ToplevelWmCapabilitiesMinimize set_minimized is available.
 	ToplevelWmCapabilitiesMinimize ToplevelWmCapabilities = 4
 )

@@ -20,8 +20,10 @@ type SessionManagerV1Error uint32
 const (
 	// SessionManagerV1ErrorInUse a requested session is already in use.
 	SessionManagerV1ErrorInUse SessionManagerV1Error = 1
+
 	// SessionManagerV1ErrorInvalidSessionID invalid session identifier.
 	SessionManagerV1ErrorInvalidSessionID SessionManagerV1Error = 2
+
 	// SessionManagerV1ErrorInvalidReason invalid reason.
 	SessionManagerV1ErrorInvalidReason SessionManagerV1Error = 3
 )
@@ -42,10 +44,12 @@ const (
 	//
 	// A new app instance is launched, for example from an app launcher.
 	SessionManagerV1ReasonLaunch SessionManagerV1Reason = 1
+
 	// SessionManagerV1ReasonRecover.
 	//
 	// An app instance is recovering from for example a compositor or app crash.
 	SessionManagerV1ReasonRecover SessionManagerV1Reason = 2
+
 	// SessionManagerV1ReasonSessionRestore.
 	//
 	// An app instance is restored, for example part of a restored session, or

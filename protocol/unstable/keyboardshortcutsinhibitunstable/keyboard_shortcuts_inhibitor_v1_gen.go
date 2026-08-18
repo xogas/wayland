@@ -27,6 +27,10 @@ var keyboardshortcutsinhibitorv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceKeyboardShortcutsInhibitorV1, keyboardshortcutsinhibitorv1EventFDCounts)
+}
+
 // KeyboardShortcutsInhibitorV1DestroyRequest destroy the keyboard shortcuts inhibitor object.
 //
 // Remove the keyboard shortcuts inhibitor from the associated wl_surface.

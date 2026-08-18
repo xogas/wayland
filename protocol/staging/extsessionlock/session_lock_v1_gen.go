@@ -29,17 +29,25 @@ var sessionlockv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSessionLockV1, sessionlockv1EventFDCounts)
+}
+
 type SessionLockV1Error uint32
 
 const (
 	// SessionLockV1ErrorInvalidDestroy attempted to destroy session lock while locked.
 	SessionLockV1ErrorInvalidDestroy SessionLockV1Error = 0
+
 	// SessionLockV1ErrorInvalidUnlock unlock requested but locked event was never sent.
 	SessionLockV1ErrorInvalidUnlock SessionLockV1Error = 1
+
 	// SessionLockV1ErrorRole given wl_surface already has a role.
 	SessionLockV1ErrorRole SessionLockV1Error = 2
+
 	// SessionLockV1ErrorDuplicateOutput given output already has a lock surface.
 	SessionLockV1ErrorDuplicateOutput SessionLockV1Error = 3
+
 	// SessionLockV1ErrorAlreadyConstructed given wl_surface has a buffer attached or committed.
 	SessionLockV1ErrorAlreadyConstructed SessionLockV1Error = 4
 )

@@ -37,6 +37,10 @@ var linuxdmabuffeedbackv1EventFDCounts = map[uint16]int{
 	6: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLinuxDmabufFeedbackV1, linuxdmabuffeedbackv1EventFDCounts)
+}
+
 // This is a bitfield of flags.
 type LinuxDmabufFeedbackV1TrancheFlags uint32
 
@@ -48,6 +52,7 @@ const (
 	// allocates a buffer. How to allocate a buffer that can be scanned out
 	// on the target device is implementation-defined.
 	LinuxDmabufFeedbackV1TrancheFlagsScanout LinuxDmabufFeedbackV1TrancheFlags = 1
+
 	// LinuxDmabufFeedbackV1TrancheFlagsSampling.
 	//
 	// The sampling flag describes that the compositor is able to efficiently

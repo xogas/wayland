@@ -25,6 +25,10 @@ var presentationfeedbackEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePresentationFeedback, presentationfeedbackEventFDCounts)
+}
+
 // PresentationFeedbackKind bitmask of flags in presented event.
 //
 // These flags provide information about how the presentation of
@@ -45,12 +49,14 @@ const (
 	// frontbuffer, then it must guarantee that tearing cannot
 	// happen.
 	PresentationFeedbackKindVsync PresentationFeedbackKind = 1
+
 	// PresentationFeedbackKindHwClock.
 	//
 	// The display hardware provided measurements that the hardware
 	// driver converted into a presentation timestamp. Sampling a
 	// clock in software is not acceptable for this flag.
 	PresentationFeedbackKindHwClock PresentationFeedbackKind = 2
+
 	// PresentationFeedbackKindHwCompletion.
 	//
 	// The display hardware signalled that it started using the new
@@ -58,6 +64,7 @@ const (
 	// to guess when the display hardware has switched to the new
 	// image content.
 	PresentationFeedbackKindHwCompletion PresentationFeedbackKind = 4
+
 	// PresentationFeedbackKindZeroCopy.
 	//
 	// The presentation of this update was done zero-copy. This means

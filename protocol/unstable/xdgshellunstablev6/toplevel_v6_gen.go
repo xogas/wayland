@@ -40,6 +40,10 @@ var toplevelv6EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceToplevelV6, toplevelv6EventFDCounts)
+}
+
 // ToplevelV6ResizeEdge edge values for resizing.
 //
 // These values are used to indicate which edge of a surface
@@ -47,14 +51,22 @@ var toplevelv6EventFDCounts = map[uint16]int{
 type ToplevelV6ResizeEdge uint32
 
 const (
-	ToplevelV6ResizeEdgeNone        ToplevelV6ResizeEdge = 0
-	ToplevelV6ResizeEdgeTop         ToplevelV6ResizeEdge = 1
-	ToplevelV6ResizeEdgeBottom      ToplevelV6ResizeEdge = 2
-	ToplevelV6ResizeEdgeLeft        ToplevelV6ResizeEdge = 4
-	ToplevelV6ResizeEdgeTopLeft     ToplevelV6ResizeEdge = 5
-	ToplevelV6ResizeEdgeBottomLeft  ToplevelV6ResizeEdge = 6
-	ToplevelV6ResizeEdgeRight       ToplevelV6ResizeEdge = 8
-	ToplevelV6ResizeEdgeTopRight    ToplevelV6ResizeEdge = 9
+	ToplevelV6ResizeEdgeNone ToplevelV6ResizeEdge = 0
+
+	ToplevelV6ResizeEdgeTop ToplevelV6ResizeEdge = 1
+
+	ToplevelV6ResizeEdgeBottom ToplevelV6ResizeEdge = 2
+
+	ToplevelV6ResizeEdgeLeft ToplevelV6ResizeEdge = 4
+
+	ToplevelV6ResizeEdgeTopLeft ToplevelV6ResizeEdge = 5
+
+	ToplevelV6ResizeEdgeBottomLeft ToplevelV6ResizeEdge = 6
+
+	ToplevelV6ResizeEdgeRight ToplevelV6ResizeEdge = 8
+
+	ToplevelV6ResizeEdgeTopRight ToplevelV6ResizeEdge = 9
+
 	ToplevelV6ResizeEdgeBottomRight ToplevelV6ResizeEdge = 10
 )
 
@@ -75,10 +87,12 @@ const (
 	// event must be obeyed by the client. If the window geometry is not obyed,
 	//        the zxdg_shell_v6.invalid_surface_state error is raised.
 	ToplevelV6StateMaximized ToplevelV6State = 1
+
 	// ToplevelV6StateFullscreen the surface is fullscreen.
 	//
 	// The surface is fullscreen. See set_fullscreen for more information.
 	ToplevelV6StateFullscreen ToplevelV6State = 2
+
 	// ToplevelV6StateResizing the surface is being resized.
 	//
 	// The surface is being resized. The window geometry specified in the
@@ -88,6 +102,7 @@ const (
 	// Clients that have aspect ratio or cell sizing configuration can use
 	// a smaller size, however.
 	ToplevelV6StateResizing ToplevelV6State = 3
+
 	// ToplevelV6StateActivated the surface is now activated.
 	//
 	// Client window decorations should be painted as if the window is

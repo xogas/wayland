@@ -26,6 +26,10 @@ var colormanagementoutputv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceColorManagementOutputV1, colormanagementoutputv1EventFDCounts)
+}
+
 // ColorManagementOutputV1DestroyRequest destroy the color management output.
 //
 // Destroy the color wp_color_management_output_v1 object. This does not

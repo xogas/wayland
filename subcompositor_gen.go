@@ -19,6 +19,7 @@ type SubcompositorError uint32
 const (
 	// SubcompositorErrorBadSurface the to-be sub-surface is invalid.
 	SubcompositorErrorBadSurface SubcompositorError = 0
+
 	// SubcompositorErrorBadParent the to-be sub-surface parent is invalid.
 	SubcompositorErrorBadParent SubcompositorError = 1
 )

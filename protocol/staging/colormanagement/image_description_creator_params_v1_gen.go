@@ -29,14 +29,19 @@ type ImageDescriptionCreatorParamsV1Error uint32
 const (
 	// ImageDescriptionCreatorParamsV1ErrorIncompleteSet incomplete parameter set.
 	ImageDescriptionCreatorParamsV1ErrorIncompleteSet ImageDescriptionCreatorParamsV1Error = 0
+
 	// ImageDescriptionCreatorParamsV1ErrorAlreadySet property already set.
 	ImageDescriptionCreatorParamsV1ErrorAlreadySet ImageDescriptionCreatorParamsV1Error = 1
+
 	// ImageDescriptionCreatorParamsV1ErrorUnsupportedFeature request not supported.
 	ImageDescriptionCreatorParamsV1ErrorUnsupportedFeature ImageDescriptionCreatorParamsV1Error = 2
+
 	// ImageDescriptionCreatorParamsV1ErrorInvalidTf invalid transfer characteristic.
 	ImageDescriptionCreatorParamsV1ErrorInvalidTf ImageDescriptionCreatorParamsV1Error = 3
+
 	// ImageDescriptionCreatorParamsV1ErrorInvalidPrimariesNamed invalid primaries named.
 	ImageDescriptionCreatorParamsV1ErrorInvalidPrimariesNamed ImageDescriptionCreatorParamsV1Error = 4
+
 	// ImageDescriptionCreatorParamsV1ErrorInvalidLuminance invalid luminance value or range.
 	ImageDescriptionCreatorParamsV1ErrorInvalidLuminance ImageDescriptionCreatorParamsV1Error = 5
 )

@@ -41,6 +41,10 @@ var surfaceEventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceSurface, surfaceEventFDCounts)
+}
+
 // SurfaceError wl_surface error values.
 //
 // These errors can be emitted in response to wl_surface requests.
@@ -49,14 +53,19 @@ type SurfaceError uint32
 const (
 	// SurfaceErrorInvalidScale buffer scale value is invalid.
 	SurfaceErrorInvalidScale SurfaceError = 0
+
 	// SurfaceErrorInvalidTransform buffer transform value is invalid.
 	SurfaceErrorInvalidTransform SurfaceError = 1
+
 	// SurfaceErrorInvalidSize buffer size is invalid.
 	SurfaceErrorInvalidSize SurfaceError = 2
+
 	// SurfaceErrorInvalidOffset buffer offset is invalid.
 	SurfaceErrorInvalidOffset SurfaceError = 3
+
 	// SurfaceErrorDefunctRoleObject surface was destroyed before its role object.
 	SurfaceErrorDefunctRoleObject SurfaceError = 4
+
 	// SurfaceErrorNoBuffer no buffer was attached.
 	SurfaceErrorNoBuffer SurfaceError = 5
 )

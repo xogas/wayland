@@ -27,6 +27,10 @@ var tabletseatv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletSeatV1, tabletseatv1EventFDCounts)
+}
+
 // TabletSeatV1DestroyRequest release the memory for the tablet seat object.
 //
 // Destroy the wp_tablet_seat object. Objects created from this

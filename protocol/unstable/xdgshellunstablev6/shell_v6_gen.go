@@ -28,19 +28,28 @@ var shellv6EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceShellV6, shellv6EventFDCounts)
+}
+
 type ShellV6Error uint32
 
 const (
 	// ShellV6ErrorRole given wl_surface has another role.
 	ShellV6ErrorRole ShellV6Error = 0
+
 	// ShellV6ErrorDefunctSurfaces xdg_shell was destroyed before children.
 	ShellV6ErrorDefunctSurfaces ShellV6Error = 1
+
 	// ShellV6ErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
 	ShellV6ErrorNotTheTopmostPopup ShellV6Error = 2
+
 	// ShellV6ErrorInvalidPopupParent the client specified an invalid popup parent surface.
 	ShellV6ErrorInvalidPopupParent ShellV6Error = 3
+
 	// ShellV6ErrorInvalidSurfaceState the client provided an invalid surface state.
 	ShellV6ErrorInvalidSurfaceState ShellV6Error = 4
+
 	// ShellV6ErrorInvalidPositioner the client provided an invalid positioner.
 	ShellV6ErrorInvalidPositioner ShellV6Error = 5
 )

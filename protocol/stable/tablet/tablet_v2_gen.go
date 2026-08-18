@@ -35,6 +35,10 @@ var tabletv2EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletV2, tabletv2EventFDCounts)
+}
+
 // TabletV2Bustype bus type.
 //
 // Describes the bus types this tablet is connected to.
@@ -43,12 +47,16 @@ type TabletV2Bustype uint32
 const (
 	// TabletV2BustypeUsb uSB.
 	TabletV2BustypeUsb TabletV2Bustype = 3
+
 	// TabletV2BustypeBluetooth bluetooth.
 	TabletV2BustypeBluetooth TabletV2Bustype = 5
+
 	// TabletV2BustypeVirtual virtual.
 	TabletV2BustypeVirtual TabletV2Bustype = 6
+
 	// TabletV2BustypeSerial serial.
 	TabletV2BustypeSerial TabletV2Bustype = 17
+
 	// TabletV2BustypeI2c i2C.
 	TabletV2BustypeI2c TabletV2Bustype = 24
 )

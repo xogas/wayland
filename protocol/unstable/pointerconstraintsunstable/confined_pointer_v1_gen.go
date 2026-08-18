@@ -28,6 +28,10 @@ var confinedpointerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceConfinedPointerV1, confinedpointerv1EventFDCounts)
+}
+
 // ConfinedPointerV1DestroyRequest destroy the confined pointer object.
 //
 // Destroy the confined pointer object. If applicable, the compositor will

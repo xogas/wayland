@@ -33,6 +33,10 @@ var drmleaseconnectorv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDrmLeaseConnectorV1, drmleaseconnectorv1EventFDCounts)
+}
+
 // DrmLeaseConnectorV1DestroyRequest destroy connector.
 //
 // The client may send this request to indicate that it will not use this

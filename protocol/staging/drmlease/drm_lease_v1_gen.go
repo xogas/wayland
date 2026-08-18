@@ -27,6 +27,10 @@ var drmleasev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDrmLeaseV1, drmleasev1EventFDCounts)
+}
+
 // DrmLeaseV1DestroyRequest destroys the lease object.
 //
 // The client should send this to indicate that it no longer wishes to use

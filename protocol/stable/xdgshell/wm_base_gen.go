@@ -28,21 +28,31 @@ var wmbaseEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceWmBase, wmbaseEventFDCounts)
+}
+
 type WmBaseError uint32
 
 const (
 	// WmBaseErrorRole given wl_surface has another role.
 	WmBaseErrorRole WmBaseError = 0
+
 	// WmBaseErrorDefunctSurfaces xdg_wm_base was destroyed before children.
 	WmBaseErrorDefunctSurfaces WmBaseError = 1
+
 	// WmBaseErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
 	WmBaseErrorNotTheTopmostPopup WmBaseError = 2
+
 	// WmBaseErrorInvalidPopupParent the client specified an invalid popup parent surface.
 	WmBaseErrorInvalidPopupParent WmBaseError = 3
+
 	// WmBaseErrorInvalidSurfaceState the client provided an invalid surface state.
 	WmBaseErrorInvalidSurfaceState WmBaseError = 4
+
 	// WmBaseErrorInvalidPositioner the client provided an invalid positioner.
 	WmBaseErrorInvalidPositioner WmBaseError = 5
+
 	// WmBaseErrorUnresponsive the client didn’t respond to a ping event in time.
 	WmBaseErrorUnresponsive WmBaseError = 6
 )

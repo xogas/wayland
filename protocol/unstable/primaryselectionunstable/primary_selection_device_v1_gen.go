@@ -28,6 +28,10 @@ var primaryselectiondevicev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePrimarySelectionDeviceV1, primaryselectiondevicev1EventFDCounts)
+}
+
 // PrimarySelectionDeviceV1SetSelectionRequest set the primary selection.
 //
 // Replaces the current selection. The previous owner of the primary

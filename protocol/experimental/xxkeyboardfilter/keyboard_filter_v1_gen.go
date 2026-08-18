@@ -28,6 +28,7 @@ type KeyboardFilterV1FilterAction uint32
 const (
 	// KeyboardFilterV1FilterActionConsume consume the key event.
 	KeyboardFilterV1FilterActionConsume KeyboardFilterV1FilterAction = 0
+
 	// KeyboardFilterV1FilterActionPassthrough pass the key event to the text input client.
 	KeyboardFilterV1FilterActionPassthrough KeyboardFilterV1FilterAction = 1
 )

@@ -27,6 +27,10 @@ var pointergestureholdv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePointerGestureHoldV1, pointergestureholdv1EventFDCounts)
+}
+
 // PointerGestureHoldV1DestroyRequest destroy the hold gesture object.
 type PointerGestureHoldV1DestroyRequest struct {
 }

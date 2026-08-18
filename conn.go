@@ -16,6 +16,7 @@ type Conn struct {
 	wc         *wire.Conn
 	uc         *net.UnixConn
 	sendMu     sync.Mutex
+	writer     wire.Writer // reused across SendRequest calls (sendMu-guarded)
 	objects    map[uint32]*Proxy
 	objectsMu  sync.RWMutex
 	zombies    map[uint32]map[uint16]int
@@ -63,14 +64,13 @@ func (c *Conn) SendRequest(objID uint32, opcode uint16, m wire.Marshaler) error 
 	if err := c.stickyErr(); err != nil {
 		return err
 	}
-	w := &wire.Writer{}
-	if err := m.Marshal(w); err != nil {
+	c.sendMu.Lock()
+	defer c.sendMu.Unlock()
+	c.writer.Reset()
+	if err := m.Marshal(&c.writer); err != nil {
 		return err
 	}
-	c.sendMu.Lock()
-	err := c.wc.SendMessage(wire.ObjectID(objID), opcode, w)
-	c.sendMu.Unlock()
-	return err
+	return c.wc.SendMessage(wire.ObjectID(objID), opcode, &c.writer)
 }
 
 func (c *Conn) RegisterProxy(p *Proxy) {
@@ -118,8 +118,16 @@ func (c *Conn) LookupProxy(id uint32) *Proxy {
 	return p
 }
 
+// allocID returns the next client-side object ID, starting at 2 (1 is the
+// display proxy). The 32-bit id space holds at most 2^32-2 allocations;
+// wrapping around would collide with objects that still exist (including the
+// display), so exhaustion panics instead of corrupting the connection.
 func (c *Conn) allocID() uint32 {
-	return c.idCounter.Add(1) + 1
+	id := c.idCounter.Add(1) + 1
+	if id < 2 {
+		panic("wayland: object id space exhausted")
+	}
+	return id
 }
 
 // setReadErr records the first fatal read error. It is sticky: once set, all
@@ -150,9 +158,9 @@ func (c *Conn) setProtoErr(err error) {
 // FailEvent reports a fatal event decode failure and terminates the
 // connection. It is called by generated event handlers when an event cannot
 // be decoded from the wire: the byte stream can no longer be trusted, and
-// continuing would misparse every subsequent event and desynchronize the
-// connection-level fd queue. The failure surfaces to the application as the
-// error returned by Dispatch / DispatchPending.
+// continuing would misread every subsequent event and throw the
+// connection-level fd queue out of sync. The failure surfaces to the
+// application as the error returned by Dispatch / DispatchPending.
 func (c *Conn) FailEvent(event string, err error) {
 	c.loggerOf().Error("event unmarshal error", "event", event, "error", err)
 	c.setProtoErr(fmt.Errorf("wayland: decode event %s: %w", event, err))
@@ -163,7 +171,7 @@ func (c *Conn) FailEvent(event string, err error) {
 // object that never existed or was already confirmed deleted, or an opcode
 // the bound interface does not define) as the connection's fatal error. The
 // fd count of such an event is unknowable, so skipping it could leave stale
-// fds in the connection queue and desynchronize every subsequent event;
+// fds in the connection queue and throw every subsequent event out of sync;
 // terminating the connection is the only safe response.
 func (c *Conn) failStream(reason string, objID uint32, opcode uint16) {
 	c.loggerOf().Error(reason, "id", objID, "opcode", opcode)

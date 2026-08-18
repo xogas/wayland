@@ -26,6 +26,10 @@ var fractionalscalev2EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceFractionalScaleV2, fractionalscalev2EventFDCounts)
+}
+
 type FractionalScaleV2Error uint32
 
 const (

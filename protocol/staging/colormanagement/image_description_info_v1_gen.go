@@ -41,6 +41,10 @@ var imagedescriptioninfov1EventFDCounts = map[uint16]int{
 	10: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImageDescriptionInfoV1, imagedescriptioninfov1EventFDCounts)
+}
+
 // ImageDescriptionInfoV1DoneEvent end of information.
 //
 // Signals the end of information events and destroys the object.

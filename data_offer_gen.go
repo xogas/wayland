@@ -32,15 +32,22 @@ var dataofferEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceDataOffer, dataofferEventFDCounts)
+}
+
 type DataOfferError uint32
 
 const (
 	// DataOfferErrorInvalidFinish finish request was called untimely.
 	DataOfferErrorInvalidFinish DataOfferError = 0
+
 	// DataOfferErrorInvalidActionMask action mask contains invalid values.
 	DataOfferErrorInvalidActionMask DataOfferError = 1
+
 	// DataOfferErrorInvalidAction action argument has an invalid value.
 	DataOfferErrorInvalidAction DataOfferError = 2
+
 	// DataOfferErrorInvalidOffer offer doesn't accept this request.
 	DataOfferErrorInvalidOffer DataOfferError = 3
 )

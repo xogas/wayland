@@ -25,6 +25,10 @@ var exportedv2EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceExportedV2, exportedv2EventFDCounts)
+}
+
 // ExportedV2DestroyRequest unexport the exported surface.
 //
 // Revoke the previously exported surface. This invalidates any

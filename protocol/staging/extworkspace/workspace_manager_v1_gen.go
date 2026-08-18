@@ -32,6 +32,10 @@ var workspacemanagerv1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceWorkspaceManagerV1, workspacemanagerv1EventFDCounts)
+}
+
 // WorkspaceManagerV1CommitRequest all requests about the workspaces have been sent.
 //
 // The client must send this request after it has finished sending other

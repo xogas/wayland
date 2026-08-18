@@ -32,6 +32,10 @@ var zoneitemv1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceZoneItemV1, zoneitemv1EventFDCounts)
+}
+
 // ZoneItemV1DestroyRequest delete this object.
 //
 // Destroys the zone item. This request may be sent at any time by the

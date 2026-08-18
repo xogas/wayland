@@ -23,8 +23,10 @@ type SecurityContextV1Error uint32
 const (
 	// SecurityContextV1ErrorAlreadyUsed security context has already been committed.
 	SecurityContextV1ErrorAlreadyUsed SecurityContextV1Error = 1
+
 	// SecurityContextV1ErrorAlreadySet metadata has already been set.
 	SecurityContextV1ErrorAlreadySet SecurityContextV1Error = 2
+
 	// SecurityContextV1ErrorInvalidMetadata metadata is invalid.
 	SecurityContextV1ErrorInvalidMetadata SecurityContextV1Error = 3
 )

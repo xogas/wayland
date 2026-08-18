@@ -21,10 +21,13 @@ type ViewportError uint32
 const (
 	// ViewportErrorBadValue negative or zero values in width or height.
 	ViewportErrorBadValue ViewportError = 0
+
 	// ViewportErrorBadSize destination size is not integer.
 	ViewportErrorBadSize ViewportError = 1
+
 	// ViewportErrorOutOfBuffer source rectangle extends outside of the content area.
 	ViewportErrorOutOfBuffer ViewportError = 2
+
 	// ViewportErrorNoSurface the wl_surface was destroyed.
 	ViewportErrorNoSurface ViewportError = 3
 )

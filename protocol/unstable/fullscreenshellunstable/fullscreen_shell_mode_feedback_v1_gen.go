@@ -25,6 +25,10 @@ var fullscreenshellmodefeedbackv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceFullscreenShellModeFeedbackV1, fullscreenshellmodefeedbackv1EventFDCounts)
+}
+
 // FullscreenShellModeFeedbackV1ModeSuccessfulEvent mode switch succeeded.
 //
 // This event indicates that the attempted mode switch operation was

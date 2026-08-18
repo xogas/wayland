@@ -23,6 +23,7 @@ type ShmPoolError uint32
 const (
 	// ShmPoolErrorInvalidFormat buffer format is not known.
 	ShmPoolErrorInvalidFormat ShmPoolError = 0
+
 	// ShmPoolErrorInvalidStride invalid size or stride during buffer creation.
 	ShmPoolErrorInvalidStride ShmPoolError = 1
 )

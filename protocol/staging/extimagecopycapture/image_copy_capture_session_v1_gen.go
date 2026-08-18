@@ -36,6 +36,10 @@ var imagecopycapturesessionv1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImageCopyCaptureSessionV1, imagecopycapturesessionv1EventFDCounts)
+}
+
 type ImageCopyCaptureSessionV1Error uint32
 
 const (

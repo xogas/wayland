@@ -20,6 +20,7 @@ type ToplevelDragV1Error uint32
 const (
 	// ToplevelDragV1ErrorToplevelAttached valid toplevel already attached.
 	ToplevelDragV1ErrorToplevelAttached ToplevelDragV1Error = 0
+
 	// ToplevelDragV1ErrorOngoingDrag drag has not ended.
 	ToplevelDragV1ErrorOngoingDrag ToplevelDragV1Error = 1
 )

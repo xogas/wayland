@@ -27,6 +27,10 @@ var transientseatv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTransientSeatV1, transientseatv1EventFDCounts)
+}
+
 // TransientSeatV1DestroyRequest destroy transient seat.
 //
 // When the transient seat object is destroyed by the client, the

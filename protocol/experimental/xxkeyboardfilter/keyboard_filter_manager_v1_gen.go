@@ -20,6 +20,7 @@ type KeyboardFilterManagerV1Error uint32
 const (
 	// KeyboardFilterManagerV1ErrorAlreadyBound an argument is already bound.
 	KeyboardFilterManagerV1ErrorAlreadyBound KeyboardFilterManagerV1Error = 1
+
 	// KeyboardFilterManagerV1ErrorWrongSeat the keyboard i attached to the wrong seat for this operation.
 	KeyboardFilterManagerV1ErrorWrongSeat KeyboardFilterManagerV1Error = 2
 )

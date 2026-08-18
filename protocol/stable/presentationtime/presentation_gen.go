@@ -26,6 +26,10 @@ var presentationEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePresentation, presentationEventFDCounts)
+}
+
 // PresentationError fatal presentation errors.
 //
 // These fatal protocol errors may be emitted in response to
@@ -35,6 +39,7 @@ type PresentationError uint32
 const (
 	// PresentationErrorInvalidTimestamp invalid value in tv_nsec.
 	PresentationErrorInvalidTimestamp PresentationError = 0
+
 	// PresentationErrorInvalidFlag invalid flag.
 	PresentationErrorInvalidFlag PresentationError = 1
 )

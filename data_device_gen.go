@@ -36,11 +36,16 @@ var datadeviceEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceDataDevice, datadeviceEventFDCounts)
+}
+
 type DataDeviceError uint32
 
 const (
 	// DataDeviceErrorRole given wl_surface has another role.
 	DataDeviceErrorRole DataDeviceError = 0
+
 	// DataDeviceErrorUsedSource source has already been used.
 	DataDeviceErrorUsedSource DataDeviceError = 1
 )

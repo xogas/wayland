@@ -42,6 +42,7 @@ const (
 	// (wp_locked_pointer.unlocked and wp_confined_pointer.unconfined) for
 	// details.
 	PointerConstraintsV1LifetimeOneshot PointerConstraintsV1Lifetime = 1
+
 	// PointerConstraintsV1LifetimePersistent.
 	//
 	// A persistent pointer constraint may again reactivate once it has

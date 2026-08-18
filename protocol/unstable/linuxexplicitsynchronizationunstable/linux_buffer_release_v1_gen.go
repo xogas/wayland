@@ -23,6 +23,10 @@ var linuxbufferreleasev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLinuxBufferReleaseV1, linuxbufferreleasev1EventFDCounts)
+}
+
 // LinuxBufferReleaseV1FencedReleaseEvent release buffer with fence.
 //
 // Sent when the compositor has finalised its usage of the associated

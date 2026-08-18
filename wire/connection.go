@@ -17,6 +17,8 @@ type Conn struct {
 	fds     []int
 	readBuf []byte // scratch buffer for ReadMsgUnix, reused across calls
 	oobBuf  []byte // scratch buffer for SCM_RIGHTS control data, reused across calls
+	sendMu  sync.Mutex
+	sendBuf []byte // scratch buffer for outgoing messages, reused across calls
 }
 
 // NewConn creates a new Conn wrapping a UnixConn.
@@ -61,7 +63,11 @@ var ErrMessageTooLarge = fmt.Errorf("wire: message size exceeds 65535 bytes")
 // SendMessage sends a Wayland message.
 // Frame: [object_id:uint32][length<<16|opcode:uint32][payload...].
 // FDs from w.Fds() are sent as SCM_RIGHTS ancillary data.
+// Safe for concurrent use.
 func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
+	c.sendMu.Lock()
+	defer c.sendMu.Unlock()
+
 	payload := w.Bytes()
 	length := 8 + len(payload)
 	if length > 0xFFFF {
@@ -69,7 +75,11 @@ func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 	}
 	pad := (4 - len(payload)%4) % 4
 
-	buf := make([]byte, 8+len(payload)+pad)
+	need := 8 + len(payload) + pad
+	if cap(c.sendBuf) < need {
+		c.sendBuf = make([]byte, need)
+	}
+	buf := c.sendBuf[:need]
 	binary.NativeEndian.PutUint32(buf[0:4], uint32(obj))
 	binary.NativeEndian.PutUint32(buf[4:8], uint32(length)<<16|uint32(opcode))
 	copy(buf[8:], payload)
@@ -90,6 +100,7 @@ func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 // ReceiveMessage reads the next complete Wayland message.
 // Received FDs are queued at the connection level (matching libwayland);
 // callers must use TakeFDs + Reader.SetFDs to assign them to a message.
+// Must be called from a single goroutine.
 func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 	for {
 		if len(c.buf) >= 8 {

@@ -30,12 +30,17 @@ var imagedescriptionv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImageDescriptionV1, imagedescriptionv1EventFDCounts)
+}
+
 // ImageDescriptionV1Error protocol errors.
 type ImageDescriptionV1Error uint32
 
 const (
 	// ImageDescriptionV1ErrorNotReady attempted to use an object which is not ready.
 	ImageDescriptionV1ErrorNotReady ImageDescriptionV1Error = 0
+
 	// ImageDescriptionV1ErrorNoInformation get_information not allowed.
 	ImageDescriptionV1ErrorNoInformation ImageDescriptionV1Error = 1
 )
@@ -46,10 +51,13 @@ type ImageDescriptionV1Cause uint32
 const (
 	// ImageDescriptionV1CauseLowVersion interface version too low.
 	ImageDescriptionV1CauseLowVersion ImageDescriptionV1Cause = 0
+
 	// ImageDescriptionV1CauseUnsupported unsupported image description data.
 	ImageDescriptionV1CauseUnsupported ImageDescriptionV1Cause = 1
+
 	// ImageDescriptionV1CauseOperatingSystem error independent of the client.
 	ImageDescriptionV1CauseOperatingSystem ImageDescriptionV1Cause = 2
+
 	// ImageDescriptionV1CauseNoOutput the relevant output no longer exists.
 	ImageDescriptionV1CauseNoOutput ImageDescriptionV1Cause = 3
 )

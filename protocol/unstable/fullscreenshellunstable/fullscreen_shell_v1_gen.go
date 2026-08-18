@@ -27,6 +27,10 @@ var fullscreenshellv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceFullscreenShellV1, fullscreenshellv1EventFDCounts)
+}
+
 // FullscreenShellV1Capability capabilities advertised by the compositor.
 //
 // Various capabilities that can be advertised by the compositor.  They
@@ -55,6 +59,7 @@ type FullscreenShellV1Capability uint32
 const (
 	// FullscreenShellV1CapabilityArbitraryModes compositor is capable of almost any output mode.
 	FullscreenShellV1CapabilityArbitraryModes FullscreenShellV1Capability = 1
+
 	// FullscreenShellV1CapabilityCursorPlane compositor has a separate cursor plane.
 	FullscreenShellV1CapabilityCursorPlane FullscreenShellV1Capability = 2
 )
@@ -69,12 +74,16 @@ type FullscreenShellV1PresentMethod uint32
 const (
 	// FullscreenShellV1PresentMethodDefault no preference, apply default policy.
 	FullscreenShellV1PresentMethodDefault FullscreenShellV1PresentMethod = 0
+
 	// FullscreenShellV1PresentMethodCenter center the surface on the output.
 	FullscreenShellV1PresentMethodCenter FullscreenShellV1PresentMethod = 1
+
 	// FullscreenShellV1PresentMethodZoom scale the surface, preserving aspect ratio, to the largest size that will fit on the output.
 	FullscreenShellV1PresentMethodZoom FullscreenShellV1PresentMethod = 2
+
 	// FullscreenShellV1PresentMethodZoomCrop scale the surface, preserving aspect ratio, to fully fill the output cropping if needed.
 	FullscreenShellV1PresentMethodZoomCrop FullscreenShellV1PresentMethod = 3
+
 	// FullscreenShellV1PresentMethodStretch scale the surface to the size of the output ignoring aspect ratio.
 	FullscreenShellV1PresentMethodStretch FullscreenShellV1PresentMethod = 4
 )
@@ -87,6 +96,7 @@ type FullscreenShellV1Error uint32
 const (
 	// FullscreenShellV1ErrorInvalidMethod present_method is not known.
 	FullscreenShellV1ErrorInvalidMethod FullscreenShellV1Error = 0
+
 	// FullscreenShellV1ErrorRole given wl_surface has another role.
 	FullscreenShellV1ErrorRole FullscreenShellV1Error = 1
 )

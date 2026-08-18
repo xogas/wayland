@@ -33,6 +33,10 @@ var tabletv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletV1, tabletv1EventFDCounts)
+}
+
 // TabletV1DestroyRequest destroy the tablet object.
 //
 // This destroys the client's resource for this tablet object.

@@ -21,6 +21,7 @@ type LinuxDrmSyncobjManagerV1Error uint32
 const (
 	// LinuxDrmSyncobjManagerV1ErrorSurfaceExists the surface already has a synchronization object associated.
 	LinuxDrmSyncobjManagerV1ErrorSurfaceExists LinuxDrmSyncobjManagerV1Error = 0
+
 	// LinuxDrmSyncobjManagerV1ErrorInvalidTimeline the timeline object could not be imported.
 	LinuxDrmSyncobjManagerV1ErrorInvalidTimeline LinuxDrmSyncobjManagerV1Error = 1
 )

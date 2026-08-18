@@ -20,7 +20,7 @@ wayland core 1.26.0, wayland-protocols 1.49 (vendored in `wayland-protocols/`, n
 
 - All `*_gen.go` produced by `cmd/wayland-scanner`; never hand-edit
 - To change protocol behavior, edit `cmd/wayland-scanner/`, then `make gen`; output must be deterministic (byte-identical for same XML)
-- All protocol elements (incl. deprecated) generated equally; no `// Deprecated:` annotations, check XML
+- All protocol elements (incl. deprecated) generated equally; deprecated elements carry standard `// Deprecated:` annotations (with since-version), check XML for semantics
 - New protocol: drop XML into `wayland-protocols/` tier, run `make gen`
 
 ## Design
@@ -56,6 +56,6 @@ make vet        # go vet ./...
 ## Principles
 
 - Zero third-party deps, stdlib only
-- Go compatibility promise: existing 1.x call sites keep compiling and behaving identically
+- No behavioral compatibility promise within 1.x: API shape (call sites keep compiling) is stable; behavior (error values, edge cases, timing) may change with bug fixes
 - Protocol support only grows; new interfaces/requests/events as wayland-protocols evolves
 - Conventional commits: `feat:` `fix:` `chore:` `refactor:` `test:` `docs:` `style:`

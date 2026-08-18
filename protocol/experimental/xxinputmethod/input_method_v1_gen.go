@@ -50,11 +50,16 @@ var inputmethodv1EventFDCounts = map[uint16]int{
 	9: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceInputMethodV1, inputmethodv1EventFDCounts)
+}
+
 type InputMethodV1Error uint32
 
 const (
 	// InputMethodV1ErrorSurfaceHasRole surface already has a role.
 	InputMethodV1ErrorSurfaceHasRole InputMethodV1Error = 0
+
 	// InputMethodV1ErrorInactive operation requires the input method to be active.
 	InputMethodV1ErrorInactive InputMethodV1Error = 1
 )
@@ -67,6 +72,7 @@ type InputMethodV1ProtocolCompat uint32
 const (
 	// InputMethodV1ProtocolCompatTextInputV3 zwp-text-input-v3 semantics.
 	InputMethodV1ProtocolCompatTextInputV3 InputMethodV1ProtocolCompat = 0
+
 	// InputMethodV1ProtocolCompatXxTextInput.
 	//
 	// Changes the meaning of serial compared to v3.

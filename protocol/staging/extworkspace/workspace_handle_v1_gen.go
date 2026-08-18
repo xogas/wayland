@@ -39,6 +39,10 @@ var workspacehandlev1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceWorkspaceHandleV1, workspacehandlev1EventFDCounts)
+}
+
 // WorkspaceHandleV1State types of states on the workspace.
 //
 // The different states that a workspace can have.
@@ -49,8 +53,10 @@ type WorkspaceHandleV1State uint32
 const (
 	// WorkspaceHandleV1StateActive the workspace is active.
 	WorkspaceHandleV1StateActive WorkspaceHandleV1State = 1
+
 	// WorkspaceHandleV1StateUrgent the workspace requests attention.
 	WorkspaceHandleV1StateUrgent WorkspaceHandleV1State = 2
+
 	// WorkspaceHandleV1StateHidden.
 	//
 	// The workspace is not visible in its workspace group, and clients
@@ -65,10 +71,13 @@ type WorkspaceHandleV1WorkspaceCapabilities uint32
 const (
 	// WorkspaceHandleV1WorkspaceCapabilitiesActivate activate request is available.
 	WorkspaceHandleV1WorkspaceCapabilitiesActivate WorkspaceHandleV1WorkspaceCapabilities = 1
+
 	// WorkspaceHandleV1WorkspaceCapabilitiesDeactivate deactivate request is available.
 	WorkspaceHandleV1WorkspaceCapabilitiesDeactivate WorkspaceHandleV1WorkspaceCapabilities = 2
+
 	// WorkspaceHandleV1WorkspaceCapabilitiesRemove remove request is available.
 	WorkspaceHandleV1WorkspaceCapabilitiesRemove WorkspaceHandleV1WorkspaceCapabilities = 4
+
 	// WorkspaceHandleV1WorkspaceCapabilitiesAssign assign request is available.
 	WorkspaceHandleV1WorkspaceCapabilitiesAssign WorkspaceHandleV1WorkspaceCapabilities = 8
 )

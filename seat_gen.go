@@ -29,6 +29,10 @@ var seatEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceSeat, seatEventFDCounts)
+}
+
 // SeatCapability seat capability bitmask.
 //
 // This is a bitmask of capabilities this seat has; if a member is
@@ -40,8 +44,10 @@ type SeatCapability uint32
 const (
 	// SeatCapabilityPointer the seat has pointer devices.
 	SeatCapabilityPointer SeatCapability = 1
+
 	// SeatCapabilityKeyboard the seat has one or more keyboards.
 	SeatCapabilityKeyboard SeatCapability = 2
+
 	// SeatCapabilityTouch the seat has touch devices.
 	SeatCapabilityTouch SeatCapability = 4
 )

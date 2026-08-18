@@ -26,6 +26,10 @@ var importedv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImportedV1, importedv1EventFDCounts)
+}
+
 // ImportedV1DestroyRequest destroy the xdg_imported object.
 //
 // Notify the compositor that it will no longer use the xdg_imported

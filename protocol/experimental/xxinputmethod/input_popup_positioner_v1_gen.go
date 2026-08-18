@@ -31,14 +31,22 @@ type InputPopupPositionerV1Anchor uint32
 
 const (
 	// InputPopupPositionerV1AnchorNone no edge, specifies center.
-	InputPopupPositionerV1AnchorNone        InputPopupPositionerV1Anchor = 0
-	InputPopupPositionerV1AnchorTop         InputPopupPositionerV1Anchor = 1
-	InputPopupPositionerV1AnchorBottom      InputPopupPositionerV1Anchor = 2
-	InputPopupPositionerV1AnchorLeft        InputPopupPositionerV1Anchor = 3
-	InputPopupPositionerV1AnchorRight       InputPopupPositionerV1Anchor = 4
-	InputPopupPositionerV1AnchorTopLeft     InputPopupPositionerV1Anchor = 5
-	InputPopupPositionerV1AnchorBottomLeft  InputPopupPositionerV1Anchor = 6
-	InputPopupPositionerV1AnchorTopRight    InputPopupPositionerV1Anchor = 7
+	InputPopupPositionerV1AnchorNone InputPopupPositionerV1Anchor = 0
+
+	InputPopupPositionerV1AnchorTop InputPopupPositionerV1Anchor = 1
+
+	InputPopupPositionerV1AnchorBottom InputPopupPositionerV1Anchor = 2
+
+	InputPopupPositionerV1AnchorLeft InputPopupPositionerV1Anchor = 3
+
+	InputPopupPositionerV1AnchorRight InputPopupPositionerV1Anchor = 4
+
+	InputPopupPositionerV1AnchorTopLeft InputPopupPositionerV1Anchor = 5
+
+	InputPopupPositionerV1AnchorBottomLeft InputPopupPositionerV1Anchor = 6
+
+	InputPopupPositionerV1AnchorTopRight InputPopupPositionerV1Anchor = 7
+
 	InputPopupPositionerV1AnchorBottomRight InputPopupPositionerV1Anchor = 8
 )
 
@@ -46,14 +54,22 @@ type InputPopupPositionerV1Gravity uint32
 
 const (
 	// InputPopupPositionerV1GravityNone center to center.
-	InputPopupPositionerV1GravityNone        InputPopupPositionerV1Gravity = 0
-	InputPopupPositionerV1GravityTop         InputPopupPositionerV1Gravity = 1
-	InputPopupPositionerV1GravityBottom      InputPopupPositionerV1Gravity = 2
-	InputPopupPositionerV1GravityLeft        InputPopupPositionerV1Gravity = 3
-	InputPopupPositionerV1GravityRight       InputPopupPositionerV1Gravity = 4
-	InputPopupPositionerV1GravityTopLeft     InputPopupPositionerV1Gravity = 5
-	InputPopupPositionerV1GravityBottomLeft  InputPopupPositionerV1Gravity = 6
-	InputPopupPositionerV1GravityTopRight    InputPopupPositionerV1Gravity = 7
+	InputPopupPositionerV1GravityNone InputPopupPositionerV1Gravity = 0
+
+	InputPopupPositionerV1GravityTop InputPopupPositionerV1Gravity = 1
+
+	InputPopupPositionerV1GravityBottom InputPopupPositionerV1Gravity = 2
+
+	InputPopupPositionerV1GravityLeft InputPopupPositionerV1Gravity = 3
+
+	InputPopupPositionerV1GravityRight InputPopupPositionerV1Gravity = 4
+
+	InputPopupPositionerV1GravityTopLeft InputPopupPositionerV1Gravity = 5
+
+	InputPopupPositionerV1GravityBottomLeft InputPopupPositionerV1Gravity = 6
+
+	InputPopupPositionerV1GravityTopRight InputPopupPositionerV1Gravity = 7
+
 	InputPopupPositionerV1GravityBottomRight InputPopupPositionerV1Gravity = 8
 )
 
@@ -80,6 +96,7 @@ const (
 	// Don't alter the surface position even if it is constrained on some
 	// axis, for example partially outside the edge of an output.
 	InputPopupPositionerV1ConstraintAdjustmentNone InputPopupPositionerV1ConstraintAdjustment = 0
+
 	// InputPopupPositionerV1ConstraintAdjustmentSlideX.
 	//
 	// Slide the surface along the x axis until it is no longer constrained.
@@ -94,6 +111,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	InputPopupPositionerV1ConstraintAdjustmentSlideX InputPopupPositionerV1ConstraintAdjustment = 1
+
 	// InputPopupPositionerV1ConstraintAdjustmentSlideY.
 	//
 	// Slide the surface along the y axis until it is no longer constrained.
@@ -108,6 +126,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	InputPopupPositionerV1ConstraintAdjustmentSlideY InputPopupPositionerV1ConstraintAdjustment = 2
+
 	// InputPopupPositionerV1ConstraintAdjustmentFlipX.
 	//
 	// Invert the anchor and gravity on the x axis if the surface is
@@ -119,6 +138,7 @@ const (
 	// position of the flip_x adjustment will be the one before the
 	// adjustment.
 	InputPopupPositionerV1ConstraintAdjustmentFlipX InputPopupPositionerV1ConstraintAdjustment = 4
+
 	// InputPopupPositionerV1ConstraintAdjustmentFlipY.
 	//
 	// Invert the anchor and gravity on the y axis if the surface is
@@ -134,11 +154,13 @@ const (
 	// position of the flip_y adjustment will be the one before the
 	// adjustment.
 	InputPopupPositionerV1ConstraintAdjustmentFlipY InputPopupPositionerV1ConstraintAdjustment = 8
+
 	// InputPopupPositionerV1ConstraintAdjustmentResizeX.
 	//
 	// Resize the surface horizontally so that it is completely
 	// unconstrained.
 	InputPopupPositionerV1ConstraintAdjustmentResizeX InputPopupPositionerV1ConstraintAdjustment = 16
+
 	// InputPopupPositionerV1ConstraintAdjustmentResizeY.
 	//
 	// Resize the surface vertically so that it is completely unconstrained.

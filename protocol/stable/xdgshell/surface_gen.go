@@ -29,19 +29,28 @@ var surfaceEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSurface, surfaceEventFDCounts)
+}
+
 type SurfaceError uint32
 
 const (
 	// SurfaceErrorNotConstructed surface was not fully constructed.
 	SurfaceErrorNotConstructed SurfaceError = 1
+
 	// SurfaceErrorAlreadyConstructed surface was already constructed.
 	SurfaceErrorAlreadyConstructed SurfaceError = 2
+
 	// SurfaceErrorUnconfiguredBuffer attaching a buffer to an unconfigured surface.
 	SurfaceErrorUnconfiguredBuffer SurfaceError = 3
+
 	// SurfaceErrorInvalidSerial invalid serial number when acking a configure event.
 	SurfaceErrorInvalidSerial SurfaceError = 4
+
 	// SurfaceErrorInvalidSize width or height was zero or negative.
 	SurfaceErrorInvalidSize SurfaceError = 5
+
 	// SurfaceErrorDefunctRoleObject surface was destroyed before its role object.
 	SurfaceErrorDefunctRoleObject SurfaceError = 6
 )

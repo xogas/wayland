@@ -20,6 +20,10 @@ var callbackEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceCallback, callbackEventFDCounts)
+}
+
 // CallbackDoneEvent done event.
 //
 // Notify the client when the related request is done.

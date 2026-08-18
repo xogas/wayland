@@ -22,8 +22,10 @@ type ColorManagementSurfaceV1Error uint32
 const (
 	// ColorManagementSurfaceV1ErrorRenderIntent unsupported rendering intent.
 	ColorManagementSurfaceV1ErrorRenderIntent ColorManagementSurfaceV1Error = 0
+
 	// ColorManagementSurfaceV1ErrorImageDescription invalid image description.
 	ColorManagementSurfaceV1ErrorImageDescription ColorManagementSurfaceV1Error = 1
+
 	// ColorManagementSurfaceV1ErrorInert forbidden request on inert object.
 	ColorManagementSurfaceV1ErrorInert ColorManagementSurfaceV1Error = 2
 )

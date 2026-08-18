@@ -26,15 +26,22 @@ var sessionlocksurfacev1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSessionLockSurfaceV1, sessionlocksurfacev1EventFDCounts)
+}
+
 type SessionLockSurfaceV1Error uint32
 
 const (
 	// SessionLockSurfaceV1ErrorCommitBeforeFirstAck surface committed before first ack_configure request.
 	SessionLockSurfaceV1ErrorCommitBeforeFirstAck SessionLockSurfaceV1Error = 0
+
 	// SessionLockSurfaceV1ErrorNullBuffer surface committed with a null buffer.
 	SessionLockSurfaceV1ErrorNullBuffer SessionLockSurfaceV1Error = 1
+
 	// SessionLockSurfaceV1ErrorDimensionsMismatch failed to match ack'd width/height.
 	SessionLockSurfaceV1ErrorDimensionsMismatch SessionLockSurfaceV1Error = 2
+
 	// SessionLockSurfaceV1ErrorInvalidSerial serial provided in ack_configure is invalid.
 	SessionLockSurfaceV1ErrorInvalidSerial SessionLockSurfaceV1Error = 3
 )

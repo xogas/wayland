@@ -28,6 +28,10 @@ var tabletpaddialv2EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletPadDialV2, tabletpaddialv2EventFDCounts)
+}
+
 // TabletPadDialV2SetFeedbackRequest set compositor feedback.
 //
 // Requests the compositor to use the provided feedback string

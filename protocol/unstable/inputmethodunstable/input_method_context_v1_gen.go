@@ -48,6 +48,10 @@ var inputmethodcontextv1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceInputMethodContextV1, inputmethodcontextv1EventFDCounts)
+}
+
 type InputMethodContextV1DestroyRequest struct {
 }
 

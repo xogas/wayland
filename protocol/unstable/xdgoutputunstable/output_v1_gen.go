@@ -33,6 +33,10 @@ var outputv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceOutputV1, outputv1EventFDCounts)
+}
+
 // OutputV1DestroyRequest destroy the xdg_output object.
 //
 // Using this request a client can tell the server that it is not

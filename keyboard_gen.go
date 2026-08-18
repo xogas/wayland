@@ -34,6 +34,10 @@ var keyboardEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceKeyboard, keyboardEventFDCounts)
+}
+
 // KeyboardKeymapFormat keyboard mapping format.
 //
 // This specifies the format of the keymap provided to the
@@ -43,6 +47,7 @@ type KeyboardKeymapFormat uint32
 const (
 	// KeyboardKeymapFormatNoKeymap no keymap; client must understand how to interpret the raw keycode.
 	KeyboardKeymapFormatNoKeymap KeyboardKeymapFormat = 0
+
 	// KeyboardKeymapFormatXkbV1 libxkbcommon compatible, null-terminated string; to determine the xkb keycode, clients must add 8 to the key event keycode.
 	KeyboardKeymapFormatXkbV1 KeyboardKeymapFormat = 1
 )
@@ -63,8 +68,10 @@ type KeyboardKeyState uint32
 const (
 	// KeyboardKeyStateReleased key is not pressed.
 	KeyboardKeyStateReleased KeyboardKeyState = 0
+
 	// KeyboardKeyStatePressed key is pressed.
 	KeyboardKeyStatePressed KeyboardKeyState = 1
+
 	// KeyboardKeyStateRepeated key was repeated.
 	KeyboardKeyStateRepeated KeyboardKeyState = 2
 )

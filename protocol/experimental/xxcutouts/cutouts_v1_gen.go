@@ -30,6 +30,10 @@ var cutoutsv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceCutoutsV1, cutoutsv1EventFDCounts)
+}
+
 // CutoutsV1Type cutout type.
 //
 // These values indicate the type of cutout. The information is
@@ -43,11 +47,13 @@ const (
 	// This element type can be used by the compositor if it
 	// doesn't want to provide a more specific type.
 	CutoutsV1TypeCutout CutoutsV1Type = 0
+
 	// CutoutsV1TypeNotch.
 	//
 	// A functional, irregular shape on one of the device's
 	// edges. It often contains a camera.
 	CutoutsV1TypeNotch CutoutsV1Type = 1
+
 	// CutoutsV1TypeWaterfall.
 	//
 	// A curved display edge intended to make the device appear
@@ -61,10 +67,13 @@ const (
 type CutoutsV1CornerPosition uint32
 
 const (
-	CutoutsV1CornerPositionTopLeft     CutoutsV1CornerPosition = 0
-	CutoutsV1CornerPositionTopRight    CutoutsV1CornerPosition = 1
+	CutoutsV1CornerPositionTopLeft CutoutsV1CornerPosition = 0
+
+	CutoutsV1CornerPositionTopRight CutoutsV1CornerPosition = 1
+
 	CutoutsV1CornerPositionBottomRight CutoutsV1CornerPosition = 2
-	CutoutsV1CornerPositionBottomLeft  CutoutsV1CornerPosition = 3
+
+	CutoutsV1CornerPositionBottomLeft CutoutsV1CornerPosition = 3
 )
 
 type CutoutsV1Error uint32

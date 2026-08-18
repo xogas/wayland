@@ -29,6 +29,10 @@ var pointergestureswipev1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePointerGestureSwipeV1, pointergestureswipev1EventFDCounts)
+}
+
 // PointerGestureSwipeV1DestroyRequest destroy the pointer swipe gesture object.
 type PointerGestureSwipeV1DestroyRequest struct {
 }

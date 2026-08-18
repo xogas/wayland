@@ -32,13 +32,19 @@ var sessionv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSessionV1, sessionv1EventFDCounts)
+}
+
 type SessionV1Error uint32
 
 const (
 	// SessionV1ErrorInvalidRestore restore cannot be performed after initial toplevel commit.
 	SessionV1ErrorInvalidRestore SessionV1Error = 1
+
 	// SessionV1ErrorNameInUse toplevel name is already in used.
 	SessionV1ErrorNameInUse SessionV1Error = 2
+
 	// SessionV1ErrorAlreadyMapped toplevel was already mapped when restored.
 	SessionV1ErrorAlreadyMapped SessionV1Error = 3
 )

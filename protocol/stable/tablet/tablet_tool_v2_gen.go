@@ -62,6 +62,10 @@ var tablettoolv2EventFDCounts = map[uint16]int{
 	18: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletToolV2, tablettoolv2EventFDCounts)
+}
+
 // TabletToolV2Type a physical tool type.
 //
 // Describes the physical type of a tool. The physical type of a tool
@@ -78,18 +82,25 @@ type TabletToolV2Type uint32
 const (
 	// TabletToolV2TypePen pen.
 	TabletToolV2TypePen TabletToolV2Type = 320
+
 	// TabletToolV2TypeEraser eraser.
 	TabletToolV2TypeEraser TabletToolV2Type = 321
+
 	// TabletToolV2TypeBrush brush.
 	TabletToolV2TypeBrush TabletToolV2Type = 322
+
 	// TabletToolV2TypePencil pencil.
 	TabletToolV2TypePencil TabletToolV2Type = 323
+
 	// TabletToolV2TypeAirbrush airbrush.
 	TabletToolV2TypeAirbrush TabletToolV2Type = 324
+
 	// TabletToolV2TypeFinger finger.
 	TabletToolV2TypeFinger TabletToolV2Type = 325
+
 	// TabletToolV2TypeMouse mouse.
 	TabletToolV2TypeMouse TabletToolV2Type = 326
+
 	// TabletToolV2TypeLens lens.
 	TabletToolV2TypeLens TabletToolV2Type = 327
 )
@@ -105,14 +116,19 @@ type TabletToolV2Capability uint32
 const (
 	// TabletToolV2CapabilityTilt tilt axes.
 	TabletToolV2CapabilityTilt TabletToolV2Capability = 1
+
 	// TabletToolV2CapabilityPressure pressure axis.
 	TabletToolV2CapabilityPressure TabletToolV2Capability = 2
+
 	// TabletToolV2CapabilityDistance distance axis.
 	TabletToolV2CapabilityDistance TabletToolV2Capability = 3
+
 	// TabletToolV2CapabilityRotation z-rotation axis.
 	TabletToolV2CapabilityRotation TabletToolV2Capability = 4
+
 	// TabletToolV2CapabilitySlider slider axis.
 	TabletToolV2CapabilitySlider TabletToolV2Capability = 5
+
 	// TabletToolV2CapabilityWheel wheel axis.
 	TabletToolV2CapabilityWheel TabletToolV2Capability = 6
 )
@@ -125,6 +141,7 @@ type TabletToolV2ButtonState uint32
 const (
 	// TabletToolV2ButtonStateReleased button is not pressed.
 	TabletToolV2ButtonStateReleased TabletToolV2ButtonState = 0
+
 	// TabletToolV2ButtonStatePressed button is pressed.
 	TabletToolV2ButtonStatePressed TabletToolV2ButtonState = 1
 )

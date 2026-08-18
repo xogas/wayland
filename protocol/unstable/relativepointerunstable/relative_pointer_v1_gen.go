@@ -25,6 +25,10 @@ var relativepointerv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceRelativePointerV1, relativepointerv1EventFDCounts)
+}
+
 // RelativePointerV1DestroyRequest release the relative pointer object.
 type RelativePointerV1DestroyRequest struct {
 }

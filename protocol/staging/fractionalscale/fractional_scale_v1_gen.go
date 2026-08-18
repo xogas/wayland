@@ -25,6 +25,10 @@ var fractionalscalev1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceFractionalScaleV1, fractionalscalev1EventFDCounts)
+}
+
 // FractionalScaleV1DestroyRequest remove surface scale information for surface.
 //
 // Destroy the fractional scale object. When this object is destroyed,

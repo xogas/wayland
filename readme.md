@@ -86,17 +86,22 @@ More runnable examples in [example/](./example/readme.md).
 make gen
 ```
 
-No `// Deprecated:` Go annotations are emitted.
-All protocol elements (including deprecated ones) are generated and handled identically.
-Refer to the protocol protocol XML descriptions to determine deprecation status.
+Deprecated protocol elements are generated and handled identically to
+current ones, so no code changes are needed to keep using them. Their generated
+identifiers carry standard `// Deprecated:` Go annotations (with the since-version
+note), so tooling like staticcheck flags their use; consult the protocol XML for
+the deprecation semantics.
 
 ## Stability
 
-The library follows Go's compatibility promise starting with v1.0.0: within
-the 1.x line, existing call sites keep compiling and behaving identically.
-Protocol support only grows — new interfaces, requests, and events are added
-as wayland-protocols evolves, and regenerating with `make gen` is
-deterministic (byte-identical output for the same XML inputs).
+Within the 1.x line, the API shape is stable: existing call sites keep
+compiling, and protocol support only grows — new interfaces, requests, and
+events are added as wayland-protocols evolves, and regenerating with
+`make gen` is deterministic (byte-identical output for the same XML inputs).
+
+Behavior is explicitly not part of the guarantee: bug fixes may change error
+values, edge-case handling, or timing between releases, so treat observed
+runtime behavior in any 1.x release as an implementation detail.
 
 Releases before v1.0.0 (the 0.0.x tags) are snapshots of the API as it
 matures and carry no compatibility guarantee.

@@ -36,6 +36,10 @@ var touchEventFDCounts = map[uint16]int{
 	6: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceTouch, touchEventFDCounts)
+}
+
 // TouchReleaseRequest release the touch object.
 type TouchReleaseRequest struct {
 }

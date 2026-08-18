@@ -20,6 +20,7 @@ type SurfaceV1Error uint32
 const (
 	// SurfaceV1ErrorAlreadyAssociated given wl_surface is already associated with an X11 window.
 	SurfaceV1ErrorAlreadyAssociated SurfaceV1Error = 0
+
 	// SurfaceV1ErrorInvalidSerial serial was not valid.
 	SurfaceV1ErrorInvalidSerial SurfaceV1Error = 1
 )

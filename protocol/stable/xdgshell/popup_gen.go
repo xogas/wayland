@@ -31,6 +31,10 @@ var popupEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePopup, popupEventFDCounts)
+}
+
 type PopupError uint32
 
 const (

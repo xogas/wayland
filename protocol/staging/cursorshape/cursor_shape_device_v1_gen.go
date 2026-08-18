@@ -34,74 +34,109 @@ type CursorShapeDeviceV1Shape uint32
 const (
 	// CursorShapeDeviceV1ShapeDefault default cursor.
 	CursorShapeDeviceV1ShapeDefault CursorShapeDeviceV1Shape = 1
+
 	// CursorShapeDeviceV1ShapeContextMenu a context menu is available for the object under the cursor.
 	CursorShapeDeviceV1ShapeContextMenu CursorShapeDeviceV1Shape = 2
+
 	// CursorShapeDeviceV1ShapeHelp help is available for the object under the cursor.
 	CursorShapeDeviceV1ShapeHelp CursorShapeDeviceV1Shape = 3
+
 	// CursorShapeDeviceV1ShapePointer pointer that indicates a link or another interactive element.
 	CursorShapeDeviceV1ShapePointer CursorShapeDeviceV1Shape = 4
+
 	// CursorShapeDeviceV1ShapeProgress progress indicator.
 	CursorShapeDeviceV1ShapeProgress CursorShapeDeviceV1Shape = 5
+
 	// CursorShapeDeviceV1ShapeWait program is busy, user should wait.
 	CursorShapeDeviceV1ShapeWait CursorShapeDeviceV1Shape = 6
+
 	// CursorShapeDeviceV1ShapeCell a cell or set of cells may be selected.
 	CursorShapeDeviceV1ShapeCell CursorShapeDeviceV1Shape = 7
+
 	// CursorShapeDeviceV1ShapeCrosshair simple crosshair.
 	CursorShapeDeviceV1ShapeCrosshair CursorShapeDeviceV1Shape = 8
+
 	// CursorShapeDeviceV1ShapeText text may be selected.
 	CursorShapeDeviceV1ShapeText CursorShapeDeviceV1Shape = 9
+
 	// CursorShapeDeviceV1ShapeVerticalText vertical text may be selected.
 	CursorShapeDeviceV1ShapeVerticalText CursorShapeDeviceV1Shape = 10
+
 	// CursorShapeDeviceV1ShapeAlias drag-and-drop: alias of/shortcut to something is to be created.
 	CursorShapeDeviceV1ShapeAlias CursorShapeDeviceV1Shape = 11
+
 	// CursorShapeDeviceV1ShapeCopy drag-and-drop: something is to be copied.
 	CursorShapeDeviceV1ShapeCopy CursorShapeDeviceV1Shape = 12
+
 	// CursorShapeDeviceV1ShapeMove drag-and-drop: something is to be moved.
 	CursorShapeDeviceV1ShapeMove CursorShapeDeviceV1Shape = 13
+
 	// CursorShapeDeviceV1ShapeNoDrop drag-and-drop: the dragged item cannot be dropped at the current cursor location.
 	CursorShapeDeviceV1ShapeNoDrop CursorShapeDeviceV1Shape = 14
+
 	// CursorShapeDeviceV1ShapeNotAllowed drag-and-drop: the requested action will not be carried out.
 	CursorShapeDeviceV1ShapeNotAllowed CursorShapeDeviceV1Shape = 15
+
 	// CursorShapeDeviceV1ShapeGrab drag-and-drop: something can be grabbed.
 	CursorShapeDeviceV1ShapeGrab CursorShapeDeviceV1Shape = 16
+
 	// CursorShapeDeviceV1ShapeGrabbing drag-and-drop: something is being grabbed.
 	CursorShapeDeviceV1ShapeGrabbing CursorShapeDeviceV1Shape = 17
+
 	// CursorShapeDeviceV1ShapeEResize resizing: the east border is to be moved.
 	CursorShapeDeviceV1ShapeEResize CursorShapeDeviceV1Shape = 18
+
 	// CursorShapeDeviceV1ShapeNResize resizing: the north border is to be moved.
 	CursorShapeDeviceV1ShapeNResize CursorShapeDeviceV1Shape = 19
+
 	// CursorShapeDeviceV1ShapeNeResize resizing: the north-east corner is to be moved.
 	CursorShapeDeviceV1ShapeNeResize CursorShapeDeviceV1Shape = 20
+
 	// CursorShapeDeviceV1ShapeNwResize resizing: the north-west corner is to be moved.
 	CursorShapeDeviceV1ShapeNwResize CursorShapeDeviceV1Shape = 21
+
 	// CursorShapeDeviceV1ShapeSResize resizing: the south border is to be moved.
 	CursorShapeDeviceV1ShapeSResize CursorShapeDeviceV1Shape = 22
+
 	// CursorShapeDeviceV1ShapeSeResize resizing: the south-east corner is to be moved.
 	CursorShapeDeviceV1ShapeSeResize CursorShapeDeviceV1Shape = 23
+
 	// CursorShapeDeviceV1ShapeSwResize resizing: the south-west corner is to be moved.
 	CursorShapeDeviceV1ShapeSwResize CursorShapeDeviceV1Shape = 24
+
 	// CursorShapeDeviceV1ShapeWResize resizing: the west border is to be moved.
 	CursorShapeDeviceV1ShapeWResize CursorShapeDeviceV1Shape = 25
+
 	// CursorShapeDeviceV1ShapeEwResize resizing: the east and west borders are to be moved.
 	CursorShapeDeviceV1ShapeEwResize CursorShapeDeviceV1Shape = 26
+
 	// CursorShapeDeviceV1ShapeNsResize resizing: the north and south borders are to be moved.
 	CursorShapeDeviceV1ShapeNsResize CursorShapeDeviceV1Shape = 27
+
 	// CursorShapeDeviceV1ShapeNeswResize resizing: the north-east and south-west corners are to be moved.
 	CursorShapeDeviceV1ShapeNeswResize CursorShapeDeviceV1Shape = 28
+
 	// CursorShapeDeviceV1ShapeNwseResize resizing: the north-west and south-east corners are to be moved.
 	CursorShapeDeviceV1ShapeNwseResize CursorShapeDeviceV1Shape = 29
+
 	// CursorShapeDeviceV1ShapeColResize resizing: that the item/column can be resized horizontally.
 	CursorShapeDeviceV1ShapeColResize CursorShapeDeviceV1Shape = 30
+
 	// CursorShapeDeviceV1ShapeRowResize resizing: that the item/row can be resized vertically.
 	CursorShapeDeviceV1ShapeRowResize CursorShapeDeviceV1Shape = 31
+
 	// CursorShapeDeviceV1ShapeAllScroll something can be scrolled in any direction.
 	CursorShapeDeviceV1ShapeAllScroll CursorShapeDeviceV1Shape = 32
+
 	// CursorShapeDeviceV1ShapeZoomIn something can be zoomed in.
 	CursorShapeDeviceV1ShapeZoomIn CursorShapeDeviceV1Shape = 33
+
 	// CursorShapeDeviceV1ShapeZoomOut something can be zoomed out.
 	CursorShapeDeviceV1ShapeZoomOut CursorShapeDeviceV1Shape = 34
+
 	// CursorShapeDeviceV1ShapeDndAsk drag-and-drop: the user will select which action will be carried out (non-css value).
 	CursorShapeDeviceV1ShapeDndAsk CursorShapeDeviceV1Shape = 35
+
 	// CursorShapeDeviceV1ShapeAllResize resizing: something can be moved or resized in any direction (non-css value).
 	CursorShapeDeviceV1ShapeAllResize CursorShapeDeviceV1Shape = 36
 )

@@ -30,6 +30,10 @@ var linuxdmabufv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLinuxDmabufV1, linuxdmabufv1EventFDCounts)
+}
+
 // LinuxDmabufV1DestroyRequest unbind the factory.
 //
 // Objects created through this interface, especially wl_buffers, will

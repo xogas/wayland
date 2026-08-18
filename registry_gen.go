@@ -26,6 +26,10 @@ var registryEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceRegistry, registryEventFDCounts)
+}
+
 // RegistryBindRequest bind an object to the display.
 //
 // Binds a new, client-created object to the server using the
@@ -207,6 +211,9 @@ func (o *Registry) Bind(name uint32, interface_ string, version uint32) (*Proxy,
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(version)
+	if counts, ok := lookupInterfaceFDCounts(interface_); ok {
+		p.SetEventFDCounts(counts)
+	}
 
 	conn.RegisterProxy(p)
 	err := conn.SendRequest(o.proxy.ID(), RegistryRequestBind, &RegistryBindRequest{

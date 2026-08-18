@@ -28,6 +28,7 @@ const (
 	// vertical blanking period. This should not result in visible tearing
 	// and may result in a delay before a surface commit is presented.
 	TearingControlV1PresentationHintVsync TearingControlV1PresentationHint = 0
+
 	// TearingControlV1PresentationHintAsync.
 	//
 	// The content of this surface is meant to be presented with minimal

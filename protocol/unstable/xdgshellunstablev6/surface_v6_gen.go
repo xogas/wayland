@@ -29,11 +29,17 @@ var surfacev6EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSurfaceV6, surfacev6EventFDCounts)
+}
+
 type SurfaceV6Error uint32
 
 const (
-	SurfaceV6ErrorNotConstructed     SurfaceV6Error = 1
+	SurfaceV6ErrorNotConstructed SurfaceV6Error = 1
+
 	SurfaceV6ErrorAlreadyConstructed SurfaceV6Error = 2
+
 	SurfaceV6ErrorUnconfiguredBuffer SurfaceV6Error = 3
 )
 

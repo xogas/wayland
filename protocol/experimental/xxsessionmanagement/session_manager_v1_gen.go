@@ -38,10 +38,12 @@ const (
 	//
 	// A new app instance is launched, for example from an app launcher.
 	SessionManagerV1ReasonLaunch SessionManagerV1Reason = 1
+
 	// SessionManagerV1ReasonRecover.
 	//
 	// An app instance is recovering from for example a compositor or app crash.
 	SessionManagerV1ReasonRecover SessionManagerV1Reason = 2
+
 	// SessionManagerV1ReasonSessionRestore.
 	//
 	// An app instance is restored, for example part of a restored session, or

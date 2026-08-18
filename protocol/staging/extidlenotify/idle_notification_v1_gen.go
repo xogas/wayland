@@ -27,6 +27,10 @@ var idlenotificationv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceIdleNotificationV1, idlenotificationv1EventFDCounts)
+}
+
 // IdleNotificationV1DestroyRequest destroy the notification object.
 //
 // Destroy the notification object.

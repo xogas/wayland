@@ -25,6 +25,10 @@ var shmEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceShm, shmEventFDCounts)
+}
+
 // ShmError wl_shm error values.
 //
 // These errors can be emitted in response to wl_shm requests.
@@ -35,8 +39,10 @@ const (
 	//
 	// Deprecated: since version 3.
 	ShmErrorInvalidFormat ShmError = 0
+
 	// ShmErrorInvalidStride invalid size or stride during pool creation.
 	ShmErrorInvalidStride ShmError = 1
+
 	// ShmErrorInvalidFd mmapping the file descriptor failed.
 	ShmErrorInvalidFd ShmError = 2
 )
@@ -61,285 +67,432 @@ type ShmFormat uint32
 const (
 	// ShmFormatArgb8888 32-bit ARGB format, [31:0] A:R:G:B 8:8:8:8 little endian.
 	ShmFormatArgb8888 ShmFormat = 0
+
 	// ShmFormatXrgb8888 32-bit RGB format, [31:0] x:R:G:B 8:8:8:8 little endian.
 	ShmFormatXrgb8888 ShmFormat = 1
+
 	// ShmFormatC8 8-bit color index format, [7:0] C.
 	ShmFormatC8 ShmFormat = 538982467
+
 	// ShmFormatRgb332 8-bit RGB format, [7:0] R:G:B 3:3:2.
 	ShmFormatRgb332 ShmFormat = 943867730
+
 	// ShmFormatBgr233 8-bit BGR format, [7:0] B:G:R 2:3:3.
 	ShmFormatBgr233 ShmFormat = 944916290
+
 	// ShmFormatXrgb4444 16-bit xRGB format, [15:0] x:R:G:B 4:4:4:4 little endian.
 	ShmFormatXrgb4444 ShmFormat = 842093144
+
 	// ShmFormatXbgr4444 16-bit xBGR format, [15:0] x:B:G:R 4:4:4:4 little endian.
 	ShmFormatXbgr4444 ShmFormat = 842089048
+
 	// ShmFormatRgbx4444 16-bit RGBx format, [15:0] R:G:B:x 4:4:4:4 little endian.
 	ShmFormatRgbx4444 ShmFormat = 842094674
+
 	// ShmFormatBgrx4444 16-bit BGRx format, [15:0] B:G:R:x 4:4:4:4 little endian.
 	ShmFormatBgrx4444 ShmFormat = 842094658
+
 	// ShmFormatArgb4444 16-bit ARGB format, [15:0] A:R:G:B 4:4:4:4 little endian.
 	ShmFormatArgb4444 ShmFormat = 842093121
+
 	// ShmFormatAbgr4444 16-bit ABGR format, [15:0] A:B:G:R 4:4:4:4 little endian.
 	ShmFormatAbgr4444 ShmFormat = 842089025
+
 	// ShmFormatRgba4444 16-bit RGBA format, [15:0] R:G:B:A 4:4:4:4 little endian.
 	ShmFormatRgba4444 ShmFormat = 842088786
+
 	// ShmFormatBgra4444 16-bit BGRA format, [15:0] B:G:R:A 4:4:4:4 little endian.
 	ShmFormatBgra4444 ShmFormat = 842088770
+
 	// ShmFormatXrgb1555 16-bit xRGB format, [15:0] x:R:G:B 1:5:5:5 little endian.
 	ShmFormatXrgb1555 ShmFormat = 892424792
+
 	// ShmFormatXbgr1555 16-bit xBGR 1555 format, [15:0] x:B:G:R 1:5:5:5 little endian.
 	ShmFormatXbgr1555 ShmFormat = 892420696
+
 	// ShmFormatRgbx5551 16-bit RGBx 5551 format, [15:0] R:G:B:x 5:5:5:1 little endian.
 	ShmFormatRgbx5551 ShmFormat = 892426322
+
 	// ShmFormatBgrx5551 16-bit BGRx 5551 format, [15:0] B:G:R:x 5:5:5:1 little endian.
 	ShmFormatBgrx5551 ShmFormat = 892426306
+
 	// ShmFormatArgb1555 16-bit ARGB 1555 format, [15:0] A:R:G:B 1:5:5:5 little endian.
 	ShmFormatArgb1555 ShmFormat = 892424769
+
 	// ShmFormatAbgr1555 16-bit ABGR 1555 format, [15:0] A:B:G:R 1:5:5:5 little endian.
 	ShmFormatAbgr1555 ShmFormat = 892420673
+
 	// ShmFormatRgba5551 16-bit RGBA 5551 format, [15:0] R:G:B:A 5:5:5:1 little endian.
 	ShmFormatRgba5551 ShmFormat = 892420434
+
 	// ShmFormatBgra5551 16-bit BGRA 5551 format, [15:0] B:G:R:A 5:5:5:1 little endian.
 	ShmFormatBgra5551 ShmFormat = 892420418
+
 	// ShmFormatRgb565 16-bit RGB 565 format, [15:0] R:G:B 5:6:5 little endian.
 	ShmFormatRgb565 ShmFormat = 909199186
+
 	// ShmFormatBgr565 16-bit BGR 565 format, [15:0] B:G:R 5:6:5 little endian.
 	ShmFormatBgr565 ShmFormat = 909199170
+
 	// ShmFormatRgb888 24-bit RGB format, [23:0] R:G:B little endian.
 	ShmFormatRgb888 ShmFormat = 875710290
+
 	// ShmFormatBgr888 24-bit BGR format, [23:0] B:G:R little endian.
 	ShmFormatBgr888 ShmFormat = 875710274
+
 	// ShmFormatXbgr8888 32-bit xBGR format, [31:0] x:B:G:R 8:8:8:8 little endian.
 	ShmFormatXbgr8888 ShmFormat = 875709016
+
 	// ShmFormatRgbx8888 32-bit RGBx format, [31:0] R:G:B:x 8:8:8:8 little endian.
 	ShmFormatRgbx8888 ShmFormat = 875714642
+
 	// ShmFormatBgrx8888 32-bit BGRx format, [31:0] B:G:R:x 8:8:8:8 little endian.
 	ShmFormatBgrx8888 ShmFormat = 875714626
+
 	// ShmFormatAbgr8888 32-bit ABGR format, [31:0] A:B:G:R 8:8:8:8 little endian.
 	ShmFormatAbgr8888 ShmFormat = 875708993
+
 	// ShmFormatRgba8888 32-bit RGBA format, [31:0] R:G:B:A 8:8:8:8 little endian.
 	ShmFormatRgba8888 ShmFormat = 875708754
+
 	// ShmFormatBgra8888 32-bit BGRA format, [31:0] B:G:R:A 8:8:8:8 little endian.
 	ShmFormatBgra8888 ShmFormat = 875708738
+
 	// ShmFormatXrgb2101010 32-bit xRGB format, [31:0] x:R:G:B 2:10:10:10 little endian.
 	ShmFormatXrgb2101010 ShmFormat = 808669784
+
 	// ShmFormatXbgr2101010 32-bit xBGR format, [31:0] x:B:G:R 2:10:10:10 little endian.
 	ShmFormatXbgr2101010 ShmFormat = 808665688
+
 	// ShmFormatRgbx1010102 32-bit RGBx format, [31:0] R:G:B:x 10:10:10:2 little endian.
 	ShmFormatRgbx1010102 ShmFormat = 808671314
+
 	// ShmFormatBgrx1010102 32-bit BGRx format, [31:0] B:G:R:x 10:10:10:2 little endian.
 	ShmFormatBgrx1010102 ShmFormat = 808671298
+
 	// ShmFormatArgb2101010 32-bit ARGB format, [31:0] A:R:G:B 2:10:10:10 little endian.
 	ShmFormatArgb2101010 ShmFormat = 808669761
+
 	// ShmFormatAbgr2101010 32-bit ABGR format, [31:0] A:B:G:R 2:10:10:10 little endian.
 	ShmFormatAbgr2101010 ShmFormat = 808665665
+
 	// ShmFormatRgba1010102 32-bit RGBA format, [31:0] R:G:B:A 10:10:10:2 little endian.
 	ShmFormatRgba1010102 ShmFormat = 808665426
+
 	// ShmFormatBgra1010102 32-bit BGRA format, [31:0] B:G:R:A 10:10:10:2 little endian.
 	ShmFormatBgra1010102 ShmFormat = 808665410
+
 	// ShmFormatYuyv packed YCbCr format, [31:0] Cr0:Y1:Cb0:Y0 8:8:8:8 little endian.
 	ShmFormatYuyv ShmFormat = 1448695129
+
 	// ShmFormatYvyu packed YCbCr format, [31:0] Cb0:Y1:Cr0:Y0 8:8:8:8 little endian.
 	ShmFormatYvyu ShmFormat = 1431918169
+
 	// ShmFormatUyvy packed YCbCr format, [31:0] Y1:Cr0:Y0:Cb0 8:8:8:8 little endian.
 	ShmFormatUyvy ShmFormat = 1498831189
+
 	// ShmFormatVyuy packed YCbCr format, [31:0] Y1:Cb0:Y0:Cr0 8:8:8:8 little endian.
 	ShmFormatVyuy ShmFormat = 1498765654
+
 	// ShmFormatAyuv packed AYCbCr format, [31:0] A:Y:Cb:Cr 8:8:8:8 little endian.
 	ShmFormatAyuv ShmFormat = 1448433985
+
 	// ShmFormatNv12 2 plane YCbCr Cr:Cb format, 2x2 subsampled Cr:Cb plane.
 	ShmFormatNv12 ShmFormat = 842094158
+
 	// ShmFormatNv21 2 plane YCbCr Cb:Cr format, 2x2 subsampled Cb:Cr plane.
 	ShmFormatNv21 ShmFormat = 825382478
+
 	// ShmFormatNv16 2 plane YCbCr Cr:Cb format, 2x1 subsampled Cr:Cb plane.
 	ShmFormatNv16 ShmFormat = 909203022
+
 	// ShmFormatNv61 2 plane YCbCr Cb:Cr format, 2x1 subsampled Cb:Cr plane.
 	ShmFormatNv61 ShmFormat = 825644622
+
 	// ShmFormatYuv410 3 plane YCbCr format, 4x4 subsampled Cb (1) and Cr (2) planes.
 	ShmFormatYuv410 ShmFormat = 961959257
+
 	// ShmFormatYvu410 3 plane YCbCr format, 4x4 subsampled Cr (1) and Cb (2) planes.
 	ShmFormatYvu410 ShmFormat = 961893977
+
 	// ShmFormatYuv411 3 plane YCbCr format, 4x1 subsampled Cb (1) and Cr (2) planes.
 	ShmFormatYuv411 ShmFormat = 825316697
+
 	// ShmFormatYvu411 3 plane YCbCr format, 4x1 subsampled Cr (1) and Cb (2) planes.
 	ShmFormatYvu411 ShmFormat = 825316953
+
 	// ShmFormatYuv420 3 plane YCbCr format, 2x2 subsampled Cb (1) and Cr (2) planes.
 	ShmFormatYuv420 ShmFormat = 842093913
+
 	// ShmFormatYvu420 3 plane YCbCr format, 2x2 subsampled Cr (1) and Cb (2) planes.
 	ShmFormatYvu420 ShmFormat = 842094169
+
 	// ShmFormatYuv422 3 plane YCbCr format, 2x1 subsampled Cb (1) and Cr (2) planes.
 	ShmFormatYuv422 ShmFormat = 909202777
+
 	// ShmFormatYvu422 3 plane YCbCr format, 2x1 subsampled Cr (1) and Cb (2) planes.
 	ShmFormatYvu422 ShmFormat = 909203033
+
 	// ShmFormatYuv444 3 plane YCbCr format, non-subsampled Cb (1) and Cr (2) planes.
 	ShmFormatYuv444 ShmFormat = 875713881
+
 	// ShmFormatYvu444 3 plane YCbCr format, non-subsampled Cr (1) and Cb (2) planes.
 	ShmFormatYvu444 ShmFormat = 875714137
+
 	// ShmFormatR8 [7:0] R.
 	ShmFormatR8 ShmFormat = 538982482
+
 	// ShmFormatR16 [15:0] R little endian.
 	ShmFormatR16 ShmFormat = 540422482
+
 	// ShmFormatRg88 [15:0] R:G 8:8 little endian.
 	ShmFormatRg88 ShmFormat = 943212370
+
 	// ShmFormatGr88 [15:0] G:R 8:8 little endian.
 	ShmFormatGr88 ShmFormat = 943215175
+
 	// ShmFormatRg1616 [31:0] R:G 16:16 little endian.
 	ShmFormatRg1616 ShmFormat = 842221394
+
 	// ShmFormatGr1616 [31:0] G:R 16:16 little endian.
 	ShmFormatGr1616 ShmFormat = 842224199
+
 	// ShmFormatXrgb16161616f [63:0] x:R:G:B 16:16:16:16 little endian.
 	ShmFormatXrgb16161616f ShmFormat = 1211388504
+
 	// ShmFormatXbgr16161616f [63:0] x:B:G:R 16:16:16:16 little endian.
 	ShmFormatXbgr16161616f ShmFormat = 1211384408
+
 	// ShmFormatArgb16161616f [63:0] A:R:G:B 16:16:16:16 little endian.
 	ShmFormatArgb16161616f ShmFormat = 1211388481
+
 	// ShmFormatAbgr16161616f [63:0] A:B:G:R 16:16:16:16 little endian.
 	ShmFormatAbgr16161616f ShmFormat = 1211384385
+
 	// ShmFormatXyuv8888 [31:0] X:Y:Cb:Cr 8:8:8:8 little endian.
 	ShmFormatXyuv8888 ShmFormat = 1448434008
+
 	// ShmFormatVuy888 [23:0] Cr:Cb:Y 8:8:8 little endian.
 	ShmFormatVuy888 ShmFormat = 875713878
+
 	// ShmFormatVuy101010 y followed by U then V, 10:10:10. Non-linear modifier only.
 	ShmFormatVuy101010 ShmFormat = 808670550
+
 	// ShmFormatY210 [63:0] Cr0:0:Y1:0:Cb0:0:Y0:0 10:6:10:6:10:6:10:6 little endian per 2 Y pixels.
 	ShmFormatY210 ShmFormat = 808530521
+
 	// ShmFormatY212 [63:0] Cr0:0:Y1:0:Cb0:0:Y0:0 12:4:12:4:12:4:12:4 little endian per 2 Y pixels.
 	ShmFormatY212 ShmFormat = 842084953
+
 	// ShmFormatY216 [63:0] Cr0:Y1:Cb0:Y0 16:16:16:16 little endian per 2 Y pixels.
 	ShmFormatY216 ShmFormat = 909193817
+
 	// ShmFormatY410 [31:0] A:Cr:Y:Cb 2:10:10:10 little endian.
 	ShmFormatY410 ShmFormat = 808531033
+
 	// ShmFormatY412 [63:0] A:0:Cr:0:Y:0:Cb:0 12:4:12:4:12:4:12:4 little endian.
 	ShmFormatY412 ShmFormat = 842085465
+
 	// ShmFormatY416 [63:0] A:Cr:Y:Cb 16:16:16:16 little endian.
 	ShmFormatY416 ShmFormat = 909194329
+
 	// ShmFormatXvyu2101010 [31:0] X:Cr:Y:Cb 2:10:10:10 little endian.
 	ShmFormatXvyu2101010 ShmFormat = 808670808
+
 	// ShmFormatXvyu1216161616 [63:0] X:0:Cr:0:Y:0:Cb:0 12:4:12:4:12:4:12:4 little endian.
 	ShmFormatXvyu1216161616 ShmFormat = 909334104
+
 	// ShmFormatXvyu16161616 [63:0] X:Cr:Y:Cb 16:16:16:16 little endian.
 	ShmFormatXvyu16161616 ShmFormat = 942954072
+
 	// ShmFormatY0l0 [63:0] A3:A2:Y3:0:Cr0:0:Y2:0:A1:A0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian.
 	ShmFormatY0l0 ShmFormat = 810299481
+
 	// ShmFormatX0l0 [63:0] X3:X2:Y3:0:Cr0:0:Y2:0:X1:X0:Y1:0:Cb0:0:Y0:0 1:1:8:2:8:2:8:2:1:1:8:2:8:2:8:2 little endian.
 	ShmFormatX0l0 ShmFormat = 810299480
+
 	// ShmFormatY0l2 [63:0] A3:A2:Y3:Cr0:Y2:A1:A0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian.
 	ShmFormatY0l2 ShmFormat = 843853913
+
 	// ShmFormatX0l2 [63:0] X3:X2:Y3:Cr0:Y2:X1:X0:Y1:Cb0:Y0 1:1:10:10:10:1:1:10:10:10 little endian.
-	ShmFormatX0l2        ShmFormat = 843853912
-	ShmFormatYuv4208bit  ShmFormat = 942691673
+	ShmFormatX0l2 ShmFormat = 843853912
+
+	ShmFormatYuv4208bit ShmFormat = 942691673
+
 	ShmFormatYuv42010bit ShmFormat = 808539481
-	ShmFormatXrgb8888A8  ShmFormat = 943805016
-	ShmFormatXbgr8888A8  ShmFormat = 943800920
-	ShmFormatRgbx8888A8  ShmFormat = 943806546
-	ShmFormatBgrx8888A8  ShmFormat = 943806530
-	ShmFormatRgb888A8    ShmFormat = 943798354
-	ShmFormatBgr888A8    ShmFormat = 943798338
-	ShmFormatRgb565A8    ShmFormat = 943797586
-	ShmFormatBgr565A8    ShmFormat = 943797570
+
+	ShmFormatXrgb8888A8 ShmFormat = 943805016
+
+	ShmFormatXbgr8888A8 ShmFormat = 943800920
+
+	ShmFormatRgbx8888A8 ShmFormat = 943806546
+
+	ShmFormatBgrx8888A8 ShmFormat = 943806530
+
+	ShmFormatRgb888A8 ShmFormat = 943798354
+
+	ShmFormatBgr888A8 ShmFormat = 943798338
+
+	ShmFormatRgb565A8 ShmFormat = 943797586
+
+	ShmFormatBgr565A8 ShmFormat = 943797570
+
 	// ShmFormatNv24 non-subsampled Cr:Cb plane.
 	ShmFormatNv24 ShmFormat = 875714126
+
 	// ShmFormatNv42 non-subsampled Cb:Cr plane.
 	ShmFormatNv42 ShmFormat = 842290766
+
 	// ShmFormatP210 2x1 subsampled Cr:Cb plane, 10 bit per channel.
 	ShmFormatP210 ShmFormat = 808530512
+
 	// ShmFormatP010 2x2 subsampled Cr:Cb plane 10 bits per channel.
 	ShmFormatP010 ShmFormat = 808530000
+
 	// ShmFormatP012 2x2 subsampled Cr:Cb plane 12 bits per channel.
 	ShmFormatP012 ShmFormat = 842084432
+
 	// ShmFormatP016 2x2 subsampled Cr:Cb plane 16 bits per channel.
 	ShmFormatP016 ShmFormat = 909193296
+
 	// ShmFormatAxbxgxrx106106106106 [63:0] A:x:B:x:G:x:R:x 10:6:10:6:10:6:10:6 little endian.
 	ShmFormatAxbxgxrx106106106106 ShmFormat = 808534593
+
 	// ShmFormatNv15 2x2 subsampled Cr:Cb plane.
 	ShmFormatNv15 ShmFormat = 892425806
+
 	ShmFormatQ410 ShmFormat = 808531025
+
 	ShmFormatQ401 ShmFormat = 825242705
+
 	// ShmFormatXrgb16161616 [63:0] x:R:G:B 16:16:16:16 little endian.
 	ShmFormatXrgb16161616 ShmFormat = 942953048
+
 	// ShmFormatXbgr16161616 [63:0] x:B:G:R 16:16:16:16 little endian.
 	ShmFormatXbgr16161616 ShmFormat = 942948952
+
 	// ShmFormatArgb16161616 [63:0] A:R:G:B 16:16:16:16 little endian.
 	ShmFormatArgb16161616 ShmFormat = 942953025
+
 	// ShmFormatAbgr16161616 [63:0] A:B:G:R 16:16:16:16 little endian.
 	ShmFormatAbgr16161616 ShmFormat = 942948929
+
 	// ShmFormatC1 [7:0] C0:C1:C2:C3:C4:C5:C6:C7 1:1:1:1:1:1:1:1 eight pixels/byte.
 	ShmFormatC1 ShmFormat = 538980675
+
 	// ShmFormatC2 [7:0] C0:C1:C2:C3 2:2:2:2 four pixels/byte.
 	ShmFormatC2 ShmFormat = 538980931
+
 	// ShmFormatC4 [7:0] C0:C1 4:4 two pixels/byte.
 	ShmFormatC4 ShmFormat = 538981443
+
 	// ShmFormatD1 [7:0] D0:D1:D2:D3:D4:D5:D6:D7 1:1:1:1:1:1:1:1 eight pixels/byte.
 	ShmFormatD1 ShmFormat = 538980676
+
 	// ShmFormatD2 [7:0] D0:D1:D2:D3 2:2:2:2 four pixels/byte.
 	ShmFormatD2 ShmFormat = 538980932
+
 	// ShmFormatD4 [7:0] D0:D1 4:4 two pixels/byte.
 	ShmFormatD4 ShmFormat = 538981444
+
 	// ShmFormatD8 [7:0] D.
 	ShmFormatD8 ShmFormat = 538982468
+
 	// ShmFormatR1 [7:0] R0:R1:R2:R3:R4:R5:R6:R7 1:1:1:1:1:1:1:1 eight pixels/byte.
 	ShmFormatR1 ShmFormat = 538980690
+
 	// ShmFormatR2 [7:0] R0:R1:R2:R3 2:2:2:2 four pixels/byte.
 	ShmFormatR2 ShmFormat = 538980946
+
 	// ShmFormatR4 [7:0] R0:R1 4:4 two pixels/byte.
 	ShmFormatR4 ShmFormat = 538981458
+
 	// ShmFormatR10 [15:0] x:R 6:10 little endian.
 	ShmFormatR10 ShmFormat = 540029266
+
 	// ShmFormatR12 [15:0] x:R 4:12 little endian.
 	ShmFormatR12 ShmFormat = 540160338
+
 	// ShmFormatAvuy8888 [31:0] A:Cr:Cb:Y 8:8:8:8 little endian.
 	ShmFormatAvuy8888 ShmFormat = 1498764865
+
 	// ShmFormatXvuy8888 [31:0] X:Cr:Cb:Y 8:8:8:8 little endian.
 	ShmFormatXvuy8888 ShmFormat = 1498764888
+
 	// ShmFormatP030 2x2 subsampled Cr:Cb plane 10 bits per channel packed.
 	ShmFormatP030 ShmFormat = 808661072
+
 	// ShmFormatRgb161616 [47:0] R:G:B 16:16:16 little endian.
 	ShmFormatRgb161616 ShmFormat = 942950226
+
 	// ShmFormatBgr161616 [47:0] B:G:R 16:16:16 little endian.
 	ShmFormatBgr161616 ShmFormat = 942950210
+
 	// ShmFormatR16f [15:0] R 16 little endian.
 	ShmFormatR16f ShmFormat = 1210064978
+
 	// ShmFormatGr1616f [31:0] G:R 16:16 little endian.
 	ShmFormatGr1616f ShmFormat = 1210077767
+
 	// ShmFormatBgr161616f [47:0] B:G:R 16:16:16 little endian.
 	ShmFormatBgr161616f ShmFormat = 1213351746
+
 	// ShmFormatR32f [31:0] R 32 little endian.
 	ShmFormatR32f ShmFormat = 1176510546
+
 	// ShmFormatGr3232f [63:0] G:R 32:32 little endian.
 	ShmFormatGr3232f ShmFormat = 1176523335
+
 	// ShmFormatBgr323232f [95:0] B:G:R 32:32:32 little endian.
 	ShmFormatBgr323232f ShmFormat = 1179797314
+
 	// ShmFormatAbgr32323232f [127:0] A:B:G:R 32:32:32:32 little endian.
 	ShmFormatAbgr32323232f ShmFormat = 1178092097
+
 	// ShmFormatNv20 2x1 subsampled Cr:Cb plane.
 	ShmFormatNv20 ShmFormat = 808605262
+
 	// ShmFormatNv30 non-subsampled Cr:Cb plane.
 	ShmFormatNv30 ShmFormat = 808670798
+
 	// ShmFormatS010 2x2 subsampled Cb (1) and Cr (2) planes 10 bits per channel.
 	ShmFormatS010 ShmFormat = 808530003
+
 	// ShmFormatS210 2x1 subsampled Cb (1) and Cr (2) planes 10 bits per channel.
 	ShmFormatS210 ShmFormat = 808530515
+
 	// ShmFormatS410 non-subsampled Cb (1) and Cr (2) planes 10 bits per channel.
 	ShmFormatS410 ShmFormat = 808531027
+
 	// ShmFormatS012 2x2 subsampled Cb (1) and Cr (2) planes 12 bits per channel.
 	ShmFormatS012 ShmFormat = 842084435
+
 	// ShmFormatS212 2x1 subsampled Cb (1) and Cr (2) planes 12 bits per channel.
 	ShmFormatS212 ShmFormat = 842084947
+
 	// ShmFormatS412 non-subsampled Cb (1) and Cr (2) planes 12 bits per channel.
 	ShmFormatS412 ShmFormat = 842085459
+
 	// ShmFormatS016 2x2 subsampled Cb (1) and Cr (2) planes 16 bits per channel.
 	ShmFormatS016 ShmFormat = 909193299
+
 	// ShmFormatS216 2x1 subsampled Cb (1) and Cr (2) planes 16 bits per channel.
 	ShmFormatS216 ShmFormat = 909193811
+
 	// ShmFormatS416 non-subsampled Cb (1) and Cr (2) planes 16 bits per channel.
 	ShmFormatS416 ShmFormat = 909194323
+
 	// ShmFormatXvuy2101010 [31:0] x:Cr:Cb:Y 2:10:10:10 little endian.
 	ShmFormatXvuy2101010 ShmFormat = 808671576
+
 	// ShmFormatP230 2x1 subsampled Cr:Cb plane 10 bits per channel packed.
 	ShmFormatP230 ShmFormat = 808661584
+
 	ShmFormatT430 ShmFormat = 808662100
+
 	// ShmFormatY8 8-bit Y-only.
 	ShmFormatY8 ShmFormat = 1497715271
+
 	// ShmFormatXyyy2101010 [31:0] x:Y2:Y1:Y0 2:10:10:10 little endian.
 	ShmFormatXyyy2101010 ShmFormat = 876695641
 )

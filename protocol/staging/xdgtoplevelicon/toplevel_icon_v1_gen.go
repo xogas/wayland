@@ -21,8 +21,10 @@ type ToplevelIconV1Error uint32
 const (
 	// ToplevelIconV1ErrorInvalidBuffer the provided buffer does not satisfy requirements.
 	ToplevelIconV1ErrorInvalidBuffer ToplevelIconV1Error = 1
+
 	// ToplevelIconV1ErrorImmutable the icon has already been assigned to a toplevel and must not be changed.
 	ToplevelIconV1ErrorImmutable ToplevelIconV1Error = 2
+
 	// ToplevelIconV1ErrorNoBuffer the provided buffer has been destroyed before the toplevel icon.
 	ToplevelIconV1ErrorNoBuffer ToplevelIconV1Error = 3
 )

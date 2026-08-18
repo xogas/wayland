@@ -33,28 +33,44 @@ const (
 type PositionerAnchor uint32
 
 const (
-	PositionerAnchorNone        PositionerAnchor = 0
-	PositionerAnchorTop         PositionerAnchor = 1
-	PositionerAnchorBottom      PositionerAnchor = 2
-	PositionerAnchorLeft        PositionerAnchor = 3
-	PositionerAnchorRight       PositionerAnchor = 4
-	PositionerAnchorTopLeft     PositionerAnchor = 5
-	PositionerAnchorBottomLeft  PositionerAnchor = 6
-	PositionerAnchorTopRight    PositionerAnchor = 7
+	PositionerAnchorNone PositionerAnchor = 0
+
+	PositionerAnchorTop PositionerAnchor = 1
+
+	PositionerAnchorBottom PositionerAnchor = 2
+
+	PositionerAnchorLeft PositionerAnchor = 3
+
+	PositionerAnchorRight PositionerAnchor = 4
+
+	PositionerAnchorTopLeft PositionerAnchor = 5
+
+	PositionerAnchorBottomLeft PositionerAnchor = 6
+
+	PositionerAnchorTopRight PositionerAnchor = 7
+
 	PositionerAnchorBottomRight PositionerAnchor = 8
 )
 
 type PositionerGravity uint32
 
 const (
-	PositionerGravityNone        PositionerGravity = 0
-	PositionerGravityTop         PositionerGravity = 1
-	PositionerGravityBottom      PositionerGravity = 2
-	PositionerGravityLeft        PositionerGravity = 3
-	PositionerGravityRight       PositionerGravity = 4
-	PositionerGravityTopLeft     PositionerGravity = 5
-	PositionerGravityBottomLeft  PositionerGravity = 6
-	PositionerGravityTopRight    PositionerGravity = 7
+	PositionerGravityNone PositionerGravity = 0
+
+	PositionerGravityTop PositionerGravity = 1
+
+	PositionerGravityBottom PositionerGravity = 2
+
+	PositionerGravityLeft PositionerGravity = 3
+
+	PositionerGravityRight PositionerGravity = 4
+
+	PositionerGravityTopLeft PositionerGravity = 5
+
+	PositionerGravityBottomLeft PositionerGravity = 6
+
+	PositionerGravityTopRight PositionerGravity = 7
+
 	PositionerGravityBottomRight PositionerGravity = 8
 )
 
@@ -81,6 +97,7 @@ const (
 	// Don't alter the surface position even if it is constrained on some
 	// axis, for example partially outside the edge of an output.
 	PositionerConstraintAdjustmentNone PositionerConstraintAdjustment = 0
+
 	// PositionerConstraintAdjustmentSlideX.
 	//
 	// Slide the surface along the x axis until it is no longer constrained.
@@ -95,6 +112,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	PositionerConstraintAdjustmentSlideX PositionerConstraintAdjustment = 1
+
 	// PositionerConstraintAdjustmentSlideY.
 	//
 	// Slide the surface along the y axis until it is no longer constrained.
@@ -109,6 +127,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	PositionerConstraintAdjustmentSlideY PositionerConstraintAdjustment = 2
+
 	// PositionerConstraintAdjustmentFlipX.
 	//
 	// Invert the anchor and gravity on the x axis if the surface is
@@ -120,6 +139,7 @@ const (
 	// position of the flip_x adjustment will be the one before the
 	// adjustment.
 	PositionerConstraintAdjustmentFlipX PositionerConstraintAdjustment = 4
+
 	// PositionerConstraintAdjustmentFlipY.
 	//
 	// Invert the anchor and gravity on the y axis if the surface is
@@ -135,11 +155,13 @@ const (
 	// position of the flip_y adjustment will be the one before the
 	// adjustment.
 	PositionerConstraintAdjustmentFlipY PositionerConstraintAdjustment = 8
+
 	// PositionerConstraintAdjustmentResizeX.
 	//
 	// Resize the surface horizontally so that it is completely
 	// unconstrained.
 	PositionerConstraintAdjustmentResizeX PositionerConstraintAdjustment = 16
+
 	// PositionerConstraintAdjustmentResizeY.
 	//
 	// Resize the surface vertically so that it is completely unconstrained.

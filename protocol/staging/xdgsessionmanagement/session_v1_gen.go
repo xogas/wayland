@@ -33,15 +33,22 @@ var sessionv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSessionV1, sessionv1EventFDCounts)
+}
+
 type SessionV1Error uint32
 
 const (
 	// SessionV1ErrorNameInUse toplevel name is already in use.
 	SessionV1ErrorNameInUse SessionV1Error = 1
+
 	// SessionV1ErrorAlreadyMapped toplevel was already mapped when restored.
 	SessionV1ErrorAlreadyMapped SessionV1Error = 2
+
 	// SessionV1ErrorInvalidName provided toplevel name is invalid.
 	SessionV1ErrorInvalidName SessionV1Error = 3
+
 	// SessionV1ErrorAlreadyAdded toplevel already added.
 	SessionV1ErrorAlreadyAdded SessionV1Error = 4
 )

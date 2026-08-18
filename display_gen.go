@@ -27,6 +27,10 @@ var displayEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceDisplay, displayEventFDCounts)
+}
+
 // DisplayError global error values.
 //
 // These errors are global and can be emitted in response to any
@@ -36,10 +40,13 @@ type DisplayError uint32
 const (
 	// DisplayErrorInvalidObject server couldn't find object.
 	DisplayErrorInvalidObject DisplayError = 0
+
 	// DisplayErrorInvalidMethod method doesn't exist on the specified interface or malformed request.
 	DisplayErrorInvalidMethod DisplayError = 1
+
 	// DisplayErrorNoMemory server is out of memory.
 	DisplayErrorNoMemory DisplayError = 2
+
 	// DisplayErrorImplementation implementation error in compositor.
 	DisplayErrorImplementation DisplayError = 3
 )

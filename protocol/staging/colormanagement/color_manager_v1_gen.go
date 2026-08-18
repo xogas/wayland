@@ -41,11 +41,16 @@ var colormanagerv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceColorManagerV1, colormanagerv1EventFDCounts)
+}
+
 type ColorManagerV1Error uint32
 
 const (
 	// ColorManagerV1ErrorUnsupportedFeature request not supported.
 	ColorManagerV1ErrorUnsupportedFeature ColorManagerV1Error = 0
+
 	// ColorManagerV1ErrorSurfaceExists color management surface exists already.
 	ColorManagerV1ErrorSurfaceExists ColorManagerV1Error = 1
 )
@@ -65,14 +70,19 @@ type ColorManagerV1RenderIntent uint32
 const (
 	// ColorManagerV1RenderIntentPerceptual perceptual.
 	ColorManagerV1RenderIntentPerceptual ColorManagerV1RenderIntent = 0
+
 	// ColorManagerV1RenderIntentRelative media-relative colorimetric.
 	ColorManagerV1RenderIntentRelative ColorManagerV1RenderIntent = 1
+
 	// ColorManagerV1RenderIntentSaturation saturation.
 	ColorManagerV1RenderIntentSaturation ColorManagerV1RenderIntent = 2
+
 	// ColorManagerV1RenderIntentAbsolute iCC-absolute colorimetric.
 	ColorManagerV1RenderIntentAbsolute ColorManagerV1RenderIntent = 3
+
 	// ColorManagerV1RenderIntentRelativeBpc media-relative colorimetric + black point compensation.
 	ColorManagerV1RenderIntentRelativeBpc ColorManagerV1RenderIntent = 4
+
 	// ColorManagerV1RenderIntentAbsoluteNoAdaptation.
 	//
 	// This rendering intent is a modified absolute rendering intent that
@@ -88,19 +98,25 @@ type ColorManagerV1Feature uint32
 const (
 	// ColorManagerV1FeatureIccV2V4 create_icc_creator request.
 	ColorManagerV1FeatureIccV2V4 ColorManagerV1Feature = 0
+
 	// ColorManagerV1FeatureParametric create_parametric_creator request.
 	ColorManagerV1FeatureParametric ColorManagerV1Feature = 1
+
 	// ColorManagerV1FeatureSetPrimaries parametric set_primaries request.
 	ColorManagerV1FeatureSetPrimaries ColorManagerV1Feature = 2
+
 	// ColorManagerV1FeatureSetTfPower parametric set_tf_power request.
 	ColorManagerV1FeatureSetTfPower ColorManagerV1Feature = 3
+
 	// ColorManagerV1FeatureSetLuminances parametric set_luminances request.
 	ColorManagerV1FeatureSetLuminances ColorManagerV1Feature = 4
+
 	// ColorManagerV1FeatureSetMasteringDisplayPrimaries.
 	//
 	// The compositor supports set_mastering_display_primaries request with a
 	// target color volume fully contained inside the primary color volume.
 	ColorManagerV1FeatureSetMasteringDisplayPrimaries ColorManagerV1Feature = 5
+
 	// ColorManagerV1FeatureExtendedTargetVolume.
 	//
 	// The compositor additionally supports target color volumes that
@@ -109,8 +125,10 @@ const (
 	// This can only be advertised if feature set_mastering_display_primaries
 	// is supported as well.
 	ColorManagerV1FeatureExtendedTargetVolume ColorManagerV1Feature = 6
+
 	// ColorManagerV1FeatureWindowsScrgb create_windows_scrgb request.
 	ColorManagerV1FeatureWindowsScrgb ColorManagerV1Feature = 7
+
 	// ColorManagerV1FeatureWindowsBt2100 create_windows_bt2100 request.
 	ColorManagerV1FeatureWindowsBt2100 ColorManagerV1Feature = 8
 )
@@ -134,6 +152,7 @@ const (
 	// - Society of Motion Picture and Television Engineers (SMPTE) RP 177
 	//   (1993) Annex B
 	ColorManagerV1PrimariesSrgb ColorManagerV1Primaries = 1
+
 	// ColorManagerV1PrimariesPalM.
 	//
 	// Color primaries as defined by
@@ -143,6 +162,7 @@ const (
 	// - United States Federal Communications Commission (2003) Title 47 Code
 	//   of Federal Regulations 73.682 (a)(20)
 	ColorManagerV1PrimariesPalM ColorManagerV1Primaries = 2
+
 	// ColorManagerV1PrimariesPal.
 	//
 	// Color primaries as defined by
@@ -151,6 +171,7 @@ const (
 	// - Rec. ITU-R BT.1358-0 625 (historical)
 	// - Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
 	ColorManagerV1PrimariesPal ColorManagerV1Primaries = 3
+
 	// ColorManagerV1PrimariesNtsc.
 	//
 	// Color primaries as defined by
@@ -160,18 +181,21 @@ const (
 	// - SMPTE 170M (2004)
 	// - SMPTE 240M (1999) (historical)
 	ColorManagerV1PrimariesNtsc ColorManagerV1Primaries = 4
+
 	// ColorManagerV1PrimariesGenericFilm.
 	//
 	// Color primaries as defined by Recommendation ITU-T H.273
 	// "Coding-independent code points for video signal type identification"
 	// for "generic film".
 	ColorManagerV1PrimariesGenericFilm ColorManagerV1Primaries = 5
+
 	// ColorManagerV1PrimariesBt2020.
 	//
 	// Color primaries as defined by
 	// - Rec. ITU-R BT.2020-2
 	// - Rec. ITU-R BT.2100-0
 	ColorManagerV1PrimariesBt2020 ColorManagerV1Primaries = 6
+
 	// ColorManagerV1PrimariesCie1931Xyz.
 	//
 	// Color primaries as defined as the maximum of the CIE 1931 XYZ color
@@ -179,16 +203,19 @@ const (
 	// - SMPTE ST 428-1
 	// - (CIE 1931 XYZ as in ISO 11664-1)
 	ColorManagerV1PrimariesCie1931Xyz ColorManagerV1Primaries = 7
+
 	// ColorManagerV1PrimariesDciP3.
 	//
 	// Color primaries as defined by Digital Cinema System and published in
 	// SMPTE RP 431-2 (2011).
 	ColorManagerV1PrimariesDciP3 ColorManagerV1Primaries = 8
+
 	// ColorManagerV1PrimariesDisplayP3.
 	//
 	// Color primaries as defined by Digital Cinema System and published in
 	// SMPTE EG 432-1 (2010).
 	ColorManagerV1PrimariesDisplayP3 ColorManagerV1Primaries = 9
+
 	// ColorManagerV1PrimariesAdobeRgb.
 	//
 	// Color primaries as defined by Adobe as "Adobe RGB" and later published
@@ -219,6 +246,7 @@ const (
 	// - primary color volume maximum: 100 cd/m²
 	// - reference white: 100 cd/m²
 	ColorManagerV1TransferFunctionBt1886 ColorManagerV1TransferFunction = 1
+
 	// ColorManagerV1TransferFunctionGamma22.
 	//
 	// Transfer characteristics as defined by
@@ -230,34 +258,41 @@ const (
 	// - Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
 	// - IEC 61966-2-1 (reference display)
 	ColorManagerV1TransferFunctionGamma22 ColorManagerV1TransferFunction = 2
+
 	// ColorManagerV1TransferFunctionGamma28.
 	//
 	// Transfer characteristics as defined by
 	// - Rec. ITU-R BT.470-6 System B, G (historical)
 	ColorManagerV1TransferFunctionGamma28 ColorManagerV1TransferFunction = 3
+
 	// ColorManagerV1TransferFunctionSt240.
 	//
 	// Transfer characteristics as defined by
 	// - SMPTE ST 240 (1999)
 	ColorManagerV1TransferFunctionSt240 ColorManagerV1TransferFunction = 4
+
 	// ColorManagerV1TransferFunctionExtLinear.
 	//
 	// Linear transfer function defined over all real numbers.
 	// Normalised electrical values are equal the normalised optical values.
 	ColorManagerV1TransferFunctionExtLinear ColorManagerV1TransferFunction = 5
+
 	// ColorManagerV1TransferFunctionLog100.
 	//
 	// Logarithmic transfer characteristic (100:1 range).
 	ColorManagerV1TransferFunctionLog100 ColorManagerV1TransferFunction = 6
+
 	// ColorManagerV1TransferFunctionLog316.
 	//
 	// Logarithmic transfer characteristic (100 * Sqrt(10) : 1 range).
 	ColorManagerV1TransferFunctionLog316 ColorManagerV1TransferFunction = 7
+
 	// ColorManagerV1TransferFunctionXvycc.
 	//
 	// Transfer characteristics as defined by
 	// - IEC 61966-2-4
 	ColorManagerV1TransferFunctionXvycc ColorManagerV1TransferFunction = 8
+
 	// ColorManagerV1TransferFunctionSrgb.
 	//
 	// Deprecated: since version 2.
@@ -269,6 +304,7 @@ const (
 	// computer graphics, or compound_power_2_4 for ICC calibrated print
 	// workflows.
 	ColorManagerV1TransferFunctionSrgb ColorManagerV1TransferFunction = 9
+
 	// ColorManagerV1TransferFunctionExtSrgb.
 	//
 	// Deprecated: since version 2.
@@ -276,6 +312,7 @@ const (
 	// Transfer characteristics as defined by
 	// - IEC 61966-2-1 sYCC
 	ColorManagerV1TransferFunctionExtSrgb ColorManagerV1TransferFunction = 10
+
 	// ColorManagerV1TransferFunctionSt2084Pq.
 	//
 	// Transfer characteristics as defined by
@@ -293,11 +330,13 @@ const (
 	// reference white is a protocol addition: it is suggested by
 	// Report ITU-R BT.2408-7 and is not part of ST 2084 or BT.2100.
 	ColorManagerV1TransferFunctionSt2084Pq ColorManagerV1TransferFunction = 11
+
 	// ColorManagerV1TransferFunctionSt428.
 	//
 	// Transfer characteristics as defined by
 	// - SMPTE ST 428-1 (2019)
 	ColorManagerV1TransferFunctionSt428 ColorManagerV1TransferFunction = 12
+
 	// ColorManagerV1TransferFunctionHlg.
 	//
 	// Transfer characteristics as defined by
@@ -318,6 +357,7 @@ const (
 	// it is suggested by Report ITU-R BT.2408-7 and is not part of
 	// ARIB STD-B67 or BT.2100.
 	ColorManagerV1TransferFunctionHlg ColorManagerV1TransferFunction = 13
+
 	// ColorManagerV1TransferFunctionCompoundPower24.
 	//
 	// Encoding characteristics as defined by IEC 61966-2-1, for displays

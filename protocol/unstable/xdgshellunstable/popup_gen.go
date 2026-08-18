@@ -25,6 +25,10 @@ var popupEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePopup, popupEventFDCounts)
+}
+
 // PopupDestroyRequest remove xdg_popup interface.
 //
 // This destroys the popup. Explicitly destroying the xdg_popup

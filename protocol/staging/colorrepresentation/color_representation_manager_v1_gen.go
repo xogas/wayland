@@ -30,6 +30,10 @@ var colorrepresentationmanagerv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceColorRepresentationManagerV1, colorrepresentationmanagerv1EventFDCounts)
+}
+
 // ColorRepresentationManagerV1Error protocol errors.
 type ColorRepresentationManagerV1Error uint32
 

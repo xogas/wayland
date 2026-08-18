@@ -20,8 +20,10 @@ type CommitTimerV1Error uint32
 const (
 	// CommitTimerV1ErrorInvalidTimestamp timestamp contains an invalid value.
 	CommitTimerV1ErrorInvalidTimestamp CommitTimerV1Error = 0
+
 	// CommitTimerV1ErrorTimestampExists timestamp exists.
 	CommitTimerV1ErrorTimestampExists CommitTimerV1Error = 1
+
 	// CommitTimerV1ErrorSurfaceDestroyed the associated surface no longer exists.
 	CommitTimerV1ErrorSurfaceDestroyed CommitTimerV1Error = 2
 )

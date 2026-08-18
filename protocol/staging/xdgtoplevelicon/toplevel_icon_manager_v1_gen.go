@@ -29,6 +29,10 @@ var topleveliconmanagerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceToplevelIconManagerV1, topleveliconmanagerv1EventFDCounts)
+}
+
 // ToplevelIconManagerV1DestroyRequest destroy the toplevel icon manager.
 //
 // Destroy the toplevel icon manager.

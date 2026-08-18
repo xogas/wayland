@@ -26,6 +26,10 @@ var datacontrolofferv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceDataControlOfferV1, datacontrolofferv1EventFDCounts)
+}
+
 // DataControlOfferV1ReceiveRequest request that the data is transferred.
 //
 // To transfer the offered data, the client issues this request and

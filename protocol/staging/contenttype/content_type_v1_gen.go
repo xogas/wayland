@@ -27,17 +27,20 @@ const (
 	// about the content type, or that the content doesn't fit into one of
 	// the other categories.
 	ContentTypeV1TypeNone ContentTypeV1Type = 0
+
 	// ContentTypeV1TypePhoto.
 	//
 	// The content type photo describes content derived from digital still
 	// pictures and may be presented with minimal processing.
 	ContentTypeV1TypePhoto ContentTypeV1Type = 1
+
 	// ContentTypeV1TypeVideo.
 	//
 	// The content type video describes a video or animation and may be
 	// presented with more accurate timing to avoid stutter. Where scaling
 	// is needed, scaling methods more appropriate for video may be used.
 	ContentTypeV1TypeVideo ContentTypeV1Type = 2
+
 	// ContentTypeV1TypeGame.
 	//
 	// The content type game describes a running game. Its content may be

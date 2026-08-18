@@ -26,6 +26,10 @@ var importedv2EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImportedV2, importedv2EventFDCounts)
+}
+
 // ImportedV2Error error values.
 //
 // These errors can be emitted in response to invalid xdg_imported

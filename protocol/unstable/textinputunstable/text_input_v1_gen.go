@@ -59,6 +59,10 @@ var textinputv1EventFDCounts = map[uint16]int{
 	12: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTextInputV1, textinputv1EventFDCounts)
+}
+
 // TextInputV1ContentHint content hint.
 //
 // Content hint is a bitmask to allow to modify the behavior of the text
@@ -70,28 +74,40 @@ type TextInputV1ContentHint uint32
 const (
 	// TextInputV1ContentHintNone no special behaviour.
 	TextInputV1ContentHintNone TextInputV1ContentHint = 0
+
 	// TextInputV1ContentHintDefault auto completion, correction and capitalization.
 	TextInputV1ContentHintDefault TextInputV1ContentHint = 7
+
 	// TextInputV1ContentHintPassword hidden and sensitive text.
 	TextInputV1ContentHintPassword TextInputV1ContentHint = 192
+
 	// TextInputV1ContentHintAutoCompletion suggest word completions.
 	TextInputV1ContentHintAutoCompletion TextInputV1ContentHint = 1
+
 	// TextInputV1ContentHintAutoCorrection suggest word corrections.
 	TextInputV1ContentHintAutoCorrection TextInputV1ContentHint = 2
+
 	// TextInputV1ContentHintAutoCapitalization switch to uppercase letters at the start of a sentence.
 	TextInputV1ContentHintAutoCapitalization TextInputV1ContentHint = 4
+
 	// TextInputV1ContentHintLowercase prefer lowercase letters.
 	TextInputV1ContentHintLowercase TextInputV1ContentHint = 8
+
 	// TextInputV1ContentHintUppercase prefer uppercase letters.
 	TextInputV1ContentHintUppercase TextInputV1ContentHint = 16
+
 	// TextInputV1ContentHintTitlecase prefer casing for titles and headings (can be language dependent).
 	TextInputV1ContentHintTitlecase TextInputV1ContentHint = 32
+
 	// TextInputV1ContentHintHiddenText characters should be hidden.
 	TextInputV1ContentHintHiddenText TextInputV1ContentHint = 64
+
 	// TextInputV1ContentHintSensitiveData typed text should not be stored.
 	TextInputV1ContentHintSensitiveData TextInputV1ContentHint = 128
+
 	// TextInputV1ContentHintLatin just latin characters should be entered.
 	TextInputV1ContentHintLatin TextInputV1ContentHint = 256
+
 	// TextInputV1ContentHintMultiline the text input is multiline.
 	TextInputV1ContentHintMultiline TextInputV1ContentHint = 512
 )
@@ -108,28 +124,40 @@ type TextInputV1ContentPurpose uint32
 const (
 	// TextInputV1ContentPurposeNormal default input, allowing all characters.
 	TextInputV1ContentPurposeNormal TextInputV1ContentPurpose = 0
+
 	// TextInputV1ContentPurposeAlpha allow only alphabetic characters.
 	TextInputV1ContentPurposeAlpha TextInputV1ContentPurpose = 1
+
 	// TextInputV1ContentPurposeDigits allow only digits.
 	TextInputV1ContentPurposeDigits TextInputV1ContentPurpose = 2
+
 	// TextInputV1ContentPurposeNumber input a number (including decimal separator and sign).
 	TextInputV1ContentPurposeNumber TextInputV1ContentPurpose = 3
+
 	// TextInputV1ContentPurposePhone input a phone number.
 	TextInputV1ContentPurposePhone TextInputV1ContentPurpose = 4
+
 	// TextInputV1ContentPurposeUrl input an URL.
 	TextInputV1ContentPurposeUrl TextInputV1ContentPurpose = 5
+
 	// TextInputV1ContentPurposeEmail input an email address.
 	TextInputV1ContentPurposeEmail TextInputV1ContentPurpose = 6
+
 	// TextInputV1ContentPurposeName input a name of a person.
 	TextInputV1ContentPurposeName TextInputV1ContentPurpose = 7
+
 	// TextInputV1ContentPurposePassword input a password (combine with password or sensitive_data hint).
 	TextInputV1ContentPurposePassword TextInputV1ContentPurpose = 8
+
 	// TextInputV1ContentPurposeDate input a date.
 	TextInputV1ContentPurposeDate TextInputV1ContentPurpose = 9
+
 	// TextInputV1ContentPurposeTime input a time.
 	TextInputV1ContentPurposeTime TextInputV1ContentPurpose = 10
+
 	// TextInputV1ContentPurposeDatetime input a date and time.
 	TextInputV1ContentPurposeDatetime TextInputV1ContentPurpose = 11
+
 	// TextInputV1ContentPurposeTerminal input for a terminal.
 	TextInputV1ContentPurposeTerminal TextInputV1ContentPurpose = 12
 )
@@ -139,13 +167,20 @@ type TextInputV1PreeditStyle uint32
 const (
 	// TextInputV1PreeditStyleDefault default style for composing text.
 	TextInputV1PreeditStyleDefault TextInputV1PreeditStyle = 0
+
 	// TextInputV1PreeditStyleNone style should be the same as in non-composing text.
-	TextInputV1PreeditStyleNone      TextInputV1PreeditStyle = 1
-	TextInputV1PreeditStyleActive    TextInputV1PreeditStyle = 2
-	TextInputV1PreeditStyleInactive  TextInputV1PreeditStyle = 3
+	TextInputV1PreeditStyleNone TextInputV1PreeditStyle = 1
+
+	TextInputV1PreeditStyleActive TextInputV1PreeditStyle = 2
+
+	TextInputV1PreeditStyleInactive TextInputV1PreeditStyle = 3
+
 	TextInputV1PreeditStyleHighlight TextInputV1PreeditStyle = 4
+
 	TextInputV1PreeditStyleUnderline TextInputV1PreeditStyle = 5
+
 	TextInputV1PreeditStyleSelection TextInputV1PreeditStyle = 6
+
 	TextInputV1PreeditStyleIncorrect TextInputV1PreeditStyle = 7
 )
 
@@ -154,8 +189,10 @@ type TextInputV1TextDirection uint32
 const (
 	// TextInputV1TextDirectionAuto automatic text direction based on text and language.
 	TextInputV1TextDirectionAuto TextInputV1TextDirection = 0
+
 	// TextInputV1TextDirectionLtr left-to-right.
 	TextInputV1TextDirectionLtr TextInputV1TextDirection = 1
+
 	// TextInputV1TextDirectionRtl right-to-left.
 	TextInputV1TextDirectionRtl TextInputV1TextDirection = 2
 )

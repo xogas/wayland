@@ -29,12 +29,17 @@ var colormanagementsurfacefeedbackv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceColorManagementSurfaceFeedbackV1, colormanagementsurfacefeedbackv1EventFDCounts)
+}
+
 // ColorManagementSurfaceFeedbackV1Error protocol errors.
 type ColorManagementSurfaceFeedbackV1Error uint32
 
 const (
 	// ColorManagementSurfaceFeedbackV1ErrorInert forbidden request on inert object.
 	ColorManagementSurfaceFeedbackV1ErrorInert ColorManagementSurfaceFeedbackV1Error = 0
+
 	// ColorManagementSurfaceFeedbackV1ErrorUnsupportedFeature attempted to use an unsupported feature.
 	ColorManagementSurfaceFeedbackV1ErrorUnsupportedFeature ColorManagementSurfaceFeedbackV1Error = 1
 )

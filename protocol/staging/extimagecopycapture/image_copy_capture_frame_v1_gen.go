@@ -36,13 +36,19 @@ var imagecopycaptureframev1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceImageCopyCaptureFrameV1, imagecopycaptureframev1EventFDCounts)
+}
+
 type ImageCopyCaptureFrameV1Error uint32
 
 const (
 	// ImageCopyCaptureFrameV1ErrorNoBuffer capture sent without attach_buffer.
 	ImageCopyCaptureFrameV1ErrorNoBuffer ImageCopyCaptureFrameV1Error = 1
+
 	// ImageCopyCaptureFrameV1ErrorInvalidBufferDamage invalid buffer damage.
 	ImageCopyCaptureFrameV1ErrorInvalidBufferDamage ImageCopyCaptureFrameV1Error = 2
+
 	// ImageCopyCaptureFrameV1ErrorAlreadyCaptured capture request has been sent.
 	ImageCopyCaptureFrameV1ErrorAlreadyCaptured ImageCopyCaptureFrameV1Error = 3
 )
@@ -54,11 +60,13 @@ const (
 	//
 	// An unspecified runtime error has occurred. The client may retry.
 	ImageCopyCaptureFrameV1FailureReasonUnknown ImageCopyCaptureFrameV1FailureReason = 0
+
 	// ImageCopyCaptureFrameV1FailureReasonBufferConstraints.
 	//
 	// The buffer submitted by the client doesn't match the latest session
 	// constraints. The client should re-allocate its buffers and retry.
 	ImageCopyCaptureFrameV1FailureReasonBufferConstraints ImageCopyCaptureFrameV1FailureReason = 1
+
 	// ImageCopyCaptureFrameV1FailureReasonStopped.
 	//
 	// The session has stopped. See ext_image_copy_capture_session_v1.stopped.

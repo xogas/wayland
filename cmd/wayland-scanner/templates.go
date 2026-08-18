@@ -58,6 +58,10 @@ const (
 var {{lower .TypeName}}EventFDCounts = map[uint16]int{
 {{range $opcode, $count := .EventFDCounts}}	{{$opcode}}: {{$count}},
 {{end}}}
+
+func init() {
+	{{$.WaylandPkg}}RegisterInterfaceFDCounts(Interface{{.TypeName}}, {{lower .TypeName}}EventFDCounts)
+}
 {{end}}
 `)
 
@@ -68,7 +72,8 @@ var wrapperTmpl = mustTmpl("wrapper", `{{range $e := .Enums}}
 {{end}}type {{$e.Type}} uint32
 
 const (
-{{range $e.Entries}}{{.Doc}}	{{.Const}} {{$e.Type}} = {{.Val}}
+{{range $i, $entry := .Entries}}{{if $i}}
+{{end}}{{.Doc}}	{{.Const}} {{$e.Type}} = {{.Val}}
 {{end}})
 {{end}}
 {{range .Requests}}
@@ -166,6 +171,9 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 {{end}}	conn := o.proxy.Conn()
     p := {{$.WaylandPkg}}NewProxy(conn)
 {{if .HasSynthVersion}}	p.SetVersion(version)
+	if counts, ok := {{$.WaylandPkg}}lookupInterfaceFDCounts(interface_); ok {
+		p.SetEventFDCounts(counts)
+	}
 {{else}}	p.SetVersion(o.proxy.Version())
 {{end}}
 {{if .HasNewID}}	wrapped := New{{.NewIDType}}(p)

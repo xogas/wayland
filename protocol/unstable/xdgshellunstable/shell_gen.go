@@ -29,6 +29,10 @@ var shellEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceShell, shellEventFDCounts)
+}
+
 // ShellVersion latest protocol version.
 //
 // The 'current' member of this enum gives the version of the
@@ -47,10 +51,13 @@ type ShellError uint32
 const (
 	// ShellErrorRole given wl_surface has another role.
 	ShellErrorRole ShellError = 0
+
 	// ShellErrorDefunctSurfaces xdg_shell was destroyed before children.
 	ShellErrorDefunctSurfaces ShellError = 1
+
 	// ShellErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
 	ShellErrorNotTheTopmostPopup ShellError = 2
+
 	// ShellErrorInvalidPopupParent the client specified an invalid popup parent surface.
 	ShellErrorInvalidPopupParent ShellError = 3
 )

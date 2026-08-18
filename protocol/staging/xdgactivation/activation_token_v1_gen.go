@@ -29,6 +29,10 @@ var activationtokenv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceActivationTokenV1, activationtokenv1EventFDCounts)
+}
+
 type ActivationTokenV1Error uint32
 
 const (

@@ -21,14 +21,19 @@ type LinuxDrmSyncobjSurfaceV1Error uint32
 const (
 	// LinuxDrmSyncobjSurfaceV1ErrorNoSurface the associated wl_surface was destroyed.
 	LinuxDrmSyncobjSurfaceV1ErrorNoSurface LinuxDrmSyncobjSurfaceV1Error = 1
+
 	// LinuxDrmSyncobjSurfaceV1ErrorUnsupportedBuffer the buffer does not support explicit synchronization.
 	LinuxDrmSyncobjSurfaceV1ErrorUnsupportedBuffer LinuxDrmSyncobjSurfaceV1Error = 2
+
 	// LinuxDrmSyncobjSurfaceV1ErrorNoBuffer no buffer was attached.
 	LinuxDrmSyncobjSurfaceV1ErrorNoBuffer LinuxDrmSyncobjSurfaceV1Error = 3
+
 	// LinuxDrmSyncobjSurfaceV1ErrorNoAcquirePoint no acquire timeline point was set.
 	LinuxDrmSyncobjSurfaceV1ErrorNoAcquirePoint LinuxDrmSyncobjSurfaceV1Error = 4
+
 	// LinuxDrmSyncobjSurfaceV1ErrorNoReleasePoint no release timeline point was set.
 	LinuxDrmSyncobjSurfaceV1ErrorNoReleasePoint LinuxDrmSyncobjSurfaceV1Error = 5
+
 	// LinuxDrmSyncobjSurfaceV1ErrorConflictingPoints acquire and release timeline points are in conflict.
 	LinuxDrmSyncobjSurfaceV1ErrorConflictingPoints LinuxDrmSyncobjSurfaceV1Error = 6
 )

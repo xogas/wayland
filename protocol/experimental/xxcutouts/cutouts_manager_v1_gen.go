@@ -20,6 +20,7 @@ type CutoutsManagerV1Error uint32
 const (
 	// CutoutsManagerV1ErrorInvalidRole given wl_surface has incorrect role.
 	CutoutsManagerV1ErrorInvalidRole CutoutsManagerV1Error = 0
+
 	// CutoutsManagerV1ErrorDefunctCutoutsObject wl_surface or surface role was destroyed before the cutouts object.
 	CutoutsManagerV1ErrorDefunctCutoutsObject CutoutsManagerV1Error = 1
 )

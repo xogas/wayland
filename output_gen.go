@@ -34,6 +34,10 @@ var outputEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceOutput, outputEventFDCounts)
+}
+
 // OutputSubpixel subpixel geometry information.
 //
 // This enumeration describes how the physical
@@ -43,14 +47,19 @@ type OutputSubpixel uint32
 const (
 	// OutputSubpixelUnknown unknown geometry.
 	OutputSubpixelUnknown OutputSubpixel = 0
+
 	// OutputSubpixelNone no geometry.
 	OutputSubpixelNone OutputSubpixel = 1
+
 	// OutputSubpixelHorizontalRgb horizontal RGB.
 	OutputSubpixelHorizontalRgb OutputSubpixel = 2
+
 	// OutputSubpixelHorizontalBgr horizontal BGR.
 	OutputSubpixelHorizontalBgr OutputSubpixel = 3
+
 	// OutputSubpixelVerticalRgb vertical RGB.
 	OutputSubpixelVerticalRgb OutputSubpixel = 4
+
 	// OutputSubpixelVerticalBgr vertical BGR.
 	OutputSubpixelVerticalBgr OutputSubpixel = 5
 )
@@ -72,18 +81,25 @@ type OutputTransform uint32
 const (
 	// OutputTransformNormal no transform.
 	OutputTransformNormal OutputTransform = 0
+
 	// OutputTransform90 90 degrees counter-clockwise.
 	OutputTransform90 OutputTransform = 1
+
 	// OutputTransform180 180 degrees counter-clockwise.
 	OutputTransform180 OutputTransform = 2
+
 	// OutputTransform270 270 degrees counter-clockwise.
 	OutputTransform270 OutputTransform = 3
+
 	// OutputTransformFlipped 180 degree flip around a vertical axis.
 	OutputTransformFlipped OutputTransform = 4
+
 	// OutputTransformFlipped90 flip and rotate 90 degrees counter-clockwise.
 	OutputTransformFlipped90 OutputTransform = 5
+
 	// OutputTransformFlipped180 flip and rotate 180 degrees counter-clockwise.
 	OutputTransformFlipped180 OutputTransform = 6
+
 	// OutputTransformFlipped270 flip and rotate 270 degrees counter-clockwise.
 	OutputTransformFlipped270 OutputTransform = 7
 )
@@ -99,6 +115,7 @@ type OutputMode uint32
 const (
 	// OutputModeCurrent indicates this is the current mode.
 	OutputModeCurrent OutputMode = 1
+
 	// OutputModePreferred indicates this is the preferred mode.
 	OutputModePreferred OutputMode = 2
 )

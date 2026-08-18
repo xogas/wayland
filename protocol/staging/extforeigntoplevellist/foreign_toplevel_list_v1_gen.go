@@ -28,6 +28,10 @@ var foreigntoplevellistv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceForeignToplevelListV1, foreigntoplevellistv1EventFDCounts)
+}
+
 // ForeignToplevelListV1StopRequest stop sending events.
 //
 // This request indicates that the client no longer wishes to receive

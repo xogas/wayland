@@ -40,6 +40,10 @@ var surfaceEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceSurface, surfaceEventFDCounts)
+}
+
 // SurfaceResizeEdge edge values for resizing.
 //
 // These values are used to indicate which edge of a surface
@@ -47,14 +51,22 @@ var surfaceEventFDCounts = map[uint16]int{
 type SurfaceResizeEdge uint32
 
 const (
-	SurfaceResizeEdgeNone        SurfaceResizeEdge = 0
-	SurfaceResizeEdgeTop         SurfaceResizeEdge = 1
-	SurfaceResizeEdgeBottom      SurfaceResizeEdge = 2
-	SurfaceResizeEdgeLeft        SurfaceResizeEdge = 4
-	SurfaceResizeEdgeTopLeft     SurfaceResizeEdge = 5
-	SurfaceResizeEdgeBottomLeft  SurfaceResizeEdge = 6
-	SurfaceResizeEdgeRight       SurfaceResizeEdge = 8
-	SurfaceResizeEdgeTopRight    SurfaceResizeEdge = 9
+	SurfaceResizeEdgeNone SurfaceResizeEdge = 0
+
+	SurfaceResizeEdgeTop SurfaceResizeEdge = 1
+
+	SurfaceResizeEdgeBottom SurfaceResizeEdge = 2
+
+	SurfaceResizeEdgeLeft SurfaceResizeEdge = 4
+
+	SurfaceResizeEdgeTopLeft SurfaceResizeEdge = 5
+
+	SurfaceResizeEdgeBottomLeft SurfaceResizeEdge = 6
+
+	SurfaceResizeEdgeRight SurfaceResizeEdge = 8
+
+	SurfaceResizeEdgeTopRight SurfaceResizeEdge = 9
+
 	SurfaceResizeEdgeBottomRight SurfaceResizeEdge = 10
 )
 
@@ -86,11 +98,13 @@ const (
 	// The surface is maximized. The window geometry specified in the configure
 	// event must be obeyed by the client.
 	SurfaceStateMaximized SurfaceState = 1
+
 	// SurfaceStateFullscreen the surface is fullscreen.
 	//
 	// The surface is fullscreen. The window geometry specified in the configure
 	// event must be obeyed by the client.
 	SurfaceStateFullscreen SurfaceState = 2
+
 	// SurfaceStateResizing the surface is being resized.
 	//
 	// The surface is being resized. The window geometry specified in the
@@ -98,6 +112,7 @@ const (
 	// Clients that have aspect ratio or cell sizing configuration can use
 	// a smaller size, however.
 	SurfaceStateResizing SurfaceState = 3
+
 	// SurfaceStateActivated the surface is now activated.
 	//
 	// Client window decorations should be painted as if the window is

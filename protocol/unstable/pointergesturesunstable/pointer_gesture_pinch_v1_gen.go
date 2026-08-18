@@ -29,6 +29,10 @@ var pointergesturepinchv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfacePointerGesturePinchV1, pointergesturepinchv1EventFDCounts)
+}
+
 // PointerGesturePinchV1DestroyRequest destroy the pinch gesture object.
 type PointerGesturePinchV1DestroyRequest struct {
 }

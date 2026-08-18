@@ -33,12 +33,16 @@ type PositionerV6Anchor uint32
 const (
 	// PositionerV6AnchorNone the center of the anchor rectangle.
 	PositionerV6AnchorNone PositionerV6Anchor = 0
+
 	// PositionerV6AnchorTop the top edge of the anchor rectangle.
 	PositionerV6AnchorTop PositionerV6Anchor = 1
+
 	// PositionerV6AnchorBottom the bottom edge of the anchor rectangle.
 	PositionerV6AnchorBottom PositionerV6Anchor = 2
+
 	// PositionerV6AnchorLeft the left edge of the anchor rectangle.
 	PositionerV6AnchorLeft PositionerV6Anchor = 4
+
 	// PositionerV6AnchorRight the right edge of the anchor rectangle.
 	PositionerV6AnchorRight PositionerV6Anchor = 8
 )
@@ -49,12 +53,16 @@ type PositionerV6Gravity uint32
 const (
 	// PositionerV6GravityNone center over the anchor edge.
 	PositionerV6GravityNone PositionerV6Gravity = 0
+
 	// PositionerV6GravityTop position above the anchor edge.
 	PositionerV6GravityTop PositionerV6Gravity = 1
+
 	// PositionerV6GravityBottom position below the anchor edge.
 	PositionerV6GravityBottom PositionerV6Gravity = 2
+
 	// PositionerV6GravityLeft position to the left of the anchor edge.
 	PositionerV6GravityLeft PositionerV6Gravity = 4
+
 	// PositionerV6GravityRight position to the right of the anchor edge.
 	PositionerV6GravityRight PositionerV6Gravity = 8
 )
@@ -82,6 +90,7 @@ const (
 	// Don't alter the surface position even if it is constrained on some
 	// axis, for example partially outside the edge of a monitor.
 	PositionerV6ConstraintAdjustmentNone PositionerV6ConstraintAdjustment = 0
+
 	// PositionerV6ConstraintAdjustmentSlideX.
 	//
 	// Slide the surface along the x axis until it is no longer constrained.
@@ -96,6 +105,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	PositionerV6ConstraintAdjustmentSlideX PositionerV6ConstraintAdjustment = 1
+
 	// PositionerV6ConstraintAdjustmentSlideY.
 	//
 	// Slide the surface along the y axis until it is no longer constrained.
@@ -110,6 +120,7 @@ const (
 	// unconstrained or the edge in the opposite direction of the gravity is
 	// constrained.
 	PositionerV6ConstraintAdjustmentSlideY PositionerV6ConstraintAdjustment = 2
+
 	// PositionerV6ConstraintAdjustmentFlipX.
 	//
 	// Invert the anchor and gravity on the x axis if the surface is
@@ -121,6 +132,7 @@ const (
 	// position of the flip_x adjustment will be the one before the
 	// adjustment.
 	PositionerV6ConstraintAdjustmentFlipX PositionerV6ConstraintAdjustment = 4
+
 	// PositionerV6ConstraintAdjustmentFlipY.
 	//
 	// Invert the anchor and gravity on the y axis if the surface is
@@ -132,11 +144,13 @@ const (
 	// position of the flip_y adjustment will be the one before the
 	// adjustment.
 	PositionerV6ConstraintAdjustmentFlipY PositionerV6ConstraintAdjustment = 8
+
 	// PositionerV6ConstraintAdjustmentResizeX.
 	//
 	// Resize the surface horizontally so that it is completely
 	// unconstrained.
 	PositionerV6ConstraintAdjustmentResizeX PositionerV6ConstraintAdjustment = 16
+
 	// PositionerV6ConstraintAdjustmentResizeY.
 	//
 	// Resize the surface vertically so that it is completely unconstrained.

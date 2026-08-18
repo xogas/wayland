@@ -59,6 +59,12 @@ func (c *Conn) Dispatch(ctx context.Context) error {
 	case <-c.done:
 		return ErrConnClosed
 	case res := <-c.readCh:
+		if c.closed.Load() {
+			// Message buffered before Close: the object table is already
+			// gone, so dispatching it would misreport a stream violation.
+			// Drop it and report the close instead.
+			return ErrConnClosed
+		}
 		if res.err != nil {
 			c.setReadErr(res.err)
 			return c.stickyErr()
@@ -82,6 +88,9 @@ func (c *Conn) DispatchPending() error {
 	for {
 		select {
 		case res := <-c.readCh:
+			if c.closed.Load() {
+				return ErrConnClosed
+			}
 			if res.err != nil {
 				c.setReadErr(res.err)
 				return c.stickyErr()
@@ -135,8 +144,21 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 		}
 		return
 	}
-	n, known := p.fdCountForOpcode(opcode)
-	if p.fdCounts != nil && !known {
+	counts := p.FDCounts()
+	if counts == nil {
+		// Raw proxy without a registered fd table (custom protocol, or a
+		// Registry.Bind whose interface is not in the registered tables): the
+		// fd count of an event cannot be determined, so fall back to lenient
+		// handling and hand the raw event to any registered handler. Custom
+		// protocols should call RegisterInterfaceFDCounts so fd-carrying
+		// events are accounted for.
+		if p.hasEvent(opcode) {
+			p.dispatchEvent(opcode, r)
+		}
+		return
+	}
+	n, known := counts[opcode]
+	if !known {
 		// The bound interface does not define this opcode (the server sent an
 		// event beyond the bound version or outside the interface). Fatal for
 		// the same fd-queue-safety reason.

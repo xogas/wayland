@@ -47,10 +47,13 @@ type DataDeviceManagerDndAction uint32
 const (
 	// DataDeviceManagerDndActionNone no action.
 	DataDeviceManagerDndActionNone DataDeviceManagerDndAction = 0
+
 	// DataDeviceManagerDndActionCopy copy action.
 	DataDeviceManagerDndActionCopy DataDeviceManagerDndAction = 1
+
 	// DataDeviceManagerDndActionMove move action.
 	DataDeviceManagerDndActionMove DataDeviceManagerDndAction = 2
+
 	// DataDeviceManagerDndActionAsk ask action.
 	DataDeviceManagerDndActionAsk DataDeviceManagerDndAction = 4
 )

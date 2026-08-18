@@ -27,15 +27,22 @@ var topleveldecorationv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceToplevelDecorationV1, topleveldecorationv1EventFDCounts)
+}
+
 type ToplevelDecorationV1Error uint32
 
 const (
 	// ToplevelDecorationV1ErrorUnconfiguredBuffer xdg_toplevel has a buffer attached before configure.
 	ToplevelDecorationV1ErrorUnconfiguredBuffer ToplevelDecorationV1Error = 0
+
 	// ToplevelDecorationV1ErrorAlreadyConstructed xdg_toplevel already has a decoration object.
 	ToplevelDecorationV1ErrorAlreadyConstructed ToplevelDecorationV1Error = 1
+
 	// ToplevelDecorationV1ErrorOrphaned xdg_toplevel destroyed before the decoration object.
 	ToplevelDecorationV1ErrorOrphaned ToplevelDecorationV1Error = 2
+
 	// ToplevelDecorationV1ErrorInvalidMode invalid mode.
 	ToplevelDecorationV1ErrorInvalidMode ToplevelDecorationV1Error = 3
 )
@@ -48,6 +55,7 @@ type ToplevelDecorationV1Mode uint32
 const (
 	// ToplevelDecorationV1ModeClientSide no server-side window decoration.
 	ToplevelDecorationV1ModeClientSide ToplevelDecorationV1Mode = 1
+
 	// ToplevelDecorationV1ModeServerSide server-side window decoration.
 	ToplevelDecorationV1ModeServerSide ToplevelDecorationV1Mode = 2
 )

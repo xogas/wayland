@@ -25,6 +25,10 @@ var inputtimestampsv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceInputTimestampsV1, inputtimestampsv1EventFDCounts)
+}
+
 // InputTimestampsV1DestroyRequest destroy the input timestamps object.
 //
 // Informs the server that the client will no longer be using this

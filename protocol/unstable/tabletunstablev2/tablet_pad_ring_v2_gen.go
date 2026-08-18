@@ -32,6 +32,10 @@ var tabletpadringv2EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceTabletPadRingV2, tabletpadringv2EventFDCounts)
+}
+
 // TabletPadRingV2Source ring axis source.
 //
 // Describes the source types for ring events. This indicates to the

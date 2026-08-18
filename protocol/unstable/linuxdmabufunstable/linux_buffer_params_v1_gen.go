@@ -30,23 +30,34 @@ var linuxbufferparamsv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLinuxBufferParamsV1, linuxbufferparamsv1EventFDCounts)
+}
+
 type LinuxBufferParamsV1Error uint32
 
 const (
 	// LinuxBufferParamsV1ErrorAlreadyUsed the dmabuf_batch object has already been used to create a wl_buffer.
 	LinuxBufferParamsV1ErrorAlreadyUsed LinuxBufferParamsV1Error = 0
+
 	// LinuxBufferParamsV1ErrorPlaneIdx plane index out of bounds.
 	LinuxBufferParamsV1ErrorPlaneIdx LinuxBufferParamsV1Error = 1
+
 	// LinuxBufferParamsV1ErrorPlaneSet the plane index was already set.
 	LinuxBufferParamsV1ErrorPlaneSet LinuxBufferParamsV1Error = 2
+
 	// LinuxBufferParamsV1ErrorIncomplete missing or too many planes to create a buffer.
 	LinuxBufferParamsV1ErrorIncomplete LinuxBufferParamsV1Error = 3
+
 	// LinuxBufferParamsV1ErrorInvalidFormat format not supported.
 	LinuxBufferParamsV1ErrorInvalidFormat LinuxBufferParamsV1Error = 4
+
 	// LinuxBufferParamsV1ErrorInvalidDimensions invalid width or height.
 	LinuxBufferParamsV1ErrorInvalidDimensions LinuxBufferParamsV1Error = 5
+
 	// LinuxBufferParamsV1ErrorOutOfBounds offset + stride * height goes out of dmabuf bounds.
 	LinuxBufferParamsV1ErrorOutOfBounds LinuxBufferParamsV1Error = 6
+
 	// LinuxBufferParamsV1ErrorInvalidWlBuffer invalid wl_buffer resulted from importing dmabufs via the create_immed request on given buffer_params.
 	LinuxBufferParamsV1ErrorInvalidWlBuffer LinuxBufferParamsV1Error = 7
 )
@@ -57,8 +68,10 @@ type LinuxBufferParamsV1Flags uint32
 const (
 	// LinuxBufferParamsV1FlagsYInvert contents are y-inverted.
 	LinuxBufferParamsV1FlagsYInvert LinuxBufferParamsV1Flags = 1
+
 	// LinuxBufferParamsV1FlagsInterlaced content is interlaced.
 	LinuxBufferParamsV1FlagsInterlaced LinuxBufferParamsV1Flags = 2
+
 	// LinuxBufferParamsV1FlagsBottomFirst bottom field first.
 	LinuxBufferParamsV1FlagsBottomFirst LinuxBufferParamsV1Flags = 4
 )

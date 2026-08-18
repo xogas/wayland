@@ -37,6 +37,10 @@ var shellsurfaceEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+func init() {
+	RegisterInterfaceFDCounts(InterfaceShellSurface, shellsurfaceEventFDCounts)
+}
+
 // ShellSurfaceResize edge values for resizing.
 //
 // These values are used to indicate which edge of a surface
@@ -50,20 +54,28 @@ type ShellSurfaceResize uint32
 const (
 	// ShellSurfaceResizeNone no edge.
 	ShellSurfaceResizeNone ShellSurfaceResize = 0
+
 	// ShellSurfaceResizeTop top edge.
 	ShellSurfaceResizeTop ShellSurfaceResize = 1
+
 	// ShellSurfaceResizeBottom bottom edge.
 	ShellSurfaceResizeBottom ShellSurfaceResize = 2
+
 	// ShellSurfaceResizeLeft left edge.
 	ShellSurfaceResizeLeft ShellSurfaceResize = 4
+
 	// ShellSurfaceResizeTopLeft top and left edges.
 	ShellSurfaceResizeTopLeft ShellSurfaceResize = 5
+
 	// ShellSurfaceResizeBottomLeft bottom and left edges.
 	ShellSurfaceResizeBottomLeft ShellSurfaceResize = 6
+
 	// ShellSurfaceResizeRight right edge.
 	ShellSurfaceResizeRight ShellSurfaceResize = 8
+
 	// ShellSurfaceResizeTopRight top and right edges.
 	ShellSurfaceResizeTopRight ShellSurfaceResize = 9
+
 	// ShellSurfaceResizeBottomRight bottom and right edges.
 	ShellSurfaceResizeBottomRight ShellSurfaceResize = 10
 )
@@ -91,10 +103,13 @@ type ShellSurfaceFullscreenMethod uint32
 const (
 	// ShellSurfaceFullscreenMethodDefault no preference, apply default policy.
 	ShellSurfaceFullscreenMethodDefault ShellSurfaceFullscreenMethod = 0
+
 	// ShellSurfaceFullscreenMethodScale scale, preserve the surface's aspect ratio and center on output.
 	ShellSurfaceFullscreenMethodScale ShellSurfaceFullscreenMethod = 1
+
 	// ShellSurfaceFullscreenMethodDriver switch output mode to the smallest mode that can fit the surface, add black borders to compensate size mismatch.
 	ShellSurfaceFullscreenMethodDriver ShellSurfaceFullscreenMethod = 2
+
 	// ShellSurfaceFullscreenMethodFill no upscaling, center on output and add black borders to compensate size mismatch.
 	ShellSurfaceFullscreenMethodFill ShellSurfaceFullscreenMethod = 3
 )

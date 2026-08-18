@@ -21,14 +21,19 @@ type LinuxSurfaceSynchronizationV1Error uint32
 const (
 	// LinuxSurfaceSynchronizationV1ErrorInvalidFence the fence specified by the client could not be imported.
 	LinuxSurfaceSynchronizationV1ErrorInvalidFence LinuxSurfaceSynchronizationV1Error = 0
+
 	// LinuxSurfaceSynchronizationV1ErrorDuplicateFence multiple fences added for a single surface commit.
 	LinuxSurfaceSynchronizationV1ErrorDuplicateFence LinuxSurfaceSynchronizationV1Error = 1
+
 	// LinuxSurfaceSynchronizationV1ErrorDuplicateRelease multiple releases added for a single surface commit.
 	LinuxSurfaceSynchronizationV1ErrorDuplicateRelease LinuxSurfaceSynchronizationV1Error = 2
+
 	// LinuxSurfaceSynchronizationV1ErrorNoSurface the associated wl_surface was destroyed.
 	LinuxSurfaceSynchronizationV1ErrorNoSurface LinuxSurfaceSynchronizationV1Error = 3
+
 	// LinuxSurfaceSynchronizationV1ErrorUnsupportedBuffer the buffer does not support explicit synchronization.
 	LinuxSurfaceSynchronizationV1ErrorUnsupportedBuffer LinuxSurfaceSynchronizationV1Error = 4
+
 	// LinuxSurfaceSynchronizationV1ErrorNoBuffer no buffer was attached.
 	LinuxSurfaceSynchronizationV1ErrorNoBuffer LinuxSurfaceSynchronizationV1Error = 5
 )

@@ -37,6 +37,10 @@ var linuxdmabuffeedbackv1EventFDCounts = map[uint16]int{
 	6: 0,
 }
 
+func init() {
+	wayland.RegisterInterfaceFDCounts(InterfaceLinuxDmabufFeedbackV1, linuxdmabuffeedbackv1EventFDCounts)
+}
+
 // This is a bitfield of flags.
 type LinuxDmabufFeedbackV1TrancheFlags uint32
 
