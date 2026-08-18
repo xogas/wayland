@@ -83,12 +83,9 @@ func wireDisplayEvents(dpy *Display, conn *Conn) {
 			Code:     ev.Code,
 			Message:  ev.Message,
 		}
-		// A protocol error means the compositor has declared the protocol
-		// state of this connection invalid; per the Wayland spec the
-		// client must terminate. Record it as the connection's fatal
-		// error and close: Dispatch/DispatchPending return pe, and all
-		// further sends fail fast. SetOnError remains available as an
-		// optional notification hook.
+		// A protocol error means the compositor declared the protocol state
+		// invalid; per the spec the client must terminate. Record it as the
+		// connection's fatal error, close, then notify via SetOnError.
 		conn.setProtoErr(pe)
 		_ = conn.Close()
 		conn.connMu.Lock()

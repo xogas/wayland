@@ -222,7 +222,7 @@ func main() {
 						_ = syscall.Close(ev.Fd)
 					}
 				})
-				fb.OnMainDevice(func(ev linuxdmabuf.LinuxDmabufFeedbackV1MainDeviceEvent) {
+				fb.OnMainDevice(func(ev linuxdmabuf.LinuxDmabufFeedbackV1MainDeviceEvent) { //nolint:staticcheck // info tool must display deprecated events
 					di.mainDevice = append([]byte{}, ev.Device...)
 				})
 				fb.OnTrancheTargetDevice(func(ev linuxdmabuf.LinuxDmabufFeedbackV1TrancheTargetDeviceEvent) {
@@ -707,9 +707,9 @@ func tfName(v colormanagement.ColorManagerV1TransferFunction) string {
 		return "log_316"
 	case colormanagement.ColorManagerV1TransferFunctionXvycc:
 		return "xvycc"
-	case colormanagement.ColorManagerV1TransferFunctionSrgb:
+	case colormanagement.ColorManagerV1TransferFunctionSrgb: //nolint:staticcheck
 		return "srgb"
-	case colormanagement.ColorManagerV1TransferFunctionExtSrgb:
+	case colormanagement.ColorManagerV1TransferFunctionExtSrgb: //nolint:staticcheck
 		return "ext_srgb"
 	case colormanagement.ColorManagerV1TransferFunctionSt2084Pq:
 		return "st2084_pq"

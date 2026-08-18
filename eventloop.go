@@ -60,9 +60,8 @@ func (c *Conn) Dispatch(ctx context.Context) error {
 		return ErrConnClosed
 	case res := <-c.readCh:
 		if c.closed.Load() {
-			// Message buffered before Close: the object table is already
-			// gone, so dispatching it would misreport a stream violation.
-			// Drop it and report the close instead.
+			// Buffered before Close: the object table is gone, so dispatching
+			// it would misreport a stream violation. Report the close instead.
 			return ErrConnClosed
 		}
 		if res.err != nil {
@@ -70,9 +69,9 @@ func (c *Conn) Dispatch(ctx context.Context) error {
 			return c.stickyErr()
 		}
 		c.dispatch(uint32(res.obj), res.opcode, res.r)
-		// A handler may have turned the connection fatal (wl_display.error
-		// or an event decode failure): surface that error now instead of
-		// dispatching more events from a dead stream.
+		// A handler may have turned the connection fatal (wl_display.error or
+		// an event decode failure): surface it instead of dispatching more
+		// events from a dead stream.
 		if err := c.stickyErr(); err != nil {
 			return err
 		}
@@ -121,17 +120,16 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 		fdCounts, isZombie := c.zombies[objID]
 		c.objectsMu.RUnlock()
 		if !isZombie {
-			// The object never existed, or the server already confirmed its
-			// destruction with delete_id: per the protocol no further events
-			// may reference it, so this is a stream-level violation.
+			// Never existed or already confirmed deleted by delete_id: the
+			// protocol guarantees no further events reference it.
 			c.failStream("event for unknown object", objID, opcode)
 			return
 		}
 		if fdCounts != nil {
 			n, known := fdCounts[opcode]
 			if !known {
-				// An opcode the destroyed interface does not define could
-				// carry an unknowable number of fds: same reasoning as above.
+				// Unknown opcode on a destroyed interface: same
+				// fd-queue-safety reason as failStream.
 				c.failStream("event for unknown opcode on destroyed object", objID, opcode)
 				return
 			}
@@ -140,18 +138,15 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 					_ = syscall.Close(fd)
 				}
 			}
-			c.loggerOf().Warn("receiving event for destroyed object", "id", objID, "opcode", opcode)
+			c.Logger().Warn("receiving event for destroyed object", "id", objID, "opcode", opcode)
 		}
 		return
 	}
 	counts := p.FDCounts()
 	if counts == nil {
-		// Raw proxy without a registered fd table (custom protocol, or a
-		// Registry.Bind whose interface is not in the registered tables): the
-		// fd count of an event cannot be determined, so fall back to lenient
-		// handling and hand the raw event to any registered handler. Custom
-		// protocols should call RegisterInterfaceFDCounts so fd-carrying
-		// events are accounted for.
+		// No registered fd table (raw proxy for a custom protocol): fd counts
+		// are unknown, so hand the event to any registered handler leniently.
+		// RegisterInterfaceFDCounts restores strict fd accounting.
 		if p.hasEvent(opcode) {
 			p.dispatchEvent(opcode, r)
 		}
@@ -159,9 +154,9 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 	}
 	n, known := counts[opcode]
 	if !known {
-		// The bound interface does not define this opcode (the server sent an
-		// event beyond the bound version or outside the interface). Fatal for
-		// the same fd-queue-safety reason.
+		// The bound interface does not define this opcode (version-skewed or
+		// bogus event): fatal for the same fd-queue-safety reason as
+		// failStream.
 		c.failStream("event for unknown opcode", objID, opcode)
 		return
 	}

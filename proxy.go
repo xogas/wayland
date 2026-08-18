@@ -16,20 +16,16 @@ type Binder interface {
 }
 
 // interfaceFDCounts maps protocol interface names to their event fd-count
-// tables. Generated code registers every interface it defines from init;
-// Registry.Bind looks the table up so that raw proxies are as safe as
-// generated bindings. Without a table, fds carried by events on a raw proxy
-// would be left stuck in the connection-level queue, skewing every
-// subsequent fd-carrying message.
+// tables. Generated code registers every interface from init; Registry.Bind
+// looks the table up so raw proxies keep exact fd accounting.
 var (
 	interfaceFDCountsMu sync.RWMutex
 	interfaceFDCounts   = map[string]map[uint16]int{}
 )
 
-// RegisterInterfaceFDCounts registers the per-opcode event fd-count table for
-// a protocol interface name. Generated code calls this from init; code that
-// binds custom protocols through Registry.Bind and handles events manually
-// should call it too, so dispatch can drain fds and reject unknown opcodes.
+// RegisterInterfaceFDCounts registers the per-opcode event fd-count table
+// for a protocol interface name. Generated code calls this from init;
+// binders of custom protocols should call it too for strict fd handling.
 func RegisterInterfaceFDCounts(name string, counts map[uint16]int) {
 	interfaceFDCountsMu.Lock()
 	interfaceFDCounts[name] = counts
@@ -124,10 +120,8 @@ func (p *Proxy) RegisterEvent(opcode uint16, h func(*wire.Reader)) {
 }
 
 func (p *Proxy) dispatchEvent(opcode uint16, r *wire.Reader) {
-	// Borrow the handler slice under RLock instead of copying it. Handlers
-	// are append-only (RegisterEvent); a concurrent append either reallocates
-	// the backing array or writes beyond this slice's length, so iteration
-	// sees exactly the handlers registered up to this point.
+	// Borrow the handler slice under RLock: RegisterEvent is append-only, so
+	// the slice stays valid for iteration without copying.
 	p.eventsMu.RLock()
 	handlers := p.events[opcode]
 	p.eventsMu.RUnlock()

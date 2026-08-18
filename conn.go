@@ -156,35 +156,23 @@ func (c *Conn) setProtoErr(err error) {
 }
 
 // FailEvent reports a fatal event decode failure and terminates the
-// connection. It is called by generated event handlers when an event cannot
-// be decoded from the wire: the byte stream can no longer be trusted, and
-// continuing would misread every subsequent event and throw the
-// connection-level fd queue out of sync. The failure surfaces to the
-// application as the error returned by Dispatch / DispatchPending.
+// connection. Generated event handlers call it when an event cannot be
+// decoded: the stream is untrusted, so the connection dies and the error
+// surfaces via Dispatch / DispatchPending.
 func (c *Conn) FailEvent(event string, err error) {
-	c.loggerOf().Error("event unmarshal error", "event", event, "error", err)
+	c.Logger().Error("event unmarshal error", "event", event, "error", err)
 	c.setProtoErr(fmt.Errorf("wayland: decode event %s: %w", event, err))
 	_ = c.Close()
 }
 
 // failStream records a stream-level protocol violation (an event for an
-// object that never existed or was already confirmed deleted, or an opcode
-// the bound interface does not define) as the connection's fatal error. The
-// fd count of such an event is unknowable, so skipping it could leave stale
-// fds in the connection queue and throw every subsequent event out of sync;
-// terminating the connection is the only safe response.
+// unknown object or opcode) as the connection's fatal error. The fd count of
+// such an event is unknowable, so skipping it would throw the fd queue out
+// of sync; terminating the connection is the only safe response.
 func (c *Conn) failStream(reason string, objID uint32, opcode uint16) {
-	c.loggerOf().Error(reason, "id", objID, "opcode", opcode)
+	c.Logger().Error(reason, "id", objID, "opcode", opcode)
 	c.setProtoErr(fmt.Errorf("wayland: %s (object %d, opcode %d)", reason, objID, opcode))
 	_ = c.Close()
-}
-
-// loggerOf returns the current logger.
-func (c *Conn) loggerOf() *slog.Logger {
-	c.connMu.Lock()
-	l := c.logger
-	c.connMu.Unlock()
-	return l
 }
 
 // stickyErr reports the connection's fatal state, in priority order: a
