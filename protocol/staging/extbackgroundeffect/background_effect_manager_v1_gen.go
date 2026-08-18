@@ -29,16 +29,23 @@ var backgroundeffectmanagerv1EventFDCounts = map[uint16]int{
 type BackgroundEffectManagerV1Error uint32
 
 const (
+	// BackgroundEffectManagerV1ErrorBackgroundEffectExists the surface already has a background effect object.
 	BackgroundEffectManagerV1ErrorBackgroundEffectExists BackgroundEffectManagerV1Error = 0
 )
 
-// BackgroundEffectManagerV1Capability is a bitfield of flags.
+// This is a bitfield of flags.
 type BackgroundEffectManagerV1Capability uint32
 
 const (
+	// BackgroundEffectManagerV1CapabilityBlur the compositor supports applying blur.
 	BackgroundEffectManagerV1CapabilityBlur BackgroundEffectManagerV1Capability = 1
 )
 
+// BackgroundEffectManagerV1DestroyRequest destroy the background effect manager.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. Existing objects created by this object are not
+// affected.
 type BackgroundEffectManagerV1DestroyRequest struct {
 }
 
@@ -52,8 +59,18 @@ func (r *BackgroundEffectManagerV1DestroyRequest) Marshal(w *wire.Writer) error 
 
 func (r *BackgroundEffectManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// BackgroundEffectManagerV1GetBackgroundEffectRequest get a background effects object.
+//
+// Instantiate an interface extension for the given wl_surface to add
+// effects like blur for the background behind it.
+//
+// If the given wl_surface already has a ext_background_effect_surface_v1
+// object associated, the background_effect_exists protocol error will be
+// raised.
 type BackgroundEffectManagerV1GetBackgroundEffectRequest struct {
-	ID      wire.NewID
+	// ID the new ext_background_effect_surface_v1 object.
+	ID wire.NewID
+	// Surface the surface.
 	Surface wire.ObjectID
 }
 
@@ -73,6 +90,7 @@ func (r *BackgroundEffectManagerV1GetBackgroundEffectRequest) Marshal(w *wire.Wr
 
 func (r *BackgroundEffectManagerV1GetBackgroundEffectRequest) Since() uint32 { return 1 }
 
+// BackgroundEffectManagerV1CapabilitiesEvent capabilities of the compositor.
 type BackgroundEffectManagerV1CapabilitiesEvent struct {
 	Flags BackgroundEffectManagerV1Capability
 }
@@ -92,21 +110,38 @@ func (e *BackgroundEffectManagerV1CapabilitiesEvent) Unmarshal(r *wire.Reader) e
 
 func (e *BackgroundEffectManagerV1CapabilitiesEvent) Since() uint32 { return 1 }
 
+// BackgroundEffectManagerV1CapabilitiesFunc is a callback for Capabilities events.
 type BackgroundEffectManagerV1CapabilitiesFunc func(ev BackgroundEffectManagerV1CapabilitiesEvent)
 
+// BackgroundEffectManagerV1 background effect factory.
+//
+// This protocol provides a way to improve visuals of translucent surfaces
+// by applying effects like blur to the background behind them.
+//
+// The capabilities are send when the global is bound, and every time they
+// change. Note that when the capability goes away, the corresponding effect
+// is no longer applied by the compositor, even if it was set before.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type BackgroundEffectManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewBackgroundEffectManagerV1 wraps p in a BackgroundEffectManagerV1 proxy.
 func NewBackgroundEffectManagerV1(p *wayland.Proxy) *BackgroundEffectManagerV1 {
 	p.SetEventFDCounts(backgroundeffectmanagerv1EventFDCounts)
 	return &BackgroundEffectManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *BackgroundEffectManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCapabilities registers fn to receive Capabilities events.
 func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(BackgroundEffectManagerV1EventCapabilities, func(r *wire.Reader) {
 		var ev BackgroundEffectManagerV1CapabilitiesEvent
@@ -120,6 +155,11 @@ func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1C
 	})
 }
 
+// Destroy destroy the background effect manager.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. Existing objects created by this object are not
+// affected.
 func (o *BackgroundEffectManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -131,6 +171,14 @@ func (o *BackgroundEffectManagerV1) Destroy() error {
 	return nil
 }
 
+// GetBackgroundEffect get a background effects object.
+//
+// Instantiate an interface extension for the given wl_surface to add
+// effects like blur for the background behind it.
+//
+// If the given wl_surface already has a ext_background_effect_surface_v1
+// object associated, the background_effect_exists protocol error will be
+// raised.
 func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (*BackgroundEffectSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

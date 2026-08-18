@@ -26,6 +26,10 @@ var toplevelsessionv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ToplevelSessionV1DestroyRequest destroy the object.
+//
+// Destroy the object. This has no effect window management of the
+// associated toplevel.
 type ToplevelSessionV1DestroyRequest struct {
 }
 
@@ -37,6 +41,12 @@ func (r *ToplevelSessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelSessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RemoveRequest remove a surface from the session.
+//
+// Remove a specified surface from the session and render any corresponding
+// xx_toplevel_session_v1 object inert. The compositor should remove any
+// data related to the toplevel in the corresponding session from its internal
+// storage.
 type ToplevelSessionV1RemoveRequest struct {
 }
 
@@ -48,6 +58,13 @@ func (r *ToplevelSessionV1RemoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelSessionV1RemoveRequest) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RestoredEvent a toplevel's session has been restored.
+//
+// The "restored" event is emitted prior to the first
+// xdg_toplevel.configure for the toplevel. It will only be emitted after
+// xx_session_v1.restore_toplevel, and the initial empty surface state has
+// been applied, and it indicates that the surface's session is being
+// restored with this configure event.
 type ToplevelSessionV1RestoredEvent struct {
 	Surface wire.ObjectID
 }
@@ -65,21 +82,25 @@ func (e *ToplevelSessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ToplevelSessionV1RestoredEvent) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RestoredFunc is a callback for Restored events.
 type ToplevelSessionV1RestoredFunc func(ev ToplevelSessionV1RestoredEvent)
 
 type ToplevelSessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelSessionV1 wraps p in a ToplevelSessionV1 proxy.
 func NewToplevelSessionV1(p *wayland.Proxy) *ToplevelSessionV1 {
 	p.SetEventFDCounts(toplevelsessionv1EventFDCounts)
 	return &ToplevelSessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelSessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnRestored registers fn to receive Restored events.
 func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(ToplevelSessionV1EventRestored, func(r *wire.Reader) {
 		var ev ToplevelSessionV1RestoredEvent
@@ -93,6 +114,10 @@ func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	})
 }
 
+// Destroy destroy the object.
+//
+// Destroy the object. This has no effect window management of the
+// associated toplevel.
 func (o *ToplevelSessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -104,6 +129,12 @@ func (o *ToplevelSessionV1) Destroy() error {
 	return nil
 }
 
+// Remove remove a surface from the session.
+//
+// Remove a specified surface from the session and render any corresponding
+// xx_toplevel_session_v1 object inert. The compositor should remove any
+// data related to the toplevel in the corresponding session from its internal
+// storage.
 func (o *ToplevelSessionV1) Remove() error {
 	if o.proxy.Deleted() {
 		return nil

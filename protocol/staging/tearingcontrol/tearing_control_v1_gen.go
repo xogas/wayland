@@ -15,13 +15,34 @@ const (
 	TearingControlV1RequestDestroy             uint16 = 1
 )
 
+// TearingControlV1PresentationHint presentation hint values.
+//
+// This enum provides information for if submitted frames from the client
+// may be presented with tearing.
 type TearingControlV1PresentationHint uint32
 
 const (
+	// TearingControlV1PresentationHintVsync.
+	//
+	// The content of this surface is meant to be synchronized to the
+	// vertical blanking period. This should not result in visible tearing
+	// and may result in a delay before a surface commit is presented.
 	TearingControlV1PresentationHintVsync TearingControlV1PresentationHint = 0
+	// TearingControlV1PresentationHintAsync.
+	//
+	// The content of this surface is meant to be presented with minimal
+	// latency and tearing is acceptable.
 	TearingControlV1PresentationHintAsync TearingControlV1PresentationHint = 1
 )
 
+// TearingControlV1SetPresentationHintRequest set presentation hint.
+//
+// Set the presentation hint for the associated wl_surface. This state is
+// double-buffered, see wl_surface.commit.
+//
+// The compositor is free to dynamically respect or ignore this hint based
+// on various conditions like hardware capabilities, surface state and
+// user preferences.
 type TearingControlV1SetPresentationHintRequest struct {
 	Hint TearingControlV1PresentationHint
 }
@@ -39,6 +60,10 @@ func (r *TearingControlV1SetPresentationHintRequest) Marshal(w *wire.Writer) err
 
 func (r *TearingControlV1SetPresentationHintRequest) Since() uint32 { return 1 }
 
+// TearingControlV1DestroyRequest destroy tearing control object.
+//
+// Destroy this surface tearing object and revert the presentation hint to
+// vsync. The change will be applied on the next wl_surface.commit.
 type TearingControlV1DestroyRequest struct {
 }
 
@@ -50,24 +75,48 @@ func (r *TearingControlV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TearingControlV1DestroyRequest) Since() uint32 { return 1 }
 
+// TearingControlV1 per-surface tearing control interface.
+//
+// An additional interface to a wl_surface object, which allows the client
+// to hint to the compositor if the content on the surface is suitable for
+// presentation with tearing.
+// The default presentation hint is vsync. See presentation_hint for more
+// details.
+//
+// If the associated wl_surface is destroyed, this object becomes inert and
+// should be destroyed.
 type TearingControlV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTearingControlV1 wraps p in a TearingControlV1 proxy.
 func NewTearingControlV1(p *wayland.Proxy) *TearingControlV1 {
 	return &TearingControlV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TearingControlV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// SetPresentationHint set presentation hint.
+//
+// Set the presentation hint for the associated wl_surface. This state is
+// double-buffered, see wl_surface.commit.
+//
+// The compositor is free to dynamically respect or ignore this hint based
+// on various conditions like hardware capabilities, surface state and
+// user preferences.
 func (o *TearingControlV1) SetPresentationHint(hint TearingControlV1PresentationHint) error {
 	return o.proxy.SendRequest(TearingControlV1RequestSetPresentationHint, &TearingControlV1SetPresentationHintRequest{
 		Hint: hint,
 	})
 }
 
+// Destroy destroy tearing control object.
+//
+// Destroy this surface tearing object and revert the presentation hint to
+// vsync. The change will be applied on the next wl_surface.commit.
 func (o *TearingControlV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

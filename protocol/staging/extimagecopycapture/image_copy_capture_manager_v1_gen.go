@@ -19,16 +19,28 @@ const (
 type ImageCopyCaptureManagerV1Error uint32
 
 const (
+	// ImageCopyCaptureManagerV1ErrorInvalidOption invalid option flag.
 	ImageCopyCaptureManagerV1ErrorInvalidOption ImageCopyCaptureManagerV1Error = 1
 )
 
-// ImageCopyCaptureManagerV1Options is a bitfield of flags.
+// This is a bitfield of flags.
 type ImageCopyCaptureManagerV1Options uint32
 
 const (
+	// ImageCopyCaptureManagerV1OptionsPaintCursors paint cursors onto captured frames.
 	ImageCopyCaptureManagerV1OptionsPaintCursors ImageCopyCaptureManagerV1Options = 1
 )
 
+// ImageCopyCaptureManagerV1CreateSessionRequest capture an image capture source.
+//
+// Create a capturing session for an image capture source.
+//
+// If the paint_cursors option is set, cursors shall be composited onto
+// the captured frame. The cursor must not be composited onto the frame
+// if this flag is not set.
+//
+// If the options bitfield is invalid, the invalid_option protocol error
+// is sent.
 type ImageCopyCaptureManagerV1CreateSessionRequest struct {
 	Session wire.NewID
 	Source  wire.ObjectID
@@ -54,6 +66,10 @@ func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Marshal(w *wire.Writer) 
 
 func (r *ImageCopyCaptureManagerV1CreateSessionRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest capture the pointer cursor of an image capture source.
+//
+// Create a cursor capturing session for the pointer of an image capture
+// source.
 type ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest struct {
 	Session wire.NewID
 	Source  wire.ObjectID
@@ -79,6 +95,11 @@ func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Marshal(w *
 
 func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureManagerV1DestroyRequest destroy the manager.
+//
+// Destroy the manager object.
+//
+// Other objects created via this interface are unaffected.
 type ImageCopyCaptureManagerV1DestroyRequest struct {
 }
 
@@ -92,18 +113,34 @@ func (r *ImageCopyCaptureManagerV1DestroyRequest) Marshal(w *wire.Writer) error 
 
 func (r *ImageCopyCaptureManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureManagerV1 manager to inform clients and begin capturing.
+//
+// This object is a manager which offers requests to start capturing from a
+// source.
 type ImageCopyCaptureManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageCopyCaptureManagerV1 wraps p in a ImageCopyCaptureManagerV1 proxy.
 func NewImageCopyCaptureManagerV1(p *wayland.Proxy) *ImageCopyCaptureManagerV1 {
 	return &ImageCopyCaptureManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageCopyCaptureManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateSession capture an image capture source.
+//
+// Create a capturing session for an image capture source.
+//
+// If the paint_cursors option is set, cursors shall be composited onto
+// the captured frame. The cursor must not be composited onto the frame
+// if this flag is not set.
+//
+// If the options bitfield is invalid, the invalid_option protocol error
+// is sent.
 func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options ImageCopyCaptureManagerV1Options) (*ImageCopyCaptureSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -123,6 +160,10 @@ func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options 
 	return wrapped, nil
 }
 
+// CreatePointerCursorSession capture the pointer cursor of an image capture source.
+//
+// Create a cursor capturing session for the pointer of an image capture
+// source.
 func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source wire.ObjectID, pointer wire.ObjectID) (*ImageCopyCaptureCursorSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -142,6 +183,11 @@ func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source wire.Objec
 	return wrapped, nil
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the manager object.
+//
+// Other objects created via this interface are unaffected.
 func (o *ImageCopyCaptureManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

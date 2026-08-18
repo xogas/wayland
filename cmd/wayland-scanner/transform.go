@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // GoInterface is the Go-specific view of a single protocol Interface.
@@ -13,6 +15,7 @@ type GoInterface struct {
 	IfName   string // protocol interface name, e.g. "wl_display"
 	Version  int
 	Imports  string // import block as raw string
+	Doc      string // rendered doc comment (with // prefix and trailing newline); "" if none
 
 	Enums    []GoEnum
 	Requests []GoRequest
@@ -31,6 +34,8 @@ type GoRequest struct {
 	Opcode          int
 	Since           int
 	DeprecatedSince int // 0 means not deprecated
+	StructDoc       string
+	MethodDoc       string
 	Args            []GoArg
 	HasNewID        bool   // new_id with resolvable interface in same protocol
 	NewIDType       string // Go type created by this request
@@ -49,6 +54,7 @@ type GoEvent struct {
 	Opcode          int
 	Since           int
 	DeprecatedSince int // 0 means not deprecated
+	StructDoc       string
 	Args            []GoArg
 	HasNewID        bool   // event has a new_id arg with resolvable interface
 	NewIDType       string // Go type created for the new_id
@@ -66,6 +72,7 @@ type GoArg struct {
 	IsNewID   bool
 	NewIDType string // set when new_id has resolvable interface
 	AllowNull bool   // object arg with allow-null="true"
+	Doc       string // field doc comment ("// Name summary.\n"), "" if none
 }
 
 // GoEnum is the Go-specific view of an enum.
@@ -73,6 +80,7 @@ type GoEnum struct {
 	Name       string
 	Type       string
 	IsBitField bool
+	Doc        string
 	Entries    []GoEnumEntry
 }
 
@@ -80,12 +88,99 @@ type GoEnum struct {
 type GoEnumEntry struct {
 	Const string
 	Val   string
+	Doc   string
 }
 
 // enumMap maps enum reference strings to Go type names.
 // Keys are either short names ("format") for same-interface enums
 // or fully-qualified names ("wl_shm.format") for cross-interface enums.
 type enumMap map[string]string
+
+// docComment renders a Go doc comment for an exported identifier.
+// The first line always begins with name (as Go requires), followed by the
+// lower-cased summary. The "Deprecated:" note, when present, immediately
+// follows the summary paragraph (as the Go convention requires). The
+// description body is dedented and emitted as subsequent paragraphs.
+// Returns "" when there is nothing to document.
+func docComment(name, summary, text string, deprecatedSince int) string {
+	if strings.TrimSpace(summary) == "" && strings.TrimSpace(text) == "" && deprecatedSince == 0 {
+		return ""
+	}
+	first := name
+	if s := strings.Join(strings.Fields(summary), " "); s != "" {
+		first += " " + lowerFirst(s)
+	}
+	first = strings.TrimRight(first, ". \t") + "."
+
+	var lines []string
+	lines = append(lines, "// "+first)
+	if deprecatedSince > 0 {
+		lines = append(lines, "//")
+		lines = append(lines, fmt.Sprintf("// Deprecated: since version %d.", deprecatedSince))
+	}
+	if t := dedent(text); t != "" {
+		lines = append(lines, "//")
+		for _, ln := range strings.Split(t, "\n") {
+			ln = strings.TrimRight(ln, " \t")
+			if ln == "" {
+				lines = append(lines, "//")
+			} else {
+				lines = append(lines, "// "+ln)
+			}
+		}
+	}
+	return strings.Join(lines, "\n") + "\n"
+}
+
+// fieldComment renders a single-line doc comment for a struct field.
+func fieldComment(name, summary string) string {
+	s := strings.Join(strings.Fields(summary), " ")
+	if s == "" {
+		return ""
+	}
+	return "// " + name + " " + lowerFirst(s) + ".\n"
+}
+
+// lowerFirst lower-cases the first rune of s.
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	r, n := utf8.DecodeRuneInString(s)
+	return string(unicode.ToLower(r)) + s[n:]
+}
+
+// dedent strips the common leading indentation from a block of text and
+// removes leading/trailing blank lines. Wayland XML description bodies are
+// uniformly indented, so the common prefix is removed to keep comment text
+// flush left (gofmt would otherwise mangle indented comment lines).
+func dedent(s string) string {
+	lines := strings.Split(s, "\n")
+	minIndent := -1
+	for _, ln := range lines {
+		if strings.TrimSpace(ln) == "" {
+			continue
+		}
+		n := len(ln) - len(strings.TrimLeft(ln, " \t"))
+		if minIndent == -1 || n < minIndent {
+			minIndent = n
+		}
+	}
+	if minIndent > 0 {
+		for i, ln := range lines {
+			if len(ln) >= minIndent {
+				lines[i] = ln[minIndent:]
+			}
+		}
+	}
+	for len(lines) > 0 && strings.TrimSpace(lines[0]) == "" {
+		lines = lines[1:]
+	}
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+	return strings.Join(lines, "\n")
+}
 
 // buildEnumMap builds a protocol-wide enum reference -> Go type mapping.
 func buildEnumMap(ifaces []Interface, prefix string) enumMap {
@@ -113,6 +208,7 @@ func convertInterface(iface *Interface, pkg, prefix string, knownIface map[strin
 		TypeName: tn,
 		IfName:   iface.Name,
 		Version:  iface.Version,
+		Doc:      docComment(tn, iface.Description.Summary, iface.Description.Text, 0),
 	}
 	if !isRoot {
 		g.WaylandPkg = "wayland."
@@ -138,11 +234,14 @@ func buildEnums(iface *Interface, typeName string) []GoEnum {
 			Name:       pascal(e.Name),
 			Type:       typeName + pascal(e.Name),
 			IsBitField: e.BitField,
+			Doc:        docComment(typeName+pascal(e.Name), e.Description.Summary, e.Description.Text, 0),
 		}
 		for j := range e.Entries {
+			entry := &e.Entries[j]
 			en.Entries = append(en.Entries, GoEnumEntry{
-				Const: en.Type + pascal(e.Entries[j].Name),
-				Val:   fmt.Sprintf("%d", e.Entries[j].Value),
+				Const: en.Type + pascal(entry.Name),
+				Val:   fmt.Sprintf("%d", entry.Value),
+				Doc:   docComment(en.Type+pascal(entry.Name), entry.Summary, entry.Description.Text, entry.DeprecatedSince),
 			})
 		}
 		out = append(out, en)
@@ -163,6 +262,8 @@ func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bo
 			Opcode:          opcode,
 			Since:           max(r.Since, 1),
 			DeprecatedSince: r.DeprecatedSince,
+			StructDoc:       docComment(tn+reqName+"Request", r.Description.Summary, r.Description.Text, r.DeprecatedSince),
+			MethodDoc:       docComment(reqName, r.Description.Summary, r.Description.Text, r.DeprecatedSince),
 			IsDestructor:    r.Type == "destructor",
 		}
 
@@ -213,6 +314,7 @@ func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool
 			Opcode:          opcode,
 			Since:           max(e.Since, 1),
 			DeprecatedSince: e.DeprecatedSince,
+			StructDoc:       docComment(tn+evtName+"Event", e.Description.Summary, e.Description.Text, e.DeprecatedSince),
 		}
 		fdCount := 0
 		for j := range e.Args {
@@ -237,7 +339,7 @@ func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool
 
 // buildArg maps a parsed Arg to its Go-specific view.
 func buildArg(a *Arg, em enumMap) GoArg {
-	ad := GoArg{GoName: pascal(a.Name), ParamName: camel(a.Name), AllowNull: a.AllowNull}
+	ad := GoArg{GoName: pascal(a.Name), ParamName: camel(a.Name), AllowNull: a.AllowNull, Doc: fieldComment(pascal(a.Name), a.Summary)}
 	switch a.Type {
 	case "int":
 		ad.GoType, ad.WireRead, ad.WriteFn = "int32", "r.Int32()", "Int32"

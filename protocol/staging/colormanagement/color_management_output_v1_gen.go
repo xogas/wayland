@@ -26,6 +26,10 @@ var colormanagementoutputv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ColorManagementOutputV1DestroyRequest destroy the color management output.
+//
+// Destroy the color wp_color_management_output_v1 object. This does not
+// affect any remaining protocol objects.
 type ColorManagementOutputV1DestroyRequest struct {
 }
 
@@ -39,6 +43,39 @@ func (r *ColorManagementOutputV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagementOutputV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorManagementOutputV1GetImageDescriptionRequest get the image description of the output.
+//
+// This creates a new wp_image_description_v1 object for the current image
+// description of the output. There always is exactly one image description
+// active for an output so the client should destroy the image description
+// created by earlier invocations of this request. This request is usually
+// sent as a reaction to the image_description_changed event or when
+// creating a wp_color_management_output_v1 object.
+//
+// The image description of an output represents the color encoding the
+// output expects. There might be performance and power advantages, as well
+// as improved color reproduction, if a content update matches the image
+// description of the output it is being shown on. If a content update is
+// shown on any other output than the one it matches the image description
+// of, then the color reproduction on those outputs might be considerably
+// worse.
+//
+// The created wp_image_description_v1 object preserves the image
+// description of the output from the time the object was created.
+//
+// The resulting image description object allows get_information request.
+//
+// If this protocol object is inert, the resulting image description object
+// shall immediately deliver the wp_image_description_v1.failed event with
+// the no_output cause.
+//
+// If the interface version is inadequate for the output's image
+// description, meaning that the client does not support all the events
+// needed to deliver the crucial information, the resulting image
+// description object shall immediately deliver the
+// wp_image_description_v1.failed event with the low_version cause.
+//
+// Otherwise the object shall immediately deliver the ready event.
 type ColorManagementOutputV1GetImageDescriptionRequest struct {
 	ImageDescription wire.NewID
 }
@@ -56,6 +93,15 @@ func (r *ColorManagementOutputV1GetImageDescriptionRequest) Marshal(w *wire.Writ
 
 func (r *ColorManagementOutputV1GetImageDescriptionRequest) Since() uint32 { return 1 }
 
+// ColorManagementOutputV1ImageDescriptionChangedEvent image description changed.
+//
+// This event is sent whenever the image description of the output changed,
+// followed by one wl_output.done event common to output events across all
+// extensions.
+//
+// If the client wants to use the updated image description, it needs to do
+// get_image_description again, because image description objects are
+// immutable.
 type ColorManagementOutputV1ImageDescriptionChangedEvent struct {
 }
 
@@ -69,21 +115,34 @@ func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Unmarshal(r *wire.
 
 func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Since() uint32 { return 1 }
 
+// ColorManagementOutputV1ImageDescriptionChangedFunc is a callback for ImageDescriptionChanged events.
 type ColorManagementOutputV1ImageDescriptionChangedFunc func(ev ColorManagementOutputV1ImageDescriptionChangedEvent)
 
+// ColorManagementOutputV1 output color properties.
+//
+// A wp_color_management_output_v1 describes the color properties of an
+// output.
+//
+// The wp_color_management_output_v1 is associated with the wl_output global
+// underlying the wl_output object. Therefore the client destroying the
+// wl_output object has no impact, but the compositor removing the output
+// global makes the wp_color_management_output_v1 object inert.
 type ColorManagementOutputV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorManagementOutputV1 wraps p in a ColorManagementOutputV1 proxy.
 func NewColorManagementOutputV1(p *wayland.Proxy) *ColorManagementOutputV1 {
 	p.SetEventFDCounts(colormanagementoutputv1EventFDCounts)
 	return &ColorManagementOutputV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorManagementOutputV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnImageDescriptionChanged registers fn to receive ImageDescriptionChanged events.
 func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOutputV1ImageDescriptionChangedFunc) {
 	o.proxy.RegisterEvent(ColorManagementOutputV1EventImageDescriptionChanged, func(r *wire.Reader) {
 		var ev ColorManagementOutputV1ImageDescriptionChangedEvent
@@ -97,6 +156,10 @@ func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOu
 	})
 }
 
+// Destroy destroy the color management output.
+//
+// Destroy the color wp_color_management_output_v1 object. This does not
+// affect any remaining protocol objects.
 func (o *ColorManagementOutputV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -108,6 +171,39 @@ func (o *ColorManagementOutputV1) Destroy() error {
 	return nil
 }
 
+// GetImageDescription get the image description of the output.
+//
+// This creates a new wp_image_description_v1 object for the current image
+// description of the output. There always is exactly one image description
+// active for an output so the client should destroy the image description
+// created by earlier invocations of this request. This request is usually
+// sent as a reaction to the image_description_changed event or when
+// creating a wp_color_management_output_v1 object.
+//
+// The image description of an output represents the color encoding the
+// output expects. There might be performance and power advantages, as well
+// as improved color reproduction, if a content update matches the image
+// description of the output it is being shown on. If a content update is
+// shown on any other output than the one it matches the image description
+// of, then the color reproduction on those outputs might be considerably
+// worse.
+//
+// The created wp_image_description_v1 object preserves the image
+// description of the output from the time the object was created.
+//
+// The resulting image description object allows get_information request.
+//
+// If this protocol object is inert, the resulting image description object
+// shall immediately deliver the wp_image_description_v1.failed event with
+// the no_output cause.
+//
+// If the interface version is inadequate for the output's image
+// description, meaning that the client does not support all the events
+// needed to deliver the crucial information, the resulting image
+// description object shall immediately deliver the
+// wp_image_description_v1.failed event with the low_version cause.
+//
+// Otherwise the object shall immediately deliver the ready event.
 func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

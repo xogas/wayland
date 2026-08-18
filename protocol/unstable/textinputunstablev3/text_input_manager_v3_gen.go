@@ -15,6 +15,9 @@ const (
 	TextInputManagerV3RequestGetTextInput uint16 = 1
 )
 
+// TextInputManagerV3DestroyRequest destroy the wp_text_input_manager.
+//
+// Destroy the wp_text_input_manager object.
 type TextInputManagerV3DestroyRequest struct {
 }
 
@@ -26,6 +29,9 @@ func (r *TextInputManagerV3DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputManagerV3DestroyRequest) Since() uint32 { return 1 }
 
+// TextInputManagerV3GetTextInputRequest create a new text input object.
+//
+// Creates a new text-input object for a given seat.
 type TextInputManagerV3GetTextInputRequest struct {
 	ID   wire.NewID
 	Seat wire.ObjectID
@@ -47,18 +53,26 @@ func (r *TextInputManagerV3GetTextInputRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputManagerV3GetTextInputRequest) Since() uint32 { return 1 }
 
+// TextInputManagerV3 text input manager.
+//
+// A factory for text-input objects. This object is a global singleton.
 type TextInputManagerV3 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTextInputManagerV3 wraps p in a TextInputManagerV3 proxy.
 func NewTextInputManagerV3(p *wayland.Proxy) *TextInputManagerV3 {
 	return &TextInputManagerV3{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TextInputManagerV3) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the wp_text_input_manager.
+//
+// Destroy the wp_text_input_manager object.
 func (o *TextInputManagerV3) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -70,6 +84,9 @@ func (o *TextInputManagerV3) Destroy() error {
 	return nil
 }
 
+// GetTextInput create a new text input object.
+//
+// Creates a new text-input object for a given seat.
 func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

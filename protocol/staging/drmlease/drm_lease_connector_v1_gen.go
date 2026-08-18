@@ -33,6 +33,13 @@ var drmleaseconnectorv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+// DrmLeaseConnectorV1DestroyRequest destroy connector.
+//
+// The client may send this request to indicate that it will not use this
+// connector. Clients are encouraged to send this after receiving the
+// "withdrawn" event so that the server can release the resources
+// associated with this connector offer. Neither existing lease requests
+// nor leases will be affected.
 type DrmLeaseConnectorV1DestroyRequest struct {
 }
 
@@ -44,7 +51,18 @@ func (r *DrmLeaseConnectorV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DrmLeaseConnectorV1DestroyRequest) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1NameEvent name.
+//
+// The compositor sends this event once the connector is created to
+// indicate the name of this connector. This will not change for the
+// duration of the Wayland session, but is not guaranteed to be consistent
+// between sessions.
+//
+// If the compositor supports wl_output version 4 and this connector
+// corresponds to a wl_output, the compositor should use the same name as
+// for the wl_output.
 type DrmLeaseConnectorV1NameEvent struct {
+	// Name connector name.
 	Name string
 }
 
@@ -61,7 +79,14 @@ func (e *DrmLeaseConnectorV1NameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseConnectorV1NameEvent) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1DescriptionEvent description.
+//
+// The compositor sends this event once the connector is created to provide
+// a human-readable description for this connector, which may be presented
+// to the user. The compositor may send this event multiple times over the
+// lifetime of this object to reflect changes in the description.
 type DrmLeaseConnectorV1DescriptionEvent struct {
+	// Description connector description.
 	Description string
 }
 
@@ -80,7 +105,14 @@ func (e *DrmLeaseConnectorV1DescriptionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseConnectorV1DescriptionEvent) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1ConnectorIDEvent connector_id.
+//
+// The compositor sends this event once the connector is created to
+// indicate the DRM object ID which represents the underlying connector
+// that is being offered. Note that the final lease may include additional
+// object IDs, such as CRTCs and planes.
 type DrmLeaseConnectorV1ConnectorIDEvent struct {
+	// ConnectorID dRM connector ID.
 	ConnectorID uint32
 }
 
@@ -99,6 +131,11 @@ func (e *DrmLeaseConnectorV1ConnectorIDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseConnectorV1ConnectorIDEvent) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1DoneEvent all properties have been sent.
+//
+// This event is sent after all properties of a connector have been sent.
+// This allows changes to the properties to be seen as atomic even if they
+// happen via multiple events.
 type DrmLeaseConnectorV1DoneEvent struct {
 }
 
@@ -110,6 +147,19 @@ func (e *DrmLeaseConnectorV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseConnectorV1DoneEvent) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1WithdrawnEvent lease offer withdrawn.
+//
+// Sent to indicate that the compositor will no longer honor requests for
+// DRM leases which include this connector. The client may still issue a
+// lease request including this connector, but the compositor will send
+// wp_drm_lease_v1.finished without issuing a lease fd. Compositors are
+// encouraged to send this event when they lose access to connector, for
+// example when the connector is hot-unplugged, when the connector gets
+// leased to a client or when the compositor loses DRM master.
+//
+// If a client holds a lease for the connector, the status of the lease
+// remains the same. The client should destroy the object after receiving
+// this event.
 type DrmLeaseConnectorV1WithdrawnEvent struct {
 }
 
@@ -121,29 +171,46 @@ func (e *DrmLeaseConnectorV1WithdrawnEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseConnectorV1WithdrawnEvent) Since() uint32 { return 1 }
 
+// DrmLeaseConnectorV1NameFunc is a callback for Name events.
 type DrmLeaseConnectorV1NameFunc func(ev DrmLeaseConnectorV1NameEvent)
 
+// DrmLeaseConnectorV1DescriptionFunc is a callback for Description events.
 type DrmLeaseConnectorV1DescriptionFunc func(ev DrmLeaseConnectorV1DescriptionEvent)
 
+// DrmLeaseConnectorV1ConnectorIDFunc is a callback for ConnectorID events.
 type DrmLeaseConnectorV1ConnectorIDFunc func(ev DrmLeaseConnectorV1ConnectorIDEvent)
 
+// DrmLeaseConnectorV1DoneFunc is a callback for Done events.
 type DrmLeaseConnectorV1DoneFunc func(ev DrmLeaseConnectorV1DoneEvent)
 
+// DrmLeaseConnectorV1WithdrawnFunc is a callback for Withdrawn events.
 type DrmLeaseConnectorV1WithdrawnFunc func(ev DrmLeaseConnectorV1WithdrawnEvent)
 
+// DrmLeaseConnectorV1 a leasable DRM connector.
+//
+// Represents a DRM connector which is available for lease. These objects are
+// created via wp_drm_lease_device_v1.connector events, and should be passed
+// to lease requests via wp_drm_lease_request_v1.request_connector.
+// Immediately after the wp_drm_lease_connector_v1 object is created the
+// compositor will send a name, a description, a connector_id and a done
+// event. When the description is updated the compositor will send a
+// description event followed by a done event.
 type DrmLeaseConnectorV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDrmLeaseConnectorV1 wraps p in a DrmLeaseConnectorV1 proxy.
 func NewDrmLeaseConnectorV1(p *wayland.Proxy) *DrmLeaseConnectorV1 {
 	p.SetEventFDCounts(drmleaseconnectorv1EventFDCounts)
 	return &DrmLeaseConnectorV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DrmLeaseConnectorV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnName registers fn to receive Name events.
 func (o *DrmLeaseConnectorV1) OnName(fn DrmLeaseConnectorV1NameFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventName, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1NameEvent
@@ -157,6 +224,7 @@ func (o *DrmLeaseConnectorV1) OnName(fn DrmLeaseConnectorV1NameFunc) {
 	})
 }
 
+// OnDescription registers fn to receive Description events.
 func (o *DrmLeaseConnectorV1) OnDescription(fn DrmLeaseConnectorV1DescriptionFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventDescription, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1DescriptionEvent
@@ -170,6 +238,7 @@ func (o *DrmLeaseConnectorV1) OnDescription(fn DrmLeaseConnectorV1DescriptionFun
 	})
 }
 
+// OnConnectorID registers fn to receive ConnectorID events.
 func (o *DrmLeaseConnectorV1) OnConnectorID(fn DrmLeaseConnectorV1ConnectorIDFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventConnectorID, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1ConnectorIDEvent
@@ -183,6 +252,7 @@ func (o *DrmLeaseConnectorV1) OnConnectorID(fn DrmLeaseConnectorV1ConnectorIDFun
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *DrmLeaseConnectorV1) OnDone(fn DrmLeaseConnectorV1DoneFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventDone, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1DoneEvent
@@ -196,6 +266,7 @@ func (o *DrmLeaseConnectorV1) OnDone(fn DrmLeaseConnectorV1DoneFunc) {
 	})
 }
 
+// OnWithdrawn registers fn to receive Withdrawn events.
 func (o *DrmLeaseConnectorV1) OnWithdrawn(fn DrmLeaseConnectorV1WithdrawnFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventWithdrawn, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1WithdrawnEvent
@@ -209,6 +280,13 @@ func (o *DrmLeaseConnectorV1) OnWithdrawn(fn DrmLeaseConnectorV1WithdrawnFunc) {
 	})
 }
 
+// Destroy destroy connector.
+//
+// The client may send this request to indicate that it will not use this
+// connector. Clients are encouraged to send this after receiving the
+// "withdrawn" event so that the server can release the resources
+// associated with this connector offer. Neither existing lease requests
+// nor leases will be affected.
 func (o *DrmLeaseConnectorV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

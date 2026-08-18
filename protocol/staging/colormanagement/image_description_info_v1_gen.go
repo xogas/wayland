@@ -41,6 +41,9 @@ var imagedescriptioninfov1EventFDCounts = map[uint16]int{
 	10: 0,
 }
 
+// ImageDescriptionInfoV1DoneEvent end of information.
+//
+// Signals the end of information events and destroys the object.
 type ImageDescriptionInfoV1DoneEvent struct {
 }
 
@@ -52,8 +55,20 @@ func (e *ImageDescriptionInfoV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionInfoV1DoneEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1IccFileEvent iCC profile matching the image description.
+//
+// The icc argument provides a file descriptor to the client which may be
+// memory-mapped to provide the ICC profile matching the image description.
+// The fd is read-only, and if mapped then it must be mapped with
+// MAP_PRIVATE by the client.
+//
+// The ICC profile version and other details are determined by the
+// compositor. There is no provision for a client to ask for a specific
+// kind of a profile.
 type ImageDescriptionInfoV1IccFileEvent struct {
-	Icc     int
+	// Icc iCC profile file descriptor.
+	Icc int
+	// IccSize iCC profile size, in bytes.
 	IccSize uint32
 }
 
@@ -77,14 +92,29 @@ func (e *ImageDescriptionInfoV1IccFileEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionInfoV1IccFileEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1PrimariesEvent primaries as chromaticity coordinates.
+//
+// Delivers the primary color volume primaries and white point using CIE
+// 1931 xy chromaticity coordinates.
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
 type ImageDescriptionInfoV1PrimariesEvent struct {
+	// RX red x * 1M.
 	RX int32
+	// RY red y * 1M.
 	RY int32
+	// GX green x * 1M.
 	GX int32
+	// GY green y * 1M.
 	GY int32
+	// BX blue x * 1M.
 	BX int32
+	// BY blue y * 1M.
 	BY int32
+	// WX white x * 1M.
 	WX int32
+	// WY white y * 1M.
 	WY int32
 }
 
@@ -138,7 +168,12 @@ func (e *ImageDescriptionInfoV1PrimariesEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionInfoV1PrimariesEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1PrimariesNamedEvent named primaries.
+//
+// Delivers the primary color volume primaries and white point using an
+// explicitly enumerated named set.
 type ImageDescriptionInfoV1PrimariesNamedEvent struct {
+	// Primaries named primaries.
 	Primaries ColorManagerV1Primaries
 }
 
@@ -157,7 +192,17 @@ func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Unmarshal(r *wire.Reader) er
 
 func (e *ImageDescriptionInfoV1PrimariesNamedEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TfPowerEvent transfer characteristic as a power curve.
+//
+// The color component transfer characteristic of this image description is
+// a pure power curve. This event provides the exponent of the power
+// function. This curve represents the conversion from electrical to
+// optical pixel or color values.
+//
+// The curve exponent has been multiplied by 10000 to get the argument eexp
+// value to carry the precision of 4 decimals.
 type ImageDescriptionInfoV1TfPowerEvent struct {
+	// Eexp the exponent * 10000.
 	Eexp uint32
 }
 
@@ -176,7 +221,12 @@ func (e *ImageDescriptionInfoV1TfPowerEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionInfoV1TfPowerEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TfNamedEvent named transfer characteristic.
+//
+// Delivers the transfer characteristic using an explicitly enumerated
+// named function.
 type ImageDescriptionInfoV1TfNamedEvent struct {
+	// Tf named transfer function.
 	Tf ColorManagerV1TransferFunction
 }
 
@@ -195,9 +245,22 @@ func (e *ImageDescriptionInfoV1TfNamedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionInfoV1TfNamedEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1LuminancesEvent primary color volume luminance range and reference white.
+//
+// Delivers the primary color volume luminance range and the reference
+// white luminance level. These values include the minimum display emission
+// and ambient flare luminances, assumed to be optically additive and have
+// the chromaticity of the primary color volume white point.
+//
+// The minimum luminance is multiplied by 10000 to get the argument
+// 'min_lum' value and carries precision of 4 decimals. The maximum
+// luminance and reference white luminance values are unscaled.
 type ImageDescriptionInfoV1LuminancesEvent struct {
-	MinLum       uint32
-	MaxLum       uint32
+	// MinLum minimum luminance (cd/m²) * 10000.
+	MinLum uint32
+	// MaxLum maximum luminance (cd/m²).
+	MaxLum uint32
+	// ReferenceLum reference white luminance (cd/m²).
 	ReferenceLum uint32
 }
 
@@ -226,14 +289,33 @@ func (e *ImageDescriptionInfoV1LuminancesEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *ImageDescriptionInfoV1LuminancesEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TargetPrimariesEvent target primaries as chromaticity coordinates.
+//
+// Provides the color primaries and white point of the target color volume
+// using CIE 1931 xy chromaticity coordinates. This is compatible with the
+// SMPTE ST 2086 definition of HDR static metadata for mastering displays.
+//
+// While primary color volume is about how color is encoded, the target
+// color volume is the actually displayable color volume.
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
 type ImageDescriptionInfoV1TargetPrimariesEvent struct {
+	// RX red x * 1M.
 	RX int32
+	// RY red y * 1M.
 	RY int32
+	// GX green x * 1M.
 	GX int32
+	// GY green y * 1M.
 	GY int32
+	// BX blue x * 1M.
 	BX int32
+	// BY blue y * 1M.
 	BY int32
+	// WX white x * 1M.
 	WX int32
+	// WY white y * 1M.
 	WY int32
 }
 
@@ -287,8 +369,24 @@ func (e *ImageDescriptionInfoV1TargetPrimariesEvent) Unmarshal(r *wire.Reader) e
 
 func (e *ImageDescriptionInfoV1TargetPrimariesEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TargetLuminanceEvent target luminance range.
+//
+// Provides the luminance range that the image description is targeting as
+// the minimum and maximum absolute luminance L. These values include the
+// minimum display emission and ambient flare luminances, assumed to be
+// optically additive and have the chromaticity of the primary color
+// volume white point. This should be compatible with the SMPTE ST 2086
+// definition of HDR static metadata.
+//
+// This luminance range is only theoretical and may not correspond to the
+// luminance of light emitted on an actual display.
+//
+// Min L value is multiplied by 10000 to get the argument min_lum value and
+// carry precision of 4 decimals. Max L value is unscaled for max_lum.
 type ImageDescriptionInfoV1TargetLuminanceEvent struct {
+	// MinLum min L (cd/m²) * 10000.
 	MinLum uint32
+	// MaxLum max L (cd/m²).
 	MaxLum uint32
 }
 
@@ -312,7 +410,15 @@ func (e *ImageDescriptionInfoV1TargetLuminanceEvent) Unmarshal(r *wire.Reader) e
 
 func (e *ImageDescriptionInfoV1TargetLuminanceEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TargetMaxCllEvent target maximum content light level.
+//
+// Provides the targeted max_cll of the image description. max_cll is
+// defined by CTA-861-H.
+//
+// This luminance is only theoretical and may not correspond to the
+// luminance of light emitted on an actual display.
 type ImageDescriptionInfoV1TargetMaxCllEvent struct {
+	// MaxCll maximum content light-level (cd/m²).
 	MaxCll uint32
 }
 
@@ -331,7 +437,15 @@ func (e *ImageDescriptionInfoV1TargetMaxCllEvent) Unmarshal(r *wire.Reader) erro
 
 func (e *ImageDescriptionInfoV1TargetMaxCllEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1TargetMaxFallEvent target maximum frame-average light level.
+//
+// Provides the targeted max_fall of the image description. max_fall is
+// defined by CTA-861-H.
+//
+// This luminance is only theoretical and may not correspond to the
+// luminance of light emitted on an actual display.
 type ImageDescriptionInfoV1TargetMaxFallEvent struct {
+	// MaxFall maximum frame-average light level (cd/m²).
 	MaxFall uint32
 }
 
@@ -350,41 +464,80 @@ func (e *ImageDescriptionInfoV1TargetMaxFallEvent) Unmarshal(r *wire.Reader) err
 
 func (e *ImageDescriptionInfoV1TargetMaxFallEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionInfoV1DoneFunc is a callback for Done events.
 type ImageDescriptionInfoV1DoneFunc func(ev ImageDescriptionInfoV1DoneEvent)
 
+// ImageDescriptionInfoV1IccFileFunc is a callback for IccFile events.
 type ImageDescriptionInfoV1IccFileFunc func(ev ImageDescriptionInfoV1IccFileEvent)
 
+// ImageDescriptionInfoV1PrimariesFunc is a callback for Primaries events.
 type ImageDescriptionInfoV1PrimariesFunc func(ev ImageDescriptionInfoV1PrimariesEvent)
 
+// ImageDescriptionInfoV1PrimariesNamedFunc is a callback for PrimariesNamed events.
 type ImageDescriptionInfoV1PrimariesNamedFunc func(ev ImageDescriptionInfoV1PrimariesNamedEvent)
 
+// ImageDescriptionInfoV1TfPowerFunc is a callback for TfPower events.
 type ImageDescriptionInfoV1TfPowerFunc func(ev ImageDescriptionInfoV1TfPowerEvent)
 
+// ImageDescriptionInfoV1TfNamedFunc is a callback for TfNamed events.
 type ImageDescriptionInfoV1TfNamedFunc func(ev ImageDescriptionInfoV1TfNamedEvent)
 
+// ImageDescriptionInfoV1LuminancesFunc is a callback for Luminances events.
 type ImageDescriptionInfoV1LuminancesFunc func(ev ImageDescriptionInfoV1LuminancesEvent)
 
+// ImageDescriptionInfoV1TargetPrimariesFunc is a callback for TargetPrimaries events.
 type ImageDescriptionInfoV1TargetPrimariesFunc func(ev ImageDescriptionInfoV1TargetPrimariesEvent)
 
+// ImageDescriptionInfoV1TargetLuminanceFunc is a callback for TargetLuminance events.
 type ImageDescriptionInfoV1TargetLuminanceFunc func(ev ImageDescriptionInfoV1TargetLuminanceEvent)
 
+// ImageDescriptionInfoV1TargetMaxCllFunc is a callback for TargetMaxCll events.
 type ImageDescriptionInfoV1TargetMaxCllFunc func(ev ImageDescriptionInfoV1TargetMaxCllEvent)
 
+// ImageDescriptionInfoV1TargetMaxFallFunc is a callback for TargetMaxFall events.
 type ImageDescriptionInfoV1TargetMaxFallFunc func(ev ImageDescriptionInfoV1TargetMaxFallEvent)
 
+// ImageDescriptionInfoV1 colorimetric image description information.
+//
+// Sends all matching events describing an image description object exactly
+// once and finally sends the 'done' event.
+//
+// This means
+// - if the image description is parametric, it must send
+//   - primaries
+//   - named_primaries, if applicable
+//   - at least one of tf_power and tf_named, as applicable
+//   - luminances
+//   - target_primaries
+//   - target_luminance
+//
+// - if the image description is parametric, it may send, if applicable,
+//   - target_max_cll
+//   - target_max_fall
+//   - if the image description contains an ICC profile, it must send the
+//     icc_file event
+//
+// Once a wp_image_description_info_v1 object has delivered a 'done' event it
+// is automatically destroyed.
+//
+// Every wp_image_description_info_v1 created from the same
+// wp_image_description_v1 shall always return the exact same data.
 type ImageDescriptionInfoV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageDescriptionInfoV1 wraps p in a ImageDescriptionInfoV1 proxy.
 func NewImageDescriptionInfoV1(p *wayland.Proxy) *ImageDescriptionInfoV1 {
 	p.SetEventFDCounts(imagedescriptioninfov1EventFDCounts)
 	return &ImageDescriptionInfoV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageDescriptionInfoV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventDone, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1DoneEvent
@@ -398,6 +551,7 @@ func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 	})
 }
 
+// OnIccFile registers fn to receive IccFile events.
 func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventIccFile, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1IccFileEvent
@@ -411,6 +565,7 @@ func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc)
 	})
 }
 
+// OnPrimaries registers fn to receive Primaries events.
 func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesEvent
@@ -424,6 +579,7 @@ func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesF
 	})
 }
 
+// OnPrimariesNamed registers fn to receive PrimariesNamed events.
 func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1PrimariesNamedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimariesNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesNamedEvent
@@ -437,6 +593,7 @@ func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1Prima
 	})
 }
 
+// OnTfPower registers fn to receive TfPower events.
 func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfPower, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfPowerEvent
@@ -450,6 +607,7 @@ func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc)
 	})
 }
 
+// OnTfNamed registers fn to receive TfNamed events.
 func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfNamedEvent
@@ -463,6 +621,7 @@ func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc)
 	})
 }
 
+// OnLuminances registers fn to receive Luminances events.
 func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1LuminancesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventLuminances, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1LuminancesEvent
@@ -476,6 +635,7 @@ func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1Luminance
 	})
 }
 
+// OnTargetPrimaries registers fn to receive TargetPrimaries events.
 func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1TargetPrimariesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetPrimariesEvent
@@ -489,6 +649,7 @@ func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1Targ
 	})
 }
 
+// OnTargetLuminance registers fn to receive TargetLuminance events.
 func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1TargetLuminanceFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetLuminance, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetLuminanceEvent
@@ -502,6 +663,7 @@ func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1Targ
 	})
 }
 
+// OnTargetMaxCll registers fn to receive TargetMaxCll events.
 func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetMaxCllFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxCll, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxCllEvent
@@ -515,6 +677,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetM
 	})
 }
 
+// OnTargetMaxFall registers fn to receive TargetMaxFall events.
 func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1TargetMaxFallFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxFall, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxFallEvent

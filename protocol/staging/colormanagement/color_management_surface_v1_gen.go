@@ -16,14 +16,22 @@ const (
 	ColorManagementSurfaceV1RequestUnsetImageDescription uint16 = 2
 )
 
+// ColorManagementSurfaceV1Error protocol errors.
 type ColorManagementSurfaceV1Error uint32
 
 const (
-	ColorManagementSurfaceV1ErrorRenderIntent     ColorManagementSurfaceV1Error = 0
+	// ColorManagementSurfaceV1ErrorRenderIntent unsupported rendering intent.
+	ColorManagementSurfaceV1ErrorRenderIntent ColorManagementSurfaceV1Error = 0
+	// ColorManagementSurfaceV1ErrorImageDescription invalid image description.
 	ColorManagementSurfaceV1ErrorImageDescription ColorManagementSurfaceV1Error = 1
-	ColorManagementSurfaceV1ErrorInert            ColorManagementSurfaceV1Error = 2
+	// ColorManagementSurfaceV1ErrorInert forbidden request on inert object.
+	ColorManagementSurfaceV1ErrorInert ColorManagementSurfaceV1Error = 2
 )
 
+// ColorManagementSurfaceV1DestroyRequest destroy the color management interface for a surface.
+//
+// Destroy the wp_color_management_surface_v1 object and do the same as
+// unset_image_description.
 type ColorManagementSurfaceV1DestroyRequest struct {
 }
 
@@ -37,9 +45,51 @@ func (r *ColorManagementSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagementSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceV1SetImageDescriptionRequest set the surface image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the image description of the underlying surface. The image
+// description and rendering intent are double-buffered state, see
+// wl_surface.commit.
+//
+// It is the client's responsibility to understand the image description
+// it sets on a surface, and to provide content that matches that image
+// description. Compositors might convert images to match their own or any
+// other image descriptions.
+//
+// Image descriptions which are not ready (see wp_image_description_v1)
+// are forbidden in this request, and in such case the protocol error
+// image_description is raised.
+//
+// All image descriptions which are ready (see wp_image_description_v1)
+// are allowed and must always be accepted by the compositor.
+//
+// When an image description is set on a surface, it establishes an
+// explicit link between surface pixel values and surface colorimetry.
+// This link may be undefined for some pixel values, see the image
+// description creator interfaces for the conditions. Non-finite
+// floating-point values (NaN, Inf) always have an undefined colorimetry.
+//
+// A rendering intent provides the client's preference on how surface
+// colorimetry should be mapped to each output. The render_intent value
+// must be one advertised by the compositor with
+// wp_color_manager_v1.render_intent event, otherwise the protocol error
+// render_intent is raised.
+//
+// By default, a surface does not have an associated image description
+// nor a rendering intent. The handling of color on such surfaces is
+// compositor implementation defined. Compositors should handle such
+// surfaces as sRGB, but may handle them differently if they have specific
+// requirements.
+//
+// Setting the image description has copy semantics; after this request,
+// the image description can be immediately destroyed without affecting
+// the pending state of the surface.
 type ColorManagementSurfaceV1SetImageDescriptionRequest struct {
 	ImageDescription wire.ObjectID
-	RenderIntent     ColorManagerV1RenderIntent
+	// RenderIntent rendering intent.
+	RenderIntent ColorManagerV1RenderIntent
 }
 
 func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Opcode() uint16 {
@@ -58,6 +108,14 @@ func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Marshal(w *wire.Wri
 
 func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceV1UnsetImageDescriptionRequest remove the surface image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// This request removes any image description from the surface. See
+// set_image_description for how a compositor handles a surface without
+// an image description. This is double-buffered state, see
+// wl_surface.commit.
 type ColorManagementSurfaceV1UnsetImageDescriptionRequest struct {
 }
 
@@ -71,18 +129,31 @@ func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Marshal(w *wire.W
 
 func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceV1 color management extension to a surface.
+//
+// A wp_color_management_surface_v1 allows the client to set the color
+// space and HDR properties of a surface.
+//
+// If the wl_surface associated with the wp_color_management_surface_v1 is
+// destroyed, the wp_color_management_surface_v1 object becomes inert.
 type ColorManagementSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorManagementSurfaceV1 wraps p in a ColorManagementSurfaceV1 proxy.
 func NewColorManagementSurfaceV1(p *wayland.Proxy) *ColorManagementSurfaceV1 {
 	return &ColorManagementSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorManagementSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the color management interface for a surface.
+//
+// Destroy the wp_color_management_surface_v1 object and do the same as
+// unset_image_description.
 func (o *ColorManagementSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -94,6 +165,47 @@ func (o *ColorManagementSurfaceV1) Destroy() error {
 	return nil
 }
 
+// SetImageDescription set the surface image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the image description of the underlying surface. The image
+// description and rendering intent are double-buffered state, see
+// wl_surface.commit.
+//
+// It is the client's responsibility to understand the image description
+// it sets on a surface, and to provide content that matches that image
+// description. Compositors might convert images to match their own or any
+// other image descriptions.
+//
+// Image descriptions which are not ready (see wp_image_description_v1)
+// are forbidden in this request, and in such case the protocol error
+// image_description is raised.
+//
+// All image descriptions which are ready (see wp_image_description_v1)
+// are allowed and must always be accepted by the compositor.
+//
+// When an image description is set on a surface, it establishes an
+// explicit link between surface pixel values and surface colorimetry.
+// This link may be undefined for some pixel values, see the image
+// description creator interfaces for the conditions. Non-finite
+// floating-point values (NaN, Inf) always have an undefined colorimetry.
+//
+// A rendering intent provides the client's preference on how surface
+// colorimetry should be mapped to each output. The render_intent value
+// must be one advertised by the compositor with
+// wp_color_manager_v1.render_intent event, otherwise the protocol error
+// render_intent is raised.
+//
+// By default, a surface does not have an associated image description
+// nor a rendering intent. The handling of color on such surfaces is
+// compositor implementation defined. Compositors should handle such
+// surfaces as sRGB, but may handle them differently if they have specific
+// requirements.
+//
+// Setting the image description has copy semantics; after this request,
+// the image description can be immediately destroyed without affecting
+// the pending state of the surface.
 func (o *ColorManagementSurfaceV1) SetImageDescription(imageDescription wire.ObjectID, renderIntent ColorManagerV1RenderIntent) error {
 	return o.proxy.SendRequest(ColorManagementSurfaceV1RequestSetImageDescription, &ColorManagementSurfaceV1SetImageDescriptionRequest{
 		ImageDescription: imageDescription,
@@ -101,6 +213,14 @@ func (o *ColorManagementSurfaceV1) SetImageDescription(imageDescription wire.Obj
 	})
 }
 
+// UnsetImageDescription remove the surface image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// This request removes any image description from the surface. See
+// set_image_description for how a compositor handles a surface without
+// an image description. This is double-buffered state, see
+// wl_surface.commit.
 func (o *ColorManagementSurfaceV1) UnsetImageDescription() error {
 	return o.proxy.SendRequest(ColorManagementSurfaceV1RequestUnsetImageDescription, &ColorManagementSurfaceV1UnsetImageDescriptionRequest{})
 }

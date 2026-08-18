@@ -50,43 +50,122 @@ var pointerEventFDCounts = map[uint16]int{
 type PointerError uint32
 
 const (
+	// PointerErrorRole given wl_surface has another role.
 	PointerErrorRole PointerError = 0
 )
 
+// PointerButtonState physical button state.
+//
+// Describes the physical state of a button that produced the button
+// event.
 type PointerButtonState uint32
 
 const (
+	// PointerButtonStateReleased the button is not pressed.
 	PointerButtonStateReleased PointerButtonState = 0
-	PointerButtonStatePressed  PointerButtonState = 1
+	// PointerButtonStatePressed the button is pressed.
+	PointerButtonStatePressed PointerButtonState = 1
 )
 
+// PointerAxis axis types.
+//
+// Describes the axis types of scroll events.
 type PointerAxis uint32
 
 const (
-	PointerAxisVerticalScroll   PointerAxis = 0
+	// PointerAxisVerticalScroll vertical axis.
+	PointerAxisVerticalScroll PointerAxis = 0
+	// PointerAxisHorizontalScroll horizontal axis.
 	PointerAxisHorizontalScroll PointerAxis = 1
 )
 
+// PointerAxisSource axis source types.
+//
+// Describes the source types for axis events. This indicates to the
+// client how an axis event was physically generated; a client may
+// adjust the user interface accordingly. For example, scroll events
+// from a "finger" source may be in a smooth coordinate space with
+// kinetic scrolling whereas a "wheel" source may be in discrete steps
+// of a number of lines.
+//
+// The "continuous" axis source is a device generating events in a
+// continuous coordinate space, but using something other than a
+// finger. One example for this source is button-based scrolling where
+// the vertical motion of a device is converted to scroll events while
+// a button is held down.
+//
+// The "wheel tilt" axis source indicates that the actual device is a
+// wheel but the scroll event is not caused by a rotation but a
+// (usually sideways) tilt of the wheel.
 type PointerAxisSource uint32
 
 const (
-	PointerAxisSourceWheel      PointerAxisSource = 0
-	PointerAxisSourceFinger     PointerAxisSource = 1
+	// PointerAxisSourceWheel a physical wheel rotation.
+	PointerAxisSourceWheel PointerAxisSource = 0
+	// PointerAxisSourceFinger finger on a touch surface.
+	PointerAxisSourceFinger PointerAxisSource = 1
+	// PointerAxisSourceContinuous continuous coordinate space.
 	PointerAxisSourceContinuous PointerAxisSource = 2
-	PointerAxisSourceWheelTilt  PointerAxisSource = 3
+	// PointerAxisSourceWheelTilt a physical wheel tilt.
+	PointerAxisSourceWheelTilt PointerAxisSource = 3
 )
 
+// PointerAxisRelativeDirection axis relative direction.
+//
+// This specifies the direction of the physical motion that caused a
+// wl_pointer.axis event, relative to the wl_pointer.axis direction.
 type PointerAxisRelativeDirection uint32
 
 const (
+	// PointerAxisRelativeDirectionIdentical physical motion matches axis direction.
 	PointerAxisRelativeDirectionIdentical PointerAxisRelativeDirection = 0
-	PointerAxisRelativeDirectionInverted  PointerAxisRelativeDirection = 1
+	// PointerAxisRelativeDirectionInverted physical motion is the inverse of the axis direction.
+	PointerAxisRelativeDirectionInverted PointerAxisRelativeDirection = 1
 )
 
+// PointerSetCursorRequest set the pointer surface.
+//
+// Set the pointer surface, i.e., the surface that contains the
+// pointer image (cursor). This request gives the surface the role
+// of a cursor. If the surface already has another role, it raises
+// a protocol error.
+//
+// The cursor actually changes only if the pointer
+// focus for this device is one of the requesting client's surfaces
+// or the surface parameter is the current pointer surface. If
+// there was a previous surface set with this request it is
+// replaced. If surface is NULL, the pointer image is hidden.
+//
+// The parameters hotspot_x and hotspot_y define the position of
+// the pointer surface relative to the pointer location. Its
+// top-left corner is always at (x, y) - (hotspot_x, hotspot_y),
+// where (x, y) are the coordinates of the pointer location, in
+// surface-local coordinates.
+//
+// On wl_surface.offset requests to the pointer surface, hotspot_x
+// and hotspot_y are decremented by the x and y parameters
+// passed to the request. The offset must be applied by
+// wl_surface.commit as usual.
+//
+// The hotspot can also be updated by passing the currently set
+// pointer surface to this request with new values for hotspot_x
+// and hotspot_y.
+//
+// The input region is ignored for wl_surfaces with the role of
+// a cursor. When the use as a cursor ends, the wl_surface is
+// unmapped.
+//
+// The serial parameter must match the latest wl_pointer.enter
+// serial number sent to the client. Otherwise the request will be
+// ignored.
 type PointerSetCursorRequest struct {
-	Serial   uint32
-	Surface  wire.ObjectID // nullable
+	// Serial serial number of the enter event.
+	Serial uint32
+	// Surface pointer surface.
+	Surface wire.ObjectID // nullable
+	// HotspotX surface-local x coordinate.
 	HotspotX int32
+	// HotspotY surface-local y coordinate.
 	HotspotY int32
 }
 
@@ -110,6 +189,13 @@ func (r *PointerSetCursorRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerSetCursorRequest) Since() uint32 { return 1 }
 
+// PointerReleaseRequest release the pointer object.
+//
+// Using this request a client can tell the server that it is not going to
+// use the pointer object anymore.
+//
+// This request destroys the pointer proxy object, so clients must not call
+// wl_pointer_destroy() after using this request.
 type PointerReleaseRequest struct {
 }
 
@@ -121,10 +207,22 @@ func (r *PointerReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerReleaseRequest) Since() uint32 { return 3 }
 
+// PointerEnterEvent enter event.
+//
+// Notification that this seat's pointer is focused on a certain
+// surface.
+//
+// When a seat's focus enters a surface, the pointer image
+// is undefined and a client should respond to this event by setting
+// an appropriate pointer image with the set_cursor request.
 type PointerEnterEvent struct {
-	Serial   uint32
-	Surface  wire.ObjectID
+	// Serial serial number of the enter event.
+	Serial uint32
+	// Surface surface entered by the pointer.
+	Surface wire.ObjectID
+	// SurfaceX surface-local x coordinate.
 	SurfaceX wire.Fixed
+	// SurfaceY surface-local y coordinate.
 	SurfaceY wire.Fixed
 }
 
@@ -156,8 +254,17 @@ func (e *PointerEnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerEnterEvent) Since() uint32 { return 1 }
 
+// PointerLeaveEvent leave event.
+//
+// Notification that this seat's pointer is no longer focused on
+// a certain surface.
+//
+// The leave notification is sent before the enter notification
+// for the new focus.
 type PointerLeaveEvent struct {
-	Serial  uint32
+	// Serial serial number of the leave event.
+	Serial uint32
+	// Surface surface left by the pointer.
 	Surface wire.ObjectID
 }
 
@@ -179,9 +286,17 @@ func (e *PointerLeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerLeaveEvent) Since() uint32 { return 1 }
 
+// PointerMotionEvent pointer motion event.
+//
+// Notification of pointer location change. The arguments
+// surface_x and surface_y are the location relative to the
+// focused surface.
 type PointerMotionEvent struct {
-	Time     uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// SurfaceX surface-local x coordinate.
 	SurfaceX wire.Fixed
+	// SurfaceY surface-local y coordinate.
 	SurfaceY wire.Fixed
 }
 
@@ -208,11 +323,31 @@ func (e *PointerMotionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerMotionEvent) Since() uint32 { return 1 }
 
+// PointerButtonEvent pointer button event.
+//
+// Mouse button click and release notifications.
+//
+// The location of the click is given by the last motion, warp or
+// enter event.
+// The time argument is a timestamp with millisecond
+// granularity, with an undefined base.
+//
+// The button is a button code as defined in the Linux kernel's
+// linux/input-event-codes.h header file, e.g. BTN_LEFT.
+//
+// Any 16-bit button code value is reserved for future additions to the
+// kernel's event code list. All other button codes above 0xFFFF are
+// currently undefined but may be used in future versions of this
+// protocol.
 type PointerButtonEvent struct {
+	// Serial serial number of the button event.
 	Serial uint32
-	Time   uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Button button that produced the event.
 	Button uint32
-	State  PointerButtonState
+	// State physical state of the button.
+	State PointerButtonState
 }
 
 func (e *PointerButtonEvent) Opcode() uint16 { return PointerEventButton }
@@ -243,9 +378,30 @@ func (e *PointerButtonEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerButtonEvent) Since() uint32 { return 1 }
 
+// PointerAxisEvent axis event.
+//
+// Scroll and other axis notifications.
+//
+// For scroll events (vertical and horizontal scroll axes), the
+// value parameter is the length of a vector along the specified
+// axis in a coordinate space identical to those of motion events,
+// representing a relative movement along the specified axis.
+//
+// For devices that support movements non-parallel to axes multiple
+// axis events will be emitted.
+//
+// When applicable, for example for touch pads, the server can
+// choose to emit scroll events where the motion vector is
+// equivalent to a motion event vector.
+//
+// When applicable, a client can transform its content relative to the
+// scroll distance.
 type PointerAxisEvent struct {
-	Time  uint32
-	Axis  PointerAxis
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Axis axis type.
+	Axis PointerAxis
+	// Value length of vector in surface-local coordinate space.
 	Value wire.Fixed
 }
 
@@ -272,6 +428,42 @@ func (e *PointerAxisEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisEvent) Since() uint32 { return 1 }
 
+// PointerFrameEvent end of a pointer event sequence.
+//
+// Indicates the end of a set of events that logically belong together.
+// A client is expected to accumulate the data in all events within the
+// frame before proceeding.
+//
+// All wl_pointer events before a wl_pointer.frame event belong
+// logically together. For example, in a diagonal scroll motion the
+// compositor will send an optional wl_pointer.axis_source event, two
+// wl_pointer.axis events (horizontal and vertical) and finally a
+// wl_pointer.frame event. The client may use this information to
+// calculate a diagonal vector for scrolling.
+//
+// When multiple wl_pointer.axis events occur within the same frame,
+// the motion vector is the combined motion of all events.
+// When a wl_pointer.axis and a wl_pointer.axis_stop event occur within
+// the same frame, this indicates that axis movement in one axis has
+// stopped but continues in the other axis.
+// When multiple wl_pointer.axis_stop events occur within the same
+// frame, this indicates that these axes stopped in the same instance.
+//
+// A wl_pointer.frame event is sent for every logical event group,
+// even if the group only contains a single wl_pointer event.
+// Specifically, a client may get a sequence: motion, frame, button,
+// frame, axis, frame, axis_stop, frame.
+//
+// The wl_pointer.enter and wl_pointer.leave events are logical events
+// generated by the compositor and not the hardware. These events are
+// also grouped by a wl_pointer.frame. When a pointer moves from one
+// surface to another, a compositor should group the
+// wl_pointer.leave event within the same wl_pointer.frame.
+// However, a client must not rely on wl_pointer.leave and
+// wl_pointer.enter being in the same wl_pointer.frame.
+// Compositor-specific policies may require the wl_pointer.leave and
+// wl_pointer.enter event being split across multiple wl_pointer.frame
+// groups.
 type PointerFrameEvent struct {
 }
 
@@ -283,7 +475,35 @@ func (e *PointerFrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerFrameEvent) Since() uint32 { return 5 }
 
+// PointerAxisSourceEvent axis source event.
+//
+// Source information for scroll and other axes.
+//
+// This event does not occur on its own. It is sent before a
+// wl_pointer.frame event and carries the source information for
+// all events within that frame.
+//
+// The source specifies how this event was generated. If the source is
+// wl_pointer.axis_source.finger, a wl_pointer.axis_stop event will be
+// sent when the user lifts the finger off the device.
+//
+// If the source is wl_pointer.axis_source.wheel,
+// wl_pointer.axis_source.wheel_tilt or
+// wl_pointer.axis_source.continuous, a wl_pointer.axis_stop event may
+// or may not be sent. Whether a compositor sends an axis_stop event
+// for these sources is hardware-specific and implementation-dependent;
+// clients must not rely on receiving an axis_stop event for these
+// scroll sources and should treat scroll sequences from these scroll
+// sources as unterminated by default.
+//
+// This event is optional. If the source is unknown for a particular
+// axis event sequence, no event is sent.
+// Only one wl_pointer.axis_source event is permitted per frame.
+//
+// The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
+// not guaranteed.
 type PointerAxisSourceEvent struct {
+	// AxisSource source of the axis event.
 	AxisSource PointerAxisSource
 }
 
@@ -300,8 +520,26 @@ func (e *PointerAxisSourceEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisSourceEvent) Since() uint32 { return 5 }
 
+// PointerAxisStopEvent axis stop event.
+//
+// Stop notification for scroll and other axes.
+//
+// For some wl_pointer.axis_source types, a wl_pointer.axis_stop event
+// is sent to notify a client that the axis sequence has terminated.
+// This enables the client to implement kinetic scrolling.
+// See the wl_pointer.axis_source documentation for information on when
+// this event may be generated.
+//
+// Any wl_pointer.axis events with the same axis_source after this
+// event should be considered as the start of a new axis motion.
+//
+// The timestamp is to be interpreted identical to the timestamp in the
+// wl_pointer.axis event. The timestamp value may be the same as a
+// preceding wl_pointer.axis event.
 type PointerAxisStopEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
+	// Axis the axis stopped with this event.
 	Axis PointerAxis
 }
 
@@ -323,9 +561,44 @@ func (e *PointerAxisStopEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisStopEvent) Since() uint32 { return 5 }
 
+// PointerAxisDiscreteEvent axis click event.
+//
 // Deprecated: since version 8.
+//
+// Discrete step information for scroll and other axes.
+//
+// This event carries the axis value of the wl_pointer.axis event in
+// discrete steps (e.g. mouse wheel clicks).
+//
+// This event is deprecated with wl_pointer version 8 - this event is not
+// sent to clients supporting version 8 or later.
+//
+// This event does not occur on its own, it is coupled with a
+// wl_pointer.axis event that represents this axis value on a
+// continuous scale. The protocol guarantees that each axis_discrete
+// event is always followed by exactly one axis event with the same
+// axis number within the same wl_pointer.frame. Note that the protocol
+// allows for other events to occur between the axis_discrete and
+// its coupled axis event, including other axis_discrete or axis
+// events. A wl_pointer.frame must not contain more than one axis_discrete
+// event per axis type.
+//
+// This event is optional; continuous scrolling devices
+// like two-finger scrolling on touchpads do not have discrete
+// steps and do not generate this event.
+//
+// The discrete value carries the directional information. e.g. a value
+// of -2 is two steps towards the negative direction of this axis.
+//
+// The axis number is identical to the axis number in the associated
+// axis event.
+//
+// The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
+// not guaranteed.
 type PointerAxisDiscreteEvent struct {
-	Axis     PointerAxis
+	// Axis axis type.
+	Axis PointerAxis
+	// Discrete number of steps.
 	Discrete int32
 }
 
@@ -347,8 +620,33 @@ func (e *PointerAxisDiscreteEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisDiscreteEvent) Since() uint32 { return 5 }
 
+// PointerAxisValue120Event axis high-resolution scroll event.
+//
+// Discrete high-resolution scroll information.
+//
+// This event carries high-resolution wheel scroll information,
+// with each multiple of 120 representing one logical scroll step
+// (a wheel detent). For example, an axis_value120 of 30 is one quarter of
+// a logical scroll step in the positive direction, a value120 of
+// -240 are two logical scroll steps in the negative direction within the
+// same hardware event.
+// Clients that rely on discrete scrolling should accumulate the
+// value120 to multiples of 120 before processing the event.
+//
+// The value120 must not be zero.
+//
+// This event replaces the wl_pointer.axis_discrete event in clients
+// supporting wl_pointer version 8 or later.
+//
+// Where a wl_pointer.axis_source event occurs in the same
+// wl_pointer.frame, the axis source applies to this event.
+//
+// The order of wl_pointer.axis_value120 and wl_pointer.axis_source is
+// not guaranteed.
 type PointerAxisValue120Event struct {
-	Axis     PointerAxis
+	// Axis axis type.
+	Axis PointerAxis
+	// Value120 scroll distance as fraction of 120.
 	Value120 int32
 }
 
@@ -370,8 +668,47 @@ func (e *PointerAxisValue120Event) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisValue120Event) Since() uint32 { return 8 }
 
+// PointerAxisRelativeDirectionEvent axis relative physical direction event.
+//
+// Relative directional information of the entity causing the axis
+// motion.
+//
+// For a wl_pointer.axis event, the wl_pointer.axis_relative_direction
+// event specifies the movement direction of the entity causing the
+// wl_pointer.axis event. For example:
+//   - if a user's fingers on a touchpad move down and this
+//     causes a wl_pointer.axis vertical_scroll down event, the physical
+//     direction is 'identical'
+//   - if a user's fingers on a touchpad move down and this causes a
+//     wl_pointer.axis vertical_scroll up scroll up event ('natural
+//     scrolling'), the physical direction is 'inverted'.
+//
+// A client may use this information to adjust scroll motion of
+// components. Specifically, enabling natural scrolling causes the
+// content to change direction compared to traditional scrolling.
+// Some widgets like volume control sliders should usually match the
+// physical direction regardless of whether natural scrolling is
+// active. This event enables clients to match the scroll direction of
+// a widget to the physical direction.
+//
+// This event does not occur on its own, it is coupled with a
+// wl_pointer.axis event that represents this axis value.
+// The protocol guarantees that each axis_relative_direction event is
+// always followed by exactly one axis event with the same
+// axis number within the same wl_pointer.frame. Note that the protocol
+// allows for other events to occur between the axis_relative_direction
+// and its coupled axis event.
+//
+// The axis number is identical to the axis number in the associated
+// axis event.
+//
+// The order of wl_pointer.axis_relative_direction,
+// wl_pointer.axis_discrete and wl_pointer.axis_source is not
+// guaranteed.
 type PointerAxisRelativeDirectionEvent struct {
-	Axis      PointerAxis
+	// Axis axis type.
+	Axis PointerAxis
+	// Direction physical direction relative to axis motion.
 	Direction PointerAxisRelativeDirection
 }
 
@@ -393,8 +730,25 @@ func (e *PointerAxisRelativeDirectionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerAxisRelativeDirectionEvent) Since() uint32 { return 9 }
 
+// PointerWarpEvent pointer warp event.
+//
+// Notification of pointer location change within a surface.
+//
+// This location change is not due to events on the input device,
+// but because either the surface under the pointer was moved and
+// thus the relative position of the pointer changed, or because
+// the compositor changed the pointer position in response to an
+// event like pointer confinement being exited.
+//
+// The arguments surface_x and surface_y are the location relative to
+// the focused surface.
+//
+// This event must not occur in the same wl_pointer.frame as a
+// wl_pointer.enter or wl_pointer.motion event.
 type PointerWarpEvent struct {
+	// SurfaceX surface-local x coordinate.
 	SurfaceX wire.Fixed
+	// SurfaceY surface-local y coordinate.
 	SurfaceY wire.Fixed
 }
 
@@ -416,43 +770,68 @@ func (e *PointerWarpEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerWarpEvent) Since() uint32 { return 11 }
 
+// PointerEnterFunc is a callback for Enter events.
 type PointerEnterFunc func(ev PointerEnterEvent)
 
+// PointerLeaveFunc is a callback for Leave events.
 type PointerLeaveFunc func(ev PointerLeaveEvent)
 
+// PointerMotionFunc is a callback for Motion events.
 type PointerMotionFunc func(ev PointerMotionEvent)
 
+// PointerButtonFunc is a callback for Button events.
 type PointerButtonFunc func(ev PointerButtonEvent)
 
+// PointerAxisFunc is a callback for Axis events.
 type PointerAxisFunc func(ev PointerAxisEvent)
 
+// PointerFrameFunc is a callback for Frame events.
 type PointerFrameFunc func(ev PointerFrameEvent)
 
+// PointerAxisSourceFunc is a callback for AxisSource events.
 type PointerAxisSourceFunc func(ev PointerAxisSourceEvent)
 
+// PointerAxisStopFunc is a callback for AxisStop events.
 type PointerAxisStopFunc func(ev PointerAxisStopEvent)
 
+// PointerAxisDiscreteFunc is a callback for AxisDiscrete events.
 type PointerAxisDiscreteFunc func(ev PointerAxisDiscreteEvent)
 
+// PointerAxisValue120Func is a callback for AxisValue120 events.
 type PointerAxisValue120Func func(ev PointerAxisValue120Event)
 
+// PointerAxisRelativeDirectionFunc is a callback for AxisRelativeDirection events.
 type PointerAxisRelativeDirectionFunc func(ev PointerAxisRelativeDirectionEvent)
 
+// PointerWarpFunc is a callback for Warp events.
 type PointerWarpFunc func(ev PointerWarpEvent)
 
+// Pointer pointer input device.
+//
+// The wl_pointer interface represents one or more input devices,
+// such as mice, which control the pointer location and pointer_focus
+// of a seat.
+//
+// The wl_pointer interface generates motion, enter and leave
+// events for the surfaces that the pointer is located over,
+// and button and axis events for button presses, button releases
+// and scrolling.
 type Pointer struct {
 	proxy *Proxy
 }
 
+// NewPointer wraps p in a Pointer proxy.
 func NewPointer(p *Proxy) *Pointer {
 	p.SetEventFDCounts(pointerEventFDCounts)
 	return &Pointer{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Pointer) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 	o.proxy.RegisterEvent(PointerEventEnter, func(r *wire.Reader) {
 		var ev PointerEnterEvent
@@ -466,6 +845,7 @@ func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 	o.proxy.RegisterEvent(PointerEventLeave, func(r *wire.Reader) {
 		var ev PointerLeaveEvent
@@ -479,6 +859,7 @@ func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 	})
 }
 
+// OnMotion registers fn to receive Motion events.
 func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 	o.proxy.RegisterEvent(PointerEventMotion, func(r *wire.Reader) {
 		var ev PointerMotionEvent
@@ -492,6 +873,7 @@ func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 	})
 }
 
+// OnButton registers fn to receive Button events.
 func (o *Pointer) OnButton(fn PointerButtonFunc) {
 	o.proxy.RegisterEvent(PointerEventButton, func(r *wire.Reader) {
 		var ev PointerButtonEvent
@@ -505,6 +887,7 @@ func (o *Pointer) OnButton(fn PointerButtonFunc) {
 	})
 }
 
+// OnAxis registers fn to receive Axis events.
 func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 	o.proxy.RegisterEvent(PointerEventAxis, func(r *wire.Reader) {
 		var ev PointerAxisEvent
@@ -518,6 +901,7 @@ func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 	o.proxy.RegisterEvent(PointerEventFrame, func(r *wire.Reader) {
 		var ev PointerFrameEvent
@@ -531,6 +915,7 @@ func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 	})
 }
 
+// OnAxisSource registers fn to receive AxisSource events.
 func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisSource, func(r *wire.Reader) {
 		var ev PointerAxisSourceEvent
@@ -544,6 +929,7 @@ func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 	})
 }
 
+// OnAxisStop registers fn to receive AxisStop events.
 func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisStop, func(r *wire.Reader) {
 		var ev PointerAxisStopEvent
@@ -557,6 +943,7 @@ func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 	})
 }
 
+// OnAxisDiscrete registers fn to receive AxisDiscrete events.
 func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisDiscrete, func(r *wire.Reader) {
 		var ev PointerAxisDiscreteEvent
@@ -570,6 +957,7 @@ func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 	})
 }
 
+// OnAxisValue120 registers fn to receive AxisValue120 events.
 func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 	o.proxy.RegisterEvent(PointerEventAxisValue120, func(r *wire.Reader) {
 		var ev PointerAxisValue120Event
@@ -583,6 +971,7 @@ func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 	})
 }
 
+// OnAxisRelativeDirection registers fn to receive AxisRelativeDirection events.
 func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisRelativeDirection, func(r *wire.Reader) {
 		var ev PointerAxisRelativeDirectionEvent
@@ -596,6 +985,7 @@ func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 	})
 }
 
+// OnWarp registers fn to receive Warp events.
 func (o *Pointer) OnWarp(fn PointerWarpFunc) {
 	o.proxy.RegisterEvent(PointerEventWarp, func(r *wire.Reader) {
 		var ev PointerWarpEvent
@@ -609,6 +999,41 @@ func (o *Pointer) OnWarp(fn PointerWarpFunc) {
 	})
 }
 
+// SetCursor set the pointer surface.
+//
+// Set the pointer surface, i.e., the surface that contains the
+// pointer image (cursor). This request gives the surface the role
+// of a cursor. If the surface already has another role, it raises
+// a protocol error.
+//
+// The cursor actually changes only if the pointer
+// focus for this device is one of the requesting client's surfaces
+// or the surface parameter is the current pointer surface. If
+// there was a previous surface set with this request it is
+// replaced. If surface is NULL, the pointer image is hidden.
+//
+// The parameters hotspot_x and hotspot_y define the position of
+// the pointer surface relative to the pointer location. Its
+// top-left corner is always at (x, y) - (hotspot_x, hotspot_y),
+// where (x, y) are the coordinates of the pointer location, in
+// surface-local coordinates.
+//
+// On wl_surface.offset requests to the pointer surface, hotspot_x
+// and hotspot_y are decremented by the x and y parameters
+// passed to the request. The offset must be applied by
+// wl_surface.commit as usual.
+//
+// The hotspot can also be updated by passing the currently set
+// pointer surface to this request with new values for hotspot_x
+// and hotspot_y.
+//
+// The input region is ignored for wl_surfaces with the role of
+// a cursor. When the use as a cursor ends, the wl_surface is
+// unmapped.
+//
+// The serial parameter must match the latest wl_pointer.enter
+// serial number sent to the client. Otherwise the request will be
+// ignored.
 func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32, hotspotY int32) error {
 	return o.proxy.SendRequest(PointerRequestSetCursor, &PointerSetCursorRequest{
 		Serial:   serial,
@@ -618,6 +1043,13 @@ func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32
 	})
 }
 
+// Release release the pointer object.
+//
+// Using this request a client can tell the server that it is not going to
+// use the pointer object anymore.
+//
+// This request destroys the pointer proxy object, so clients must not call
+// wl_pointer_destroy() after using this request.
 func (o *Pointer) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch

@@ -34,38 +34,79 @@ var outputEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+// OutputSubpixel subpixel geometry information.
+//
+// This enumeration describes how the physical
+// pixels on an output are laid out.
 type OutputSubpixel uint32
 
 const (
-	OutputSubpixelUnknown       OutputSubpixel = 0
-	OutputSubpixelNone          OutputSubpixel = 1
+	// OutputSubpixelUnknown unknown geometry.
+	OutputSubpixelUnknown OutputSubpixel = 0
+	// OutputSubpixelNone no geometry.
+	OutputSubpixelNone OutputSubpixel = 1
+	// OutputSubpixelHorizontalRgb horizontal RGB.
 	OutputSubpixelHorizontalRgb OutputSubpixel = 2
+	// OutputSubpixelHorizontalBgr horizontal BGR.
 	OutputSubpixelHorizontalBgr OutputSubpixel = 3
-	OutputSubpixelVerticalRgb   OutputSubpixel = 4
-	OutputSubpixelVerticalBgr   OutputSubpixel = 5
+	// OutputSubpixelVerticalRgb vertical RGB.
+	OutputSubpixelVerticalRgb OutputSubpixel = 4
+	// OutputSubpixelVerticalBgr vertical BGR.
+	OutputSubpixelVerticalBgr OutputSubpixel = 5
 )
 
+// OutputTransform transformation applied to buffer contents.
+//
+// This describes transformations that clients and compositors apply to
+// buffer contents.
+//
+// The flipped values correspond to an initial flip around a
+// vertical axis followed by rotation.
+//
+// The purpose is mainly to allow clients to render accordingly and
+// tell the compositor, so that for fullscreen surfaces, the
+// compositor will still be able to scan out directly from client
+// surfaces.
 type OutputTransform uint32
 
 const (
-	OutputTransformNormal     OutputTransform = 0
-	OutputTransform90         OutputTransform = 1
-	OutputTransform180        OutputTransform = 2
-	OutputTransform270        OutputTransform = 3
-	OutputTransformFlipped    OutputTransform = 4
-	OutputTransformFlipped90  OutputTransform = 5
+	// OutputTransformNormal no transform.
+	OutputTransformNormal OutputTransform = 0
+	// OutputTransform90 90 degrees counter-clockwise.
+	OutputTransform90 OutputTransform = 1
+	// OutputTransform180 180 degrees counter-clockwise.
+	OutputTransform180 OutputTransform = 2
+	// OutputTransform270 270 degrees counter-clockwise.
+	OutputTransform270 OutputTransform = 3
+	// OutputTransformFlipped 180 degree flip around a vertical axis.
+	OutputTransformFlipped OutputTransform = 4
+	// OutputTransformFlipped90 flip and rotate 90 degrees counter-clockwise.
+	OutputTransformFlipped90 OutputTransform = 5
+	// OutputTransformFlipped180 flip and rotate 180 degrees counter-clockwise.
 	OutputTransformFlipped180 OutputTransform = 6
+	// OutputTransformFlipped270 flip and rotate 270 degrees counter-clockwise.
 	OutputTransformFlipped270 OutputTransform = 7
 )
 
-// OutputMode is a bitfield of flags.
+// OutputMode mode information.
+//
+// These flags describe properties of an output mode.
+// They are used in the flags bitfield of the mode event.
+//
+// This is a bitfield of flags.
 type OutputMode uint32
 
 const (
-	OutputModeCurrent   OutputMode = 1
+	// OutputModeCurrent indicates this is the current mode.
+	OutputModeCurrent OutputMode = 1
+	// OutputModePreferred indicates this is the preferred mode.
 	OutputModePreferred OutputMode = 2
 )
 
+// OutputReleaseRequest release the output object.
+//
+// Using this request a client can tell the server that it is not going to
+// use the output object anymore.
 type OutputReleaseRequest struct {
 }
 
@@ -77,15 +118,45 @@ func (r *OutputReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *OutputReleaseRequest) Since() uint32 { return 3 }
 
+// OutputGeometryEvent properties of the output.
+//
+// The geometry event describes geometric properties of the output.
+// The event is sent when binding to the output object and whenever
+// any of the properties change.
+//
+// The physical size can be set to zero if it doesn't make sense for this
+// output (e.g. for projectors or virtual outputs).
+//
+// The geometry event will be followed by a done event (starting from
+// version 2).
+//
+// Clients should use wl_surface.preferred_buffer_transform instead of the
+// transform advertised by this event to find the preferred buffer
+// transform to use for a surface.
+//
+// Note: wl_output only advertises partial information about the output
+// position and identification. Some compositors, for instance those not
+// implementing a desktop-style output layout or those exposing virtual
+// outputs, might fake this information. Instead of using x and y, clients
+// should use xdg_output.logical_position. Instead of using make and model,
+// clients should use name and description.
 type OutputGeometryEvent struct {
-	X              int32
-	Y              int32
-	PhysicalWidth  int32
+	// X x position within the global compositor space.
+	X int32
+	// Y y position within the global compositor space.
+	Y int32
+	// PhysicalWidth width in millimeters of the output.
+	PhysicalWidth int32
+	// PhysicalHeight height in millimeters of the output.
 	PhysicalHeight int32
-	Subpixel       int32
-	Make           string
-	Model          string
-	Transform      int32
+	// Subpixel subpixel orientation of the output.
+	Subpixel int32
+	// Make textual description of the manufacturer.
+	Make string
+	// Model textual description of the model.
+	Model string
+	// Transform additional transformation applied to buffer contents during presentation.
+	Transform int32
 }
 
 func (e *OutputGeometryEvent) Opcode() uint16 { return OutputEventGeometry }
@@ -136,10 +207,49 @@ func (e *OutputGeometryEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputGeometryEvent) Since() uint32 { return 1 }
 
+// OutputModeEvent advertise available modes for the output.
+//
+// The mode event describes an available mode for the output.
+//
+// The event is sent when binding to the output object and there
+// will always be one mode, the current mode.  The event is sent
+// again if an output changes mode, for the mode that is now
+// current.  In other words, the current mode is always the last
+// mode that was received with the current flag set.
+//
+// Non-current modes are deprecated. A compositor can decide to only
+// advertise the current mode and never send other modes. Clients
+// should not rely on non-current modes.
+//
+// The size of a mode is given in physical hardware units of
+// the output device. This is not necessarily the same as
+// the output size in the global compositor space. For instance,
+// the output may be scaled, as described in wl_output.scale,
+// or transformed, as described in wl_output.transform. Clients
+// willing to retrieve the output size in the global compositor
+// space should use xdg_output.logical_size instead.
+//
+// The vertical refresh rate can be set to zero if it doesn't make
+// sense for this output (e.g. for virtual outputs).
+//
+// The mode event will be followed by a done event (starting from
+// version 2).
+//
+// Clients should not use the refresh rate to schedule frames. Instead,
+// they should use the wl_surface.frame event or the presentation-time
+// protocol.
+//
+// Note: this information is not always meaningful for all outputs. Some
+// compositors, such as those exposing virtual outputs, might fake the
+// refresh rate or the size.
 type OutputModeEvent struct {
-	Flags   OutputMode
-	Width   int32
-	Height  int32
+	// Flags bitfield of mode flags.
+	Flags OutputMode
+	// Width width of the mode in hardware units.
+	Width int32
+	// Height height of the mode in hardware units.
+	Height int32
+	// Refresh vertical refresh rate in mHz.
 	Refresh int32
 }
 
@@ -171,6 +281,13 @@ func (e *OutputModeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputModeEvent) Since() uint32 { return 1 }
 
+// OutputDoneEvent sent all information about output.
+//
+// This event is sent after all other properties have been
+// sent after binding to the output object and after any
+// other property changes done after that. This allows
+// changes to the output properties to be seen as
+// atomic, even if they happen via multiple events.
 type OutputDoneEvent struct {
 }
 
@@ -182,7 +299,28 @@ func (e *OutputDoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputDoneEvent) Since() uint32 { return 2 }
 
+// OutputScaleEvent output scaling properties.
+//
+// This event contains scaling geometry information
+// that is not in the geometry event. It may be sent after
+// binding the output object or if the output scale changes
+// later. The compositor will emit a non-zero, positive
+// value for scale. If it is not sent, the client should
+// assume a scale of 1.
+//
+// A scale larger than 1 means that the compositor will
+// automatically scale surface buffers by this amount
+// when rendering. This is used for very high resolution
+// displays where applications rendering at the native
+// resolution would be too small to be legible.
+//
+// Clients should use wl_surface.preferred_buffer_scale
+// instead of this event to find the preferred buffer
+// scale to use for a surface.
+//
+// The scale event will be followed by a done event.
 type OutputScaleEvent struct {
+	// Factor scaling factor of output.
 	Factor int32
 }
 
@@ -199,7 +337,38 @@ func (e *OutputScaleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputScaleEvent) Since() uint32 { return 2 }
 
+// OutputNameEvent name of this output.
+//
+// Many compositors will assign user-friendly names to their outputs, show
+// them to the user, allow the user to refer to an output, etc. The client
+// may wish to know this name as well to offer the user similar behaviors.
+//
+// The name is a UTF-8 string with no convention defined for its contents.
+// Each name is unique among all wl_output globals. The name is only
+// guaranteed to be unique for the compositor instance.
+//
+// The same output name is used for all clients for a given wl_output
+// global. Thus, the name can be shared across processes to refer to a
+// specific wl_output global.
+//
+// The name is not guaranteed to be persistent across sessions, thus cannot
+// be used to reliably identify an output in e.g. configuration files.
+//
+// Examples of names include 'HDMI-A-1', 'WL-1', 'X11-1', etc. However, do
+// not assume that the name is a reflection of an underlying DRM connector,
+// X11 connection, etc.
+//
+// The name event is sent after binding the output object. This event is
+// only sent once per output object, and the name does not change over the
+// lifetime of the wl_output global.
+//
+// Compositors may re-use the same output name if the wl_output global is
+// destroyed and re-created later. Compositors should avoid re-using the
+// same name if possible.
+//
+// The name event will be followed by a done event.
 type OutputNameEvent struct {
+	// Name output name.
 	Name string
 }
 
@@ -216,7 +385,24 @@ func (e *OutputNameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputNameEvent) Since() uint32 { return 4 }
 
+// OutputDescriptionEvent human-readable description of this output.
+//
+// Many compositors can produce human-readable descriptions of their
+// outputs. The client may wish to know this description as well, e.g. for
+// output selection purposes.
+//
+// The description is a UTF-8 string with no convention defined for its
+// contents. The description is not guaranteed to be unique among all
+// wl_output globals. Examples might include 'Foocorp 11" Display' or
+// 'Virtual X11 output via :1'.
+//
+// The description event is sent after binding the output object and
+// whenever the description changes. The description is optional, and may
+// not be sent at all.
+//
+// The description event will be followed by a done event.
 type OutputDescriptionEvent struct {
+	// Description output description.
 	Description string
 }
 
@@ -233,31 +419,48 @@ func (e *OutputDescriptionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputDescriptionEvent) Since() uint32 { return 4 }
 
+// OutputGeometryFunc is a callback for Geometry events.
 type OutputGeometryFunc func(ev OutputGeometryEvent)
 
+// OutputModeFunc is a callback for Mode events.
 type OutputModeFunc func(ev OutputModeEvent)
 
+// OutputDoneFunc is a callback for Done events.
 type OutputDoneFunc func(ev OutputDoneEvent)
 
+// OutputScaleFunc is a callback for Scale events.
 type OutputScaleFunc func(ev OutputScaleEvent)
 
+// OutputNameFunc is a callback for Name events.
 type OutputNameFunc func(ev OutputNameEvent)
 
+// OutputDescriptionFunc is a callback for Description events.
 type OutputDescriptionFunc func(ev OutputDescriptionEvent)
 
+// Output compositor output region.
+//
+// An output describes part of the compositor geometry.  The
+// compositor works in the 'compositor coordinate system' and an
+// output corresponds to a rectangular area in that space that is
+// actually visible.  This typically corresponds to a monitor that
+// displays part of the compositor space.  This object is published
+// as global during start up, or when a monitor is hotplugged.
 type Output struct {
 	proxy *Proxy
 }
 
+// NewOutput wraps p in a Output proxy.
 func NewOutput(p *Proxy) *Output {
 	p.SetEventFDCounts(outputEventFDCounts)
 	return &Output{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Output) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnGeometry registers fn to receive Geometry events.
 func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 	o.proxy.RegisterEvent(OutputEventGeometry, func(r *wire.Reader) {
 		var ev OutputGeometryEvent
@@ -271,6 +474,7 @@ func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 	})
 }
 
+// OnMode registers fn to receive Mode events.
 func (o *Output) OnMode(fn OutputModeFunc) {
 	o.proxy.RegisterEvent(OutputEventMode, func(r *wire.Reader) {
 		var ev OutputModeEvent
@@ -284,6 +488,7 @@ func (o *Output) OnMode(fn OutputModeFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *Output) OnDone(fn OutputDoneFunc) {
 	o.proxy.RegisterEvent(OutputEventDone, func(r *wire.Reader) {
 		var ev OutputDoneEvent
@@ -297,6 +502,7 @@ func (o *Output) OnDone(fn OutputDoneFunc) {
 	})
 }
 
+// OnScale registers fn to receive Scale events.
 func (o *Output) OnScale(fn OutputScaleFunc) {
 	o.proxy.RegisterEvent(OutputEventScale, func(r *wire.Reader) {
 		var ev OutputScaleEvent
@@ -310,6 +516,7 @@ func (o *Output) OnScale(fn OutputScaleFunc) {
 	})
 }
 
+// OnName registers fn to receive Name events.
 func (o *Output) OnName(fn OutputNameFunc) {
 	o.proxy.RegisterEvent(OutputEventName, func(r *wire.Reader) {
 		var ev OutputNameEvent
@@ -323,6 +530,7 @@ func (o *Output) OnName(fn OutputNameFunc) {
 	})
 }
 
+// OnDescription registers fn to receive Description events.
 func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 	o.proxy.RegisterEvent(OutputEventDescription, func(r *wire.Reader) {
 		var ev OutputDescriptionEvent
@@ -336,6 +544,10 @@ func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 	})
 }
 
+// Release release the output object.
+//
+// Using this request a client can tell the server that it is not going to
+// use the output object anymore.
 func (o *Output) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch

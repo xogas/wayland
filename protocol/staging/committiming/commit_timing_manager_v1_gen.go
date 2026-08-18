@@ -18,9 +18,15 @@ const (
 type CommitTimingManagerV1Error uint32
 
 const (
+	// CommitTimingManagerV1ErrorCommitTimerExists commit timer already exists for surface.
 	CommitTimingManagerV1ErrorCommitTimerExists CommitTimingManagerV1Error = 0
 )
 
+// CommitTimingManagerV1DestroyRequest unbind from the commit timing interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 type CommitTimingManagerV1DestroyRequest struct {
 }
 
@@ -34,6 +40,12 @@ func (r *CommitTimingManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CommitTimingManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// CommitTimingManagerV1GetTimerRequest request commit timer interface for surface.
+//
+// Establish a timing controller for a surface.
+//
+// Only one commit timer can be created for a surface, or a
+// commit_timer_exists protocol error will be generated.
 type CommitTimingManagerV1GetTimerRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -55,18 +67,48 @@ func (r *CommitTimingManagerV1GetTimerRequest) Marshal(w *wire.Writer) error {
 
 func (r *CommitTimingManagerV1GetTimerRequest) Since() uint32 { return 1 }
 
+// CommitTimingManagerV1 commit timing.
+//
+// When a compositor latches on to new content updates it will check for
+// any number of requirements of the available content updates (such as
+// fences of all buffers being signalled) to consider the update ready.
+//
+// This protocol provides a method for adding a time constraint to surface
+// content. This constraint indicates to the compositor that a content
+// update should be presented as closely as possible to, but not before,
+// a specified time.
+//
+// This protocol does not change the Wayland property that content
+// updates are applied in the order they are received, even when some
+// content updates contain timestamps and others do not.
+//
+// To provide timestamps, this global factory interface must be used to
+// acquire a wp_commit_timing_v1 object for a surface, which may then be
+// used to provide timestamp information for commits.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type CommitTimingManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCommitTimingManagerV1 wraps p in a CommitTimingManagerV1 proxy.
 func NewCommitTimingManagerV1(p *wayland.Proxy) *CommitTimingManagerV1 {
 	return &CommitTimingManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CommitTimingManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy unbind from the commit timing interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 func (o *CommitTimingManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +120,12 @@ func (o *CommitTimingManagerV1) Destroy() error {
 	return nil
 }
 
+// GetTimer request commit timer interface for surface.
+//
+// Establish a timing controller for a surface.
+//
+// Only one commit timer can be created for a surface, or a
+// commit_timer_exists protocol error will be generated.
 func (o *CommitTimingManagerV1) GetTimer(surface wire.ObjectID) (*CommitTimerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

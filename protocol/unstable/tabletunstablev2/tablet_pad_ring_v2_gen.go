@@ -32,15 +32,45 @@ var tabletpadringv2EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+// TabletPadRingV2Source ring axis source.
+//
+// Describes the source types for ring events. This indicates to the
+// client how a ring event was physically generated; a client may
+// adjust the user interface accordingly. For example, events
+// from a "finger" source may trigger kinetic scrolling.
 type TabletPadRingV2Source uint32
 
 const (
+	// TabletPadRingV2SourceFinger finger.
 	TabletPadRingV2SourceFinger TabletPadRingV2Source = 1
 )
 
+// TabletPadRingV2SetFeedbackRequest set compositor feedback.
+//
+// Request that the compositor use the provided feedback string
+// associated with this ring. This request should be issued immediately
+// after a wp_tablet_pad_group.mode_switch event from the corresponding
+// group is received, or whenever the ring is mapped to a different
+// action. See wp_tablet_pad_group.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the ring; compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// wp_tablet_pad_group.mode_switch event received for the group of this
+// ring. Requests providing other serials than the most recent one will be
+// ignored.
 type TabletPadRingV2SetFeedbackRequest struct {
+	// Description ring description.
 	Description string
-	Serial      uint32
+	// Serial serial of the mode switch event.
+	Serial uint32
 }
 
 func (r *TabletPadRingV2SetFeedbackRequest) Opcode() uint16 { return TabletPadRingV2RequestSetFeedback }
@@ -57,6 +87,9 @@ func (r *TabletPadRingV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadRingV2SetFeedbackRequest) Since() uint32 { return 1 }
 
+// TabletPadRingV2DestroyRequest destroy the ring object.
+//
+// This destroys the client's resource for this ring object.
 type TabletPadRingV2DestroyRequest struct {
 }
 
@@ -68,7 +101,22 @@ func (r *TabletPadRingV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadRingV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletPadRingV2SourceEvent ring event source.
+//
+// Source information for ring events.
+//
+// This event does not occur on its own. It is sent before a
+// wp_tablet_pad_ring.frame event and carries the source information
+// for all events within that frame.
+//
+// The source specifies how this event was generated. If the source is
+// wp_tablet_pad_ring.source.finger, a wp_tablet_pad_ring.stop event
+// will be sent when the user lifts the finger off the device.
+//
+// This event is optional. If the source is unknown for an interaction,
+// no event is sent.
 type TabletPadRingV2SourceEvent struct {
+	// Source the event source.
 	Source TabletPadStripV2Source
 }
 
@@ -85,7 +133,14 @@ func (e *TabletPadRingV2SourceEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadRingV2SourceEvent) Since() uint32 { return 1 }
 
+// TabletPadRingV2AngleEvent angle changed.
+//
+// Sent whenever the angle on a ring changes.
+//
+// The angle is provided in degrees clockwise from the logical
+// north of the ring in the pad's current rotation.
 type TabletPadRingV2AngleEvent struct {
+	// Degrees the current angle in degrees.
 	Degrees wire.Fixed
 }
 
@@ -102,6 +157,18 @@ func (e *TabletPadRingV2AngleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadRingV2AngleEvent) Since() uint32 { return 1 }
 
+// TabletPadRingV2StopEvent interaction stopped.
+//
+// Stop notification for ring events.
+//
+// For some wp_tablet_pad_ring.source types, a wp_tablet_pad_ring.stop
+// event is sent to notify a client that the interaction with the ring
+// has terminated. This enables the client to implement kinetic scrolling.
+// See the wp_tablet_pad_ring.source documentation for information on
+// when this event may be generated.
+//
+// Any wp_tablet_pad_ring.angle events with the same source after this
+// event should be considered as the start of a new interaction.
 type TabletPadRingV2StopEvent struct {
 }
 
@@ -113,7 +180,23 @@ func (e *TabletPadRingV2StopEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadRingV2StopEvent) Since() uint32 { return 1 }
 
+// TabletPadRingV2FrameEvent end of a ring event sequence.
+//
+// Indicates the end of a set of ring events that logically belong
+// together. A client is expected to accumulate the data in all events
+// within the frame before proceeding.
+//
+// All wp_tablet_pad_ring events before a wp_tablet_pad_ring.frame event belong
+// logically together. For example, on termination of a finger interaction
+// on a ring the compositor will send a wp_tablet_pad_ring.source event,
+// a wp_tablet_pad_ring.stop event and a wp_tablet_pad_ring.frame event.
+//
+// A wp_tablet_pad_ring.frame event is sent for every logical event
+// group, even if the group only contains a single wp_tablet_pad_ring
+// event. Specifically, a client may get a sequence: angle, frame,
+// angle, frame, etc.
 type TabletPadRingV2FrameEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
 }
 
@@ -130,27 +213,41 @@ func (e *TabletPadRingV2FrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadRingV2FrameEvent) Since() uint32 { return 1 }
 
+// TabletPadRingV2SourceFunc is a callback for Source events.
 type TabletPadRingV2SourceFunc func(ev TabletPadRingV2SourceEvent)
 
+// TabletPadRingV2AngleFunc is a callback for Angle events.
 type TabletPadRingV2AngleFunc func(ev TabletPadRingV2AngleEvent)
 
+// TabletPadRingV2StopFunc is a callback for Stop events.
 type TabletPadRingV2StopFunc func(ev TabletPadRingV2StopEvent)
 
+// TabletPadRingV2FrameFunc is a callback for Frame events.
 type TabletPadRingV2FrameFunc func(ev TabletPadRingV2FrameEvent)
 
+// TabletPadRingV2 pad ring.
+//
+// A circular interaction area, such as the touch ring on the Wacom Intuos
+// Pro series tablets.
+//
+// Events on a ring are logically grouped by the wl_tablet_pad_ring.frame
+// event.
 type TabletPadRingV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletPadRingV2 wraps p in a TabletPadRingV2 proxy.
 func NewTabletPadRingV2(p *wayland.Proxy) *TabletPadRingV2 {
 	p.SetEventFDCounts(tabletpadringv2EventFDCounts)
 	return &TabletPadRingV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletPadRingV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSource registers fn to receive Source events.
 func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadRingV2SourceEvent
@@ -164,6 +261,7 @@ func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 	})
 }
 
+// OnAngle registers fn to receive Angle events.
 func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventAngle, func(r *wire.Reader) {
 		var ev TabletPadRingV2AngleEvent
@@ -177,6 +275,7 @@ func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 	})
 }
 
+// OnStop registers fn to receive Stop events.
 func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadRingV2StopEvent
@@ -190,6 +289,7 @@ func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *TabletPadRingV2) OnFrame(fn TabletPadRingV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadRingV2FrameEvent
@@ -203,6 +303,27 @@ func (o *TabletPadRingV2) OnFrame(fn TabletPadRingV2FrameFunc) {
 	})
 }
 
+// SetFeedback set compositor feedback.
+//
+// Request that the compositor use the provided feedback string
+// associated with this ring. This request should be issued immediately
+// after a wp_tablet_pad_group.mode_switch event from the corresponding
+// group is received, or whenever the ring is mapped to a different
+// action. See wp_tablet_pad_group.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the ring; compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// wp_tablet_pad_group.mode_switch event received for the group of this
+// ring. Requests providing other serials than the most recent one will be
+// ignored.
 func (o *TabletPadRingV2) SetFeedback(description string, serial uint32) error {
 	return o.proxy.SendRequest(TabletPadRingV2RequestSetFeedback, &TabletPadRingV2SetFeedbackRequest{
 		Description: description,
@@ -210,6 +331,9 @@ func (o *TabletPadRingV2) SetFeedback(description string, serial uint32) error {
 	})
 }
 
+// Destroy destroy the ring object.
+//
+// This destroys the client's resource for this ring object.
 func (o *TabletPadRingV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

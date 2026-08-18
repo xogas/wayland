@@ -15,6 +15,10 @@ const (
 	ExporterV1RequestExport  uint16 = 1
 )
 
+// ExporterV1DestroyRequest destroy the xdg_exporter object.
+//
+// Notify the compositor that the xdg_exporter object will no longer be
+// used.
 type ExporterV1DestroyRequest struct {
 }
 
@@ -26,8 +30,20 @@ func (r *ExporterV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ExporterV1DestroyRequest) Since() uint32 { return 1 }
 
+// ExporterV1ExportRequest export a surface.
+//
+// The export request exports the passed surface so that it can later be
+// imported via xdg_importer. When called, a new xdg_exported object will
+// be created and xdg_exported.handle will be sent immediately. See the
+// corresponding interface and event for details.
+//
+// A surface may be exported multiple times, and each exported handle may
+// be used to create an xdg_imported multiple times. Only xdg_surface
+// surfaces may be exported.
 type ExporterV1ExportRequest struct {
-	ID      wire.NewID
+	// ID the new xdg_exported object.
+	ID wire.NewID
+	// Surface the surface to export.
 	Surface wire.ObjectID
 }
 
@@ -45,18 +61,28 @@ func (r *ExporterV1ExportRequest) Marshal(w *wire.Writer) error {
 
 func (r *ExporterV1ExportRequest) Since() uint32 { return 1 }
 
+// ExporterV1 interface for exporting surfaces.
+//
+// A global interface used for exporting surfaces that can later be imported
+// using xdg_importer.
 type ExporterV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewExporterV1 wraps p in a ExporterV1 proxy.
 func NewExporterV1(p *wayland.Proxy) *ExporterV1 {
 	return &ExporterV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ExporterV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_exporter object.
+//
+// Notify the compositor that the xdg_exporter object will no longer be
+// used.
 func (o *ExporterV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -68,6 +94,16 @@ func (o *ExporterV1) Destroy() error {
 	return nil
 }
 
+// Export export a surface.
+//
+// The export request exports the passed surface so that it can later be
+// imported via xdg_importer. When called, a new xdg_exported object will
+// be created and xdg_exported.handle will be sent immediately. See the
+// corresponding interface and event for details.
+//
+// A surface may be exported multiple times, and each exported handle may
+// be used to create an xdg_imported multiple times. Only xdg_surface
+// surfaces may be exported.
 func (o *ExporterV1) Export(surface wire.ObjectID) (*ExportedV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

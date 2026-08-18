@@ -40,6 +40,10 @@ var surfaceEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// SurfaceResizeEdge edge values for resizing.
+//
+// These values are used to indicate which edge of a surface
+// is being dragged in a resize operation.
 type SurfaceResizeEdge uint32
 
 const (
@@ -54,15 +58,59 @@ const (
 	SurfaceResizeEdgeBottomRight SurfaceResizeEdge = 10
 )
 
+// SurfaceState types of state on the surface.
+//
+// The different state values used on the surface. This is designed for
+// state values like maximized, fullscreen. It is paired with the
+// configure event to ensure that both the client and the compositor
+// setting the state can be synchronized.
+//
+// States set in this way are double-buffered, see wl_surface.commit.
+//
+// Desktop environments may extend this enum by taking up a range of
+// values and documenting the range they chose in this description.
+// They are not required to document the values for the range that they
+// chose. Ideally, any good extensions from a desktop environment should
+// make its way into standardization into this enum.
+//
+// The current reserved ranges are:
+//
+// 0x0000 - 0x0FFF: xdg-shell core values, documented below.
+// 0x1000 - 0x1FFF: GNOME
+// 0x2000 - 0x2FFF: EFL
 type SurfaceState uint32
 
 const (
-	SurfaceStateMaximized  SurfaceState = 1
+	// SurfaceStateMaximized the surface is maximized.
+	//
+	// The surface is maximized. The window geometry specified in the configure
+	// event must be obeyed by the client.
+	SurfaceStateMaximized SurfaceState = 1
+	// SurfaceStateFullscreen the surface is fullscreen.
+	//
+	// The surface is fullscreen. The window geometry specified in the configure
+	// event must be obeyed by the client.
 	SurfaceStateFullscreen SurfaceState = 2
-	SurfaceStateResizing   SurfaceState = 3
-	SurfaceStateActivated  SurfaceState = 4
+	// SurfaceStateResizing the surface is being resized.
+	//
+	// The surface is being resized. The window geometry specified in the
+	// configure event is a maximum; the client cannot resize beyond it.
+	// Clients that have aspect ratio or cell sizing configuration can use
+	// a smaller size, however.
+	SurfaceStateResizing SurfaceState = 3
+	// SurfaceStateActivated the surface is now activated.
+	//
+	// Client window decorations should be painted as if the window is
+	// active. Do not assume this means that the window actually has
+	// keyboard or pointer focus.
+	SurfaceStateActivated SurfaceState = 4
 )
 
+// SurfaceDestroyRequest destroy the xdg_surface.
+//
+// Unmap and destroy the window. The window will be effectively
+// hidden from the user's point of view, and all state like
+// maximization, fullscreen, and so on, will be lost.
 type SurfaceDestroyRequest struct {
 }
 
@@ -74,6 +122,15 @@ func (r *SurfaceDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceDestroyRequest) Since() uint32 { return 1 }
 
+// SurfaceSetParentRequest set the parent of this surface.
+//
+// Set the "parent" of this surface. This window should be stacked
+// above a parent. The parent surface must be mapped as long as this
+// surface is mapped.
+//
+// Parent windows should be set on dialogs, toolboxes, or other
+// "auxiliary" surfaces, so that the parent is raised when the dialog
+// is raised.
 type SurfaceSetParentRequest struct {
 	Parent wire.ObjectID // nullable
 }
@@ -89,6 +146,15 @@ func (r *SurfaceSetParentRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetParentRequest) Since() uint32 { return 1 }
 
+// SurfaceSetTitleRequest set surface title.
+//
+// Set a short title for the surface.
+//
+// This string may be used to identify the surface in a task bar,
+// window list, or other user interface elements provided by the
+// compositor.
+//
+// The string must be encoded in UTF-8.
 type SurfaceSetTitleRequest struct {
 	Title string
 }
@@ -104,6 +170,28 @@ func (r *SurfaceSetTitleRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetTitleRequest) Since() uint32 { return 1 }
 
+// SurfaceSetAppIDRequest set application ID.
+//
+// Set an application identifier for the surface.
+//
+// The app ID identifies the general class of applications to which
+// the surface belongs. The compositor can use this to group multiple
+// surfaces together, or to determine how to launch a new application.
+//
+// For D-Bus activatable applications, the app ID is used as the D-Bus
+// service name.
+//
+// The compositor shell will try to group application surfaces together
+// by their app ID.  As a best practice, it is suggested to select app
+// ID's that match the basename of the application's .desktop file.
+// For example, "org.freedesktop.FooViewer" where the .desktop file is
+// "org.freedesktop.FooViewer.desktop".
+//
+// See the desktop-entry specification [0] for more details on
+// application identifiers and how they relate to well-known D-Bus
+// names and .desktop files.
+//
+// [0] http://standards.freedesktop.org/desktop-entry-spec/
 type SurfaceSetAppIDRequest struct {
 	AppID string
 }
@@ -119,11 +207,28 @@ func (r *SurfaceSetAppIDRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetAppIDRequest) Since() uint32 { return 1 }
 
+// SurfaceShowWindowMenuRequest show the window menu.
+//
+// Clients implementing client-side decorations might want to show
+// a context menu when right-clicking on the decorations, giving the
+// user a menu that they can use to maximize or minimize the window.
+//
+// This request asks the compositor to pop up such a window menu at
+// the given position, relative to the local surface coordinates of
+// the parent surface. There are no guarantees as to what menu items
+// the window menu contains.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event.
 type SurfaceShowWindowMenuRequest struct {
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
 	Serial uint32
-	X      int32
-	Y      int32
+	// X the x position to pop up the window menu at.
+	X int32
+	// Y the y position to pop up the window menu at.
+	Y int32
 }
 
 func (r *SurfaceShowWindowMenuRequest) Opcode() uint16 { return SurfaceRequestShowWindowMenu }
@@ -146,8 +251,28 @@ func (r *SurfaceShowWindowMenuRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceShowWindowMenuRequest) Since() uint32 { return 1 }
 
+// SurfaceMoveRequest start an interactive move.
+//
+// Start an interactive, user-driven move of the surface.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event. The passed
+// serial is used to determine the type of interactive move (touch,
+// pointer, etc).
+//
+// The server may ignore move requests depending on the state of
+// the surface (e.g. fullscreen or maximized), or if the passed serial
+// is no longer valid.
+//
+// If triggered, the surface will lose the focus of the device
+// (wl_pointer, wl_touch, etc) used for the move. It is up to the
+// compositor to visually indicate that the move is taking place, such as
+// updating a pointer cursor, during the move. There is no guarantee
+// that the device focus will return when the move is completed.
 type SurfaceMoveRequest struct {
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
 	Serial uint32
 }
 
@@ -165,10 +290,45 @@ func (r *SurfaceMoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceMoveRequest) Since() uint32 { return 1 }
 
+// SurfaceResizeRequest start an interactive resize.
+//
+// Start a user-driven, interactive resize of the surface.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event. The passed
+// serial is used to determine the type of interactive resize (touch,
+// pointer, etc).
+//
+// The server may ignore resize requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
+//
+// If triggered, the client will receive configure events with the
+// "resize" state enum value and the expected sizes. See the "resize"
+// enum value for more details about what is required. The client
+// must also acknowledge configure events using "ack_configure". After
+// the resize is completed, the client will receive another "configure"
+// event without the resize state.
+//
+// If triggered, the surface also will lose the focus of the device
+// (wl_pointer, wl_touch, etc) used for the resize. It is up to the
+// compositor to visually indicate that the resize is taking place,
+// such as updating a pointer cursor, during the resize. There is no
+// guarantee that the device focus will return when the resize is
+// completed.
+//
+// The edges parameter specifies how the surface should be resized,
+// and is one of the values of the resize_edge enum. The compositor
+// may use this information to update the surface position for
+// example when dragging the top left corner. The compositor may also
+// use this information to adapt its behavior, e.g. choose an
+// appropriate cursor image.
 type SurfaceResizeRequest struct {
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
 	Serial uint32
-	Edges  uint32
+	// Edges which edge or corner is being dragged.
+	Edges uint32
 }
 
 func (r *SurfaceResizeRequest) Opcode() uint16 { return SurfaceRequestResize }
@@ -188,7 +348,29 @@ func (r *SurfaceResizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceResizeRequest) Since() uint32 { return 1 }
 
+// SurfaceAckConfigureRequest ack a configure event.
+//
+// When a configure event is received, if a client commits the
+// surface in response to the configure event, then the client
+// must make an ack_configure request sometime before the commit
+// request, passing along the serial of the configure event.
+//
+// For instance, the compositor might use this information to move
+// a surface to the top left only when the client has drawn itself
+// for the maximized or fullscreen state.
+//
+// If the client receives multiple configure events before it
+// can respond to one, it only has to ack the last configure event.
+//
+// A client is not required to commit immediately after sending
+// an ack_configure request - it may even ack_configure several times
+// before its next surface commit.
+//
+// The compositor expects that the most recently received
+// ack_configure request at the time of a commit indicates which
+// configure event the client is responding to.
 type SurfaceAckConfigureRequest struct {
+	// Serial the serial from the configure event.
 	Serial uint32
 }
 
@@ -203,6 +385,32 @@ func (r *SurfaceAckConfigureRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceAckConfigureRequest) Since() uint32 { return 1 }
 
+// SurfaceSetWindowGeometryRequest set the new window geometry.
+//
+// The window geometry of a window is its "visible bounds" from the
+// user's perspective. Client-side decorations often have invisible
+// portions like drop-shadows which should be ignored for the
+// purposes of aligning, placing and constraining windows.
+//
+// The window geometry is double-buffered state, see wl_surface.commit.
+//
+// Once the window geometry of the surface is set once, it is not
+// possible to unset it, and it will remain the same until
+// set_window_geometry is called again, even if a new subsurface or
+// buffer is attached.
+//
+// If never set, the value is the full bounds of the surface,
+// including any subsurfaces. This updates dynamically on every
+// commit. This unset mode is meant for extremely simple clients.
+//
+// If responding to a configure event, the window geometry in here
+// must respect the sizing negotiations specified by the states in
+// the configure event.
+//
+// The arguments are given in the surface local coordinate space of
+// the wl_surface associated with this xdg_surface.
+//
+// The width and height must be greater than zero.
 type SurfaceSetWindowGeometryRequest struct {
 	X      int32
 	Y      int32
@@ -230,6 +438,29 @@ func (r *SurfaceSetWindowGeometryRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetWindowGeometryRequest) Since() uint32 { return 1 }
 
+// SurfaceSetMaximizedRequest maximize the window.
+//
+// Maximize the surface.
+//
+// After requesting that the surface should be maximized, the compositor
+// will respond by emitting a configure event with the "maximized" state
+// and the required window geometry. The client should then update its
+// content, drawing it in a maximized state, i.e. without shadow or other
+// decoration outside of the window geometry. The client must also
+// acknowledge the configure when committing the new content (see
+// ack_configure).
+//
+// It is up to the compositor to decide how and where to maximize the
+// surface, for example which output and what region of the screen should
+// be used.
+//
+// If the surface was already maximized, the compositor will still emit
+// a configure event with the "maximized" state.
+//
+// Note that unrelated compositor side state changes may cause
+// configure events to be emitted at any time, meaning trying to
+// match this request to a specific future configure event is
+// futile.
 type SurfaceSetMaximizedRequest struct {
 }
 
@@ -241,6 +472,30 @@ func (r *SurfaceSetMaximizedRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetMaximizedRequest) Since() uint32 { return 1 }
 
+// SurfaceUnsetMaximizedRequest unmaximize the window.
+//
+// Unmaximize the surface.
+//
+// After requesting that the surface should be unmaximized, the compositor
+// will respond by emitting a configure event without the "maximized"
+// state. If available, the compositor will include the window geometry
+// dimensions the window had prior to being maximized in the configure
+// request. The client must then update its content, drawing it in a
+// regular state, i.e. potentially with shadow, etc. The client must also
+// acknowledge the configure when committing the new content (see
+// ack_configure).
+//
+// It is up to the compositor to position the surface after it was
+// unmaximized; usually the position the surface had before maximizing, if
+// applicable.
+//
+// If the surface was already not maximized, the compositor will still
+// emit a configure event without the "maximized" state.
+//
+// Note that unrelated compositor side state changes may cause
+// configure events to be emitted at any time, meaning trying to
+// match this request to a specific future configure event is
+// futile.
 type SurfaceUnsetMaximizedRequest struct {
 }
 
@@ -252,6 +507,19 @@ func (r *SurfaceUnsetMaximizedRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceUnsetMaximizedRequest) Since() uint32 { return 1 }
 
+// SurfaceSetFullscreenRequest set the window as fullscreen on a monitor.
+//
+// Make the surface fullscreen.
+//
+//	You can specify an output that you would prefer to be fullscreen.
+//
+// If this value is NULL, it's up to the compositor to choose which
+//
+//	display will be used to map this surface.
+//
+//	If the surface doesn't cover the whole output, the compositor will
+//	position the surface in the center of the output and compensate with
+//	black borders filling the rest of the output.
 type SurfaceSetFullscreenRequest struct {
 	Output wire.ObjectID // nullable
 }
@@ -278,6 +546,16 @@ func (r *SurfaceUnsetFullscreenRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceUnsetFullscreenRequest) Since() uint32 { return 1 }
 
+// SurfaceSetMinimizedRequest set the window as minimized.
+//
+// Request that the compositor minimize your surface. There is no
+// way to know if the surface is currently minimized, nor is there
+// any way to unset minimization on this surface.
+//
+// If you are looking to throttle redrawing when minimized, please
+// instead use the wl_surface.frame event for this, as this will
+// also work with live previews on windows in Alt-Tab, Expose or
+// similar compositor features.
 type SurfaceSetMinimizedRequest struct {
 }
 
@@ -289,6 +567,33 @@ func (r *SurfaceSetMinimizedRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetMinimizedRequest) Since() uint32 { return 1 }
 
+// SurfaceConfigureEvent suggest a surface change.
+//
+// The configure event asks the client to resize its surface or to
+// change its state.
+//
+// The width and height arguments specify a hint to the window
+// about how its surface should be resized in window geometry
+// coordinates. See set_window_geometry.
+//
+// If the width or height arguments are zero, it means the client
+// should decide its own window dimension. This may happen when the
+// compositor need to configure the state of the surface but doesn't
+// have any information about any previous or expected dimension.
+//
+// The states listed in the event specify how the width/height
+// arguments should be interpreted, and possibly how it should be
+// drawn.
+//
+// Clients should arrange their surface for the new size and
+// states, and then send a ack_configure request with the serial
+// sent in this configure event at some point before committing
+// the new surface.
+//
+// If the client receives multiple configure events before it
+//
+//	can respond to one, it is free to discard all but the last
+//	event it received.
 type SurfaceConfigureEvent struct {
 	Width  int32
 	Height int32
@@ -324,6 +629,16 @@ func (e *SurfaceConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SurfaceConfigureEvent) Since() uint32 { return 1 }
 
+// SurfaceCloseEvent surface wants to be closed.
+//
+// The close event is sent by the compositor when the user
+// wants the surface to be closed. This should be equivalent to
+// the user clicking the close button in client-side decorations,
+// if your application has any...
+//
+// This is only a request that the user intends to close your
+// window. The client may choose to ignore this request, or show
+// a dialog to ask the user to save their data...
 type SurfaceCloseEvent struct {
 }
 
@@ -335,23 +650,49 @@ func (e *SurfaceCloseEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SurfaceCloseEvent) Since() uint32 { return 1 }
 
+// SurfaceConfigureFunc is a callback for Configure events.
 type SurfaceConfigureFunc func(ev SurfaceConfigureEvent)
 
+// SurfaceCloseFunc is a callback for Close events.
 type SurfaceCloseFunc func(ev SurfaceCloseEvent)
 
+// Surface a desktop window.
+//
+// An interface that may be implemented by a wl_surface, for
+// implementations that provide a desktop-style user interface.
+//
+// It provides requests to treat surfaces like windows, allowing to set
+// properties like maximized, fullscreen, minimized, and to move and resize
+// them, and associate metadata like title and app id.
+//
+// The client must call wl_surface.commit on the corresponding wl_surface
+// for the xdg_surface state to take effect. Prior to committing the new
+// state, it can set up initial configuration, such as maximizing or setting
+// a window geometry.
+//
+// Even without attaching a buffer the compositor must respond to initial
+// committed configuration, for instance sending a configure event with
+// expected window geometry if the client maximized its surface during
+// initialization.
+//
+// For a surface to be mapped by the compositor the client must have
+// committed both an xdg_surface state and a buffer.
 type Surface struct {
 	proxy *wayland.Proxy
 }
 
+// NewSurface wraps p in a Surface proxy.
 func NewSurface(p *wayland.Proxy) *Surface {
 	p.SetEventFDCounts(surfaceEventFDCounts)
 	return &Surface{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Surface) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(SurfaceEventConfigure, func(r *wire.Reader) {
 		var ev SurfaceConfigureEvent
@@ -365,6 +706,7 @@ func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 	})
 }
 
+// OnClose registers fn to receive Close events.
 func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 	o.proxy.RegisterEvent(SurfaceEventClose, func(r *wire.Reader) {
 		var ev SurfaceCloseEvent
@@ -378,6 +720,11 @@ func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 	})
 }
 
+// Destroy destroy the xdg_surface.
+//
+// Unmap and destroy the window. The window will be effectively
+// hidden from the user's point of view, and all state like
+// maximization, fullscreen, and so on, will be lost.
 func (o *Surface) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -389,24 +736,77 @@ func (o *Surface) Destroy() error {
 	return nil
 }
 
+// SetParent set the parent of this surface.
+//
+// Set the "parent" of this surface. This window should be stacked
+// above a parent. The parent surface must be mapped as long as this
+// surface is mapped.
+//
+// Parent windows should be set on dialogs, toolboxes, or other
+// "auxiliary" surfaces, so that the parent is raised when the dialog
+// is raised.
 func (o *Surface) SetParent(parent wire.ObjectID) error {
 	return o.proxy.SendRequest(SurfaceRequestSetParent, &SurfaceSetParentRequest{
 		Parent: parent,
 	})
 }
 
+// SetTitle set surface title.
+//
+// Set a short title for the surface.
+//
+// This string may be used to identify the surface in a task bar,
+// window list, or other user interface elements provided by the
+// compositor.
+//
+// The string must be encoded in UTF-8.
 func (o *Surface) SetTitle(title string) error {
 	return o.proxy.SendRequest(SurfaceRequestSetTitle, &SurfaceSetTitleRequest{
 		Title: title,
 	})
 }
 
+// SetAppID set application ID.
+//
+// Set an application identifier for the surface.
+//
+// The app ID identifies the general class of applications to which
+// the surface belongs. The compositor can use this to group multiple
+// surfaces together, or to determine how to launch a new application.
+//
+// For D-Bus activatable applications, the app ID is used as the D-Bus
+// service name.
+//
+// The compositor shell will try to group application surfaces together
+// by their app ID.  As a best practice, it is suggested to select app
+// ID's that match the basename of the application's .desktop file.
+// For example, "org.freedesktop.FooViewer" where the .desktop file is
+// "org.freedesktop.FooViewer.desktop".
+//
+// See the desktop-entry specification [0] for more details on
+// application identifiers and how they relate to well-known D-Bus
+// names and .desktop files.
+//
+// [0] http://standards.freedesktop.org/desktop-entry-spec/
 func (o *Surface) SetAppID(appID string) error {
 	return o.proxy.SendRequest(SurfaceRequestSetAppID, &SurfaceSetAppIDRequest{
 		AppID: appID,
 	})
 }
 
+// ShowWindowMenu show the window menu.
+//
+// Clients implementing client-side decorations might want to show
+// a context menu when right-clicking on the decorations, giving the
+// user a menu that they can use to maximize or minimize the window.
+//
+// This request asks the compositor to pop up such a window menu at
+// the given position, relative to the local surface coordinates of
+// the parent surface. There are no guarantees as to what menu items
+// the window menu contains.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event.
 func (o *Surface) ShowWindowMenu(seat wire.ObjectID, serial uint32, x int32, y int32) error {
 	return o.proxy.SendRequest(SurfaceRequestShowWindowMenu, &SurfaceShowWindowMenuRequest{
 		Seat:   seat,
@@ -416,6 +816,24 @@ func (o *Surface) ShowWindowMenu(seat wire.ObjectID, serial uint32, x int32, y i
 	})
 }
 
+// Move start an interactive move.
+//
+// Start an interactive, user-driven move of the surface.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event. The passed
+// serial is used to determine the type of interactive move (touch,
+// pointer, etc).
+//
+// The server may ignore move requests depending on the state of
+// the surface (e.g. fullscreen or maximized), or if the passed serial
+// is no longer valid.
+//
+// If triggered, the surface will lose the focus of the device
+// (wl_pointer, wl_touch, etc) used for the move. It is up to the
+// compositor to visually indicate that the move is taking place, such as
+// updating a pointer cursor, during the move. There is no guarantee
+// that the device focus will return when the move is completed.
 func (o *Surface) Move(seat wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(SurfaceRequestMove, &SurfaceMoveRequest{
 		Seat:   seat,
@@ -423,6 +841,38 @@ func (o *Surface) Move(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
+// Resize start an interactive resize.
+//
+// Start a user-driven, interactive resize of the surface.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event. The passed
+// serial is used to determine the type of interactive resize (touch,
+// pointer, etc).
+//
+// The server may ignore resize requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
+//
+// If triggered, the client will receive configure events with the
+// "resize" state enum value and the expected sizes. See the "resize"
+// enum value for more details about what is required. The client
+// must also acknowledge configure events using "ack_configure". After
+// the resize is completed, the client will receive another "configure"
+// event without the resize state.
+//
+// If triggered, the surface also will lose the focus of the device
+// (wl_pointer, wl_touch, etc) used for the resize. It is up to the
+// compositor to visually indicate that the resize is taking place,
+// such as updating a pointer cursor, during the resize. There is no
+// guarantee that the device focus will return when the resize is
+// completed.
+//
+// The edges parameter specifies how the surface should be resized,
+// and is one of the values of the resize_edge enum. The compositor
+// may use this information to update the surface position for
+// example when dragging the top left corner. The compositor may also
+// use this information to adapt its behavior, e.g. choose an
+// appropriate cursor image.
 func (o *Surface) Resize(seat wire.ObjectID, serial uint32, edges uint32) error {
 	return o.proxy.SendRequest(SurfaceRequestResize, &SurfaceResizeRequest{
 		Seat:   seat,
@@ -431,12 +881,59 @@ func (o *Surface) Resize(seat wire.ObjectID, serial uint32, edges uint32) error 
 	})
 }
 
+// AckConfigure ack a configure event.
+//
+// When a configure event is received, if a client commits the
+// surface in response to the configure event, then the client
+// must make an ack_configure request sometime before the commit
+// request, passing along the serial of the configure event.
+//
+// For instance, the compositor might use this information to move
+// a surface to the top left only when the client has drawn itself
+// for the maximized or fullscreen state.
+//
+// If the client receives multiple configure events before it
+// can respond to one, it only has to ack the last configure event.
+//
+// A client is not required to commit immediately after sending
+// an ack_configure request - it may even ack_configure several times
+// before its next surface commit.
+//
+// The compositor expects that the most recently received
+// ack_configure request at the time of a commit indicates which
+// configure event the client is responding to.
 func (o *Surface) AckConfigure(serial uint32) error {
 	return o.proxy.SendRequest(SurfaceRequestAckConfigure, &SurfaceAckConfigureRequest{
 		Serial: serial,
 	})
 }
 
+// SetWindowGeometry set the new window geometry.
+//
+// The window geometry of a window is its "visible bounds" from the
+// user's perspective. Client-side decorations often have invisible
+// portions like drop-shadows which should be ignored for the
+// purposes of aligning, placing and constraining windows.
+//
+// The window geometry is double-buffered state, see wl_surface.commit.
+//
+// Once the window geometry of the surface is set once, it is not
+// possible to unset it, and it will remain the same until
+// set_window_geometry is called again, even if a new subsurface or
+// buffer is attached.
+//
+// If never set, the value is the full bounds of the surface,
+// including any subsurfaces. This updates dynamically on every
+// commit. This unset mode is meant for extremely simple clients.
+//
+// If responding to a configure event, the window geometry in here
+// must respect the sizing negotiations specified by the states in
+// the configure event.
+//
+// The arguments are given in the surface local coordinate space of
+// the wl_surface associated with this xdg_surface.
+//
+// The width and height must be greater than zero.
 func (o *Surface) SetWindowGeometry(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(SurfaceRequestSetWindowGeometry, &SurfaceSetWindowGeometryRequest{
 		X:      x,
@@ -446,14 +943,74 @@ func (o *Surface) SetWindowGeometry(x int32, y int32, width int32, height int32)
 	})
 }
 
+// SetMaximized maximize the window.
+//
+// Maximize the surface.
+//
+// After requesting that the surface should be maximized, the compositor
+// will respond by emitting a configure event with the "maximized" state
+// and the required window geometry. The client should then update its
+// content, drawing it in a maximized state, i.e. without shadow or other
+// decoration outside of the window geometry. The client must also
+// acknowledge the configure when committing the new content (see
+// ack_configure).
+//
+// It is up to the compositor to decide how and where to maximize the
+// surface, for example which output and what region of the screen should
+// be used.
+//
+// If the surface was already maximized, the compositor will still emit
+// a configure event with the "maximized" state.
+//
+// Note that unrelated compositor side state changes may cause
+// configure events to be emitted at any time, meaning trying to
+// match this request to a specific future configure event is
+// futile.
 func (o *Surface) SetMaximized() error {
 	return o.proxy.SendRequest(SurfaceRequestSetMaximized, &SurfaceSetMaximizedRequest{})
 }
 
+// UnsetMaximized unmaximize the window.
+//
+// Unmaximize the surface.
+//
+// After requesting that the surface should be unmaximized, the compositor
+// will respond by emitting a configure event without the "maximized"
+// state. If available, the compositor will include the window geometry
+// dimensions the window had prior to being maximized in the configure
+// request. The client must then update its content, drawing it in a
+// regular state, i.e. potentially with shadow, etc. The client must also
+// acknowledge the configure when committing the new content (see
+// ack_configure).
+//
+// It is up to the compositor to position the surface after it was
+// unmaximized; usually the position the surface had before maximizing, if
+// applicable.
+//
+// If the surface was already not maximized, the compositor will still
+// emit a configure event without the "maximized" state.
+//
+// Note that unrelated compositor side state changes may cause
+// configure events to be emitted at any time, meaning trying to
+// match this request to a specific future configure event is
+// futile.
 func (o *Surface) UnsetMaximized() error {
 	return o.proxy.SendRequest(SurfaceRequestUnsetMaximized, &SurfaceUnsetMaximizedRequest{})
 }
 
+// SetFullscreen set the window as fullscreen on a monitor.
+//
+// Make the surface fullscreen.
+//
+//	You can specify an output that you would prefer to be fullscreen.
+//
+// If this value is NULL, it's up to the compositor to choose which
+//
+//	display will be used to map this surface.
+//
+//	If the surface doesn't cover the whole output, the compositor will
+//	position the surface in the center of the output and compensate with
+//	black borders filling the rest of the output.
 func (o *Surface) SetFullscreen(output wire.ObjectID) error {
 	return o.proxy.SendRequest(SurfaceRequestSetFullscreen, &SurfaceSetFullscreenRequest{
 		Output: output,
@@ -464,6 +1021,16 @@ func (o *Surface) UnsetFullscreen() error {
 	return o.proxy.SendRequest(SurfaceRequestUnsetFullscreen, &SurfaceUnsetFullscreenRequest{})
 }
 
+// SetMinimized set the window as minimized.
+//
+// Request that the compositor minimize your surface. There is no
+// way to know if the surface is currently minimized, nor is there
+// any way to unset minimization on this surface.
+//
+// If you are looking to throttle redrawing when minimized, please
+// instead use the wl_surface.frame event for this, as this will
+// also work with live previews on windows in Alt-Tab, Expose or
+// similar compositor features.
 func (o *Surface) SetMinimized() error {
 	return o.proxy.SendRequest(SurfaceRequestSetMinimized, &SurfaceSetMinimizedRequest{})
 }

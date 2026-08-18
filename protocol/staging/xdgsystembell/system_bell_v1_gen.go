@@ -15,6 +15,9 @@ const (
 	SystemBellV1RequestRing    uint16 = 1
 )
 
+// SystemBellV1DestroyRequest destroy the system bell object.
+//
+// Notify that the object will no longer be used.
 type SystemBellV1DestroyRequest struct {
 }
 
@@ -26,7 +29,19 @@ func (r *SystemBellV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SystemBellV1DestroyRequest) Since() uint32 { return 1 }
 
+// SystemBellV1RingRequest ring the system bell.
+//
+// This requests rings the system bell on behalf of a client. How ringing
+// the bell is implemented is up to the compositor. It may be an audible
+// sound, a visual feedback of some kind, or any other thing including
+// nothing.
+//
+//	The passed surface should correspond to a toplevel like surface role,
+//	or be null, meaning the client doesn't have a particular toplevel it
+//	wants to associate the bell ringing with. See the xdg-shell protocol
+//	extension for a toplevel like surface role.
 type SystemBellV1RingRequest struct {
+	// Surface associated surface.
 	Surface wire.ObjectID // nullable
 }
 
@@ -41,18 +56,31 @@ func (r *SystemBellV1RingRequest) Marshal(w *wire.Writer) error {
 
 func (r *SystemBellV1RingRequest) Since() uint32 { return 1 }
 
+// SystemBellV1 system bell.
+//
+// This global interface enables clients to ring the system bell.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type SystemBellV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSystemBellV1 wraps p in a SystemBellV1 proxy.
 func NewSystemBellV1(p *wayland.Proxy) *SystemBellV1 {
 	return &SystemBellV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SystemBellV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the system bell object.
+//
+// Notify that the object will no longer be used.
 func (o *SystemBellV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -64,6 +92,17 @@ func (o *SystemBellV1) Destroy() error {
 	return nil
 }
 
+// Ring ring the system bell.
+//
+// This requests rings the system bell on behalf of a client. How ringing
+// the bell is implemented is up to the compositor. It may be an audible
+// sound, a visual feedback of some kind, or any other thing including
+// nothing.
+//
+//	The passed surface should correspond to a toplevel like surface role,
+//	or be null, meaning the client doesn't have a particular toplevel it
+//	wants to associate the bell ringing with. See the xdg-shell protocol
+//	extension for a toplevel like surface role.
 func (o *SystemBellV1) Ring(surface wire.ObjectID) error {
 	return o.proxy.SendRequest(SystemBellV1RequestRing, &SystemBellV1RingRequest{
 		Surface: surface,

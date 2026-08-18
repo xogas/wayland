@@ -18,9 +18,13 @@ const (
 type KeyboardShortcutsInhibitManagerV1Error uint32
 
 const (
+	// KeyboardShortcutsInhibitManagerV1ErrorAlreadyInhibited the shortcuts are already inhibited for this surface.
 	KeyboardShortcutsInhibitManagerV1ErrorAlreadyInhibited KeyboardShortcutsInhibitManagerV1Error = 0
 )
 
+// KeyboardShortcutsInhibitManagerV1DestroyRequest destroy the keyboard shortcuts inhibitor object.
+//
+// Destroy the keyboard shortcuts inhibitor manager.
 type KeyboardShortcutsInhibitManagerV1DestroyRequest struct {
 }
 
@@ -34,10 +38,19 @@ func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Marshal(w *wire.Writer
 
 func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest create a new keyboard shortcuts inhibitor object.
+//
+// Create a new keyboard shortcuts inhibitor object associated with
+// the given surface for the given seat.
+//
+// If shortcuts are already inhibited for the specified seat and surface,
+// a protocol error "already_inhibited" is raised by the compositor.
 type KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Surface the surface that inhibits the keyboard shortcuts behavior.
 	Surface wire.ObjectID
-	Seat    wire.ObjectID
+	// Seat the wl_seat for which keyboard shortcuts should be disabled.
+	Seat wire.ObjectID
 }
 
 func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Opcode() uint16 {
@@ -59,18 +72,26 @@ func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Marshal(w *wi
 
 func (r *KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest) Since() uint32 { return 1 }
 
+// KeyboardShortcutsInhibitManagerV1 context object for keyboard grab_manager.
+//
+// A global interface used for inhibiting the compositor keyboard shortcuts.
 type KeyboardShortcutsInhibitManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewKeyboardShortcutsInhibitManagerV1 wraps p in a KeyboardShortcutsInhibitManagerV1 proxy.
 func NewKeyboardShortcutsInhibitManagerV1(p *wayland.Proxy) *KeyboardShortcutsInhibitManagerV1 {
 	return &KeyboardShortcutsInhibitManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *KeyboardShortcutsInhibitManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the keyboard shortcuts inhibitor object.
+//
+// Destroy the keyboard shortcuts inhibitor manager.
 func (o *KeyboardShortcutsInhibitManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -82,6 +103,13 @@ func (o *KeyboardShortcutsInhibitManagerV1) Destroy() error {
 	return nil
 }
 
+// InhibitShortcuts create a new keyboard shortcuts inhibitor object.
+//
+// Create a new keyboard shortcuts inhibitor object associated with
+// the given surface for the given seat.
+//
+// If shortcuts are already inhibited for the specified seat and surface,
+// a protocol error "already_inhibited" is raised by the compositor.
 func (o *KeyboardShortcutsInhibitManagerV1) InhibitShortcuts(surface wire.ObjectID, seat wire.ObjectID) (*KeyboardShortcutsInhibitorV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

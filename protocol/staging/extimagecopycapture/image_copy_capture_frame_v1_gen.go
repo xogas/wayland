@@ -39,19 +39,36 @@ var imagecopycaptureframev1EventFDCounts = map[uint16]int{
 type ImageCopyCaptureFrameV1Error uint32
 
 const (
-	ImageCopyCaptureFrameV1ErrorNoBuffer            ImageCopyCaptureFrameV1Error = 1
+	// ImageCopyCaptureFrameV1ErrorNoBuffer capture sent without attach_buffer.
+	ImageCopyCaptureFrameV1ErrorNoBuffer ImageCopyCaptureFrameV1Error = 1
+	// ImageCopyCaptureFrameV1ErrorInvalidBufferDamage invalid buffer damage.
 	ImageCopyCaptureFrameV1ErrorInvalidBufferDamage ImageCopyCaptureFrameV1Error = 2
-	ImageCopyCaptureFrameV1ErrorAlreadyCaptured     ImageCopyCaptureFrameV1Error = 3
+	// ImageCopyCaptureFrameV1ErrorAlreadyCaptured capture request has been sent.
+	ImageCopyCaptureFrameV1ErrorAlreadyCaptured ImageCopyCaptureFrameV1Error = 3
 )
 
 type ImageCopyCaptureFrameV1FailureReason uint32
 
 const (
-	ImageCopyCaptureFrameV1FailureReasonUnknown           ImageCopyCaptureFrameV1FailureReason = 0
+	// ImageCopyCaptureFrameV1FailureReasonUnknown.
+	//
+	// An unspecified runtime error has occurred. The client may retry.
+	ImageCopyCaptureFrameV1FailureReasonUnknown ImageCopyCaptureFrameV1FailureReason = 0
+	// ImageCopyCaptureFrameV1FailureReasonBufferConstraints.
+	//
+	// The buffer submitted by the client doesn't match the latest session
+	// constraints. The client should re-allocate its buffers and retry.
 	ImageCopyCaptureFrameV1FailureReasonBufferConstraints ImageCopyCaptureFrameV1FailureReason = 1
-	ImageCopyCaptureFrameV1FailureReasonStopped           ImageCopyCaptureFrameV1FailureReason = 2
+	// ImageCopyCaptureFrameV1FailureReasonStopped.
+	//
+	// The session has stopped. See ext_image_copy_capture_session_v1.stopped.
+	ImageCopyCaptureFrameV1FailureReasonStopped ImageCopyCaptureFrameV1FailureReason = 2
 )
 
+// ImageCopyCaptureFrameV1DestroyRequest destroy this object.
+//
+// Destroys the frame. This request can be sent at any time by the
+// client.
 type ImageCopyCaptureFrameV1DestroyRequest struct {
 }
 
@@ -65,6 +82,16 @@ func (r *ImageCopyCaptureFrameV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImageCopyCaptureFrameV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1AttachBufferRequest attach buffer to session.
+//
+// Attach a buffer to the session.
+//
+// The wl_buffer.release request is unused.
+//
+// The new buffer replaces any previously attached buffer.
+//
+// This request must not be sent after capture, or else the
+// already_captured protocol error is raised.
 type ImageCopyCaptureFrameV1AttachBufferRequest struct {
 	Buffer wire.ObjectID
 }
@@ -82,10 +109,37 @@ func (r *ImageCopyCaptureFrameV1AttachBufferRequest) Marshal(w *wire.Writer) err
 
 func (r *ImageCopyCaptureFrameV1AttachBufferRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1DamageBufferRequest damage buffer.
+//
+// Apply damage to the buffer which is to be captured next. This request
+// may be sent multiple times to describe a region.
+//
+// The client indicates the accumulated damage since this wl_buffer was
+// last captured. During capture, the compositor will update the buffer
+// with at least the union of the region passed by the client and the
+// region advertised by ext_image_copy_capture_frame_v1.damage.
+//
+// When a wl_buffer is captured for the first time, or when the client
+// doesn't track damage, the client must damage the whole buffer.
+//
+// This is for optimisation purposes. The compositor may use this
+// information to reduce copying.
+//
+// These coordinates originate from the upper left corner of the buffer.
+//
+// If x or y are strictly negative, or if width or height are negative or
+// zero, the invalid_buffer_damage protocol error is raised.
+//
+// This request must not be sent after capture, or else the
+// already_captured protocol error is raised.
 type ImageCopyCaptureFrameV1DamageBufferRequest struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X region x coordinate.
+	X int32
+	// Y region y coordinate.
+	Y int32
+	// Width region width.
+	Width int32
+	// Height region height.
 	Height int32
 }
 
@@ -111,6 +165,17 @@ func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Marshal(w *wire.Writer) err
 
 func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1CaptureRequest capture a frame.
+//
+// Capture a frame.
+//
+// Unless this is the first successful captured frame performed in this
+// session, the compositor may wait an indefinite amount of time for the
+// source content to change before performing the copy.
+//
+// This request may only be sent once, or else the already_captured
+// protocol error is raised. A buffer must be attached before this request
+// is sent, or else the no_buffer protocol error is raised.
 type ImageCopyCaptureFrameV1CaptureRequest struct {
 }
 
@@ -124,6 +189,10 @@ func (r *ImageCopyCaptureFrameV1CaptureRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImageCopyCaptureFrameV1CaptureRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1TransformEvent buffer transform.
+//
+// This event is sent before the ready event and holds the transform that
+// the compositor has applied to the buffer contents.
 type ImageCopyCaptureFrameV1TransformEvent struct {
 	Transform uint32
 }
@@ -143,10 +212,24 @@ func (e *ImageCopyCaptureFrameV1TransformEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *ImageCopyCaptureFrameV1TransformEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1DamageEvent buffer damaged region.
+//
+// This event is sent before the ready event. It may be generated multiple
+// times to describe a region.
+//
+// The first captured frame in a session will always carry full damage.
+// Subsequent frames' damaged regions describe which parts of the buffer
+// have changed since the last ready event.
+//
+// These coordinates originate in the upper left corner of the buffer.
 type ImageCopyCaptureFrameV1DamageEvent struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X damage x coordinate.
+	X int32
+	// Y damage y coordinate.
+	Y int32
+	// Width damage width.
+	Width int32
+	// Height damage height.
 	Height int32
 }
 
@@ -180,10 +263,24 @@ func (e *ImageCopyCaptureFrameV1DamageEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageCopyCaptureFrameV1DamageEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1PresentationTimeEvent presentation time of the frame.
+//
+// This event indicates the time at which the frame is presented to the
+// output in system monotonic time. This event is sent before the ready
+// event.
+//
+// The timestamp is expressed as tv_sec_hi, tv_sec_lo, tv_nsec triples,
+// each component being an unsigned 32-bit value. Whole seconds are in
+// tv_sec which is a 64-bit value combined from tv_sec_hi and tv_sec_lo,
+// and the additional fractional part in tv_nsec as nanoseconds. Hence,
+// for valid timestamps tv_nsec must be in [0, 999999999].
 type ImageCopyCaptureFrameV1PresentationTimeEvent struct {
+	// TvSecHi high 32 bits of the seconds part of the timestamp.
 	TvSecHi uint32
+	// TvSecLo low 32 bits of the seconds part of the timestamp.
 	TvSecLo uint32
-	TvNsec  uint32
+	// TvNsec nanoseconds part of the timestamp.
+	TvNsec uint32
 }
 
 func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Opcode() uint16 {
@@ -211,6 +308,14 @@ func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Unmarshal(r *wire.Reader)
 
 func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1ReadyEvent frame is available for reading.
+//
+// Called as soon as the frame is copied, indicating it is available
+// for reading.
+//
+// The buffer may be re-used by the client after this event.
+//
+// After receiving this event, the client must destroy the object.
 type ImageCopyCaptureFrameV1ReadyEvent struct {
 }
 
@@ -222,6 +327,11 @@ func (e *ImageCopyCaptureFrameV1ReadyEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageCopyCaptureFrameV1ReadyEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1FailedEvent capture failed.
+//
+// This event indicates that the attempted frame copy has failed.
+//
+// After receiving this event, the client must destroy the object.
 type ImageCopyCaptureFrameV1FailedEvent struct {
 	Reason ImageCopyCaptureFrameV1FailureReason
 }
@@ -241,29 +351,49 @@ func (e *ImageCopyCaptureFrameV1FailedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageCopyCaptureFrameV1FailedEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureFrameV1TransformFunc is a callback for Transform events.
 type ImageCopyCaptureFrameV1TransformFunc func(ev ImageCopyCaptureFrameV1TransformEvent)
 
+// ImageCopyCaptureFrameV1DamageFunc is a callback for Damage events.
 type ImageCopyCaptureFrameV1DamageFunc func(ev ImageCopyCaptureFrameV1DamageEvent)
 
+// ImageCopyCaptureFrameV1PresentationTimeFunc is a callback for PresentationTime events.
 type ImageCopyCaptureFrameV1PresentationTimeFunc func(ev ImageCopyCaptureFrameV1PresentationTimeEvent)
 
+// ImageCopyCaptureFrameV1ReadyFunc is a callback for Ready events.
 type ImageCopyCaptureFrameV1ReadyFunc func(ev ImageCopyCaptureFrameV1ReadyEvent)
 
+// ImageCopyCaptureFrameV1FailedFunc is a callback for Failed events.
 type ImageCopyCaptureFrameV1FailedFunc func(ev ImageCopyCaptureFrameV1FailedEvent)
 
+// ImageCopyCaptureFrameV1 image capture frame.
+//
+// This object represents an image capture frame.
+//
+// The client should attach a buffer, damage the buffer, and then send a
+// capture request.
+//
+// If the capture is successful, the compositor must send the frame metadata
+// (transform, damage, presentation_time in any order) followed by the ready
+// event.
+//
+// If the capture fails, the compositor must send the failed event.
 type ImageCopyCaptureFrameV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageCopyCaptureFrameV1 wraps p in a ImageCopyCaptureFrameV1 proxy.
 func NewImageCopyCaptureFrameV1(p *wayland.Proxy) *ImageCopyCaptureFrameV1 {
 	p.SetEventFDCounts(imagecopycaptureframev1EventFDCounts)
 	return &ImageCopyCaptureFrameV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageCopyCaptureFrameV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnTransform registers fn to receive Transform events.
 func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1TransformFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventTransform, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1TransformEvent
@@ -277,6 +407,7 @@ func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1Transfor
 	})
 }
 
+// OnDamage registers fn to receive Damage events.
 func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventDamage, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1DamageEvent
@@ -290,6 +421,7 @@ func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc)
 	})
 }
 
+// OnPresentationTime registers fn to receive PresentationTime events.
 func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1PresentationTimeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventPresentationTime, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1PresentationTimeEvent
@@ -303,6 +435,7 @@ func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1P
 	})
 }
 
+// OnReady registers fn to receive Ready events.
 func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventReady, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1ReadyEvent
@@ -316,6 +449,7 @@ func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 	})
 }
 
+// OnFailed registers fn to receive Failed events.
 func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventFailed, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1FailedEvent
@@ -329,6 +463,10 @@ func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc)
 	})
 }
 
+// Destroy destroy this object.
+//
+// Destroys the frame. This request can be sent at any time by the
+// client.
 func (o *ImageCopyCaptureFrameV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -340,12 +478,45 @@ func (o *ImageCopyCaptureFrameV1) Destroy() error {
 	return nil
 }
 
+// AttachBuffer attach buffer to session.
+//
+// Attach a buffer to the session.
+//
+// The wl_buffer.release request is unused.
+//
+// The new buffer replaces any previously attached buffer.
+//
+// This request must not be sent after capture, or else the
+// already_captured protocol error is raised.
 func (o *ImageCopyCaptureFrameV1) AttachBuffer(buffer wire.ObjectID) error {
 	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestAttachBuffer, &ImageCopyCaptureFrameV1AttachBufferRequest{
 		Buffer: buffer,
 	})
 }
 
+// DamageBuffer damage buffer.
+//
+// Apply damage to the buffer which is to be captured next. This request
+// may be sent multiple times to describe a region.
+//
+// The client indicates the accumulated damage since this wl_buffer was
+// last captured. During capture, the compositor will update the buffer
+// with at least the union of the region passed by the client and the
+// region advertised by ext_image_copy_capture_frame_v1.damage.
+//
+// When a wl_buffer is captured for the first time, or when the client
+// doesn't track damage, the client must damage the whole buffer.
+//
+// This is for optimisation purposes. The compositor may use this
+// information to reduce copying.
+//
+// These coordinates originate from the upper left corner of the buffer.
+//
+// If x or y are strictly negative, or if width or height are negative or
+// zero, the invalid_buffer_damage protocol error is raised.
+//
+// This request must not be sent after capture, or else the
+// already_captured protocol error is raised.
 func (o *ImageCopyCaptureFrameV1) DamageBuffer(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestDamageBuffer, &ImageCopyCaptureFrameV1DamageBufferRequest{
 		X:      x,
@@ -355,6 +526,17 @@ func (o *ImageCopyCaptureFrameV1) DamageBuffer(x int32, y int32, width int32, he
 	})
 }
 
+// Capture capture a frame.
+//
+// Capture a frame.
+//
+// Unless this is the first successful captured frame performed in this
+// session, the compositor may wait an indefinite amount of time for the
+// source content to change before performing the copy.
+//
+// This request may only be sent once, or else the already_captured
+// protocol error is raised. A buffer must be attached before this request
+// is sent, or else the no_buffer protocol error is raised.
 func (o *ImageCopyCaptureFrameV1) Capture() error {
 	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestCapture, &ImageCopyCaptureFrameV1CaptureRequest{})
 }

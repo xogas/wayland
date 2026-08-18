@@ -27,6 +27,10 @@ var tabletseatv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// TabletSeatV1DestroyRequest release the memory for the tablet seat object.
+//
+// Destroy the wp_tablet_seat object. Objects created from this
+// object are unaffected and should be destroyed separately.
 type TabletSeatV1DestroyRequest struct {
 }
 
@@ -38,7 +42,14 @@ func (r *TabletSeatV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletSeatV1DestroyRequest) Since() uint32 { return 1 }
 
+// TabletSeatV1TabletAddedEvent new device notification.
+//
+// This event is sent whenever a new tablet becomes available on this
+// seat. This event only provides the object id of the tablet, any
+// static information about the tablet (device name, vid/pid, etc.) is
+// sent through the wp_tablet interface.
 type TabletSeatV1TabletAddedEvent struct {
+	// ID the newly added graphics tablet.
 	ID *TabletV1
 }
 
@@ -46,7 +57,14 @@ func (e *TabletSeatV1TabletAddedEvent) Opcode() uint16 { return TabletSeatV1Even
 
 func (e *TabletSeatV1TabletAddedEvent) Since() uint32 { return 1 }
 
+// TabletSeatV1ToolAddedEvent a new tool has been used with a tablet.
+//
+// This event is sent whenever a tool that has not previously been used
+// with a tablet comes into use. This event only provides the object id
+// of the tool; any static information about the tool (capabilities,
+// type, etc.) is sent through the wp_tablet_tool interface.
 type TabletSeatV1ToolAddedEvent struct {
+	// ID the newly added tablet tool.
 	ID *TabletToolV1
 }
 
@@ -54,23 +72,33 @@ func (e *TabletSeatV1ToolAddedEvent) Opcode() uint16 { return TabletSeatV1EventT
 
 func (e *TabletSeatV1ToolAddedEvent) Since() uint32 { return 1 }
 
+// TabletSeatV1TabletAddedFunc is a callback for TabletAdded events.
 type TabletSeatV1TabletAddedFunc func(ev TabletSeatV1TabletAddedEvent)
 
+// TabletSeatV1ToolAddedFunc is a callback for ToolAdded events.
 type TabletSeatV1ToolAddedFunc func(ev TabletSeatV1ToolAddedEvent)
 
+// TabletSeatV1 controller object for graphic tablet devices of a seat.
+//
+// An object that provides access to the graphics tablets available on this
+// seat. After binding to this interface, the compositor sends a set of
+// wp_tablet_seat.tablet_added and wp_tablet_seat.tool_added events.
 type TabletSeatV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletSeatV1 wraps p in a TabletSeatV1 proxy.
 func NewTabletSeatV1(p *wayland.Proxy) *TabletSeatV1 {
 	p.SetEventFDCounts(tabletseatv1EventFDCounts)
 	return &TabletSeatV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletSeatV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnTabletAdded registers fn to receive TabletAdded events.
 func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1TabletAddedEvent
@@ -89,6 +117,7 @@ func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 	})
 }
 
+// OnToolAdded registers fn to receive ToolAdded events.
 func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1ToolAddedEvent
@@ -107,6 +136,10 @@ func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 	})
 }
 
+// Destroy release the memory for the tablet seat object.
+//
+// Destroy the wp_tablet_seat object. Objects created from this
+// object are unaffected and should be destroyed separately.
 func (o *TabletSeatV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

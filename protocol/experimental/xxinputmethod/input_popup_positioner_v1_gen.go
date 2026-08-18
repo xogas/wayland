@@ -23,12 +23,14 @@ const (
 type InputPopupPositionerV1Error uint32
 
 const (
+	// InputPopupPositionerV1ErrorInvalidInput invalid input provided.
 	InputPopupPositionerV1ErrorInvalidInput InputPopupPositionerV1Error = 0
 )
 
 type InputPopupPositionerV1Anchor uint32
 
 const (
+	// InputPopupPositionerV1AnchorNone no edge, specifies center.
 	InputPopupPositionerV1AnchorNone        InputPopupPositionerV1Anchor = 0
 	InputPopupPositionerV1AnchorTop         InputPopupPositionerV1Anchor = 1
 	InputPopupPositionerV1AnchorBottom      InputPopupPositionerV1Anchor = 2
@@ -43,6 +45,7 @@ const (
 type InputPopupPositionerV1Gravity uint32
 
 const (
+	// InputPopupPositionerV1GravityNone center to center.
 	InputPopupPositionerV1GravityNone        InputPopupPositionerV1Gravity = 0
 	InputPopupPositionerV1GravityTop         InputPopupPositionerV1Gravity = 1
 	InputPopupPositionerV1GravityBottom      InputPopupPositionerV1Gravity = 2
@@ -54,19 +57,97 @@ const (
 	InputPopupPositionerV1GravityBottomRight InputPopupPositionerV1Gravity = 8
 )
 
-// InputPopupPositionerV1ConstraintAdjustment is a bitfield of flags.
+// InputPopupPositionerV1ConstraintAdjustment constraint adjustments.
+//
+// The constraint adjustment value define ways the compositor will adjust
+// the position of the surface, if the unadjusted position would result
+// in the surface being partly constrained.
+//
+// Whether a surface is considered 'constrained' is left to the compositor
+// to determine. For example, the surface may be partly outside the
+// compositor's defined 'work area', thus necessitating the child surface's
+// position be adjusted until it is entirely inside the work area.
+//
+// The adjustments can be combined, according to a defined precedence: 1)
+// Flip, 2) Slide, 3) Resize.
+//
+// This is a bitfield of flags.
 type InputPopupPositionerV1ConstraintAdjustment uint32
 
 const (
-	InputPopupPositionerV1ConstraintAdjustmentNone    InputPopupPositionerV1ConstraintAdjustment = 0
-	InputPopupPositionerV1ConstraintAdjustmentSlideX  InputPopupPositionerV1ConstraintAdjustment = 1
-	InputPopupPositionerV1ConstraintAdjustmentSlideY  InputPopupPositionerV1ConstraintAdjustment = 2
-	InputPopupPositionerV1ConstraintAdjustmentFlipX   InputPopupPositionerV1ConstraintAdjustment = 4
-	InputPopupPositionerV1ConstraintAdjustmentFlipY   InputPopupPositionerV1ConstraintAdjustment = 8
+	// InputPopupPositionerV1ConstraintAdjustmentNone.
+	//
+	// Don't alter the surface position even if it is constrained on some
+	// axis, for example partially outside the edge of an output.
+	InputPopupPositionerV1ConstraintAdjustmentNone InputPopupPositionerV1ConstraintAdjustment = 0
+	// InputPopupPositionerV1ConstraintAdjustmentSlideX.
+	//
+	// Slide the surface along the x axis until it is no longer constrained.
+	//
+	// First try to slide towards the direction of the gravity on the x axis
+	// until either the edge in the opposite direction of the gravity is
+	// unconstrained or the edge in the direction of the gravity is
+	// constrained.
+	//
+	// Then try to slide towards the opposite direction of the gravity on the
+	// x axis until either the edge in the direction of the gravity is
+	// unconstrained or the edge in the opposite direction of the gravity is
+	// constrained.
+	InputPopupPositionerV1ConstraintAdjustmentSlideX InputPopupPositionerV1ConstraintAdjustment = 1
+	// InputPopupPositionerV1ConstraintAdjustmentSlideY.
+	//
+	// Slide the surface along the y axis until it is no longer constrained.
+	//
+	// First try to slide towards the direction of the gravity on the y axis
+	// until either the edge in the opposite direction of the gravity is
+	// unconstrained or the edge in the direction of the gravity is
+	// constrained.
+	//
+	// Then try to slide towards the opposite direction of the gravity on the
+	// y axis until either the edge in the direction of the gravity is
+	// unconstrained or the edge in the opposite direction of the gravity is
+	// constrained.
+	InputPopupPositionerV1ConstraintAdjustmentSlideY InputPopupPositionerV1ConstraintAdjustment = 2
+	// InputPopupPositionerV1ConstraintAdjustmentFlipX.
+	//
+	// Invert the anchor and gravity on the x axis if the surface is
+	// constrained on the x axis. For example, if the left edge of the
+	// surface is constrained, the gravity is 'left' and the anchor is
+	// 'left', change the gravity to 'right' and the anchor to 'right'.
+	//
+	// If the adjusted position also ends up being constrained, the resulting
+	// position of the flip_x adjustment will be the one before the
+	// adjustment.
+	InputPopupPositionerV1ConstraintAdjustmentFlipX InputPopupPositionerV1ConstraintAdjustment = 4
+	// InputPopupPositionerV1ConstraintAdjustmentFlipY.
+	//
+	// Invert the anchor and gravity on the y axis if the surface is
+	// constrained on the y axis. For example, if the bottom edge of the
+	// surface is constrained, the gravity is 'bottom' and the anchor is
+	// 'bottom', change the gravity to 'top' and the anchor to 'top'.
+	//
+	// The adjusted position is calculated given the original anchor
+	// rectangle and offset, but with the new flipped anchor and gravity
+	// values.
+	//
+	// If the adjusted position also ends up being constrained, the resulting
+	// position of the flip_y adjustment will be the one before the
+	// adjustment.
+	InputPopupPositionerV1ConstraintAdjustmentFlipY InputPopupPositionerV1ConstraintAdjustment = 8
+	// InputPopupPositionerV1ConstraintAdjustmentResizeX.
+	//
+	// Resize the surface horizontally so that it is completely
+	// unconstrained.
 	InputPopupPositionerV1ConstraintAdjustmentResizeX InputPopupPositionerV1ConstraintAdjustment = 16
+	// InputPopupPositionerV1ConstraintAdjustmentResizeY.
+	//
+	// Resize the surface vertically so that it is completely unconstrained.
 	InputPopupPositionerV1ConstraintAdjustmentResizeY InputPopupPositionerV1ConstraintAdjustment = 32
 )
 
+// InputPopupPositionerV1DestroyRequest destroy the input_popup_positioner object.
+//
+// Notify the compositor that the positioner will no longer be used.
 type InputPopupPositionerV1DestroyRequest struct {
 }
 
@@ -80,8 +161,17 @@ func (r *InputPopupPositionerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupPositionerV1DestroyRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetSizeRequest set the size of the to-be positioned rectangle.
+//
+// Set the size of the surface that is to be positioned with the positioner
+// object. The size is in surface-local coordinates and corresponds to the
+// window geometry. See xdg_surface.set_window_geometry.
+//
+// If any dimension is set to zero, the invalid_input error is raised.
 type InputPopupPositionerV1SetSizeRequest struct {
-	Width  uint32
+	// Width width of positioned rectangle.
+	Width uint32
+	// Height height of positioned rectangle.
 	Height uint32
 }
 
@@ -101,7 +191,16 @@ func (r *InputPopupPositionerV1SetSizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupPositionerV1SetSizeRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetAnchorRequest set anchor rectangle anchor.
+//
+// Defines the anchor point for the anchor rectangle. The specified anchor
+// is used to derive an anchor point that the popup surface will be
+// positioned relative to. If a corner anchor is set (e.g. 'top_left' or
+// 'bottom_right'), the anchor point will be at the specified corner;
+// otherwise, the derived anchor point will be centered on the specified
+// edge, or in the center of the anchor rectangle if no edge is specified.
 type InputPopupPositionerV1SetAnchorRequest struct {
+	// Anchor anchor.
 	Anchor InputPopupPositionerV1Anchor
 }
 
@@ -118,7 +217,17 @@ func (r *InputPopupPositionerV1SetAnchorRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupPositionerV1SetAnchorRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetGravityRequest set surface gravity.
+//
+// Defines in what direction the surface should be positioned, relative to
+// the anchor point of the anchor rectangle. If a corner gravity is
+// specified (e.g. 'bottom_right' or 'top_left'), then the surface
+// will be placed towards the specified gravity; otherwise, the child
+// surface will be centered over the anchor point on any axis that had no
+// gravity specified. If the gravity is not in the ‘gravity’ enum, an
+// invalid_input error is raised.
 type InputPopupPositionerV1SetGravityRequest struct {
+	// Gravity gravity direction.
 	Gravity InputPopupPositionerV1Gravity
 }
 
@@ -135,7 +244,23 @@ func (r *InputPopupPositionerV1SetGravityRequest) Marshal(w *wire.Writer) error 
 
 func (r *InputPopupPositionerV1SetGravityRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetConstraintAdjustmentRequest set the adjustment to be done when constrained.
+//
+// Specify how the popup should be positioned if the originally intended
+// position caused the surface to be constrained, meaning at least
+// partially outside positioning boundaries set by the compositor. The
+// adjustment is set by constructing a bitmask describing the adjustment to
+// be made when the surface is constrained on that axis.
+//
+// If no bit for one axis is set, the compositor will assume that the child
+// surface should not change its position on that axis when constrained.
+//
+// If more than one bit for one axis is set, the order of how adjustments
+// are applied is specified in the corresponding adjustment descriptions.
+//
+// The default adjustment is none.
 type InputPopupPositionerV1SetConstraintAdjustmentRequest struct {
+	// ConstraintAdjustment bit mask of constraint adjustments.
 	ConstraintAdjustment InputPopupPositionerV1ConstraintAdjustment
 }
 
@@ -152,8 +277,23 @@ func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Marshal(w *wire.W
 
 func (r *InputPopupPositionerV1SetConstraintAdjustmentRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetOffsetRequest set surface position offset.
+//
+// Specify the surface position offset relative to the position of the
+// anchor on the anchor rectangle and the anchor on the surface. For
+// example if the anchor of the anchor rectangle is at (x, y), the surface
+// has the gravity bottom|right, and the offset is (ox, oy), the calculated
+// surface position will be (x + ox, y + oy). The offset position of the
+// surface is the one used for constraint testing. See
+// set_constraint_adjustment.
+//
+// An example use case is placing a popup menu on top of a user interface
+// element, while aligning the user interface element of the parent surface
+// with some user interface element placed somewhere in the popup surface.
 type InputPopupPositionerV1SetOffsetRequest struct {
+	// X surface position x offset.
 	X int32
+	// Y surface position y offset.
 	Y int32
 }
 
@@ -173,6 +313,13 @@ func (r *InputPopupPositionerV1SetOffsetRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupPositionerV1SetOffsetRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1SetReactiveRequest continuously reconstrain the surface.
+//
+// When set reactive, the surface is reconstrained if the conditions used
+// for constraining changed, e.g. the window containing the text input moved.
+//
+// Whenever the conditions change and the popup gets reconstrained, a
+// configure sequence is sent with updated geometry.
 type InputPopupPositionerV1SetReactiveRequest struct {
 }
 
@@ -186,18 +333,51 @@ func (r *InputPopupPositionerV1SetReactiveRequest) Marshal(w *wire.Writer) error
 
 func (r *InputPopupPositionerV1SetReactiveRequest) Since() uint32 { return 1 }
 
+// InputPopupPositionerV1 input method popup positioner.
+//
+// The input_popup_positioner provides a collection of rules for the placement of an input method popup surface relative to the cursor.
+// Rules can be defined to ensure
+// the text input area remains within the visible area's borders, and to
+// specify how the popup changes its position, such as sliding along
+// an axis, or flipping around a rectangle. These positioner-created rules are
+// constrained by the requirement that a popup must intersect with or
+// be at least partially adjacent to the surface containing the text input.
+//
+// See the various requests for details about possible rules.
+//
+// A newly created positioner has the following state:
+// - 0 surface width
+// - 0 surface height
+// - anchor at the center ("none")
+// - gravity towards the center ("none")
+// - constraints adjustment set to none
+// - offset at x = 0, y = 0
+// - not reactive
+//
+// Upon receiving a request taking the positioner as an argument, the compositor makes a copy of the rules
+// specified by the input_popup_positioner. Thus, after the request is complete the
+// input_popup_positioner object can be destroyed or reused; further changes to the
+// object will have no effect on previous usages.
+//
+// For an input_popup_positioner object to be considered complete, its state must contain a non-zero width and height. Passing an incomplete input_popup_positioner object when
+// positioning a surface raises an invalid_positioner error.
 type InputPopupPositionerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputPopupPositionerV1 wraps p in a InputPopupPositionerV1 proxy.
 func NewInputPopupPositionerV1(p *wayland.Proxy) *InputPopupPositionerV1 {
 	return &InputPopupPositionerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputPopupPositionerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the input_popup_positioner object.
+//
+// Notify the compositor that the positioner will no longer be used.
 func (o *InputPopupPositionerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -209,6 +389,13 @@ func (o *InputPopupPositionerV1) Destroy() error {
 	return nil
 }
 
+// SetSize set the size of the to-be positioned rectangle.
+//
+// Set the size of the surface that is to be positioned with the positioner
+// object. The size is in surface-local coordinates and corresponds to the
+// window geometry. See xdg_surface.set_window_geometry.
+//
+// If any dimension is set to zero, the invalid_input error is raised.
 func (o *InputPopupPositionerV1) SetSize(width uint32, height uint32) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetSize, &InputPopupPositionerV1SetSizeRequest{
 		Width:  width,
@@ -216,24 +403,69 @@ func (o *InputPopupPositionerV1) SetSize(width uint32, height uint32) error {
 	})
 }
 
+// SetAnchor set anchor rectangle anchor.
+//
+// Defines the anchor point for the anchor rectangle. The specified anchor
+// is used to derive an anchor point that the popup surface will be
+// positioned relative to. If a corner anchor is set (e.g. 'top_left' or
+// 'bottom_right'), the anchor point will be at the specified corner;
+// otherwise, the derived anchor point will be centered on the specified
+// edge, or in the center of the anchor rectangle if no edge is specified.
 func (o *InputPopupPositionerV1) SetAnchor(anchor InputPopupPositionerV1Anchor) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetAnchor, &InputPopupPositionerV1SetAnchorRequest{
 		Anchor: anchor,
 	})
 }
 
+// SetGravity set surface gravity.
+//
+// Defines in what direction the surface should be positioned, relative to
+// the anchor point of the anchor rectangle. If a corner gravity is
+// specified (e.g. 'bottom_right' or 'top_left'), then the surface
+// will be placed towards the specified gravity; otherwise, the child
+// surface will be centered over the anchor point on any axis that had no
+// gravity specified. If the gravity is not in the ‘gravity’ enum, an
+// invalid_input error is raised.
 func (o *InputPopupPositionerV1) SetGravity(gravity InputPopupPositionerV1Gravity) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetGravity, &InputPopupPositionerV1SetGravityRequest{
 		Gravity: gravity,
 	})
 }
 
+// SetConstraintAdjustment set the adjustment to be done when constrained.
+//
+// Specify how the popup should be positioned if the originally intended
+// position caused the surface to be constrained, meaning at least
+// partially outside positioning boundaries set by the compositor. The
+// adjustment is set by constructing a bitmask describing the adjustment to
+// be made when the surface is constrained on that axis.
+//
+// If no bit for one axis is set, the compositor will assume that the child
+// surface should not change its position on that axis when constrained.
+//
+// If more than one bit for one axis is set, the order of how adjustments
+// are applied is specified in the corresponding adjustment descriptions.
+//
+// The default adjustment is none.
 func (o *InputPopupPositionerV1) SetConstraintAdjustment(constraintAdjustment InputPopupPositionerV1ConstraintAdjustment) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetConstraintAdjustment, &InputPopupPositionerV1SetConstraintAdjustmentRequest{
 		ConstraintAdjustment: constraintAdjustment,
 	})
 }
 
+// SetOffset set surface position offset.
+//
+// Specify the surface position offset relative to the position of the
+// anchor on the anchor rectangle and the anchor on the surface. For
+// example if the anchor of the anchor rectangle is at (x, y), the surface
+// has the gravity bottom|right, and the offset is (ox, oy), the calculated
+// surface position will be (x + ox, y + oy). The offset position of the
+// surface is the one used for constraint testing. See
+// set_constraint_adjustment.
+//
+// An example use case is placing a popup menu on top of a user interface
+// element, while aligning the user interface element of the parent surface
+// with some user interface element placed somewhere in the popup surface.
 func (o *InputPopupPositionerV1) SetOffset(x int32, y int32) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetOffset, &InputPopupPositionerV1SetOffsetRequest{
 		X: x,
@@ -241,6 +473,13 @@ func (o *InputPopupPositionerV1) SetOffset(x int32, y int32) error {
 	})
 }
 
+// SetReactive continuously reconstrain the surface.
+//
+// When set reactive, the surface is reconstrained if the conditions used
+// for constraining changed, e.g. the window containing the text input moved.
+//
+// Whenever the conditions change and the popup gets reconstrained, a
+// configure sequence is sent with updated geometry.
 func (o *InputPopupPositionerV1) SetReactive() error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetReactive, &InputPopupPositionerV1SetReactiveRequest{})
 }

@@ -15,6 +15,10 @@ const (
 	RelativePointerManagerV1RequestGetRelativePointer uint16 = 1
 )
 
+// RelativePointerManagerV1DestroyRequest destroy the relative pointer manager object.
+//
+// Used by the client to notify the server that it will no longer use this
+// relative pointer manager object.
 type RelativePointerManagerV1DestroyRequest struct {
 }
 
@@ -28,6 +32,10 @@ func (r *RelativePointerManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *RelativePointerManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// RelativePointerManagerV1GetRelativePointerRequest get a relative pointer object.
+//
+// Create a relative pointer interface given a wl_pointer object. See the
+// wp_relative_pointer interface for more details.
 type RelativePointerManagerV1GetRelativePointerRequest struct {
 	ID      wire.NewID
 	Pointer wire.ObjectID
@@ -49,18 +57,28 @@ func (r *RelativePointerManagerV1GetRelativePointerRequest) Marshal(w *wire.Writ
 
 func (r *RelativePointerManagerV1GetRelativePointerRequest) Since() uint32 { return 1 }
 
+// RelativePointerManagerV1 get relative pointer objects.
+//
+// A global interface used for getting the relative pointer object for a
+// given pointer.
 type RelativePointerManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewRelativePointerManagerV1 wraps p in a RelativePointerManagerV1 proxy.
 func NewRelativePointerManagerV1(p *wayland.Proxy) *RelativePointerManagerV1 {
 	return &RelativePointerManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *RelativePointerManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the relative pointer manager object.
+//
+// Used by the client to notify the server that it will no longer use this
+// relative pointer manager object.
 func (o *RelativePointerManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -72,6 +90,10 @@ func (o *RelativePointerManagerV1) Destroy() error {
 	return nil
 }
 
+// GetRelativePointer get a relative pointer object.
+//
+// Create a relative pointer interface given a wl_pointer object. See the
+// wp_relative_pointer interface for more details.
 func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*RelativePointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

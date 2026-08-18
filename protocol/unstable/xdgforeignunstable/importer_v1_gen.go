@@ -15,6 +15,10 @@ const (
 	ImporterV1RequestImport  uint16 = 1
 )
 
+// ImporterV1DestroyRequest destroy the xdg_importer object.
+//
+// Notify the compositor that the xdg_importer object will no longer be
+// used.
 type ImporterV1DestroyRequest struct {
 }
 
@@ -26,8 +30,17 @@ func (r *ImporterV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImporterV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImporterV1ImportRequest import a surface.
+//
+// The import request imports a surface from any client given a handle
+// retrieved by exporting said surface using xdg_exporter.export. When
+// called, a new xdg_imported object will be created. This new object
+// represents the imported surface, and the importing client can
+// manipulate its relationship using it. See xdg_imported for details.
 type ImporterV1ImportRequest struct {
-	ID     wire.NewID
+	// ID the new xdg_imported object.
+	ID wire.NewID
+	// Handle the exported surface handle.
 	Handle string
 }
 
@@ -45,18 +58,29 @@ func (r *ImporterV1ImportRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImporterV1ImportRequest) Since() uint32 { return 1 }
 
+// ImporterV1 interface for importing surfaces.
+//
+// A global interface used for importing surfaces exported by xdg_exporter.
+// With this interface, a client can create a reference to a surface of
+// another client.
 type ImporterV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImporterV1 wraps p in a ImporterV1 proxy.
 func NewImporterV1(p *wayland.Proxy) *ImporterV1 {
 	return &ImporterV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImporterV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_importer object.
+//
+// Notify the compositor that the xdg_importer object will no longer be
+// used.
 func (o *ImporterV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -68,6 +92,13 @@ func (o *ImporterV1) Destroy() error {
 	return nil
 }
 
+// Import import a surface.
+//
+// The import request imports a surface from any client given a handle
+// retrieved by exporting said surface using xdg_exporter.export. When
+// called, a new xdg_imported object will be created. This new object
+// represents the imported surface, and the importing client can
+// manipulate its relationship using it. See xdg_imported for details.
 func (o *ImporterV1) Import(handle string) (*ImportedV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

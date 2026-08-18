@@ -32,15 +32,45 @@ var tabletpadstripv2EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+// TabletPadStripV2Source strip axis source.
+//
+// Describes the source types for strip events. This indicates to the
+// client how a strip event was physically generated; a client may
+// adjust the user interface accordingly. For example, events
+// from a "finger" source may trigger kinetic scrolling.
 type TabletPadStripV2Source uint32
 
 const (
+	// TabletPadStripV2SourceFinger finger.
 	TabletPadStripV2SourceFinger TabletPadStripV2Source = 1
 )
 
+// TabletPadStripV2SetFeedbackRequest set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this strip. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever the strip is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the strip, and compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// strip. Requests providing other serials than the most recent one will be
+// ignored.
 type TabletPadStripV2SetFeedbackRequest struct {
+	// Description strip description.
 	Description string
-	Serial      uint32
+	// Serial serial of the mode switch event.
+	Serial uint32
 }
 
 func (r *TabletPadStripV2SetFeedbackRequest) Opcode() uint16 {
@@ -59,6 +89,9 @@ func (r *TabletPadStripV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadStripV2SetFeedbackRequest) Since() uint32 { return 1 }
 
+// TabletPadStripV2DestroyRequest destroy the strip object.
+//
+// This destroys the client's resource for this strip object.
 type TabletPadStripV2DestroyRequest struct {
 }
 
@@ -70,7 +103,22 @@ func (r *TabletPadStripV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadStripV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletPadStripV2SourceEvent strip event source.
+//
+// Source information for strip events.
+//
+// This event does not occur on its own. It is sent before a
+// zwp_tablet_pad_strip_v2.frame event and carries the source information
+// for all events within that frame.
+//
+// The source specifies how this event was generated. If the source is
+// zwp_tablet_pad_strip_v2.source.finger, a zwp_tablet_pad_strip_v2.stop event
+// will be sent when the user lifts their finger off the device.
+//
+// This event is optional. If the source is unknown for an interaction,
+// no event is sent.
 type TabletPadStripV2SourceEvent struct {
+	// Source the event source.
 	Source TabletPadStripV2Source
 }
 
@@ -87,7 +135,15 @@ func (e *TabletPadStripV2SourceEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadStripV2SourceEvent) Since() uint32 { return 1 }
 
+// TabletPadStripV2PositionEvent position changed.
+//
+// Sent whenever the position on a strip changes.
+//
+// The position is normalized to a range of [0, 65535], the 0-value
+// represents the top-most and/or left-most position of the strip in
+// the pad's current rotation.
 type TabletPadStripV2PositionEvent struct {
+	// Position the current position.
 	Position uint32
 }
 
@@ -104,6 +160,18 @@ func (e *TabletPadStripV2PositionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadStripV2PositionEvent) Since() uint32 { return 1 }
 
+// TabletPadStripV2StopEvent interaction stopped.
+//
+// Stop notification for strip events.
+//
+// For some zwp_tablet_pad_strip_v2.source types, a zwp_tablet_pad_strip_v2.stop
+// event is sent to notify a client that the interaction with the strip
+// has terminated. This enables the client to implement kinetic
+// scrolling. See the zwp_tablet_pad_strip_v2.source documentation for
+// information on when this event may be generated.
+//
+// Any zwp_tablet_pad_strip_v2.position events with the same source after this
+// event should be considered as the start of a new interaction.
 type TabletPadStripV2StopEvent struct {
 }
 
@@ -115,7 +183,24 @@ func (e *TabletPadStripV2StopEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadStripV2StopEvent) Since() uint32 { return 1 }
 
+// TabletPadStripV2FrameEvent end of a strip event sequence.
+//
+// Indicates the end of a set of events that represent one logical
+// hardware strip event. A client is expected to accumulate the data
+// in all events within the frame before proceeding.
+//
+// All zwp_tablet_pad_strip_v2 events before a zwp_tablet_pad_strip_v2.frame event belong
+// logically together. For example, on termination of a finger interaction
+// on a strip the compositor will send a zwp_tablet_pad_strip_v2.source event,
+// a zwp_tablet_pad_strip_v2.stop event and a zwp_tablet_pad_strip_v2.frame
+// event.
+//
+// A zwp_tablet_pad_strip_v2.frame event is sent for every logical event
+// group, even if the group only contains a single zwp_tablet_pad_strip_v2
+// event. Specifically, a client may get a sequence: position, frame,
+// position, frame, etc.
 type TabletPadStripV2FrameEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
 }
 
@@ -132,27 +217,41 @@ func (e *TabletPadStripV2FrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadStripV2FrameEvent) Since() uint32 { return 1 }
 
+// TabletPadStripV2SourceFunc is a callback for Source events.
 type TabletPadStripV2SourceFunc func(ev TabletPadStripV2SourceEvent)
 
+// TabletPadStripV2PositionFunc is a callback for Position events.
 type TabletPadStripV2PositionFunc func(ev TabletPadStripV2PositionEvent)
 
+// TabletPadStripV2StopFunc is a callback for Stop events.
 type TabletPadStripV2StopFunc func(ev TabletPadStripV2StopEvent)
 
+// TabletPadStripV2FrameFunc is a callback for Frame events.
 type TabletPadStripV2FrameFunc func(ev TabletPadStripV2FrameEvent)
 
+// TabletPadStripV2 pad strip.
+//
+// A linear interaction area, such as the strips found in Wacom Cintiq
+// models.
+//
+// Events on a strip are logically grouped by the zwp_tablet_pad_strip_v2.frame
+// event.
 type TabletPadStripV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletPadStripV2 wraps p in a TabletPadStripV2 proxy.
 func NewTabletPadStripV2(p *wayland.Proxy) *TabletPadStripV2 {
 	p.SetEventFDCounts(tabletpadstripv2EventFDCounts)
 	return &TabletPadStripV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletPadStripV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSource registers fn to receive Source events.
 func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadStripV2SourceEvent
@@ -166,6 +265,7 @@ func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 	})
 }
 
+// OnPosition registers fn to receive Position events.
 func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventPosition, func(r *wire.Reader) {
 		var ev TabletPadStripV2PositionEvent
@@ -179,6 +279,7 @@ func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 	})
 }
 
+// OnStop registers fn to receive Stop events.
 func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadStripV2StopEvent
@@ -192,6 +293,7 @@ func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *TabletPadStripV2) OnFrame(fn TabletPadStripV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadStripV2FrameEvent
@@ -205,6 +307,27 @@ func (o *TabletPadStripV2) OnFrame(fn TabletPadStripV2FrameFunc) {
 	})
 }
 
+// SetFeedback set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this strip. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever the strip is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the strip, and compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// strip. Requests providing other serials than the most recent one will be
+// ignored.
 func (o *TabletPadStripV2) SetFeedback(description string, serial uint32) error {
 	return o.proxy.SendRequest(TabletPadStripV2RequestSetFeedback, &TabletPadStripV2SetFeedbackRequest{
 		Description: description,
@@ -212,6 +335,9 @@ func (o *TabletPadStripV2) SetFeedback(description string, serial uint32) error 
 	})
 }
 
+// Destroy destroy the strip object.
+//
+// This destroys the client's resource for this strip object.
 func (o *TabletPadStripV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

@@ -16,6 +16,13 @@ const (
 	ActivationV1RequestActivate           uint16 = 2
 )
 
+// ActivationV1DestroyRequest destroy the xdg_activation object.
+//
+// Notify the compositor that the xdg_activation object will no longer be
+// used.
+//
+// The child objects created via this interface are unaffected and should
+// be destroyed separately.
 type ActivationV1DestroyRequest struct {
 }
 
@@ -27,6 +34,11 @@ func (r *ActivationV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationV1DestroyRequest) Since() uint32 { return 1 }
 
+// ActivationV1GetActivationTokenRequest requests a token.
+//
+// Creates an xdg_activation_token_v1 object that will provide
+// the initiating client with a unique token for this activation. This
+// token should be offered to the clients to be activated.
 type ActivationV1GetActivationTokenRequest struct {
 	ID wire.NewID
 }
@@ -44,8 +56,22 @@ func (r *ActivationV1GetActivationTokenRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationV1GetActivationTokenRequest) Since() uint32 { return 1 }
 
+// ActivationV1ActivateRequest notify new interaction being available.
+//
+// Requests surface activation. It's up to the compositor to display
+// this information as desired, for example by placing the surface above
+// the rest.
+//
+// The compositor may know who requested this by checking the activation
+// token and might decide not to follow through with the activation if it's
+// considered unwanted.
+//
+// Compositors can ignore unknown activation tokens when an invalid
+// token is passed.
 type ActivationV1ActivateRequest struct {
-	Token   string
+	// Token the activation token of the initiating client.
+	Token string
+	// Surface the wl_surface to activate.
 	Surface wire.ObjectID
 }
 
@@ -63,18 +89,32 @@ func (r *ActivationV1ActivateRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationV1ActivateRequest) Since() uint32 { return 1 }
 
+// ActivationV1 interface for activating surfaces.
+//
+// A global interface used for informing the compositor about applications
+// being activated or started, or for applications to request to be
+// activated.
 type ActivationV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewActivationV1 wraps p in a ActivationV1 proxy.
 func NewActivationV1(p *wayland.Proxy) *ActivationV1 {
 	return &ActivationV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ActivationV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_activation object.
+//
+// Notify the compositor that the xdg_activation object will no longer be
+// used.
+//
+// The child objects created via this interface are unaffected and should
+// be destroyed separately.
 func (o *ActivationV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -86,6 +126,11 @@ func (o *ActivationV1) Destroy() error {
 	return nil
 }
 
+// GetActivationToken requests a token.
+//
+// Creates an xdg_activation_token_v1 object that will provide
+// the initiating client with a unique token for this activation. This
+// token should be offered to the clients to be activated.
 func (o *ActivationV1) GetActivationToken() (*ActivationTokenV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -103,6 +148,18 @@ func (o *ActivationV1) GetActivationToken() (*ActivationTokenV1, error) {
 	return wrapped, nil
 }
 
+// Activate notify new interaction being available.
+//
+// Requests surface activation. It's up to the compositor to display
+// this information as desired, for example by placing the surface above
+// the rest.
+//
+// The compositor may know who requested this by checking the activation
+// token and might decide not to follow through with the activation if it's
+// considered unwanted.
+//
+// Compositors can ignore unknown activation tokens when an invalid
+// token is passed.
 func (o *ActivationV1) Activate(token string, surface wire.ObjectID) error {
 	return o.proxy.SendRequest(ActivationV1RequestActivate, &ActivationV1ActivateRequest{
 		Token:   token,

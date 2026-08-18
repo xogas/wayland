@@ -15,12 +15,22 @@ const (
 	FifoManagerV1RequestGetFifo uint16 = 1
 )
 
+// FifoManagerV1Error fatal presentation error.
+//
+// These fatal protocol errors may be emitted in response to
+// illegal requests.
 type FifoManagerV1Error uint32
 
 const (
+	// FifoManagerV1ErrorAlreadyExists fifo manager already exists for surface.
 	FifoManagerV1ErrorAlreadyExists FifoManagerV1Error = 0
 )
 
+// FifoManagerV1DestroyRequest unbind from the manager interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 type FifoManagerV1DestroyRequest struct {
 }
 
@@ -32,6 +42,16 @@ func (r *FifoManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FifoManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// FifoManagerV1GetFifoRequest request fifo interface for surface.
+//
+// Establish a fifo object for a surface that may be used to add
+// display refresh constraints to content updates.
+//
+// Only one such object may exist for a surface and attempting
+// to create more than one will result in an already_exists
+// protocol error. If a surface is acted on by multiple software
+// components, general best practice is that only the component
+// performing wl_surface.attach operations should use this protocol.
 type FifoManagerV1GetFifoRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -51,18 +71,38 @@ func (r *FifoManagerV1GetFifoRequest) Marshal(w *wire.Writer) error {
 
 func (r *FifoManagerV1GetFifoRequest) Since() uint32 { return 1 }
 
+// FifoManagerV1 protocol for fifo constraints.
+//
+// When a Wayland compositor considers applying a content update,
+// it must ensure all the update's readiness constraints (fences, etc)
+// are met.
+//
+// This protocol provides a way to use the completion of a display refresh
+// cycle as an additional readiness constraint.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type FifoManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFifoManagerV1 wraps p in a FifoManagerV1 proxy.
 func NewFifoManagerV1(p *wayland.Proxy) *FifoManagerV1 {
 	return &FifoManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FifoManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy unbind from the manager interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 func (o *FifoManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +114,16 @@ func (o *FifoManagerV1) Destroy() error {
 	return nil
 }
 
+// GetFifo request fifo interface for surface.
+//
+// Establish a fifo object for a surface that may be used to add
+// display refresh constraints to content updates.
+//
+// Only one such object may exist for a surface and attempting
+// to create more than one will result in an already_exists
+// protocol error. If a surface is acted on by multiple software
+// components, general best practice is that only the component
+// performing wl_surface.attach operations should use this protocol.
 func (o *FifoManagerV1) GetFifo(surface wire.ObjectID) (*FifoV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

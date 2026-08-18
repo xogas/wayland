@@ -39,25 +39,47 @@ var workspacehandlev1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
-// WorkspaceHandleV1State is a bitfield of flags.
+// WorkspaceHandleV1State types of states on the workspace.
+//
+// The different states that a workspace can have.
+//
+// This is a bitfield of flags.
 type WorkspaceHandleV1State uint32
 
 const (
+	// WorkspaceHandleV1StateActive the workspace is active.
 	WorkspaceHandleV1StateActive WorkspaceHandleV1State = 1
+	// WorkspaceHandleV1StateUrgent the workspace requests attention.
 	WorkspaceHandleV1StateUrgent WorkspaceHandleV1State = 2
+	// WorkspaceHandleV1StateHidden.
+	//
+	// The workspace is not visible in its workspace group, and clients
+	// attempting to visualize the compositor workspace state should not
+	// display such workspaces.
 	WorkspaceHandleV1StateHidden WorkspaceHandleV1State = 4
 )
 
-// WorkspaceHandleV1WorkspaceCapabilities is a bitfield of flags.
+// This is a bitfield of flags.
 type WorkspaceHandleV1WorkspaceCapabilities uint32
 
 const (
-	WorkspaceHandleV1WorkspaceCapabilitiesActivate   WorkspaceHandleV1WorkspaceCapabilities = 1
+	// WorkspaceHandleV1WorkspaceCapabilitiesActivate activate request is available.
+	WorkspaceHandleV1WorkspaceCapabilitiesActivate WorkspaceHandleV1WorkspaceCapabilities = 1
+	// WorkspaceHandleV1WorkspaceCapabilitiesDeactivate deactivate request is available.
 	WorkspaceHandleV1WorkspaceCapabilitiesDeactivate WorkspaceHandleV1WorkspaceCapabilities = 2
-	WorkspaceHandleV1WorkspaceCapabilitiesRemove     WorkspaceHandleV1WorkspaceCapabilities = 4
-	WorkspaceHandleV1WorkspaceCapabilitiesAssign     WorkspaceHandleV1WorkspaceCapabilities = 8
+	// WorkspaceHandleV1WorkspaceCapabilitiesRemove remove request is available.
+	WorkspaceHandleV1WorkspaceCapabilitiesRemove WorkspaceHandleV1WorkspaceCapabilities = 4
+	// WorkspaceHandleV1WorkspaceCapabilitiesAssign assign request is available.
+	WorkspaceHandleV1WorkspaceCapabilitiesAssign WorkspaceHandleV1WorkspaceCapabilities = 8
 )
 
+// WorkspaceHandleV1DestroyRequest destroy the ext_workspace_handle_v1 object.
+//
+// Destroys the ext_workspace_handle_v1 object.
+//
+// This request should be made either when the client does not want to
+// use the workspace object any more or after the remove event to finalize
+// the destruction of the object.
 type WorkspaceHandleV1DestroyRequest struct {
 }
 
@@ -69,6 +91,14 @@ func (r *WorkspaceHandleV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceHandleV1DestroyRequest) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1ActivateRequest activate the workspace.
+//
+// Request that this workspace be activated.
+//
+// There is no guarantee the workspace will be actually activated, and
+// behaviour may be compositor-dependent. For example, activating a
+// workspace may or may not deactivate all other workspaces in the same
+// group.
 type WorkspaceHandleV1ActivateRequest struct {
 }
 
@@ -80,6 +110,11 @@ func (r *WorkspaceHandleV1ActivateRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceHandleV1ActivateRequest) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1DeactivateRequest deactivate the workspace.
+//
+// Request that this workspace be deactivated.
+//
+// There is no guarantee the workspace will be actually deactivated.
 type WorkspaceHandleV1DeactivateRequest struct {
 }
 
@@ -93,6 +128,11 @@ func (r *WorkspaceHandleV1DeactivateRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceHandleV1DeactivateRequest) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1AssignRequest assign workspace to group.
+//
+// Requests that this workspace is assigned to the given workspace group.
+//
+// There is no guarantee the workspace will be assigned.
 type WorkspaceHandleV1AssignRequest struct {
 	WorkspaceGroup wire.ObjectID
 }
@@ -108,6 +148,11 @@ func (r *WorkspaceHandleV1AssignRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceHandleV1AssignRequest) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1RemoveRequest remove the workspace.
+//
+// Request that this workspace be removed.
+//
+// There is no guarantee the workspace will be actually removed.
 type WorkspaceHandleV1RemoveRequest struct {
 }
 
@@ -119,6 +164,21 @@ func (r *WorkspaceHandleV1RemoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceHandleV1RemoveRequest) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1IDEvent workspace id.
+//
+// If this event is emitted, it will be send immediately after the
+// ext_workspace_handle_v1 is created or when an id is assigned to
+// a workspace (at most once during its lifetime).
+//
+// An id will never change during the lifetime of the `ext_workspace_handle_v1`
+// and is guaranteed to be unique during its lifetime.
+//
+// Ids are not human-readable and shouldn't be displayed, use `name` for that purpose.
+//
+// Compositors are expected to only send ids for workspaces likely stable across multiple
+// sessions and can be used by clients to store preferences for workspaces. Workspaces without
+// ids should be considered temporary and any data associated with them should be deleted once
+// the respective object is lost.
 type WorkspaceHandleV1IDEvent struct {
 	ID string
 }
@@ -136,6 +196,13 @@ func (e *WorkspaceHandleV1IDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1IDEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1NameEvent workspace name changed.
+//
+// This event is emitted immediately after the ext_workspace_handle_v1 is
+// created and whenever the name of the workspace changes.
+//
+// A name is meant to be human-readable and can be displayed to a user.
+// Unlike the id it is neither stable nor unique.
 type WorkspaceHandleV1NameEvent struct {
 	Name string
 }
@@ -153,6 +220,26 @@ func (e *WorkspaceHandleV1NameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1NameEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1CoordinatesEvent workspace coordinates changed.
+//
+// This event is used to organize workspaces into an N-dimensional grid
+// within a workspace group, and if supported, is emitted immediately after
+// the ext_workspace_handle_v1 is created and whenever the coordinates of
+// the workspace change. Compositors may not send this event if they do not
+// conceptually arrange workspaces in this way. If compositors simply
+// number workspaces, without any geometric interpretation, they may send
+// 1D coordinates, which clients should not interpret as implying any
+// geometry. Sending an empty array means that the compositor no longer
+// orders the workspace geometrically.
+//
+// Coordinates have an arbitrary number of dimensions N with an uint32
+// position along each dimension. By convention if N > 1, the first
+// dimension is X, the second Y, the third Z, and so on. The compositor may
+// chose to utilize these events for a more novel workspace layout
+// convention, however. No guarantee is made about the grid being filled or
+// bounded; there may be a workspace at coordinate 1 and another at
+// coordinate 1000 and none in between. Within a workspace group, however,
+// workspaces must have unique coordinates of equal dimensionality.
 type WorkspaceHandleV1CoordinatesEvent struct {
 	Coordinates []byte
 }
@@ -170,6 +257,14 @@ func (e *WorkspaceHandleV1CoordinatesEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1CoordinatesEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1StateEvent the state of the workspace changed.
+//
+// This event is emitted immediately after the ext_workspace_handle_v1 is
+// created and each time the workspace state changes, either because of a
+// compositor action or because of a request in this protocol.
+//
+// Missing states convey the opposite meaning, e.g. an unset active bit
+// means the workspace is currently inactive.
 type WorkspaceHandleV1StateEvent struct {
 	State WorkspaceHandleV1State
 }
@@ -187,7 +282,23 @@ func (e *WorkspaceHandleV1StateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1StateEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1CapabilitiesEvent compositor capabilities.
+//
+// This event advertises the capabilities supported by the compositor. If
+// a capability isn't supported, clients should hide or disable the UI
+// elements that expose this functionality. For instance, if the
+// compositor doesn't advertise support for removing workspaces, a button
+// triggering the remove request should not be displayed.
+//
+// The compositor will ignore requests it doesn't support. For instance,
+// a compositor which doesn't advertise support for remove will ignore
+// remove requests.
+//
+// Compositors must send this event once after creation of an
+// ext_workspace_handle_v1 . When the capabilities change, compositors
+// must send this event again.
 type WorkspaceHandleV1CapabilitiesEvent struct {
+	// Capabilities capabilities.
 	Capabilities WorkspaceHandleV1WorkspaceCapabilities
 }
 
@@ -206,6 +317,17 @@ func (e *WorkspaceHandleV1CapabilitiesEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1CapabilitiesEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1RemovedEvent this workspace has been removed.
+//
+// This event is send when the workspace associated with the ext_workspace_handle_v1
+// has been removed. After sending this request, the compositor will immediately consider
+// the object inert. Any requests will be ignored except the destroy request.
+//
+// It is guaranteed there won't be any more events referencing this
+// ext_workspace_handle_v1.
+//
+// The compositor must only remove a workspaces not currently belonging to any
+// workspace_group.
 type WorkspaceHandleV1RemovedEvent struct {
 }
 
@@ -217,31 +339,58 @@ func (e *WorkspaceHandleV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceHandleV1RemovedEvent) Since() uint32 { return 1 }
 
+// WorkspaceHandleV1IDFunc is a callback for ID events.
 type WorkspaceHandleV1IDFunc func(ev WorkspaceHandleV1IDEvent)
 
+// WorkspaceHandleV1NameFunc is a callback for Name events.
 type WorkspaceHandleV1NameFunc func(ev WorkspaceHandleV1NameEvent)
 
+// WorkspaceHandleV1CoordinatesFunc is a callback for Coordinates events.
 type WorkspaceHandleV1CoordinatesFunc func(ev WorkspaceHandleV1CoordinatesEvent)
 
+// WorkspaceHandleV1StateFunc is a callback for State events.
 type WorkspaceHandleV1StateFunc func(ev WorkspaceHandleV1StateEvent)
 
+// WorkspaceHandleV1CapabilitiesFunc is a callback for Capabilities events.
 type WorkspaceHandleV1CapabilitiesFunc func(ev WorkspaceHandleV1CapabilitiesEvent)
 
+// WorkspaceHandleV1RemovedFunc is a callback for Removed events.
 type WorkspaceHandleV1RemovedFunc func(ev WorkspaceHandleV1RemovedEvent)
 
+// WorkspaceHandleV1 a workspace handing a group of surfaces.
+//
+// A ext_workspace_handle_v1 object represents a workspace that handles a
+// group of surfaces.
+//
+// Each workspace has:
+// - a name, conveyed to the client with the name event
+// - potentially an id conveyed with the id event
+// - a list of states, conveyed to the client with the state event
+// - and optionally a set of coordinates, conveyed to the client with the
+// coordinates event
+//
+// The client may request that the compositor activate or deactivate the workspace.
+//
+// Each workspace can belong to only a single workspace group.
+// Depending on the compositor policy, there might be workspaces with
+// the same name in different workspace groups, but these workspaces are still
+// separate (e.g. one of them might be active while the other is not).
 type WorkspaceHandleV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewWorkspaceHandleV1 wraps p in a WorkspaceHandleV1 proxy.
 func NewWorkspaceHandleV1(p *wayland.Proxy) *WorkspaceHandleV1 {
 	p.SetEventFDCounts(workspacehandlev1EventFDCounts)
 	return &WorkspaceHandleV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *WorkspaceHandleV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnID registers fn to receive ID events.
 func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventID, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1IDEvent
@@ -255,6 +404,7 @@ func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 	})
 }
 
+// OnName registers fn to receive Name events.
 func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventName, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1NameEvent
@@ -268,6 +418,7 @@ func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 	})
 }
 
+// OnCoordinates registers fn to receive Coordinates events.
 func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCoordinates, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CoordinatesEvent
@@ -281,6 +432,7 @@ func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 	})
 }
 
+// OnState registers fn to receive State events.
 func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventState, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1StateEvent
@@ -294,6 +446,7 @@ func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 	})
 }
 
+// OnCapabilities registers fn to receive Capabilities events.
 func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CapabilitiesEvent
@@ -307,6 +460,7 @@ func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc)
 	})
 }
 
+// OnRemoved registers fn to receive Removed events.
 func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1RemovedEvent
@@ -320,6 +474,13 @@ func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 	})
 }
 
+// Destroy destroy the ext_workspace_handle_v1 object.
+//
+// Destroys the ext_workspace_handle_v1 object.
+//
+// This request should be made either when the client does not want to
+// use the workspace object any more or after the remove event to finalize
+// the destruction of the object.
 func (o *WorkspaceHandleV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -331,20 +492,43 @@ func (o *WorkspaceHandleV1) Destroy() error {
 	return nil
 }
 
+// Activate activate the workspace.
+//
+// Request that this workspace be activated.
+//
+// There is no guarantee the workspace will be actually activated, and
+// behaviour may be compositor-dependent. For example, activating a
+// workspace may or may not deactivate all other workspaces in the same
+// group.
 func (o *WorkspaceHandleV1) Activate() error {
 	return o.proxy.SendRequest(WorkspaceHandleV1RequestActivate, &WorkspaceHandleV1ActivateRequest{})
 }
 
+// Deactivate deactivate the workspace.
+//
+// Request that this workspace be deactivated.
+//
+// There is no guarantee the workspace will be actually deactivated.
 func (o *WorkspaceHandleV1) Deactivate() error {
 	return o.proxy.SendRequest(WorkspaceHandleV1RequestDeactivate, &WorkspaceHandleV1DeactivateRequest{})
 }
 
+// Assign assign workspace to group.
+//
+// Requests that this workspace is assigned to the given workspace group.
+//
+// There is no guarantee the workspace will be assigned.
 func (o *WorkspaceHandleV1) Assign(workspaceGroup wire.ObjectID) error {
 	return o.proxy.SendRequest(WorkspaceHandleV1RequestAssign, &WorkspaceHandleV1AssignRequest{
 		WorkspaceGroup: workspaceGroup,
 	})
 }
 
+// Remove remove the workspace.
+//
+// Request that this workspace be removed.
+//
+// There is no guarantee the workspace will be actually removed.
 func (o *WorkspaceHandleV1) Remove() error {
 	return o.proxy.SendRequest(WorkspaceHandleV1RequestRemove, &WorkspaceHandleV1RemoveRequest{})
 }

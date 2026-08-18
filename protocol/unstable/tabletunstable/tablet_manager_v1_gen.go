@@ -15,9 +15,14 @@ const (
 	TabletManagerV1RequestDestroy       uint16 = 1
 )
 
+// TabletManagerV1GetTabletSeatRequest get the tablet seat.
+//
+// Get the wp_tablet_seat object for the given seat. This object
+// provides access to all graphics tablets in this seat.
 type TabletManagerV1GetTabletSeatRequest struct {
 	TabletSeat wire.NewID
-	Seat       wire.ObjectID
+	// Seat the wl_seat object to retrieve the tablets for.
+	Seat wire.ObjectID
 }
 
 func (r *TabletManagerV1GetTabletSeatRequest) Opcode() uint16 {
@@ -36,6 +41,10 @@ func (r *TabletManagerV1GetTabletSeatRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletManagerV1GetTabletSeatRequest) Since() uint32 { return 1 }
 
+// TabletManagerV1DestroyRequest release the memory for the tablet manager object.
+//
+// Destroy the wp_tablet_manager object. Objects created from this
+// object are unaffected and should be destroyed separately.
 type TabletManagerV1DestroyRequest struct {
 }
 
@@ -47,18 +56,29 @@ func (r *TabletManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// TabletManagerV1 controller object for graphic tablet devices.
+//
+// An object that provides access to the graphics tablets available on this
+// system. All tablets are associated with a seat, to get access to the
+// actual tablets, use wp_tablet_manager.get_tablet_seat.
 type TabletManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletManagerV1 wraps p in a TabletManagerV1 proxy.
 func NewTabletManagerV1(p *wayland.Proxy) *TabletManagerV1 {
 	return &TabletManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// GetTabletSeat get the tablet seat.
+//
+// Get the wp_tablet_seat object for the given seat. This object
+// provides access to all graphics tablets in this seat.
 func (o *TabletManagerV1) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -77,6 +97,10 @@ func (o *TabletManagerV1) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV1, erro
 	return wrapped, nil
 }
 
+// Destroy release the memory for the tablet manager object.
+//
+// Destroy the wp_tablet_manager object. Objects created from this
+// object are unaffected and should be destroyed separately.
 func (o *TabletManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

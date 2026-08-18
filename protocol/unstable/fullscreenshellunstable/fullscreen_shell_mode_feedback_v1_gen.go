@@ -25,6 +25,14 @@ var fullscreenshellmodefeedbackv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// FullscreenShellModeFeedbackV1ModeSuccessfulEvent mode switch succeeded.
+//
+// This event indicates that the attempted mode switch operation was
+// successful.  A surface of the size requested in the mode switch
+// will fill the output without scaling.
+//
+// Upon receiving this event, the client should destroy the
+// wl_fullscreen_shell_mode_feedback object.
 type FullscreenShellModeFeedbackV1ModeSuccessfulEvent struct {
 }
 
@@ -38,6 +46,14 @@ func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Unmarshal(r *wire.Rea
 
 func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Since() uint32 { return 1 }
 
+// FullscreenShellModeFeedbackV1ModeFailedEvent mode switch failed.
+//
+// This event indicates that the attempted mode switch operation
+// failed.  This may be because the requested output mode is not
+// possible or it may mean that the compositor does not want to allow it.
+//
+// Upon receiving this event, the client should destroy the
+// wl_fullscreen_shell_mode_feedback object.
 type FullscreenShellModeFeedbackV1ModeFailedEvent struct {
 }
 
@@ -51,6 +67,14 @@ func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Unmarshal(r *wire.Reader)
 
 func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Since() uint32 { return 1 }
 
+// FullscreenShellModeFeedbackV1PresentCancelledEvent mode switch cancelled.
+//
+// This event indicates that the attempted mode switch operation was
+// cancelled.  Most likely this is because the client requested a
+// second mode switch before the first one completed.
+//
+// Upon receiving this event, the client should destroy the
+// wl_fullscreen_shell_mode_feedback object.
 type FullscreenShellModeFeedbackV1PresentCancelledEvent struct {
 }
 
@@ -64,25 +88,31 @@ func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Unmarshal(r *wire.R
 
 func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Since() uint32 { return 1 }
 
+// FullscreenShellModeFeedbackV1ModeSuccessfulFunc is a callback for ModeSuccessful events.
 type FullscreenShellModeFeedbackV1ModeSuccessfulFunc func(ev FullscreenShellModeFeedbackV1ModeSuccessfulEvent)
 
+// FullscreenShellModeFeedbackV1ModeFailedFunc is a callback for ModeFailed events.
 type FullscreenShellModeFeedbackV1ModeFailedFunc func(ev FullscreenShellModeFeedbackV1ModeFailedEvent)
 
+// FullscreenShellModeFeedbackV1PresentCancelledFunc is a callback for PresentCancelled events.
 type FullscreenShellModeFeedbackV1PresentCancelledFunc func(ev FullscreenShellModeFeedbackV1PresentCancelledEvent)
 
 type FullscreenShellModeFeedbackV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFullscreenShellModeFeedbackV1 wraps p in a FullscreenShellModeFeedbackV1 proxy.
 func NewFullscreenShellModeFeedbackV1(p *wayland.Proxy) *FullscreenShellModeFeedbackV1 {
 	p.SetEventFDCounts(fullscreenshellmodefeedbackv1EventFDCounts)
 	return &FullscreenShellModeFeedbackV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FullscreenShellModeFeedbackV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnModeSuccessful registers fn to receive ModeSuccessful events.
 func (o *FullscreenShellModeFeedbackV1) OnModeSuccessful(fn FullscreenShellModeFeedbackV1ModeSuccessfulFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventModeSuccessful, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1ModeSuccessfulEvent
@@ -96,6 +126,7 @@ func (o *FullscreenShellModeFeedbackV1) OnModeSuccessful(fn FullscreenShellModeF
 	})
 }
 
+// OnModeFailed registers fn to receive ModeFailed events.
 func (o *FullscreenShellModeFeedbackV1) OnModeFailed(fn FullscreenShellModeFeedbackV1ModeFailedFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventModeFailed, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1ModeFailedEvent
@@ -109,6 +140,7 @@ func (o *FullscreenShellModeFeedbackV1) OnModeFailed(fn FullscreenShellModeFeedb
 	})
 }
 
+// OnPresentCancelled registers fn to receive PresentCancelled events.
 func (o *FullscreenShellModeFeedbackV1) OnPresentCancelled(fn FullscreenShellModeFeedbackV1PresentCancelledFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventPresentCancelled, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1PresentCancelledEvent

@@ -15,6 +15,10 @@ const (
 	DecorationManagerV1RequestGetToplevelDecoration uint16 = 1
 )
 
+// DecorationManagerV1DestroyRequest destroy the decoration manager object.
+//
+// Destroy the decoration manager. This doesn't destroy objects created
+// with the manager.
 type DecorationManagerV1DestroyRequest struct {
 }
 
@@ -26,6 +30,30 @@ func (r *DecorationManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DecorationManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// DecorationManagerV1GetToplevelDecorationRequest create a new toplevel decoration object.
+//
+// Create a new decoration object associated with the given toplevel.
+//
+// For objects of version 1, creating an xdg_toplevel_decoration from an
+// xdg_toplevel which has a buffer attached or committed is a client
+// error, and any attempts by a client to attach or manipulate a buffer
+// prior to the first xdg_toplevel_decoration.configure event must also be
+// treated as errors.
+//
+// For objects of version 2 or newer, creating an xdg_toplevel_decoration
+// from an xdg_toplevel which has a buffer attached or committed is
+// allowed. The initial decoration mode of the surface if a buffer is
+// already attached depends on whether a xdg_toplevel_decoration object
+// has been associated with the surface or not prior to this request.
+//
+// If an xdg_toplevel_decoration was associated with the surface, then
+// destroyed without a surface commit, the previous decoration mode is
+// retained.
+//
+// If no xdg_toplevel_decoration was associated with the surface prior to
+// this request, or if a surface commit has been performed after a previous
+// xdg_toplevel_decoration object associated with the surface was
+// destroyed, the decoration mode is assumed to be client-side.
 type DecorationManagerV1GetToplevelDecorationRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
@@ -47,18 +75,48 @@ func (r *DecorationManagerV1GetToplevelDecorationRequest) Marshal(w *wire.Writer
 
 func (r *DecorationManagerV1GetToplevelDecorationRequest) Since() uint32 { return 1 }
 
+// DecorationManagerV1 window decoration manager.
+//
+// This interface allows a compositor to announce support for server-side
+// decorations.
+//
+// A window decoration is a set of window controls as deemed appropriate by
+// the party managing them, such as user interface components used to move,
+// resize and change a window's state.
+//
+// A client can use this protocol to request being decorated by a supporting
+// compositor.
+//
+// If compositor and client do not negotiate the use of a server-side
+// decoration using this protocol, clients continue to self-decorate as they
+// see fit.
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type DecorationManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDecorationManagerV1 wraps p in a DecorationManagerV1 proxy.
 func NewDecorationManagerV1(p *wayland.Proxy) *DecorationManagerV1 {
 	return &DecorationManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DecorationManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the decoration manager object.
+//
+// Destroy the decoration manager. This doesn't destroy objects created
+// with the manager.
 func (o *DecorationManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -70,6 +128,30 @@ func (o *DecorationManagerV1) Destroy() error {
 	return nil
 }
 
+// GetToplevelDecoration create a new toplevel decoration object.
+//
+// Create a new decoration object associated with the given toplevel.
+//
+// For objects of version 1, creating an xdg_toplevel_decoration from an
+// xdg_toplevel which has a buffer attached or committed is a client
+// error, and any attempts by a client to attach or manipulate a buffer
+// prior to the first xdg_toplevel_decoration.configure event must also be
+// treated as errors.
+//
+// For objects of version 2 or newer, creating an xdg_toplevel_decoration
+// from an xdg_toplevel which has a buffer attached or committed is
+// allowed. The initial decoration mode of the surface if a buffer is
+// already attached depends on whether a xdg_toplevel_decoration object
+// has been associated with the surface or not prior to this request.
+//
+// If an xdg_toplevel_decoration was associated with the surface, then
+// destroyed without a surface commit, the previous decoration mode is
+// retained.
+//
+// If no xdg_toplevel_decoration was associated with the surface prior to
+// this request, or if a surface commit has been performed after a previous
+// xdg_toplevel_decoration object associated with the surface was
+// destroyed, the decoration mode is assumed to be client-side.
 func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*ToplevelDecorationV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

@@ -27,16 +27,38 @@ var displayEventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// DisplayError global error values.
+//
+// These errors are global and can be emitted in response to any
+// server request.
 type DisplayError uint32
 
 const (
-	DisplayErrorInvalidObject  DisplayError = 0
-	DisplayErrorInvalidMethod  DisplayError = 1
-	DisplayErrorNoMemory       DisplayError = 2
+	// DisplayErrorInvalidObject server couldn't find object.
+	DisplayErrorInvalidObject DisplayError = 0
+	// DisplayErrorInvalidMethod method doesn't exist on the specified interface or malformed request.
+	DisplayErrorInvalidMethod DisplayError = 1
+	// DisplayErrorNoMemory server is out of memory.
+	DisplayErrorNoMemory DisplayError = 2
+	// DisplayErrorImplementation implementation error in compositor.
 	DisplayErrorImplementation DisplayError = 3
 )
 
+// DisplaySyncRequest asynchronous roundtrip.
+//
+// The sync request asks the server to emit the 'done' event
+// on the returned wl_callback object.  Since requests are
+// handled in-order and events are delivered in-order, this can
+// be used as a barrier to ensure all previous requests and the
+// resulting events have been handled.
+//
+// The object returned by this request will be destroyed by the
+// compositor after the callback is fired and as such the client must not
+// attempt to use it after that point.
+//
+// The callback_data passed in the callback is undefined and should be ignored.
 type DisplaySyncRequest struct {
+	// Callback callback object for the sync request.
 	Callback wire.NewID
 }
 
@@ -51,7 +73,19 @@ func (r *DisplaySyncRequest) Marshal(w *wire.Writer) error {
 
 func (r *DisplaySyncRequest) Since() uint32 { return 1 }
 
+// DisplayGetRegistryRequest get global registry object.
+//
+// This request creates a registry object that allows the client
+// to list and bind the global objects available from the
+// compositor.
+//
+// It should be noted that the server side resources consumed in
+// response to a get_registry request can only be released when the
+// client disconnects, not when the client side proxy is destroyed.
+// Therefore, clients should invoke get_registry as infrequently as
+// possible to avoid wasting memory.
 type DisplayGetRegistryRequest struct {
+	// Registry global registry object.
 	Registry wire.NewID
 }
 
@@ -66,10 +100,22 @@ func (r *DisplayGetRegistryRequest) Marshal(w *wire.Writer) error {
 
 func (r *DisplayGetRegistryRequest) Since() uint32 { return 1 }
 
+// DisplayErrorEvent fatal error event.
+//
+// The error event is sent out when a fatal (non-recoverable)
+// error has occurred.  The object_id argument is the object
+// where the error occurred, most often in response to a request
+// to that object.  The code identifies the error and is defined
+// by the object interface.  As such, each interface defines its
+// own set of error codes.  The message is a brief description
+// of the error, for (debugging) convenience.
 type DisplayErrorEvent struct {
+	// ObjectID object where the error occurred.
 	ObjectID wire.ObjectID
-	Code     uint32
-	Message  string
+	// Code error code.
+	Code uint32
+	// Message error description.
+	Message string
 }
 
 func (e *DisplayErrorEvent) Opcode() uint16 { return DisplayEventError }
@@ -95,7 +141,19 @@ func (e *DisplayErrorEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DisplayErrorEvent) Since() uint32 { return 1 }
 
+// DisplayDeleteIDEvent acknowledge object ID deletion.
+//
+// This event is used internally by the object ID management logic.
+//
+// When the server stops using an object created by the client, the server
+// sends this event. In particular, after sending this event, the server
+// will no longer send any events that contain the object as the receiver
+// or as an argument.
+//
+// When the client receives this event, it knows that it can reuse the
+// object ID.
 type DisplayDeleteIDEvent struct {
+	// ID deleted object ID.
 	ID uint32
 }
 
@@ -112,23 +170,32 @@ func (e *DisplayDeleteIDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DisplayDeleteIDEvent) Since() uint32 { return 1 }
 
+// DisplayErrorFunc is a callback for Error events.
 type DisplayErrorFunc func(ev DisplayErrorEvent)
 
+// DisplayDeleteIDFunc is a callback for DeleteID events.
 type DisplayDeleteIDFunc func(ev DisplayDeleteIDEvent)
 
+// Display core global object.
+//
+// The core global object.  This is a special singleton object.  It
+// is used for internal Wayland protocol features.
 type Display struct {
 	proxy *Proxy
 }
 
+// NewDisplay wraps p in a Display proxy.
 func NewDisplay(p *Proxy) *Display {
 	p.SetEventFDCounts(displayEventFDCounts)
 	return &Display{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Display) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnError registers fn to receive Error events.
 func (o *Display) OnError(fn DisplayErrorFunc) {
 	o.proxy.RegisterEvent(DisplayEventError, func(r *wire.Reader) {
 		var ev DisplayErrorEvent
@@ -142,6 +209,7 @@ func (o *Display) OnError(fn DisplayErrorFunc) {
 	})
 }
 
+// OnDeleteID registers fn to receive DeleteID events.
 func (o *Display) OnDeleteID(fn DisplayDeleteIDFunc) {
 	o.proxy.RegisterEvent(DisplayEventDeleteID, func(r *wire.Reader) {
 		var ev DisplayDeleteIDEvent
@@ -155,6 +223,19 @@ func (o *Display) OnDeleteID(fn DisplayDeleteIDFunc) {
 	})
 }
 
+// Sync asynchronous roundtrip.
+//
+// The sync request asks the server to emit the 'done' event
+// on the returned wl_callback object.  Since requests are
+// handled in-order and events are delivered in-order, this can
+// be used as a barrier to ensure all previous requests and the
+// resulting events have been handled.
+//
+// The object returned by this request will be destroyed by the
+// compositor after the callback is fired and as such the client must not
+// attempt to use it after that point.
+//
+// The callback_data passed in the callback is undefined and should be ignored.
 func (o *Display) Sync() (*Callback, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -172,6 +253,17 @@ func (o *Display) Sync() (*Callback, error) {
 	return wrapped, nil
 }
 
+// GetRegistry get global registry object.
+//
+// This request creates a registry object that allows the client
+// to list and bind the global objects available from the
+// compositor.
+//
+// It should be noted that the server side resources consumed in
+// response to a get_registry request can only be released when the
+// client disconnects, not when the client side proxy is destroyed.
+// Therefore, clients should invoke get_registry as infrequently as
+// possible to avoid wasting memory.
 func (o *Display) GetRegistry() (*Registry, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)

@@ -44,69 +44,291 @@ var colormanagerv1EventFDCounts = map[uint16]int{
 type ColorManagerV1Error uint32
 
 const (
+	// ColorManagerV1ErrorUnsupportedFeature request not supported.
 	ColorManagerV1ErrorUnsupportedFeature ColorManagerV1Error = 0
-	ColorManagerV1ErrorSurfaceExists      ColorManagerV1Error = 1
+	// ColorManagerV1ErrorSurfaceExists color management surface exists already.
+	ColorManagerV1ErrorSurfaceExists ColorManagerV1Error = 1
 )
 
+// ColorManagerV1RenderIntent rendering intents.
+//
+// See the ICC.1:2022 specification from the International Color Consortium
+// for more details about rendering intents.
+//
+// The principles of ICC defined rendering intents apply with all types of
+// image descriptions, not only those with ICC file profiles.
+//
+// Compositors must support the perceptual rendering intent. Other
+// rendering intents are optional.
 type ColorManagerV1RenderIntent uint32
 
 const (
-	ColorManagerV1RenderIntentPerceptual           ColorManagerV1RenderIntent = 0
-	ColorManagerV1RenderIntentRelative             ColorManagerV1RenderIntent = 1
-	ColorManagerV1RenderIntentSaturation           ColorManagerV1RenderIntent = 2
-	ColorManagerV1RenderIntentAbsolute             ColorManagerV1RenderIntent = 3
-	ColorManagerV1RenderIntentRelativeBpc          ColorManagerV1RenderIntent = 4
+	// ColorManagerV1RenderIntentPerceptual perceptual.
+	ColorManagerV1RenderIntentPerceptual ColorManagerV1RenderIntent = 0
+	// ColorManagerV1RenderIntentRelative media-relative colorimetric.
+	ColorManagerV1RenderIntentRelative ColorManagerV1RenderIntent = 1
+	// ColorManagerV1RenderIntentSaturation saturation.
+	ColorManagerV1RenderIntentSaturation ColorManagerV1RenderIntent = 2
+	// ColorManagerV1RenderIntentAbsolute iCC-absolute colorimetric.
+	ColorManagerV1RenderIntentAbsolute ColorManagerV1RenderIntent = 3
+	// ColorManagerV1RenderIntentRelativeBpc media-relative colorimetric + black point compensation.
+	ColorManagerV1RenderIntentRelativeBpc ColorManagerV1RenderIntent = 4
+	// ColorManagerV1RenderIntentAbsoluteNoAdaptation.
+	//
+	// This rendering intent is a modified absolute rendering intent that
+	// assumes the viewer is not adapted to the display white point, so no
+	// chromatic adaptation between surface and display is done.
+	// This can be useful for color proofing applications.
 	ColorManagerV1RenderIntentAbsoluteNoAdaptation ColorManagerV1RenderIntent = 5
 )
 
+// ColorManagerV1Feature compositor supported features.
 type ColorManagerV1Feature uint32
 
 const (
-	ColorManagerV1FeatureIccV2V4                      ColorManagerV1Feature = 0
-	ColorManagerV1FeatureParametric                   ColorManagerV1Feature = 1
-	ColorManagerV1FeatureSetPrimaries                 ColorManagerV1Feature = 2
-	ColorManagerV1FeatureSetTfPower                   ColorManagerV1Feature = 3
-	ColorManagerV1FeatureSetLuminances                ColorManagerV1Feature = 4
+	// ColorManagerV1FeatureIccV2V4 create_icc_creator request.
+	ColorManagerV1FeatureIccV2V4 ColorManagerV1Feature = 0
+	// ColorManagerV1FeatureParametric create_parametric_creator request.
+	ColorManagerV1FeatureParametric ColorManagerV1Feature = 1
+	// ColorManagerV1FeatureSetPrimaries parametric set_primaries request.
+	ColorManagerV1FeatureSetPrimaries ColorManagerV1Feature = 2
+	// ColorManagerV1FeatureSetTfPower parametric set_tf_power request.
+	ColorManagerV1FeatureSetTfPower ColorManagerV1Feature = 3
+	// ColorManagerV1FeatureSetLuminances parametric set_luminances request.
+	ColorManagerV1FeatureSetLuminances ColorManagerV1Feature = 4
+	// ColorManagerV1FeatureSetMasteringDisplayPrimaries.
+	//
+	// The compositor supports set_mastering_display_primaries request with a
+	// target color volume fully contained inside the primary color volume.
 	ColorManagerV1FeatureSetMasteringDisplayPrimaries ColorManagerV1Feature = 5
-	ColorManagerV1FeatureExtendedTargetVolume         ColorManagerV1Feature = 6
-	ColorManagerV1FeatureWindowsScrgb                 ColorManagerV1Feature = 7
-	ColorManagerV1FeatureWindowsBt2100                ColorManagerV1Feature = 8
+	// ColorManagerV1FeatureExtendedTargetVolume.
+	//
+	// The compositor additionally supports target color volumes that
+	// extend outside of the primary color volume.
+	//
+	// This can only be advertised if feature set_mastering_display_primaries
+	// is supported as well.
+	ColorManagerV1FeatureExtendedTargetVolume ColorManagerV1Feature = 6
+	// ColorManagerV1FeatureWindowsScrgb create_windows_scrgb request.
+	ColorManagerV1FeatureWindowsScrgb ColorManagerV1Feature = 7
+	// ColorManagerV1FeatureWindowsBt2100 create_windows_bt2100 request.
+	ColorManagerV1FeatureWindowsBt2100 ColorManagerV1Feature = 8
 )
 
+// ColorManagerV1Primaries named color primaries.
+//
+// Named color primaries used to encode well-known sets of primaries.
+//
+// A value of 0 is invalid and will never be present in the list of enums.
 type ColorManagerV1Primaries uint32
 
 const (
-	ColorManagerV1PrimariesSrgb        ColorManagerV1Primaries = 1
-	ColorManagerV1PrimariesPalM        ColorManagerV1Primaries = 2
-	ColorManagerV1PrimariesPal         ColorManagerV1Primaries = 3
-	ColorManagerV1PrimariesNtsc        ColorManagerV1Primaries = 4
+	// ColorManagerV1PrimariesSrgb.
+	//
+	// Color primaries as defined by
+	// - Rec. ITU-R BT.709-6
+	// - Rec. ITU-R BT.1361-0 conventional colour gamut system and extended
+	//   colour gamut system (historical)
+	// - IEC 61966-2-1 sRGB or sYCC
+	// - IEC 61966-2-4
+	// - Society of Motion Picture and Television Engineers (SMPTE) RP 177
+	//   (1993) Annex B
+	ColorManagerV1PrimariesSrgb ColorManagerV1Primaries = 1
+	// ColorManagerV1PrimariesPalM.
+	//
+	// Color primaries as defined by
+	// - Rec. ITU-R BT.470-6 System M (historical)
+	// - United States National Television System Committee 1953
+	//   Recommendation for transmission standards for color television
+	// - United States Federal Communications Commission (2003) Title 47 Code
+	//   of Federal Regulations 73.682 (a)(20)
+	ColorManagerV1PrimariesPalM ColorManagerV1Primaries = 2
+	// ColorManagerV1PrimariesPal.
+	//
+	// Color primaries as defined by
+	// - Rec. ITU-R BT.470-6 System B, G (historical)
+	// - Rec. ITU-R BT.601-7 625
+	// - Rec. ITU-R BT.1358-0 625 (historical)
+	// - Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
+	ColorManagerV1PrimariesPal ColorManagerV1Primaries = 3
+	// ColorManagerV1PrimariesNtsc.
+	//
+	// Color primaries as defined by
+	// - Rec. ITU-R BT.601-7 525
+	// - Rec. ITU-R BT.1358-1 525 or 625 (historical)
+	// - Rec. ITU-R BT.1700-0 NTSC
+	// - SMPTE 170M (2004)
+	// - SMPTE 240M (1999) (historical)
+	ColorManagerV1PrimariesNtsc ColorManagerV1Primaries = 4
+	// ColorManagerV1PrimariesGenericFilm.
+	//
+	// Color primaries as defined by Recommendation ITU-T H.273
+	// "Coding-independent code points for video signal type identification"
+	// for "generic film".
 	ColorManagerV1PrimariesGenericFilm ColorManagerV1Primaries = 5
-	ColorManagerV1PrimariesBt2020      ColorManagerV1Primaries = 6
-	ColorManagerV1PrimariesCie1931Xyz  ColorManagerV1Primaries = 7
-	ColorManagerV1PrimariesDciP3       ColorManagerV1Primaries = 8
-	ColorManagerV1PrimariesDisplayP3   ColorManagerV1Primaries = 9
-	ColorManagerV1PrimariesAdobeRgb    ColorManagerV1Primaries = 10
+	// ColorManagerV1PrimariesBt2020.
+	//
+	// Color primaries as defined by
+	// - Rec. ITU-R BT.2020-2
+	// - Rec. ITU-R BT.2100-0
+	ColorManagerV1PrimariesBt2020 ColorManagerV1Primaries = 6
+	// ColorManagerV1PrimariesCie1931Xyz.
+	//
+	// Color primaries as defined as the maximum of the CIE 1931 XYZ color
+	// space by
+	// - SMPTE ST 428-1
+	// - (CIE 1931 XYZ as in ISO 11664-1)
+	ColorManagerV1PrimariesCie1931Xyz ColorManagerV1Primaries = 7
+	// ColorManagerV1PrimariesDciP3.
+	//
+	// Color primaries as defined by Digital Cinema System and published in
+	// SMPTE RP 431-2 (2011).
+	ColorManagerV1PrimariesDciP3 ColorManagerV1Primaries = 8
+	// ColorManagerV1PrimariesDisplayP3.
+	//
+	// Color primaries as defined by Digital Cinema System and published in
+	// SMPTE EG 432-1 (2010).
+	ColorManagerV1PrimariesDisplayP3 ColorManagerV1Primaries = 9
+	// ColorManagerV1PrimariesAdobeRgb.
+	//
+	// Color primaries as defined by Adobe as "Adobe RGB" and later published
+	// by ISO 12640-4 (2011).
+	ColorManagerV1PrimariesAdobeRgb ColorManagerV1Primaries = 10
 )
 
+// ColorManagerV1TransferFunction named transfer functions.
+//
+// Named transfer functions used to represent well-known transfer
+// characteristics of displays.
+//
+// A value of 0 is invalid and will never be present in the list of enums.
+//
+// See appendix.md for the formulae.
 type ColorManagerV1TransferFunction uint32
 
 const (
-	ColorManagerV1TransferFunctionBt1886          ColorManagerV1TransferFunction = 1
-	ColorManagerV1TransferFunctionGamma22         ColorManagerV1TransferFunction = 2
-	ColorManagerV1TransferFunctionGamma28         ColorManagerV1TransferFunction = 3
-	ColorManagerV1TransferFunctionSt240           ColorManagerV1TransferFunction = 4
-	ColorManagerV1TransferFunctionExtLinear       ColorManagerV1TransferFunction = 5
-	ColorManagerV1TransferFunctionLog100          ColorManagerV1TransferFunction = 6
-	ColorManagerV1TransferFunctionLog316          ColorManagerV1TransferFunction = 7
-	ColorManagerV1TransferFunctionXvycc           ColorManagerV1TransferFunction = 8
-	ColorManagerV1TransferFunctionSrgb            ColorManagerV1TransferFunction = 9
-	ColorManagerV1TransferFunctionExtSrgb         ColorManagerV1TransferFunction = 10
-	ColorManagerV1TransferFunctionSt2084Pq        ColorManagerV1TransferFunction = 11
-	ColorManagerV1TransferFunctionSt428           ColorManagerV1TransferFunction = 12
-	ColorManagerV1TransferFunctionHlg             ColorManagerV1TransferFunction = 13
+	// ColorManagerV1TransferFunctionBt1886.
+	//
+	// Rec. ITU-R BT.1886 is the display transfer characteristic assumed by
+	// - Rec. ITU-R BT.601-7 525 and 625
+	// - Rec. ITU-R BT.709-6
+	// - Rec. ITU-R BT.2020-2
+	//
+	// This TF implies these default luminances from Rec. ITU-R BT.2035:
+	// - primary color volume minimum: 0.01 cd/m²
+	// - primary color volume maximum: 100 cd/m²
+	// - reference white: 100 cd/m²
+	ColorManagerV1TransferFunctionBt1886 ColorManagerV1TransferFunction = 1
+	// ColorManagerV1TransferFunctionGamma22.
+	//
+	// Transfer characteristics as defined by
+	// - Rec. ITU-R BT.470-6 System M (historical)
+	// - United States National Television System Committee 1953
+	//   Recommendation for transmission standards for color television
+	// - United States Federal Communications Commission (2003) Title 47 Code
+	//   of Federal Regulations 73.682 (a) (20)
+	// - Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
+	// - IEC 61966-2-1 (reference display)
+	ColorManagerV1TransferFunctionGamma22 ColorManagerV1TransferFunction = 2
+	// ColorManagerV1TransferFunctionGamma28.
+	//
+	// Transfer characteristics as defined by
+	// - Rec. ITU-R BT.470-6 System B, G (historical)
+	ColorManagerV1TransferFunctionGamma28 ColorManagerV1TransferFunction = 3
+	// ColorManagerV1TransferFunctionSt240.
+	//
+	// Transfer characteristics as defined by
+	// - SMPTE ST 240 (1999)
+	ColorManagerV1TransferFunctionSt240 ColorManagerV1TransferFunction = 4
+	// ColorManagerV1TransferFunctionExtLinear.
+	//
+	// Linear transfer function defined over all real numbers.
+	// Normalised electrical values are equal the normalised optical values.
+	ColorManagerV1TransferFunctionExtLinear ColorManagerV1TransferFunction = 5
+	// ColorManagerV1TransferFunctionLog100.
+	//
+	// Logarithmic transfer characteristic (100:1 range).
+	ColorManagerV1TransferFunctionLog100 ColorManagerV1TransferFunction = 6
+	// ColorManagerV1TransferFunctionLog316.
+	//
+	// Logarithmic transfer characteristic (100 * Sqrt(10) : 1 range).
+	ColorManagerV1TransferFunctionLog316 ColorManagerV1TransferFunction = 7
+	// ColorManagerV1TransferFunctionXvycc.
+	//
+	// Transfer characteristics as defined by
+	// - IEC 61966-2-4
+	ColorManagerV1TransferFunctionXvycc ColorManagerV1TransferFunction = 8
+	// ColorManagerV1TransferFunctionSrgb.
+	//
+	// Deprecated: since version 2.
+	//
+	// Transfer characteristics as defined by
+	// - IEC 61966-2-1 sRGB
+	//
+	// As a rule of thumb, use gamma22 for video, motion picture and
+	// computer graphics, or compound_power_2_4 for ICC calibrated print
+	// workflows.
+	ColorManagerV1TransferFunctionSrgb ColorManagerV1TransferFunction = 9
+	// ColorManagerV1TransferFunctionExtSrgb.
+	//
+	// Deprecated: since version 2.
+	//
+	// Transfer characteristics as defined by
+	// - IEC 61966-2-1 sYCC
+	ColorManagerV1TransferFunctionExtSrgb ColorManagerV1TransferFunction = 10
+	// ColorManagerV1TransferFunctionSt2084Pq.
+	//
+	// Transfer characteristics as defined by
+	// - SMPTE ST 2084 (2014) for 10-, 12-, 14- and 16-bit systems
+	// - Rec. ITU-R BT.2100-2 perceptual quantization (PQ) system
+	//
+	// This TF implies these default luminances
+	// - primary color volume minimum: 0.005 cd/m²
+	// - primary color volume maximum: 10000 cd/m²
+	// - reference white: 203 cd/m²
+	//
+	// The difference between the primary color volume minimum and maximum
+	// must be approximately 10000 cd/m² as that is the swing of the EOTF
+	// defined by ST 2084 and BT.2100. The default value for the
+	// reference white is a protocol addition: it is suggested by
+	// Report ITU-R BT.2408-7 and is not part of ST 2084 or BT.2100.
+	ColorManagerV1TransferFunctionSt2084Pq ColorManagerV1TransferFunction = 11
+	// ColorManagerV1TransferFunctionSt428.
+	//
+	// Transfer characteristics as defined by
+	// - SMPTE ST 428-1 (2019)
+	ColorManagerV1TransferFunctionSt428 ColorManagerV1TransferFunction = 12
+	// ColorManagerV1TransferFunctionHlg.
+	//
+	// Transfer characteristics as defined by
+	// - ARIB STD-B67 (2015)
+	// - Rec. ITU-R BT.2100-2 hybrid log-gamma (HLG) system
+	//
+	// This TF implies these default luminances
+	// - primary color volume minimum: 0.005 cd/m²
+	// - primary color volume maximum: 1000 cd/m²
+	// - reference white: 203 cd/m²
+	//
+	// HLG is a relative display-referred signal with a specified
+	// non-linear mapping to the display peak luminance (the HLG OOTF).
+	// All absolute luminance values used here for HLG assume a 1000 cd/m²
+	// peak display.
+	//
+	// The default value for the reference white is a protocol addition:
+	// it is suggested by Report ITU-R BT.2408-7 and is not part of
+	// ARIB STD-B67 or BT.2100.
+	ColorManagerV1TransferFunctionHlg ColorManagerV1TransferFunction = 13
+	// ColorManagerV1TransferFunctionCompoundPower24.
+	//
+	// Encoding characteristics as defined by IEC 61966-2-1, for displays
+	// that invert the encoding function.
 	ColorManagerV1TransferFunctionCompoundPower24 ColorManagerV1TransferFunction = 14
 )
 
+// ColorManagerV1DestroyRequest destroy the color manager.
+//
+// Destroy the wp_color_manager_v1 object. This does not affect any other
+// objects in any way.
 type ColorManagerV1DestroyRequest struct {
 }
 
@@ -118,6 +340,12 @@ func (r *ColorManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1GetOutputRequest create a color management interface for a wl_output.
+//
+// This creates a new wp_color_management_output_v1 object for the
+// given wl_output.
+//
+// See the wp_color_management_output_v1 interface for more details.
 type ColorManagerV1GetOutputRequest struct {
 	ID     wire.NewID
 	Output wire.ObjectID
@@ -137,6 +365,15 @@ func (r *ColorManagerV1GetOutputRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagerV1GetOutputRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1GetSurfaceRequest create a color management interface for a wl_surface.
+//
+// If a wp_color_management_surface_v1 object already exists for the given
+// wl_surface, the protocol error surface_exists is raised.
+//
+// This creates a new color wp_color_management_surface_v1 object for the
+// given wl_surface.
+//
+// See the wp_color_management_surface_v1 interface for more details.
 type ColorManagerV1GetSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -156,6 +393,13 @@ func (r *ColorManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1GetSurfaceFeedbackRequest create a color management feedback interface.
+//
+// This creates a new color wp_color_management_surface_feedback_v1 object
+// for the given wl_surface.
+//
+// See the wp_color_management_surface_feedback_v1 interface for more
+// details.
 type ColorManagerV1GetSurfaceFeedbackRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -177,7 +421,18 @@ func (r *ColorManagerV1GetSurfaceFeedbackRequest) Marshal(w *wire.Writer) error 
 
 func (r *ColorManagerV1GetSurfaceFeedbackRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1CreateIccCreatorRequest make a new ICC-based image description creator object.
+//
+// Makes a new ICC-based image description creator object with all
+// properties initially unset. The client can then use the object's
+// interface to define all the required properties for an image description
+// and finally create a wp_image_description_v1 object.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.icc_v2_v4.
+// Otherwise this request raises the protocol error unsupported_feature.
 type ColorManagerV1CreateIccCreatorRequest struct {
+	// Obj the new creator object.
 	Obj wire.NewID
 }
 
@@ -194,7 +449,18 @@ func (r *ColorManagerV1CreateIccCreatorRequest) Marshal(w *wire.Writer) error {
 
 func (r *ColorManagerV1CreateIccCreatorRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1CreateParametricCreatorRequest make a new parametric image description creator object.
+//
+// Makes a new parametric image description creator object with all
+// properties initially unset. The client can then use the object's
+// interface to define all the required properties for an image description
+// and finally create a wp_image_description_v1 object.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.parametric.
+// Otherwise this request raises the protocol error unsupported_feature.
 type ColorManagerV1CreateParametricCreatorRequest struct {
+	// Obj the new creator object.
 	Obj wire.NewID
 }
 
@@ -211,6 +477,52 @@ func (r *ColorManagerV1CreateParametricCreatorRequest) Marshal(w *wire.Writer) e
 
 func (r *ColorManagerV1CreateParametricCreatorRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1CreateWindowsScrgbRequest create Windows-scRGB image description object.
+//
+// This creates a pre-defined image description for the so-called
+// Windows-scRGB stimulus encoding. This comes from the Windows 10 handling
+// of its own definition of an scRGB color space for an HDR screen
+// driven in BT.2100/PQ signalling mode.
+//
+// Windows-scRGB uses sRGB (BT.709) color primaries and white point.
+// The transfer characteristic is extended linear.
+//
+// The nominal color channel value range is extended, meaning it includes
+// negative and greater than 1.0 values. Negative values are used to
+// escape the sRGB color gamut boundaries. To make use of the extended
+// range, the client needs to use a pixel format that can represent those
+// values, e.g. floating-point 16 bits per channel.
+//
+// Nominal color value R=G=B=0.0 corresponds to BT.2100/PQ system
+// 0 cd/m², and R=G=B=1.0 corresponds to BT.2100/PQ system 80 cd/m².
+// The maximum is R=G=B=125.0 corresponding to 10k cd/m².
+//
+// Windows-scRGB is displayed by Windows 10 by converting it to
+// BT.2100/PQ, maintaining the CIE 1931 chromaticity and mapping the
+// luminance as above. No adjustment is made to the signal to account
+// for the viewing conditions.
+//
+// The reference white level of Windows-scRGB is unknown. If a
+// reference white level must be assumed for compositor processing, it
+// should be R=G=B=2.5375 corresponding to 203 cd/m² of Report ITU-R
+// BT.2408-7.
+//
+// The target color volume of Windows-scRGB is unknown. The color gamut
+// may be anything between sRGB and BT.2100.
+//
+// Note: EGL_EXT_gl_colorspace_scrgb_linear definition differs from
+// Windows-scRGB by using R=G=B=1.0 as the reference white level, while
+// Windows-scRGB reference white level is unknown or varies. However,
+// it seems probable that Windows implements both
+// EGL_EXT_gl_colorspace_scrgb_linear and Vulkan
+// VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT as Windows-scRGB.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.windows_scrgb.
+// Otherwise this request raises the protocol error unsupported_feature.
+//
+// The resulting image description object does not allow get_information
+// request. The wp_image_description_v1.ready event shall be sent.
 type ColorManagerV1CreateWindowsScrgbRequest struct {
 	ImageDescription wire.NewID
 }
@@ -228,6 +540,12 @@ func (r *ColorManagerV1CreateWindowsScrgbRequest) Marshal(w *wire.Writer) error 
 
 func (r *ColorManagerV1CreateWindowsScrgbRequest) Since() uint32 { return 1 }
 
+// ColorManagerV1GetImageDescriptionRequest create an image description from a reference.
+//
+// This request retrieves the image description backing a reference.
+//
+// The get_information request can be used if and only if the request that
+// creates the reference allows it.
 type ColorManagerV1GetImageDescriptionRequest struct {
 	ImageDescription wire.NewID
 	Reference        wire.ObjectID
@@ -249,6 +567,32 @@ func (r *ColorManagerV1GetImageDescriptionRequest) Marshal(w *wire.Writer) error
 
 func (r *ColorManagerV1GetImageDescriptionRequest) Since() uint32 { return 2 }
 
+// ColorManagerV1CreateWindowsBt2100Request create Windows-BT.2100 image description object.
+//
+// This creates a pre-defined image description for the so-called
+// Windows-BT.2100 stimulus encoding. This comes from the Windows 10
+// handling of its own definition of a BT.2100 color space for an HDR
+// screen driven in BT.2100/PQ signalling mode.
+//
+// Windows-BT.2100 uses BT.2020 color primaries and white point.
+// The transfer characteristic is st2084_pq.
+//
+// Windows-BT.2100 is generally displayed by Windows 10 without any
+// adjustments to the signal to account for viewing conditions.
+//
+// The reference white level of Windows-BT.2100 is unknown. If a
+// reference white level must be assumed for compositor processing, it
+// should be 203 cd/m² of Report ITU-R BT.2408-7.
+//
+// The target color volume of Windows-BT.2100 is unknown. The color gamut
+// may be anything up to BT.2100.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.windows_bt2100.
+// Otherwise this request raises the protocol error unsupported_feature.
+//
+// The resulting image description object does not allow get_information
+// request. The wp_image_description_v1.ready event shall be sent.
 type ColorManagerV1CreateWindowsBt2100Request struct {
 	ImageDescription wire.NewID
 }
@@ -266,7 +610,15 @@ func (r *ColorManagerV1CreateWindowsBt2100Request) Marshal(w *wire.Writer) error
 
 func (r *ColorManagerV1CreateWindowsBt2100Request) Since() uint32 { return 3 }
 
+// ColorManagerV1SupportedIntentEvent supported rendering intent.
+//
+// When this object is created, it shall immediately send this event once
+// for each rendering intent the compositor supports.
+//
+// A compositor must not advertise intents that are deprecated in the
+// bound version of the interface.
 type ColorManagerV1SupportedIntentEvent struct {
+	// RenderIntent rendering intent.
 	RenderIntent ColorManagerV1RenderIntent
 }
 
@@ -285,7 +637,15 @@ func (e *ColorManagerV1SupportedIntentEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ColorManagerV1SupportedIntentEvent) Since() uint32 { return 1 }
 
+// ColorManagerV1SupportedFeatureEvent supported features.
+//
+// When this object is created, it shall immediately send this event once
+// for each compositor supported feature listed in the enumeration.
+//
+// A compositor must not advertise features that are deprecated in the
+// bound version of the interface.
 type ColorManagerV1SupportedFeatureEvent struct {
+	// Feature supported feature.
 	Feature ColorManagerV1Feature
 }
 
@@ -304,7 +664,16 @@ func (e *ColorManagerV1SupportedFeatureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ColorManagerV1SupportedFeatureEvent) Since() uint32 { return 1 }
 
+// ColorManagerV1SupportedTfNamedEvent supported named transfer characteristic.
+//
+// When this object is created, it shall immediately send this event once
+// for each named transfer function the compositor supports with the
+// parametric image description creator.
+//
+// A compositor must not advertise transfer functions that are deprecated
+// in the bound version of the interface.
 type ColorManagerV1SupportedTfNamedEvent struct {
+	// Tf named transfer function.
 	Tf ColorManagerV1TransferFunction
 }
 
@@ -323,7 +692,16 @@ func (e *ColorManagerV1SupportedTfNamedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ColorManagerV1SupportedTfNamedEvent) Since() uint32 { return 1 }
 
+// ColorManagerV1SupportedPrimariesNamedEvent supported named primaries.
+//
+// When this object is created, it shall immediately send this event once
+// for each named set of primaries the compositor supports with the
+// parametric image description creator.
+//
+// A compositor must not advertise names that are deprecated in the
+// bound version of the interface.
 type ColorManagerV1SupportedPrimariesNamedEvent struct {
+	// Primaries named color primaries.
 	Primaries ColorManagerV1Primaries
 }
 
@@ -342,6 +720,10 @@ func (e *ColorManagerV1SupportedPrimariesNamedEvent) Unmarshal(r *wire.Reader) e
 
 func (e *ColorManagerV1SupportedPrimariesNamedEvent) Since() uint32 { return 1 }
 
+// ColorManagerV1DoneEvent all features have been sent.
+//
+// This event is sent when all supported rendering intents, features,
+// transfer functions and named primaries have been sent.
 type ColorManagerV1DoneEvent struct {
 }
 
@@ -353,29 +735,46 @@ func (e *ColorManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ColorManagerV1DoneEvent) Since() uint32 { return 1 }
 
+// ColorManagerV1SupportedIntentFunc is a callback for SupportedIntent events.
 type ColorManagerV1SupportedIntentFunc func(ev ColorManagerV1SupportedIntentEvent)
 
+// ColorManagerV1SupportedFeatureFunc is a callback for SupportedFeature events.
 type ColorManagerV1SupportedFeatureFunc func(ev ColorManagerV1SupportedFeatureEvent)
 
+// ColorManagerV1SupportedTfNamedFunc is a callback for SupportedTfNamed events.
 type ColorManagerV1SupportedTfNamedFunc func(ev ColorManagerV1SupportedTfNamedEvent)
 
+// ColorManagerV1SupportedPrimariesNamedFunc is a callback for SupportedPrimariesNamed events.
 type ColorManagerV1SupportedPrimariesNamedFunc func(ev ColorManagerV1SupportedPrimariesNamedEvent)
 
+// ColorManagerV1DoneFunc is a callback for Done events.
 type ColorManagerV1DoneFunc func(ev ColorManagerV1DoneEvent)
 
+// ColorManagerV1 color manager singleton.
+//
+// A singleton global interface used for getting color management extensions
+// for wl_surface and wl_output objects, and for creating client defined
+// image description objects. The extension interfaces allow
+// getting the image description of outputs and setting the image
+// description of surfaces.
+//
+// Compositors should never remove this global.
 type ColorManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorManagerV1 wraps p in a ColorManagerV1 proxy.
 func NewColorManagerV1(p *wayland.Proxy) *ColorManagerV1 {
 	p.SetEventFDCounts(colormanagerv1EventFDCounts)
 	return &ColorManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSupportedIntent registers fn to receive SupportedIntent events.
 func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedIntent, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedIntentEvent
@@ -389,6 +788,7 @@ func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc)
 	})
 }
 
+// OnSupportedFeature registers fn to receive SupportedFeature events.
 func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedFeature, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedFeatureEvent
@@ -402,6 +802,7 @@ func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFun
 	})
 }
 
+// OnSupportedTfNamed registers fn to receive SupportedTfNamed events.
 func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedTfNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedTfNamedEvent
@@ -415,6 +816,7 @@ func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFun
 	})
 }
 
+// OnSupportedPrimariesNamed registers fn to receive SupportedPrimariesNamed events.
 func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPrimariesNamedFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedPrimariesNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedPrimariesNamedEvent
@@ -428,6 +830,7 @@ func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPri
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorManagerV1DoneEvent
@@ -441,6 +844,10 @@ func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 	})
 }
 
+// Destroy destroy the color manager.
+//
+// Destroy the wp_color_manager_v1 object. This does not affect any other
+// objects in any way.
 func (o *ColorManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -452,6 +859,12 @@ func (o *ColorManagerV1) Destroy() error {
 	return nil
 }
 
+// GetOutput create a color management interface for a wl_output.
+//
+// This creates a new wp_color_management_output_v1 object for the
+// given wl_output.
+//
+// See the wp_color_management_output_v1 interface for more details.
 func (o *ColorManagerV1) GetOutput(output wire.ObjectID) (*ColorManagementOutputV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -470,6 +883,15 @@ func (o *ColorManagerV1) GetOutput(output wire.ObjectID) (*ColorManagementOutput
 	return wrapped, nil
 }
 
+// GetSurface create a color management interface for a wl_surface.
+//
+// If a wp_color_management_surface_v1 object already exists for the given
+// wl_surface, the protocol error surface_exists is raised.
+//
+// This creates a new color wp_color_management_surface_v1 object for the
+// given wl_surface.
+//
+// See the wp_color_management_surface_v1 interface for more details.
 func (o *ColorManagerV1) GetSurface(surface wire.ObjectID) (*ColorManagementSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -488,6 +910,13 @@ func (o *ColorManagerV1) GetSurface(surface wire.ObjectID) (*ColorManagementSurf
 	return wrapped, nil
 }
 
+// GetSurfaceFeedback create a color management feedback interface.
+//
+// This creates a new color wp_color_management_surface_feedback_v1 object
+// for the given wl_surface.
+//
+// See the wp_color_management_surface_feedback_v1 interface for more
+// details.
 func (o *ColorManagerV1) GetSurfaceFeedback(surface wire.ObjectID) (*ColorManagementSurfaceFeedbackV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -506,6 +935,16 @@ func (o *ColorManagerV1) GetSurfaceFeedback(surface wire.ObjectID) (*ColorManage
 	return wrapped, nil
 }
 
+// CreateIccCreator make a new ICC-based image description creator object.
+//
+// Makes a new ICC-based image description creator object with all
+// properties initially unset. The client can then use the object's
+// interface to define all the required properties for an image description
+// and finally create a wp_image_description_v1 object.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.icc_v2_v4.
+// Otherwise this request raises the protocol error unsupported_feature.
 func (o *ColorManagerV1) CreateIccCreator() (*ImageDescriptionCreatorIccV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -523,6 +962,16 @@ func (o *ColorManagerV1) CreateIccCreator() (*ImageDescriptionCreatorIccV1, erro
 	return wrapped, nil
 }
 
+// CreateParametricCreator make a new parametric image description creator object.
+//
+// Makes a new parametric image description creator object with all
+// properties initially unset. The client can then use the object's
+// interface to define all the required properties for an image description
+// and finally create a wp_image_description_v1 object.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.parametric.
+// Otherwise this request raises the protocol error unsupported_feature.
 func (o *ColorManagerV1) CreateParametricCreator() (*ImageDescriptionCreatorParamsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -540,6 +989,52 @@ func (o *ColorManagerV1) CreateParametricCreator() (*ImageDescriptionCreatorPara
 	return wrapped, nil
 }
 
+// CreateWindowsScrgb create Windows-scRGB image description object.
+//
+// This creates a pre-defined image description for the so-called
+// Windows-scRGB stimulus encoding. This comes from the Windows 10 handling
+// of its own definition of an scRGB color space for an HDR screen
+// driven in BT.2100/PQ signalling mode.
+//
+// Windows-scRGB uses sRGB (BT.709) color primaries and white point.
+// The transfer characteristic is extended linear.
+//
+// The nominal color channel value range is extended, meaning it includes
+// negative and greater than 1.0 values. Negative values are used to
+// escape the sRGB color gamut boundaries. To make use of the extended
+// range, the client needs to use a pixel format that can represent those
+// values, e.g. floating-point 16 bits per channel.
+//
+// Nominal color value R=G=B=0.0 corresponds to BT.2100/PQ system
+// 0 cd/m², and R=G=B=1.0 corresponds to BT.2100/PQ system 80 cd/m².
+// The maximum is R=G=B=125.0 corresponding to 10k cd/m².
+//
+// Windows-scRGB is displayed by Windows 10 by converting it to
+// BT.2100/PQ, maintaining the CIE 1931 chromaticity and mapping the
+// luminance as above. No adjustment is made to the signal to account
+// for the viewing conditions.
+//
+// The reference white level of Windows-scRGB is unknown. If a
+// reference white level must be assumed for compositor processing, it
+// should be R=G=B=2.5375 corresponding to 203 cd/m² of Report ITU-R
+// BT.2408-7.
+//
+// The target color volume of Windows-scRGB is unknown. The color gamut
+// may be anything between sRGB and BT.2100.
+//
+// Note: EGL_EXT_gl_colorspace_scrgb_linear definition differs from
+// Windows-scRGB by using R=G=B=1.0 as the reference white level, while
+// Windows-scRGB reference white level is unknown or varies. However,
+// it seems probable that Windows implements both
+// EGL_EXT_gl_colorspace_scrgb_linear and Vulkan
+// VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT as Windows-scRGB.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.windows_scrgb.
+// Otherwise this request raises the protocol error unsupported_feature.
+//
+// The resulting image description object does not allow get_information
+// request. The wp_image_description_v1.ready event shall be sent.
 func (o *ColorManagerV1) CreateWindowsScrgb() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -557,6 +1052,12 @@ func (o *ColorManagerV1) CreateWindowsScrgb() (*ImageDescriptionV1, error) {
 	return wrapped, nil
 }
 
+// GetImageDescription create an image description from a reference.
+//
+// This request retrieves the image description backing a reference.
+//
+// The get_information request can be used if and only if the request that
+// creates the reference allows it.
 func (o *ColorManagerV1) GetImageDescription(reference wire.ObjectID) (*ImageDescriptionV1, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch
@@ -578,6 +1079,32 @@ func (o *ColorManagerV1) GetImageDescription(reference wire.ObjectID) (*ImageDes
 	return wrapped, nil
 }
 
+// CreateWindowsBt2100 create Windows-BT.2100 image description object.
+//
+// This creates a pre-defined image description for the so-called
+// Windows-BT.2100 stimulus encoding. This comes from the Windows 10
+// handling of its own definition of a BT.2100 color space for an HDR
+// screen driven in BT.2100/PQ signalling mode.
+//
+// Windows-BT.2100 uses BT.2020 color primaries and white point.
+// The transfer characteristic is st2084_pq.
+//
+// Windows-BT.2100 is generally displayed by Windows 10 without any
+// adjustments to the signal to account for viewing conditions.
+//
+// The reference white level of Windows-BT.2100 is unknown. If a
+// reference white level must be assumed for compositor processing, it
+// should be 203 cd/m² of Report ITU-R BT.2408-7.
+//
+// The target color volume of Windows-BT.2100 is unknown. The color gamut
+// may be anything up to BT.2100.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.windows_bt2100.
+// Otherwise this request raises the protocol error unsupported_feature.
+//
+// The resulting image description object does not allow get_information
+// request. The wp_image_description_v1.ready event shall be sent.
 func (o *ColorManagerV1) CreateWindowsBt2100() (*ImageDescriptionV1, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return nil, wayland.ErrVersionMismatch

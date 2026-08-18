@@ -27,30 +27,77 @@ var fullscreenshellv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// FullscreenShellV1Capability capabilities advertised by the compositor.
+//
+// Various capabilities that can be advertised by the compositor.  They
+// are advertised one-at-a-time when the wl_fullscreen_shell interface is
+// bound.  See the wl_fullscreen_shell.capability event for more details.
+//
+// ARBITRARY_MODES:
+// This is a hint to the client that indicates that the compositor is
+// capable of setting practically any mode on its outputs.  If this
+// capability is provided, wl_fullscreen_shell.present_surface_for_mode
+// will almost never fail and clients should feel free to set whatever
+// mode they like.  If the compositor does not advertise this, it may
+// still support some modes that are not advertised through wl_global.mode
+// but it is less likely.
+//
+// CURSOR_PLANE:
+// This is a hint to the client that indicates that the compositor can
+// handle a cursor surface from the client without actually compositing.
+// This may be because of a hardware cursor plane or some other mechanism.
+// If the compositor does not advertise this capability then setting
+// wl_pointer.cursor may degrade performance or be ignored entirely.  If
+// CURSOR_PLANE is not advertised, it is recommended that the client draw
+// its own cursor and set wl_pointer.cursor(NULL).
 type FullscreenShellV1Capability uint32
 
 const (
+	// FullscreenShellV1CapabilityArbitraryModes compositor is capable of almost any output mode.
 	FullscreenShellV1CapabilityArbitraryModes FullscreenShellV1Capability = 1
-	FullscreenShellV1CapabilityCursorPlane    FullscreenShellV1Capability = 2
+	// FullscreenShellV1CapabilityCursorPlane compositor has a separate cursor plane.
+	FullscreenShellV1CapabilityCursorPlane FullscreenShellV1Capability = 2
 )
 
+// FullscreenShellV1PresentMethod different method to set the surface fullscreen.
+//
+// Hints to indicate to the compositor how to deal with a conflict
+// between the dimensions of the surface and the dimensions of the
+// output. The compositor is free to ignore this parameter.
 type FullscreenShellV1PresentMethod uint32
 
 const (
-	FullscreenShellV1PresentMethodDefault  FullscreenShellV1PresentMethod = 0
-	FullscreenShellV1PresentMethodCenter   FullscreenShellV1PresentMethod = 1
-	FullscreenShellV1PresentMethodZoom     FullscreenShellV1PresentMethod = 2
+	// FullscreenShellV1PresentMethodDefault no preference, apply default policy.
+	FullscreenShellV1PresentMethodDefault FullscreenShellV1PresentMethod = 0
+	// FullscreenShellV1PresentMethodCenter center the surface on the output.
+	FullscreenShellV1PresentMethodCenter FullscreenShellV1PresentMethod = 1
+	// FullscreenShellV1PresentMethodZoom scale the surface, preserving aspect ratio, to the largest size that will fit on the output.
+	FullscreenShellV1PresentMethodZoom FullscreenShellV1PresentMethod = 2
+	// FullscreenShellV1PresentMethodZoomCrop scale the surface, preserving aspect ratio, to fully fill the output cropping if needed.
 	FullscreenShellV1PresentMethodZoomCrop FullscreenShellV1PresentMethod = 3
-	FullscreenShellV1PresentMethodStretch  FullscreenShellV1PresentMethod = 4
+	// FullscreenShellV1PresentMethodStretch scale the surface to the size of the output ignoring aspect ratio.
+	FullscreenShellV1PresentMethodStretch FullscreenShellV1PresentMethod = 4
 )
 
+// FullscreenShellV1Error wl_fullscreen_shell error values.
+//
+// These errors can be emitted in response to wl_fullscreen_shell requests.
 type FullscreenShellV1Error uint32
 
 const (
+	// FullscreenShellV1ErrorInvalidMethod present_method is not known.
 	FullscreenShellV1ErrorInvalidMethod FullscreenShellV1Error = 0
-	FullscreenShellV1ErrorRole          FullscreenShellV1Error = 1
+	// FullscreenShellV1ErrorRole given wl_surface has another role.
+	FullscreenShellV1ErrorRole FullscreenShellV1Error = 1
 )
 
+// FullscreenShellV1ReleaseRequest release the wl_fullscreen_shell interface.
+//
+// Release the binding from the wl_fullscreen_shell interface.
+//
+// This destroys the server-side object and frees this binding.  If
+// the client binds to wl_fullscreen_shell multiple times, it may wish
+// to free some of those bindings.
 type FullscreenShellV1ReleaseRequest struct {
 }
 
@@ -62,6 +109,29 @@ func (r *FullscreenShellV1ReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *FullscreenShellV1ReleaseRequest) Since() uint32 { return 1 }
 
+// FullscreenShellV1PresentSurfaceRequest present surface for display.
+//
+// Present a surface on the given output.
+//
+// If the output is null, the compositor will present the surface on
+// whatever display (or displays) it thinks best.  In particular, this
+// may replace any or all surfaces currently presented so it should
+// not be used in combination with placing surfaces on specific
+// outputs.
+//
+// The method parameter is a hint to the compositor for how the surface
+// is to be presented.  In particular, it tells the compositor how to
+// handle a size mismatch between the presented surface and the
+// output.  The compositor is free to ignore this parameter.
+//
+// The "zoom", "zoom_crop", and "stretch" methods imply a scaling
+// operation on the surface.  This will override any kind of output
+// scaling, so the buffer_scale property of the surface is effectively
+// ignored.
+//
+// This request gives the surface the role of a fullscreen shell surface.
+// If the surface already has another role, it raises a role protocol
+// error.
 type FullscreenShellV1PresentSurfaceRequest struct {
 	Surface wire.ObjectID // nullable
 	Method  FullscreenShellV1PresentMethod
@@ -87,6 +157,49 @@ func (r *FullscreenShellV1PresentSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *FullscreenShellV1PresentSurfaceRequest) Since() uint32 { return 1 }
 
+// FullscreenShellV1PresentSurfaceForModeRequest present surface for display at a particular mode.
+//
+// Presents a surface on the given output for a particular mode.
+//
+// If the current size of the output differs from that of the surface,
+// the compositor will attempt to change the size of the output to
+// match the surface.  The result of the mode-switch operation will be
+// returned via the provided wl_fullscreen_shell_mode_feedback object.
+//
+// If the current output mode matches the one requested or if the
+// compositor successfully switches the mode to match the surface,
+// then the mode_successful event will be sent and the output will
+// contain the contents of the given surface.  If the compositor
+// cannot match the output size to the surface size, the mode_failed
+// will be sent and the output will contain the contents of the
+// previously presented surface (if any).  If another surface is
+// presented on the given output before either of these has a chance
+// to happen, the present_cancelled event will be sent.
+//
+// Due to race conditions and other issues unknown to the client, no
+// mode-switch operation is guaranteed to succeed.  However, if the
+// mode is one advertised by wl_output.mode or if the compositor
+// advertises the ARBITRARY_MODES capability, then the client should
+// expect that the mode-switch operation will usually succeed.
+//
+// If the size of the presented surface changes, the resulting output
+// is undefined.  The compositor may attempt to change the output mode
+// to compensate.  However, there is no guarantee that a suitable mode
+// will be found and the client has no way to be notified of success
+// or failure.
+//
+// The framerate parameter specifies the desired framerate for the
+// output in mHz.  The compositor is free to ignore this parameter.  A
+// value of 0 indicates that the client has no preference.
+//
+// If the value of wl_output.scale differs from wl_surface.buffer_scale,
+// then the compositor may choose a mode that matches either the buffer
+// size or the surface size.  In either case, the surface will fill the
+// output.
+//
+// This request gives the surface the role of a fullscreen shell surface.
+// If the surface already has another role, it raises a role protocol
+// error.
 type FullscreenShellV1PresentSurfaceForModeRequest struct {
 	Surface   wire.ObjectID
 	Output    wire.ObjectID
@@ -116,6 +229,16 @@ func (r *FullscreenShellV1PresentSurfaceForModeRequest) Marshal(w *wire.Writer) 
 
 func (r *FullscreenShellV1PresentSurfaceForModeRequest) Since() uint32 { return 1 }
 
+// FullscreenShellV1CapabilityEvent advertises a capability of the compositor.
+//
+// Advertises a single capability of the compositor.
+//
+// When the wl_fullscreen_shell interface is bound, this event is emitted
+// once for each capability advertised.  Valid capabilities are given by
+// the wl_fullscreen_shell.capability enum.  If clients want to take
+// advantage of any of these capabilities, they should use a
+// wl_display.sync request immediately after binding to ensure that they
+// receive all the capability events.
 type FullscreenShellV1CapabilityEvent struct {
 	Capability FullscreenShellV1Capability
 }
@@ -133,21 +256,60 @@ func (e *FullscreenShellV1CapabilityEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *FullscreenShellV1CapabilityEvent) Since() uint32 { return 1 }
 
+// FullscreenShellV1CapabilityFunc is a callback for Capability events.
 type FullscreenShellV1CapabilityFunc func(ev FullscreenShellV1CapabilityEvent)
 
+// FullscreenShellV1 displays a single surface per output.
+//
+// Displays a single surface per output.
+//
+// This interface provides a mechanism for a single client to display
+// simple full-screen surfaces.  While there technically may be multiple
+// clients bound to this interface, only one of those clients should be
+// shown at a time.
+//
+// To present a surface, the client uses either the present_surface or
+// present_surface_for_mode requests.  Presenting a surface takes effect
+// on the next wl_surface.commit.  See the individual requests for
+// details about scaling and mode switches.
+//
+// The client can have at most one surface per output at any time.
+// Requesting a surface to be presented on an output that already has a
+// surface replaces the previously presented surface.  Presenting a null
+// surface removes its content and effectively disables the output.
+// Exactly what happens when an output is "disabled" is
+// compositor-specific.  The same surface may be presented on multiple
+// outputs simultaneously.
+//
+// Once a surface is presented on an output, it stays on that output
+// until either the client removes it or the compositor destroys the
+// output.  This way, the client can update the output's contents by
+// simply attaching a new buffer.
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type FullscreenShellV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFullscreenShellV1 wraps p in a FullscreenShellV1 proxy.
 func NewFullscreenShellV1(p *wayland.Proxy) *FullscreenShellV1 {
 	p.SetEventFDCounts(fullscreenshellv1EventFDCounts)
 	return &FullscreenShellV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FullscreenShellV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCapability registers fn to receive Capability events.
 func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 	o.proxy.RegisterEvent(FullscreenShellV1EventCapability, func(r *wire.Reader) {
 		var ev FullscreenShellV1CapabilityEvent
@@ -161,6 +323,13 @@ func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 	})
 }
 
+// Release release the wl_fullscreen_shell interface.
+//
+// Release the binding from the wl_fullscreen_shell interface.
+//
+// This destroys the server-side object and frees this binding.  If
+// the client binds to wl_fullscreen_shell multiple times, it may wish
+// to free some of those bindings.
 func (o *FullscreenShellV1) Release() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -172,6 +341,29 @@ func (o *FullscreenShellV1) Release() error {
 	return nil
 }
 
+// PresentSurface present surface for display.
+//
+// Present a surface on the given output.
+//
+// If the output is null, the compositor will present the surface on
+// whatever display (or displays) it thinks best.  In particular, this
+// may replace any or all surfaces currently presented so it should
+// not be used in combination with placing surfaces on specific
+// outputs.
+//
+// The method parameter is a hint to the compositor for how the surface
+// is to be presented.  In particular, it tells the compositor how to
+// handle a size mismatch between the presented surface and the
+// output.  The compositor is free to ignore this parameter.
+//
+// The "zoom", "zoom_crop", and "stretch" methods imply a scaling
+// operation on the surface.  This will override any kind of output
+// scaling, so the buffer_scale property of the surface is effectively
+// ignored.
+//
+// This request gives the surface the role of a fullscreen shell surface.
+// If the surface already has another role, it raises a role protocol
+// error.
 func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method FullscreenShellV1PresentMethod, output wire.ObjectID) error {
 	return o.proxy.SendRequest(FullscreenShellV1RequestPresentSurface, &FullscreenShellV1PresentSurfaceRequest{
 		Surface: surface,
@@ -180,6 +372,49 @@ func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method Fullscr
 	})
 }
 
+// PresentSurfaceForMode present surface for display at a particular mode.
+//
+// Presents a surface on the given output for a particular mode.
+//
+// If the current size of the output differs from that of the surface,
+// the compositor will attempt to change the size of the output to
+// match the surface.  The result of the mode-switch operation will be
+// returned via the provided wl_fullscreen_shell_mode_feedback object.
+//
+// If the current output mode matches the one requested or if the
+// compositor successfully switches the mode to match the surface,
+// then the mode_successful event will be sent and the output will
+// contain the contents of the given surface.  If the compositor
+// cannot match the output size to the surface size, the mode_failed
+// will be sent and the output will contain the contents of the
+// previously presented surface (if any).  If another surface is
+// presented on the given output before either of these has a chance
+// to happen, the present_cancelled event will be sent.
+//
+// Due to race conditions and other issues unknown to the client, no
+// mode-switch operation is guaranteed to succeed.  However, if the
+// mode is one advertised by wl_output.mode or if the compositor
+// advertises the ARBITRARY_MODES capability, then the client should
+// expect that the mode-switch operation will usually succeed.
+//
+// If the size of the presented surface changes, the resulting output
+// is undefined.  The compositor may attempt to change the output mode
+// to compensate.  However, there is no guarantee that a suitable mode
+// will be found and the client has no way to be notified of success
+// or failure.
+//
+// The framerate parameter specifies the desired framerate for the
+// output in mHz.  The compositor is free to ignore this parameter.  A
+// value of 0 indicates that the client has no preference.
+//
+// If the value of wl_output.scale differs from wl_surface.buffer_scale,
+// then the compositor may choose a mode that matches either the buffer
+// size or the surface size.  In either case, the surface will fill the
+// output.
+//
+// This request gives the surface the role of a fullscreen shell surface.
+// If the surface already has another role, it raises a role protocol
+// error.
 func (o *FullscreenShellV1) PresentSurfaceForMode(surface wire.ObjectID, output wire.ObjectID, framerate int32) (*FullscreenShellModeFeedbackV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

@@ -18,9 +18,14 @@ const (
 type FractionalScaleManagerV2Error uint32
 
 const (
+	// FractionalScaleManagerV2ErrorFractionalScaleExists xx_fractional_scale_v2 for the surface already exists.
 	FractionalScaleManagerV2ErrorFractionalScaleExists FractionalScaleManagerV2Error = 0
 )
 
+// FractionalScaleManagerV2DestroyRequest release the global.
+//
+// Informs the server that the client will not be using this protocol
+// object anymore. This does not affect any other objects.
 type FractionalScaleManagerV2DestroyRequest struct {
 }
 
@@ -34,8 +39,15 @@ func (r *FractionalScaleManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FractionalScaleManagerV2DestroyRequest) Since() uint32 { return 1 }
 
+// FractionalScaleManagerV2GetFractionalScaleRequest create an interface to enable fractional scaling.
+//
+// Create an interface object for a wl_surface to communicate scale.
+// If the given wl_surface already has a xx_fractional_scale_v2 object
+// associated, the fractional_scale_exists protocol error is raised.
 type FractionalScaleManagerV2GetFractionalScaleRequest struct {
-	ID      wire.NewID
+	// ID the new scale interface.
+	ID wire.NewID
+	// Surface the surface.
 	Surface wire.ObjectID
 }
 
@@ -55,18 +67,27 @@ func (r *FractionalScaleManagerV2GetFractionalScaleRequest) Marshal(w *wire.Writ
 
 func (r *FractionalScaleManagerV2GetFractionalScaleRequest) Since() uint32 { return 1 }
 
+// FractionalScaleManagerV2 creates surface scale interfaces.
+//
+// A global interface to create xx_fractional_scale_v2 interfaces.
 type FractionalScaleManagerV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFractionalScaleManagerV2 wraps p in a FractionalScaleManagerV2 proxy.
 func NewFractionalScaleManagerV2(p *wayland.Proxy) *FractionalScaleManagerV2 {
 	return &FractionalScaleManagerV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FractionalScaleManagerV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy release the global.
+//
+// Informs the server that the client will not be using this protocol
+// object anymore. This does not affect any other objects.
 func (o *FractionalScaleManagerV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +99,11 @@ func (o *FractionalScaleManagerV2) Destroy() error {
 	return nil
 }
 
+// GetFractionalScale create an interface to enable fractional scaling.
+//
+// Create an interface object for a wl_surface to communicate scale.
+// If the given wl_surface already has a xx_fractional_scale_v2 object
+// associated, the fractional_scale_exists protocol error is raised.
 func (o *FractionalScaleManagerV2) GetFractionalScale(surface wire.ObjectID) (*FractionalScaleV2, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

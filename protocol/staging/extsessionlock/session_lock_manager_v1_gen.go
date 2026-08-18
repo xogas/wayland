@@ -15,6 +15,11 @@ const (
 	SessionLockManagerV1RequestLock    uint16 = 1
 )
 
+// SessionLockManagerV1DestroyRequest destroy the session lock manager object.
+//
+// This informs the compositor that the session lock manager object will
+// no longer be used. Existing objects created through this interface
+// remain valid.
 type SessionLockManagerV1DestroyRequest struct {
 }
 
@@ -28,6 +33,12 @@ func (r *SessionLockManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionLockManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// SessionLockManagerV1LockRequest attempt to lock the session.
+//
+// This request creates a session lock and asks the compositor to lock the
+// session. The compositor will send either the ext_session_lock_v1.locked
+// or ext_session_lock_v1.finished event on the created object in
+// response to this request.
 type SessionLockManagerV1LockRequest struct {
 	ID wire.NewID
 }
@@ -43,18 +54,28 @@ func (r *SessionLockManagerV1LockRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionLockManagerV1LockRequest) Since() uint32 { return 1 }
 
+// SessionLockManagerV1 used to lock the session.
+//
+// This interface is used to request that the session be locked.
 type SessionLockManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSessionLockManagerV1 wraps p in a SessionLockManagerV1 proxy.
 func NewSessionLockManagerV1(p *wayland.Proxy) *SessionLockManagerV1 {
 	return &SessionLockManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SessionLockManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the session lock manager object.
+//
+// This informs the compositor that the session lock manager object will
+// no longer be used. Existing objects created through this interface
+// remain valid.
 func (o *SessionLockManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -66,6 +87,12 @@ func (o *SessionLockManagerV1) Destroy() error {
 	return nil
 }
 
+// Lock attempt to lock the session.
+//
+// This request creates a session lock and asks the compositor to lock the
+// session. The compositor will send either the ext_session_lock_v1.locked
+// or ext_session_lock_v1.finished event on the created object in
+// response to this request.
 func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

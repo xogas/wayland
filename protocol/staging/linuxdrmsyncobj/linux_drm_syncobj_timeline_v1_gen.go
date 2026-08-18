@@ -14,6 +14,11 @@ const (
 	LinuxDrmSyncobjTimelineV1RequestDestroy uint16 = 0
 )
 
+// LinuxDrmSyncobjTimelineV1DestroyRequest destroy the timeline.
+//
+// Destroy the synchronization object timeline. Other objects are not
+// affected by this request, in particular timeline points set by
+// set_acquire_point and set_release_point are not unset.
 type LinuxDrmSyncobjTimelineV1DestroyRequest struct {
 }
 
@@ -27,18 +32,29 @@ func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Marshal(w *wire.Writer) error 
 
 func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjTimelineV1 synchronization object timeline.
+//
+// This object represents an explicit synchronization object timeline
+// imported by the client to the compositor.
 type LinuxDrmSyncobjTimelineV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxDrmSyncobjTimelineV1 wraps p in a LinuxDrmSyncobjTimelineV1 proxy.
 func NewLinuxDrmSyncobjTimelineV1(p *wayland.Proxy) *LinuxDrmSyncobjTimelineV1 {
 	return &LinuxDrmSyncobjTimelineV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxDrmSyncobjTimelineV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the timeline.
+//
+// Destroy the synchronization object timeline. Other objects are not
+// affected by this request, in particular timeline points set by
+// set_acquire_point and set_release_point are not unset.
 func (o *LinuxDrmSyncobjTimelineV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

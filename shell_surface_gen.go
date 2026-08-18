@@ -37,38 +37,74 @@ var shellsurfaceEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
-// ShellSurfaceResize is a bitfield of flags.
+// ShellSurfaceResize edge values for resizing.
+//
+// These values are used to indicate which edge of a surface
+// is being dragged in a resize operation. The server may
+// use this information to adapt its behavior, e.g. choose
+// an appropriate cursor image.
+//
+// This is a bitfield of flags.
 type ShellSurfaceResize uint32
 
 const (
-	ShellSurfaceResizeNone        ShellSurfaceResize = 0
-	ShellSurfaceResizeTop         ShellSurfaceResize = 1
-	ShellSurfaceResizeBottom      ShellSurfaceResize = 2
-	ShellSurfaceResizeLeft        ShellSurfaceResize = 4
-	ShellSurfaceResizeTopLeft     ShellSurfaceResize = 5
-	ShellSurfaceResizeBottomLeft  ShellSurfaceResize = 6
-	ShellSurfaceResizeRight       ShellSurfaceResize = 8
-	ShellSurfaceResizeTopRight    ShellSurfaceResize = 9
+	// ShellSurfaceResizeNone no edge.
+	ShellSurfaceResizeNone ShellSurfaceResize = 0
+	// ShellSurfaceResizeTop top edge.
+	ShellSurfaceResizeTop ShellSurfaceResize = 1
+	// ShellSurfaceResizeBottom bottom edge.
+	ShellSurfaceResizeBottom ShellSurfaceResize = 2
+	// ShellSurfaceResizeLeft left edge.
+	ShellSurfaceResizeLeft ShellSurfaceResize = 4
+	// ShellSurfaceResizeTopLeft top and left edges.
+	ShellSurfaceResizeTopLeft ShellSurfaceResize = 5
+	// ShellSurfaceResizeBottomLeft bottom and left edges.
+	ShellSurfaceResizeBottomLeft ShellSurfaceResize = 6
+	// ShellSurfaceResizeRight right edge.
+	ShellSurfaceResizeRight ShellSurfaceResize = 8
+	// ShellSurfaceResizeTopRight top and right edges.
+	ShellSurfaceResizeTopRight ShellSurfaceResize = 9
+	// ShellSurfaceResizeBottomRight bottom and right edges.
 	ShellSurfaceResizeBottomRight ShellSurfaceResize = 10
 )
 
-// ShellSurfaceTransient is a bitfield of flags.
+// ShellSurfaceTransient details of transient behaviour.
+//
+// These flags specify details of the expected behaviour
+// of transient surfaces. Used in the set_transient request.
+//
+// This is a bitfield of flags.
 type ShellSurfaceTransient uint32
 
 const (
+	// ShellSurfaceTransientInactive do not set keyboard focus.
 	ShellSurfaceTransientInactive ShellSurfaceTransient = 1
 )
 
+// ShellSurfaceFullscreenMethod different method to set the surface fullscreen.
+//
+// Hints to indicate to the compositor how to deal with a conflict
+// between the dimensions of the surface and the dimensions of the
+// output. The compositor is free to ignore this parameter.
 type ShellSurfaceFullscreenMethod uint32
 
 const (
+	// ShellSurfaceFullscreenMethodDefault no preference, apply default policy.
 	ShellSurfaceFullscreenMethodDefault ShellSurfaceFullscreenMethod = 0
-	ShellSurfaceFullscreenMethodScale   ShellSurfaceFullscreenMethod = 1
-	ShellSurfaceFullscreenMethodDriver  ShellSurfaceFullscreenMethod = 2
-	ShellSurfaceFullscreenMethodFill    ShellSurfaceFullscreenMethod = 3
+	// ShellSurfaceFullscreenMethodScale scale, preserve the surface's aspect ratio and center on output.
+	ShellSurfaceFullscreenMethodScale ShellSurfaceFullscreenMethod = 1
+	// ShellSurfaceFullscreenMethodDriver switch output mode to the smallest mode that can fit the surface, add black borders to compensate size mismatch.
+	ShellSurfaceFullscreenMethodDriver ShellSurfaceFullscreenMethod = 2
+	// ShellSurfaceFullscreenMethodFill no upscaling, center on output and add black borders to compensate size mismatch.
+	ShellSurfaceFullscreenMethodFill ShellSurfaceFullscreenMethod = 3
 )
 
+// ShellSurfacePongRequest respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive.
 type ShellSurfacePongRequest struct {
+	// Serial serial number of the ping event.
 	Serial uint32
 }
 
@@ -83,8 +119,17 @@ func (r *ShellSurfacePongRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfacePongRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceMoveRequest start an interactive move.
+//
+// Start a pointer-driven move of the surface.
+//
+// This request must be used in response to a button press event.
+// The server may ignore move requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
 type ShellSurfaceMoveRequest struct {
-	Seat   wire.ObjectID
+	// Seat seat whose pointer is used.
+	Seat wire.ObjectID
+	// Serial serial number of the implicit grab on the pointer.
 	Serial uint32
 }
 
@@ -102,10 +147,20 @@ func (r *ShellSurfaceMoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceMoveRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceResizeRequest start an interactive resize.
+//
+// Start a pointer-driven resizing of the surface.
+//
+// This request must be used in response to a button press event.
+// The server may ignore resize requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
 type ShellSurfaceResizeRequest struct {
-	Seat   wire.ObjectID
+	// Seat seat whose pointer is used.
+	Seat wire.ObjectID
+	// Serial serial number of the implicit grab on the pointer.
 	Serial uint32
-	Edges  ShellSurfaceResize
+	// Edges which edge or corner is being dragged.
+	Edges ShellSurfaceResize
 }
 
 func (r *ShellSurfaceResizeRequest) Opcode() uint16 { return ShellSurfaceRequestResize }
@@ -125,6 +180,11 @@ func (r *ShellSurfaceResizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceResizeRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetToplevelRequest make the surface a toplevel surface.
+//
+// Map the surface as a toplevel surface.
+//
+// A toplevel surface is not fullscreen, maximized or transient.
 type ShellSurfaceSetToplevelRequest struct {
 }
 
@@ -136,11 +196,24 @@ func (r *ShellSurfaceSetToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetToplevelRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetTransientRequest make the surface a transient surface.
+//
+// Map the surface relative to an existing surface.
+//
+// The x and y arguments specify the location of the upper left
+// corner of the surface relative to the upper left corner of the
+// parent surface, in surface-local coordinates.
+//
+// The flags argument controls details of the transient behaviour.
 type ShellSurfaceSetTransientRequest struct {
+	// Parent parent surface.
 	Parent wire.ObjectID
-	X      int32
-	Y      int32
-	Flags  ShellSurfaceTransient
+	// X surface-local x coordinate.
+	X int32
+	// Y surface-local y coordinate.
+	Y int32
+	// Flags transient surface behavior.
+	Flags ShellSurfaceTransient
 }
 
 func (r *ShellSurfaceSetTransientRequest) Opcode() uint16 { return ShellSurfaceRequestSetTransient }
@@ -163,10 +236,48 @@ func (r *ShellSurfaceSetTransientRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetTransientRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetFullscreenRequest make the surface a fullscreen surface.
+//
+// Map the surface as a fullscreen surface.
+//
+// If an output parameter is given then the surface will be made
+// fullscreen on that output. If the client does not specify the
+// output then the compositor will apply its policy - usually
+// choosing the output on which the surface has the biggest surface
+// area.
+//
+// The client may specify a method to resolve a size conflict
+// between the output size and the surface size - this is provided
+// through the method parameter.
+//
+// The framerate parameter is used only when the method is set
+// to "driver", to indicate the preferred framerate. A value of 0
+// indicates that the client does not care about framerate.  The
+// framerate is specified in mHz, that is framerate of 60000 is 60Hz.
+//
+// A method of "scale" or "driver" implies a scaling operation of
+// the surface, either via a direct scaling operation or a change of
+// the output mode. This will override any kind of output scaling, so
+// that mapping a surface with a buffer size equal to the mode can
+// fill the screen independent of buffer_scale.
+//
+// A method of "fill" means we don't scale up the buffer, however
+// any output scale is applied. This means that you may run into
+// an edge case where the application maps a buffer with the same
+// size of the output mode but buffer_scale 1 (thus making a
+// surface larger than the output). In this case it is allowed to
+// downscale the results to fit the screen.
+//
+// The compositor must reply to this request with a configure event
+// with the dimensions for the output on which the surface will
+// be made fullscreen.
 type ShellSurfaceSetFullscreenRequest struct {
-	Method    ShellSurfaceFullscreenMethod
+	// Method method for resolving size conflict.
+	Method ShellSurfaceFullscreenMethod
+	// Framerate framerate in mHz.
 	Framerate uint32
-	Output    wire.ObjectID // nullable
+	// Output output on which the surface is to be fullscreen.
+	Output wire.ObjectID // nullable
 }
 
 func (r *ShellSurfaceSetFullscreenRequest) Opcode() uint16 { return ShellSurfaceRequestSetFullscreen }
@@ -186,13 +297,40 @@ func (r *ShellSurfaceSetFullscreenRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetFullscreenRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetPopupRequest make the surface a popup surface.
+//
+// Map the surface as a popup.
+//
+// A popup surface is a transient surface with an added pointer
+// grab.
+//
+// An existing implicit grab will be changed to owner-events mode,
+// and the popup grab will continue after the implicit grab ends
+// (i.e. releasing the mouse button does not cause the popup to
+// be unmapped).
+//
+// The popup grab continues until the window is destroyed or a
+// mouse button is pressed in any other client's window. A click
+// in any of the client's surfaces is reported as normal, however,
+// clicks in other clients' surfaces will be discarded and trigger
+// the callback.
+//
+// The x and y arguments specify the location of the upper left
+// corner of the surface relative to the upper left corner of the
+// parent surface, in surface-local coordinates.
 type ShellSurfaceSetPopupRequest struct {
-	Seat   wire.ObjectID
+	// Seat seat whose pointer is used.
+	Seat wire.ObjectID
+	// Serial serial number of the implicit grab on the pointer.
 	Serial uint32
+	// Parent parent surface.
 	Parent wire.ObjectID
-	X      int32
-	Y      int32
-	Flags  ShellSurfaceTransient
+	// X surface-local x coordinate.
+	X int32
+	// Y surface-local y coordinate.
+	Y int32
+	// Flags transient surface behavior.
+	Flags ShellSurfaceTransient
 }
 
 func (r *ShellSurfaceSetPopupRequest) Opcode() uint16 { return ShellSurfaceRequestSetPopup }
@@ -221,7 +359,28 @@ func (r *ShellSurfaceSetPopupRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetPopupRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetMaximizedRequest make the surface a maximized surface.
+//
+// Map the surface as a maximized surface.
+//
+// If an output parameter is given then the surface will be
+// maximized on that output. If the client does not specify the
+// output then the compositor will apply its policy - usually
+// choosing the output on which the surface has the biggest surface
+// area.
+//
+// The compositor will reply with a configure event telling
+// the expected new surface size. The operation is completed
+// on the next buffer attach to this surface.
+//
+// A maximized surface typically fills the entire output it is
+// bound to, except for desktop elements such as panels. This is
+// the main difference between a maximized shell surface and a
+// fullscreen shell surface.
+//
+// The details depend on the compositor implementation.
 type ShellSurfaceSetMaximizedRequest struct {
+	// Output output on which the surface is to be maximized.
 	Output wire.ObjectID // nullable
 }
 
@@ -236,7 +395,17 @@ func (r *ShellSurfaceSetMaximizedRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetMaximizedRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetTitleRequest set surface title.
+//
+// Set a short title for the surface.
+//
+// This string may be used to identify the surface in a task bar,
+// window list, or other user interface elements provided by the
+// compositor.
+//
+// The string must be encoded in UTF-8.
 type ShellSurfaceSetTitleRequest struct {
+	// Title surface title.
 	Title string
 }
 
@@ -251,7 +420,16 @@ func (r *ShellSurfaceSetTitleRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetTitleRequest) Since() uint32 { return 1 }
 
+// ShellSurfaceSetClassRequest set surface class.
+//
+// Set a class for the surface.
+//
+// The surface class identifies the general class of applications
+// to which the surface belongs. A common convention is to use the
+// file name (or the full path if it is a non-standard location) of
+// the application's .desktop file as the class.
 type ShellSurfaceSetClassRequest struct {
+	// Class surface class.
 	Class string
 }
 
@@ -266,7 +444,12 @@ func (r *ShellSurfaceSetClassRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellSurfaceSetClassRequest) Since() uint32 { return 1 }
 
+// ShellSurfacePingEvent ping client.
+//
+// Ping a client to check if it is receiving events and sending
+// requests. A client is expected to reply with a pong request.
 type ShellSurfacePingEvent struct {
+	// Serial serial number of the ping.
 	Serial uint32
 }
 
@@ -283,9 +466,31 @@ func (e *ShellSurfacePingEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ShellSurfacePingEvent) Since() uint32 { return 1 }
 
+// ShellSurfaceConfigureEvent suggest resize.
+//
+// The configure event asks the client to resize its surface.
+//
+// The size is a hint, in the sense that the client is free to
+// ignore it if it doesn't resize, pick a smaller size (to
+// satisfy aspect ratio or resize in steps of NxM pixels).
+//
+// The edges parameter provides a hint about how the surface
+// was resized. The client may use this information to decide
+// how to adjust its content to the new size (e.g. a scrolling
+// area might adjust its content position to leave the viewable
+// content unmoved).
+//
+// The client is free to dismiss all but the last configure
+// event it received.
+//
+// The width and height arguments specify the size of the window
+// in surface-local coordinates.
 type ShellSurfaceConfigureEvent struct {
-	Edges  ShellSurfaceResize
-	Width  int32
+	// Edges how the surface was resized.
+	Edges ShellSurfaceResize
+	// Width new width of the surface.
+	Width int32
+	// Height new height of the surface.
 	Height int32
 }
 
@@ -312,6 +517,11 @@ func (e *ShellSurfaceConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ShellSurfaceConfigureEvent) Since() uint32 { return 1 }
 
+// ShellSurfacePopupDoneEvent popup interaction is done.
+//
+// The popup_done event is sent out when a popup grab is broken,
+// that is, when the user clicks a surface that doesn't belong
+// to the client owning the popup surface.
 type ShellSurfacePopupDoneEvent struct {
 }
 
@@ -323,25 +533,44 @@ func (e *ShellSurfacePopupDoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ShellSurfacePopupDoneEvent) Since() uint32 { return 1 }
 
+// ShellSurfacePingFunc is a callback for Ping events.
 type ShellSurfacePingFunc func(ev ShellSurfacePingEvent)
 
+// ShellSurfaceConfigureFunc is a callback for Configure events.
 type ShellSurfaceConfigureFunc func(ev ShellSurfaceConfigureEvent)
 
+// ShellSurfacePopupDoneFunc is a callback for PopupDone events.
 type ShellSurfacePopupDoneFunc func(ev ShellSurfacePopupDoneEvent)
 
+// ShellSurface desktop-style metadata interface.
+//
+// An interface that may be implemented by a wl_surface, for
+// implementations that provide a desktop-style user interface.
+//
+// It provides requests to treat surfaces like toplevel, fullscreen
+// or popup windows, move, resize or maximize them, associate
+// metadata like title and class, etc.
+//
+// On the server side the object is automatically destroyed when
+// the related wl_surface is destroyed. On the client side,
+// wl_shell_surface_destroy() must be called before destroying
+// the wl_surface object.
 type ShellSurface struct {
 	proxy *Proxy
 }
 
+// NewShellSurface wraps p in a ShellSurface proxy.
 func NewShellSurface(p *Proxy) *ShellSurface {
 	p.SetEventFDCounts(shellsurfaceEventFDCounts)
 	return &ShellSurface{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ShellSurface) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnPing registers fn to receive Ping events.
 func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPing, func(r *wire.Reader) {
 		var ev ShellSurfacePingEvent
@@ -355,6 +584,7 @@ func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 	})
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventConfigure, func(r *wire.Reader) {
 		var ev ShellSurfaceConfigureEvent
@@ -368,6 +598,7 @@ func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 	})
 }
 
+// OnPopupDone registers fn to receive PopupDone events.
 func (o *ShellSurface) OnPopupDone(fn ShellSurfacePopupDoneFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPopupDone, func(r *wire.Reader) {
 		var ev ShellSurfacePopupDoneEvent
@@ -381,12 +612,23 @@ func (o *ShellSurface) OnPopupDone(fn ShellSurfacePopupDoneFunc) {
 	})
 }
 
+// Pong respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive.
 func (o *ShellSurface) Pong(serial uint32) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestPong, &ShellSurfacePongRequest{
 		Serial: serial,
 	})
 }
 
+// Move start an interactive move.
+//
+// Start a pointer-driven move of the surface.
+//
+// This request must be used in response to a button press event.
+// The server may ignore move requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
 func (o *ShellSurface) Move(seat wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestMove, &ShellSurfaceMoveRequest{
 		Seat:   seat,
@@ -394,6 +636,13 @@ func (o *ShellSurface) Move(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
+// Resize start an interactive resize.
+//
+// Start a pointer-driven resizing of the surface.
+//
+// This request must be used in response to a button press event.
+// The server may ignore resize requests depending on the state of
+// the surface (e.g. fullscreen or maximized).
 func (o *ShellSurface) Resize(seat wire.ObjectID, serial uint32, edges ShellSurfaceResize) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestResize, &ShellSurfaceResizeRequest{
 		Seat:   seat,
@@ -402,10 +651,24 @@ func (o *ShellSurface) Resize(seat wire.ObjectID, serial uint32, edges ShellSurf
 	})
 }
 
+// SetToplevel make the surface a toplevel surface.
+//
+// Map the surface as a toplevel surface.
+//
+// A toplevel surface is not fullscreen, maximized or transient.
 func (o *ShellSurface) SetToplevel() error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetToplevel, &ShellSurfaceSetToplevelRequest{})
 }
 
+// SetTransient make the surface a transient surface.
+//
+// Map the surface relative to an existing surface.
+//
+// The x and y arguments specify the location of the upper left
+// corner of the surface relative to the upper left corner of the
+// parent surface, in surface-local coordinates.
+//
+// The flags argument controls details of the transient behaviour.
 func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetTransient, &ShellSurfaceSetTransientRequest{
 		Parent: parent,
@@ -415,6 +678,41 @@ func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flag
 	})
 }
 
+// SetFullscreen make the surface a fullscreen surface.
+//
+// Map the surface as a fullscreen surface.
+//
+// If an output parameter is given then the surface will be made
+// fullscreen on that output. If the client does not specify the
+// output then the compositor will apply its policy - usually
+// choosing the output on which the surface has the biggest surface
+// area.
+//
+// The client may specify a method to resolve a size conflict
+// between the output size and the surface size - this is provided
+// through the method parameter.
+//
+// The framerate parameter is used only when the method is set
+// to "driver", to indicate the preferred framerate. A value of 0
+// indicates that the client does not care about framerate.  The
+// framerate is specified in mHz, that is framerate of 60000 is 60Hz.
+//
+// A method of "scale" or "driver" implies a scaling operation of
+// the surface, either via a direct scaling operation or a change of
+// the output mode. This will override any kind of output scaling, so
+// that mapping a surface with a buffer size equal to the mode can
+// fill the screen independent of buffer_scale.
+//
+// A method of "fill" means we don't scale up the buffer, however
+// any output scale is applied. This means that you may run into
+// an edge case where the application maps a buffer with the same
+// size of the output mode but buffer_scale 1 (thus making a
+// surface larger than the output). In this case it is allowed to
+// downscale the results to fit the screen.
+//
+// The compositor must reply to this request with a configure event
+// with the dimensions for the output on which the surface will
+// be made fullscreen.
 func (o *ShellSurface) SetFullscreen(method ShellSurfaceFullscreenMethod, framerate uint32, output wire.ObjectID) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetFullscreen, &ShellSurfaceSetFullscreenRequest{
 		Method:    method,
@@ -423,6 +721,27 @@ func (o *ShellSurface) SetFullscreen(method ShellSurfaceFullscreenMethod, framer
 	})
 }
 
+// SetPopup make the surface a popup surface.
+//
+// Map the surface as a popup.
+//
+// A popup surface is a transient surface with an added pointer
+// grab.
+//
+// An existing implicit grab will be changed to owner-events mode,
+// and the popup grab will continue after the implicit grab ends
+// (i.e. releasing the mouse button does not cause the popup to
+// be unmapped).
+//
+// The popup grab continues until the window is destroyed or a
+// mouse button is pressed in any other client's window. A click
+// in any of the client's surfaces is reported as normal, however,
+// clicks in other clients' surfaces will be discarded and trigger
+// the callback.
+//
+// The x and y arguments specify the location of the upper left
+// corner of the surface relative to the upper left corner of the
+// parent surface, in surface-local coordinates.
 func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetPopup, &ShellSurfaceSetPopupRequest{
 		Seat:   seat,
@@ -434,18 +753,55 @@ func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.O
 	})
 }
 
+// SetMaximized make the surface a maximized surface.
+//
+// Map the surface as a maximized surface.
+//
+// If an output parameter is given then the surface will be
+// maximized on that output. If the client does not specify the
+// output then the compositor will apply its policy - usually
+// choosing the output on which the surface has the biggest surface
+// area.
+//
+// The compositor will reply with a configure event telling
+// the expected new surface size. The operation is completed
+// on the next buffer attach to this surface.
+//
+// A maximized surface typically fills the entire output it is
+// bound to, except for desktop elements such as panels. This is
+// the main difference between a maximized shell surface and a
+// fullscreen shell surface.
+//
+// The details depend on the compositor implementation.
 func (o *ShellSurface) SetMaximized(output wire.ObjectID) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetMaximized, &ShellSurfaceSetMaximizedRequest{
 		Output: output,
 	})
 }
 
+// SetTitle set surface title.
+//
+// Set a short title for the surface.
+//
+// This string may be used to identify the surface in a task bar,
+// window list, or other user interface elements provided by the
+// compositor.
+//
+// The string must be encoded in UTF-8.
 func (o *ShellSurface) SetTitle(title string) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetTitle, &ShellSurfaceSetTitleRequest{
 		Title: title,
 	})
 }
 
+// SetClass set surface class.
+//
+// Set a class for the surface.
+//
+// The surface class identifies the general class of applications
+// to which the surface belongs. A common convention is to use the
+// file name (or the full path if it is a non-standard location) of
+// the application's .desktop file as the class.
 func (o *ShellSurface) SetClass(class string) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetClass, &ShellSurfaceSetClassRequest{
 		Class: class,

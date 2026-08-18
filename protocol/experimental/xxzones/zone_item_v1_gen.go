@@ -32,6 +32,18 @@ var zoneitemv1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+// ZoneItemV1DestroyRequest delete this object.
+//
+// Destroys the zone item. This request may be sent at any time by the
+// client.
+// By destroying the object, the respective item surface remains at its
+// last position, but its association with its zone is lost.
+// This will also cause it to lose any other attached state described by
+// this protocol.
+//
+// If the item was associated with a zone when this request is sent,
+// the compositor must emit 'item_left' on the respective zone, unless
+// it had already been emitted before a 'closed' event.
 type ZoneItemV1DestroyRequest struct {
 }
 
@@ -43,8 +55,51 @@ func (r *ZoneItemV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneItemV1DestroyRequest) Since() uint32 { return 1 }
 
+// ZoneItemV1SetPositionRequest set a preferred item surface position.
+//
+// Request a preferred position (x, y) for the specified item
+// surface to be placed at, relative to its associated zone.
+// This state is double-buffered and is applied on the next
+// wl_surface.commit of the surface represented by 'item'.
+//
+// X and Y coordinates are relative to the zone this item is associated
+// with, and must not be larger than the dimensions set by the zone size.
+// They may be smaller than zero, if the item's top-left edge is to be
+// placed beyond the zone's top-left sides, but clients should expect the
+// compositor to more aggressively sanitize the coordinate values in that
+// case.
+// If a coordinate exceeds the zone's maximum bounds, the compositor must
+// sanitize it to more appropriate values (e.g. by clamping the values to
+// the maximum size).
+// For infinite zones, the client may pick any coordinate.
+//
+// Compositors implementing this protocol should try to place an item
+// at the requested coordinates relative to the item's zone, unless doing
+// so is not allowed by compositor policy (because e.g. the user has set
+// custom rules for the surface represented by the respective item, the
+// surface overlaps with a protected shell component, session management
+// has loaded previous surface positions or the placement request would
+// send the item out of bounds).
+//
+// Clients should be aware that their placement preferences might not
+// always be followed and must be prepared to handle the case where the
+// item is placed at a different position by the compositor.
+//
+// Once an item has been mapped, a change to its preferred placement can
+// still be requested and should be applied, but must not be followed
+// by the compositor while the user is interacting with the affected item
+// surface (e.g. clicking & dragging within the window, or resizing it).
+//
+// After a call to this request, a 'position' event must be emitted with the
+// item's new actual position.
+// If the current item has no zone associated with it, a 'position_failed'
+// event must be emitted.
+// If the compositor did not move the item at all, not even with sanitized
+// values, a 'position_failed' event must be emitted as well.
 type ZoneItemV1SetPositionRequest struct {
+	// X x position relative to zone.
 	X int32
+	// Y y position relative to zone.
 	Y int32
 }
 
@@ -62,11 +117,34 @@ func (r *ZoneItemV1SetPositionRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneItemV1SetPositionRequest) Since() uint32 { return 1 }
 
+// ZoneItemV1FrameExtentsEvent the extents of the frame bordering the item.
+//
+// The 'frame_extents' event describes the current extents of the frame
+// bordering the item's content area.
+//
+// This event is sent immediately after the item joins a zone, or if
+// the item frame extents have been changed by other means (e.g. toggled
+// by a client request, or compositor involvement). The dimensions are in
+// the same coordinate space as the item's zone (the surface coordinate
+// space).
+//
+// This event must be followed by a 'position' event, even if the item's
+// coordinates did not change as a result of the frame extents changing.
+//
+// If the item has no associated frame, the event should still be sent,
+// but extents must be set to zero.
+//
+// This event can only be emitted if the item is currently associated
+// with a zone.
 type ZoneItemV1FrameExtentsEvent struct {
-	Top    int32
+	// Top current height of the frame bordering the top of the item.
+	Top int32
+	// Bottom current height of the frame bordering the bottom of the item.
 	Bottom int32
-	Left   int32
-	Right  int32
+	// Left current width of the frame bordering the left of the item.
+	Left int32
+	// Right current width of the frame bordering the right of the item.
+	Right int32
 }
 
 func (e *ZoneItemV1FrameExtentsEvent) Opcode() uint16 { return ZoneItemV1EventFrameExtents }
@@ -97,8 +175,25 @@ func (e *ZoneItemV1FrameExtentsEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneItemV1FrameExtentsEvent) Since() uint32 { return 1 }
 
+// ZoneItemV1PositionEvent notify about the position of an item.
+//
+// This event notifies the client of the current position (x, y) of
+// the item relative to its zone.
+// Coordinates are relative to the zone this item belongs to, and only
+// valid within it.
+// Negative coordinates are possible, if the user has moved an item
+// surface beyond the zone's top-left boundary.
+//
+// This event is sent in response to a 'set_position' request,
+// or if the item position has been changed by other means
+// (e.g. user interaction or compositor involvement).
+//
+// This event can only be emitted if the item is currently associated
+// with a zone.
 type ZoneItemV1PositionEvent struct {
+	// X current x position relative to zone.
 	X int32
+	// Y current y position relative to zone.
 	Y int32
 }
 
@@ -120,6 +215,14 @@ func (e *ZoneItemV1PositionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneItemV1PositionEvent) Since() uint32 { return 1 }
 
+// ZoneItemV1PositionFailedEvent a set_position request has failed.
+//
+// The compositor was unable to set the position of this item entirely,
+// and could not even find sanitized coordinates to place the item at
+// instead.
+//
+// This event will also be emitted if 'set_position' was called while the
+// item had no zone associated with it.
 type ZoneItemV1PositionFailedEvent struct {
 }
 
@@ -131,6 +234,19 @@ func (e *ZoneItemV1PositionFailedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneItemV1PositionFailedEvent) Since() uint32 { return 1 }
 
+// ZoneItemV1ClosedEvent the underlying surface has been destroyed.
+//
+// This event indicates that the surface wrapped by this
+// zone item has been destroyed.
+//
+// The 'xx_zone_item_v1' object becomes inert and the client should
+// destroy it. Any requests made on an inert zone item must be silently
+// ignored by the compositor, and no further events will be sent for this
+// item.
+//
+// If the item was associated with a zone when this event is sent,
+// the compositor must also emit 'item_left' on the respective zone
+// before sending this event.
 type ZoneItemV1ClosedEvent struct {
 }
 
@@ -142,27 +258,45 @@ func (e *ZoneItemV1ClosedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneItemV1ClosedEvent) Since() uint32 { return 1 }
 
+// ZoneItemV1FrameExtentsFunc is a callback for FrameExtents events.
 type ZoneItemV1FrameExtentsFunc func(ev ZoneItemV1FrameExtentsEvent)
 
+// ZoneItemV1PositionFunc is a callback for Position events.
 type ZoneItemV1PositionFunc func(ev ZoneItemV1PositionEvent)
 
+// ZoneItemV1PositionFailedFunc is a callback for PositionFailed events.
 type ZoneItemV1PositionFailedFunc func(ev ZoneItemV1PositionFailedEvent)
 
+// ZoneItemV1ClosedFunc is a callback for Closed events.
 type ZoneItemV1ClosedFunc func(ev ZoneItemV1ClosedEvent)
 
+// ZoneItemV1 opaque surface object that can be positioned in a zone.
+//
+// The zone item object is an opaque descriptor for a positionable
+// element, such as a toplevel window.
+// It currently can only be created from an 'xdg_toplevel' via the
+// 'get_zone_item' request on a 'xx_zone_manager'.
+//
+// The lifetime of a zone item is tied to its referenced item (usually
+// a toplevel).
+// When the reference is destroyed, the compositor must send a 'closed'
+// event and the zone item becomes inert.
 type ZoneItemV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewZoneItemV1 wraps p in a ZoneItemV1 proxy.
 func NewZoneItemV1(p *wayland.Proxy) *ZoneItemV1 {
 	p.SetEventFDCounts(zoneitemv1EventFDCounts)
 	return &ZoneItemV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ZoneItemV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnFrameExtents registers fn to receive FrameExtents events.
 func (o *ZoneItemV1) OnFrameExtents(fn ZoneItemV1FrameExtentsFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventFrameExtents, func(r *wire.Reader) {
 		var ev ZoneItemV1FrameExtentsEvent
@@ -176,6 +310,7 @@ func (o *ZoneItemV1) OnFrameExtents(fn ZoneItemV1FrameExtentsFunc) {
 	})
 }
 
+// OnPosition registers fn to receive Position events.
 func (o *ZoneItemV1) OnPosition(fn ZoneItemV1PositionFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPosition, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionEvent
@@ -189,6 +324,7 @@ func (o *ZoneItemV1) OnPosition(fn ZoneItemV1PositionFunc) {
 	})
 }
 
+// OnPositionFailed registers fn to receive PositionFailed events.
 func (o *ZoneItemV1) OnPositionFailed(fn ZoneItemV1PositionFailedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPositionFailed, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionFailedEvent
@@ -202,6 +338,7 @@ func (o *ZoneItemV1) OnPositionFailed(fn ZoneItemV1PositionFailedFunc) {
 	})
 }
 
+// OnClosed registers fn to receive Closed events.
 func (o *ZoneItemV1) OnClosed(fn ZoneItemV1ClosedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventClosed, func(r *wire.Reader) {
 		var ev ZoneItemV1ClosedEvent
@@ -215,6 +352,18 @@ func (o *ZoneItemV1) OnClosed(fn ZoneItemV1ClosedFunc) {
 	})
 }
 
+// Destroy delete this object.
+//
+// Destroys the zone item. This request may be sent at any time by the
+// client.
+// By destroying the object, the respective item surface remains at its
+// last position, but its association with its zone is lost.
+// This will also cause it to lose any other attached state described by
+// this protocol.
+//
+// If the item was associated with a zone when this request is sent,
+// the compositor must emit 'item_left' on the respective zone, unless
+// it had already been emitted before a 'closed' event.
 func (o *ZoneItemV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -226,6 +375,47 @@ func (o *ZoneItemV1) Destroy() error {
 	return nil
 }
 
+// SetPosition set a preferred item surface position.
+//
+// Request a preferred position (x, y) for the specified item
+// surface to be placed at, relative to its associated zone.
+// This state is double-buffered and is applied on the next
+// wl_surface.commit of the surface represented by 'item'.
+//
+// X and Y coordinates are relative to the zone this item is associated
+// with, and must not be larger than the dimensions set by the zone size.
+// They may be smaller than zero, if the item's top-left edge is to be
+// placed beyond the zone's top-left sides, but clients should expect the
+// compositor to more aggressively sanitize the coordinate values in that
+// case.
+// If a coordinate exceeds the zone's maximum bounds, the compositor must
+// sanitize it to more appropriate values (e.g. by clamping the values to
+// the maximum size).
+// For infinite zones, the client may pick any coordinate.
+//
+// Compositors implementing this protocol should try to place an item
+// at the requested coordinates relative to the item's zone, unless doing
+// so is not allowed by compositor policy (because e.g. the user has set
+// custom rules for the surface represented by the respective item, the
+// surface overlaps with a protected shell component, session management
+// has loaded previous surface positions or the placement request would
+// send the item out of bounds).
+//
+// Clients should be aware that their placement preferences might not
+// always be followed and must be prepared to handle the case where the
+// item is placed at a different position by the compositor.
+//
+// Once an item has been mapped, a change to its preferred placement can
+// still be requested and should be applied, but must not be followed
+// by the compositor while the user is interacting with the affected item
+// surface (e.g. clicking & dragging within the window, or resizing it).
+//
+// After a call to this request, a 'position' event must be emitted with the
+// item's new actual position.
+// If the current item has no zone associated with it, a 'position_failed'
+// event must be emitted.
+// If the compositor did not move the item at all, not even with sanitized
+// values, a 'position_failed' event must be emitted as well.
 func (o *ZoneItemV1) SetPosition(x int32, y int32) error {
 	return o.proxy.SendRequest(ZoneItemV1RequestSetPosition, &ZoneItemV1SetPositionRequest{
 		X: x,

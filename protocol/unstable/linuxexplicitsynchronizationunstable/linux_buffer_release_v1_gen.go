@@ -23,7 +23,21 @@ var linuxbufferreleasev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// LinuxBufferReleaseV1FencedReleaseEvent release buffer with fence.
+//
+// Sent when the compositor has finalised its usage of the associated
+// buffer for the relevant commit, providing a dma_fence which will be
+// signaled when all operations by the compositor on that buffer for that
+// commit have finished.
+//
+// Once the fence has signaled, and assuming the associated buffer is not
+// pending release from other wl_surface.commit requests, no additional
+// explicit or implicit synchronization is required to safely reuse or
+// destroy the buffer.
+//
+// This event destroys the zwp_linux_buffer_release_v1 object.
 type LinuxBufferReleaseV1FencedReleaseEvent struct {
+	// Fence fence for last operation on buffer.
 	Fence int
 }
 
@@ -42,6 +56,19 @@ func (e *LinuxBufferReleaseV1FencedReleaseEvent) Unmarshal(r *wire.Reader) error
 
 func (e *LinuxBufferReleaseV1FencedReleaseEvent) Since() uint32 { return 1 }
 
+// LinuxBufferReleaseV1ImmediateReleaseEvent release buffer immediately.
+//
+// Sent when the compositor has finalised its usage of the associated
+// buffer for the relevant commit, and either performed no operations
+// using it, or has a guarantee that all its operations on that buffer for
+// that commit have finished.
+//
+// Once this event is received, and assuming the associated buffer is not
+// pending release from other wl_surface.commit requests, no additional
+// explicit or implicit synchronization is required to safely reuse or
+// destroy the buffer.
+//
+// This event destroys the zwp_linux_buffer_release_v1 object.
 type LinuxBufferReleaseV1ImmediateReleaseEvent struct {
 }
 
@@ -55,23 +82,47 @@ func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Unmarshal(r *wire.Reader) er
 
 func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Since() uint32 { return 1 }
 
+// LinuxBufferReleaseV1FencedReleaseFunc is a callback for FencedRelease events.
 type LinuxBufferReleaseV1FencedReleaseFunc func(ev LinuxBufferReleaseV1FencedReleaseEvent)
 
+// LinuxBufferReleaseV1ImmediateReleaseFunc is a callback for ImmediateRelease events.
 type LinuxBufferReleaseV1ImmediateReleaseFunc func(ev LinuxBufferReleaseV1ImmediateReleaseEvent)
 
+// LinuxBufferReleaseV1 buffer release explicit synchronization.
+//
+// This object is instantiated in response to a
+// zwp_linux_surface_synchronization_v1.get_release request.
+//
+// It provides an alternative to wl_buffer.release events, providing a
+// unique release from a single wl_surface.commit request. The release event
+// also supports explicit synchronization, providing a fence FD for the
+// client to synchronize against.
+//
+// Exactly one event, either a fenced_release or an immediate_release, will
+// be emitted for the wl_surface.commit request. The compositor can choose
+// release by release which event it uses.
+//
+// This event does not replace wl_buffer.release events; servers are still
+// required to send those events.
+//
+// Once a buffer release object has delivered a 'fenced_release' or an
+// 'immediate_release' event it is automatically destroyed.
 type LinuxBufferReleaseV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxBufferReleaseV1 wraps p in a LinuxBufferReleaseV1 proxy.
 func NewLinuxBufferReleaseV1(p *wayland.Proxy) *LinuxBufferReleaseV1 {
 	p.SetEventFDCounts(linuxbufferreleasev1EventFDCounts)
 	return &LinuxBufferReleaseV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxBufferReleaseV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnFencedRelease registers fn to receive FencedRelease events.
 func (o *LinuxBufferReleaseV1) OnFencedRelease(fn LinuxBufferReleaseV1FencedReleaseFunc) {
 	o.proxy.RegisterEvent(LinuxBufferReleaseV1EventFencedRelease, func(r *wire.Reader) {
 		var ev LinuxBufferReleaseV1FencedReleaseEvent
@@ -85,6 +136,7 @@ func (o *LinuxBufferReleaseV1) OnFencedRelease(fn LinuxBufferReleaseV1FencedRele
 	})
 }
 
+// OnImmediateRelease registers fn to receive ImmediateRelease events.
 func (o *LinuxBufferReleaseV1) OnImmediateRelease(fn LinuxBufferReleaseV1ImmediateReleaseFunc) {
 	o.proxy.RegisterEvent(LinuxBufferReleaseV1EventImmediateRelease, func(r *wire.Reader) {
 		var ev LinuxBufferReleaseV1ImmediateReleaseEvent

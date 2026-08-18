@@ -26,13 +26,24 @@ var presentationEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// PresentationError fatal presentation errors.
+//
+// These fatal protocol errors may be emitted in response to
+// illegal presentation requests.
 type PresentationError uint32
 
 const (
+	// PresentationErrorInvalidTimestamp invalid value in tv_nsec.
 	PresentationErrorInvalidTimestamp PresentationError = 0
-	PresentationErrorInvalidFlag      PresentationError = 1
+	// PresentationErrorInvalidFlag invalid flag.
+	PresentationErrorInvalidFlag PresentationError = 1
 )
 
+// PresentationDestroyRequest unbind from the presentation interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 type PresentationDestroyRequest struct {
 }
 
@@ -44,8 +55,20 @@ func (r *PresentationDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PresentationDestroyRequest) Since() uint32 { return 1 }
 
+// PresentationFeedbackRequest request presentation feedback information.
+//
+// Request presentation feedback for the current content submission
+// on the given surface. This creates a new presentation_feedback
+// object, which will deliver the feedback information once. If
+// multiple presentation_feedback objects are created for the same
+// submission, they will all deliver the same information.
+//
+// For details on what information is returned, see the
+// presentation_feedback interface.
 type PresentationFeedbackRequest struct {
-	Surface  wire.ObjectID
+	// Surface target surface.
+	Surface wire.ObjectID
+	// Callback new feedback object.
 	Callback wire.NewID
 }
 
@@ -63,7 +86,38 @@ func (r *PresentationFeedbackRequest) Marshal(w *wire.Writer) error {
 
 func (r *PresentationFeedbackRequest) Since() uint32 { return 1 }
 
+// PresentationClockIDEvent clock ID for timestamps.
+//
+// This event tells the client in which clock domain the
+// compositor interprets the timestamps used by the presentation
+// extension. This clock is called the presentation clock.
+//
+// The compositor sends this event when the client binds to the
+// presentation interface. The presentation clock does not change
+// during the lifetime of the client connection.
+//
+// The clock identifier is platform dependent. On POSIX platforms, the
+// identifier value is one of the clockid_t values accepted by
+// clock_gettime(). clock_gettime() is defined by POSIX.1-2001.
+//
+// Timestamps in this clock domain are expressed as tv_sec_hi,
+// tv_sec_lo, tv_nsec triples, each component being an unsigned
+// 32-bit value. Whole seconds are in tv_sec which is a 64-bit
+// value combined from tv_sec_hi and tv_sec_lo, and the
+// additional fractional part in tv_nsec as nanoseconds. Hence,
+// for valid timestamps tv_nsec must be in [0, 999999999].
+//
+// Note that clock_id applies only to the presentation clock,
+// and implies nothing about e.g. the timestamps used in the
+// Wayland core protocol input events.
+//
+// Compositors should prefer a clock which does not jump and is
+// not slewed e.g. by NTP. The absolute value of the clock is
+// irrelevant. Precision of one millisecond or better is
+// recommended. Clients must be able to query the current clock
+// value directly, not by asking the compositor.
 type PresentationClockIDEvent struct {
+	// ClkID platform clock identifier.
 	ClkID uint32
 }
 
@@ -80,21 +134,44 @@ func (e *PresentationClockIDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PresentationClockIDEvent) Since() uint32 { return 1 }
 
+// PresentationClockIDFunc is a callback for ClockID events.
 type PresentationClockIDFunc func(ev PresentationClockIDEvent)
 
+// Presentation timed presentation related wl_surface requests.
+//
+// The main feature of this interface is accurate presentation
+// timing feedback to ensure smooth video playback while maintaining
+// audio/video synchronization. Some features use the concept of a
+// presentation clock, which is defined in the
+// presentation.clock_id event.
+//
+// A content update for a wl_surface is submitted by a
+// wl_surface.commit request. Request 'feedback' associates with
+// the wl_surface.commit and provides feedback on the content
+// update, particularly the final realized presentation time.
+//
+// When the final realized presentation time is available, e.g.
+// after a framebuffer flip completes, the requested
+// presentation_feedback.presented events are sent. The final
+// presentation time can differ from the compositor's predicted
+// display update time and the update's target time, especially
+// when the compositor misses its target vertical blanking period.
 type Presentation struct {
 	proxy *wayland.Proxy
 }
 
+// NewPresentation wraps p in a Presentation proxy.
 func NewPresentation(p *wayland.Proxy) *Presentation {
 	p.SetEventFDCounts(presentationEventFDCounts)
 	return &Presentation{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Presentation) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnClockID registers fn to receive ClockID events.
 func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 	o.proxy.RegisterEvent(PresentationEventClockID, func(r *wire.Reader) {
 		var ev PresentationClockIDEvent
@@ -108,6 +185,11 @@ func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 	})
 }
 
+// Destroy unbind from the presentation interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object. Existing objects created by this object
+// are not affected.
 func (o *Presentation) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -119,6 +201,16 @@ func (o *Presentation) Destroy() error {
 	return nil
 }
 
+// Feedback request presentation feedback information.
+//
+// Request presentation feedback for the current content submission
+// on the given surface. This creates a new presentation_feedback
+// object, which will deliver the feedback information once. If
+// multiple presentation_feedback objects are created for the same
+// submission, they will all deliver the same information.
+//
+// For details on what information is returned, see the
+// presentation_feedback interface.
 func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

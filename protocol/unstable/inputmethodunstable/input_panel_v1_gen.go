@@ -35,14 +35,19 @@ func (r *InputPanelV1GetInputPanelSurfaceRequest) Marshal(w *wire.Writer) error 
 
 func (r *InputPanelV1GetInputPanelSurfaceRequest) Since() uint32 { return 1 }
 
+// InputPanelV1 interface for implementing keyboards.
+//
+// Only one client can bind this interface at a time.
 type InputPanelV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputPanelV1 wraps p in a InputPanelV1 proxy.
 func NewInputPanelV1(p *wayland.Proxy) *InputPanelV1 {
 	return &InputPanelV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputPanelV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }

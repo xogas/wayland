@@ -18,17 +18,41 @@ const (
 type SessionManagerV1Error uint32
 
 const (
+	// SessionManagerV1ErrorInUse a requested session is already in use.
 	SessionManagerV1ErrorInUse SessionManagerV1Error = 1
 )
 
+// SessionManagerV1Reason reason for getting a session.
+//
+// The reason may determine in what way a session restores the window
+// management state of associated toplevels.
+//
+// For example newly launched applications might be launched on the active
+// workspace with restored size and position, while a recovered
+// applications might restore additional state such as active workspace and
+// stacking order.
 type SessionManagerV1Reason uint32
 
 const (
-	SessionManagerV1ReasonLaunch         SessionManagerV1Reason = 1
-	SessionManagerV1ReasonRecover        SessionManagerV1Reason = 2
+	// SessionManagerV1ReasonLaunch.
+	//
+	// A new app instance is launched, for example from an app launcher.
+	SessionManagerV1ReasonLaunch SessionManagerV1Reason = 1
+	// SessionManagerV1ReasonRecover.
+	//
+	// An app instance is recovering from for example a compositor or app crash.
+	SessionManagerV1ReasonRecover SessionManagerV1Reason = 2
+	// SessionManagerV1ReasonSessionRestore.
+	//
+	// An app instance is restored, for example part of a restored session, or
+	// restored from having been temporarily terminated due to resource
+	// constraints.
 	SessionManagerV1ReasonSessionRestore SessionManagerV1Reason = 3
 )
 
+// SessionManagerV1DestroyRequest destroy this object.
+//
+// This has no effect other than to destroy the xx_session_manager object.
 type SessionManagerV1DestroyRequest struct {
 }
 
@@ -40,9 +64,29 @@ func (r *SessionManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// SessionManagerV1GetSessionRequest create or restore a session.
+//
+// Create a session object corresponding to either an existing session
+// identified by the given session identifier string or a new session.
+// While the session object exists, the session is considered to be "in
+// use".
+//
+// If a identifier string represents a session that is currently actively
+// in use by the the same client, an 'in_use' error is raised. If some
+// other client is currently using the same session, the new session will
+// replace managing the associated state.
+//
+// NULL is passed to initiate a new session. If an id is passed which does
+// not represent a valid session, the compositor treats it as if NULL had
+// been passed.
+//
+// A client is allowed to have any number of in use sessions at the same
+// time.
 type SessionManagerV1GetSessionRequest struct {
-	ID      wire.NewID
-	Reason  SessionManagerV1Reason
+	ID wire.NewID
+	// Reason reason for session.
+	Reason SessionManagerV1Reason
+	// Session the session to restore.
 	Session *string // nullable
 }
 
@@ -63,18 +107,32 @@ func (r *SessionManagerV1GetSessionRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionManagerV1GetSessionRequest) Since() uint32 { return 1 }
 
+// SessionManagerV1 manage sessions for applications.
+//
+// The xx_session_manager interface defines base requests for creating and
+// managing a session for an application. Sessions persist across application
+// and compositor restarts unless explicitly destroyed. A session is created
+// for the purpose of maintaining an application's xdg_toplevel surfaces
+// across compositor or application restarts. The compositor should remember
+// as many states as possible for surfaces in a given session, but there is
+// no requirement for which states must be remembered.
 type SessionManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSessionManagerV1 wraps p in a SessionManagerV1 proxy.
 func NewSessionManagerV1(p *wayland.Proxy) *SessionManagerV1 {
 	return &SessionManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SessionManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy this object.
+//
+// This has no effect other than to destroy the xx_session_manager object.
 func (o *SessionManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -86,6 +144,24 @@ func (o *SessionManagerV1) Destroy() error {
 	return nil
 }
 
+// GetSession create or restore a session.
+//
+// Create a session object corresponding to either an existing session
+// identified by the given session identifier string or a new session.
+// While the session object exists, the session is considered to be "in
+// use".
+//
+// If a identifier string represents a session that is currently actively
+// in use by the the same client, an 'in_use' error is raised. If some
+// other client is currently using the same session, the new session will
+// replace managing the associated state.
+//
+// NULL is passed to initiate a new session. If an id is passed which does
+// not represent a valid session, the compositor treats it as if NULL had
+// been passed.
+//
+// A client is allowed to have any number of in use sessions at the same
+// time.
 func (o *SessionManagerV1) GetSession(reason SessionManagerV1Reason, session *string) (*SessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

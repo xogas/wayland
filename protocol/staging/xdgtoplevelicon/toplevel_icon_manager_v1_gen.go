@@ -29,6 +29,10 @@ var topleveliconmanagerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// ToplevelIconManagerV1DestroyRequest destroy the toplevel icon manager.
+//
+// Destroy the toplevel icon manager.
+// This does not destroy objects created with the manager.
 type ToplevelIconManagerV1DestroyRequest struct {
 }
 
@@ -42,6 +46,10 @@ func (r *ToplevelIconManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelIconManagerV1CreateIconRequest create a new icon instance.
+//
+// Creates a new icon object. This icon can then be attached to a
+// xdg_toplevel via the 'set_icon' request.
 type ToplevelIconManagerV1CreateIconRequest struct {
 	ID wire.NewID
 }
@@ -59,7 +67,30 @@ func (r *ToplevelIconManagerV1CreateIconRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconManagerV1CreateIconRequest) Since() uint32 { return 1 }
 
+// ToplevelIconManagerV1SetIconRequest set an icon on a toplevel window.
+//
+// This request assigns the icon 'icon' to 'toplevel', or clears the
+// toplevel icon if 'icon' was null.
+// This state is double-buffered and is applied on the next
+// wl_surface.commit of the toplevel.
+//
+// After making this call, the xdg_toplevel_icon_v1 provided as 'icon'
+// can be destroyed by the client without 'toplevel' losing its icon.
+// The xdg_toplevel_icon_v1 is immutable from this point, and any
+// future attempts to change it must raise the
+// 'xdg_toplevel_icon_v1.immutable' protocol error.
+//
+// The compositor must set the toplevel icon from either the pixel data
+// the icon provides, or by loading a stock icon using the icon name.
+// See the description of 'xdg_toplevel_icon_v1' for details.
+//
+// If 'icon' is set to null, the icon of the respective toplevel is reset
+// to its default icon (usually the icon of the application, derived from
+// its desktop-entry file, or a placeholder icon).
+// If this request is passed an icon with no pixel buffers or icon name
+// assigned, the icon must be reset just like if 'icon' was null.
 type ToplevelIconManagerV1SetIconRequest struct {
+	// Toplevel the toplevel to act on.
 	Toplevel wire.ObjectID
 	Icon     wire.ObjectID // nullable
 }
@@ -80,7 +111,22 @@ func (r *ToplevelIconManagerV1SetIconRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconManagerV1SetIconRequest) Since() uint32 { return 1 }
 
+// ToplevelIconManagerV1IconSizeEvent describes a supported & preferred icon size.
+//
+// This event indicates an icon size the compositor prefers to be
+// available if the client has scalable icons and can render to any size.
+//
+// When the 'xdg_toplevel_icon_manager_v1' object is created, the
+// compositor may send one or more 'icon_size' events to describe the list
+// of preferred icon sizes. If the compositor has no size preference, it
+// may not send any 'icon_size' event, and it is up to the client to
+// decide a suitable icon size.
+//
+// A sequence of 'icon_size' events must be finished with a 'done' event.
+// If the compositor has no size preferences, it must still send the
+// 'done' event, without any preceding 'icon_size' events.
 type ToplevelIconManagerV1IconSizeEvent struct {
+	// Size the edge size of the square icon in surface-local coordinates, e.g. 64.
 	Size int32
 }
 
@@ -99,6 +145,9 @@ func (e *ToplevelIconManagerV1IconSizeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ToplevelIconManagerV1IconSizeEvent) Since() uint32 { return 1 }
 
+// ToplevelIconManagerV1DoneEvent all information has been sent.
+//
+// This event is sent after all 'icon_size' events have been sent.
 type ToplevelIconManagerV1DoneEvent struct {
 }
 
@@ -110,23 +159,32 @@ func (e *ToplevelIconManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ToplevelIconManagerV1DoneEvent) Since() uint32 { return 1 }
 
+// ToplevelIconManagerV1IconSizeFunc is a callback for IconSize events.
 type ToplevelIconManagerV1IconSizeFunc func(ev ToplevelIconManagerV1IconSizeEvent)
 
+// ToplevelIconManagerV1DoneFunc is a callback for Done events.
 type ToplevelIconManagerV1DoneFunc func(ev ToplevelIconManagerV1DoneEvent)
 
+// ToplevelIconManagerV1 interface to manage toplevel icons.
+//
+// This interface allows clients to create toplevel window icons and set
+// them on toplevel windows to be displayed to the user.
 type ToplevelIconManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelIconManagerV1 wraps p in a ToplevelIconManagerV1 proxy.
 func NewToplevelIconManagerV1(p *wayland.Proxy) *ToplevelIconManagerV1 {
 	p.SetEventFDCounts(topleveliconmanagerv1EventFDCounts)
 	return &ToplevelIconManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelIconManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnIconSize registers fn to receive IconSize events.
 func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventIconSize, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1IconSizeEvent
@@ -140,6 +198,7 @@ func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc)
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventDone, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1DoneEvent
@@ -153,6 +212,10 @@ func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 	})
 }
 
+// Destroy destroy the toplevel icon manager.
+//
+// Destroy the toplevel icon manager.
+// This does not destroy objects created with the manager.
 func (o *ToplevelIconManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -164,6 +227,10 @@ func (o *ToplevelIconManagerV1) Destroy() error {
 	return nil
 }
 
+// CreateIcon create a new icon instance.
+//
+// Creates a new icon object. This icon can then be attached to a
+// xdg_toplevel via the 'set_icon' request.
 func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -181,6 +248,28 @@ func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {
 	return wrapped, nil
 }
 
+// SetIcon set an icon on a toplevel window.
+//
+// This request assigns the icon 'icon' to 'toplevel', or clears the
+// toplevel icon if 'icon' was null.
+// This state is double-buffered and is applied on the next
+// wl_surface.commit of the toplevel.
+//
+// After making this call, the xdg_toplevel_icon_v1 provided as 'icon'
+// can be destroyed by the client without 'toplevel' losing its icon.
+// The xdg_toplevel_icon_v1 is immutable from this point, and any
+// future attempts to change it must raise the
+// 'xdg_toplevel_icon_v1.immutable' protocol error.
+//
+// The compositor must set the toplevel icon from either the pixel data
+// the icon provides, or by loading a stock icon using the icon name.
+// See the description of 'xdg_toplevel_icon_v1' for details.
+//
+// If 'icon' is set to null, the icon of the respective toplevel is reset
+// to its default icon (usually the icon of the application, derived from
+// its desktop-entry file, or a placeholder icon).
+// If this request is passed an icon with no pixel buffers or icon name
+// assigned, the icon must be reset just like if 'icon' was null.
 func (o *ToplevelIconManagerV1) SetIcon(toplevel wire.ObjectID, icon wire.ObjectID) error {
 	return o.proxy.SendRequest(ToplevelIconManagerV1RequestSetIcon, &ToplevelIconManagerV1SetIconRequest{
 		Toplevel: toplevel,

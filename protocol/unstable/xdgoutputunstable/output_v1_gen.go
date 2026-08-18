@@ -33,6 +33,10 @@ var outputv1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+// OutputV1DestroyRequest destroy the xdg_output object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xdg_output object anymore.
 type OutputV1DestroyRequest struct {
 }
 
@@ -44,8 +48,18 @@ func (r *OutputV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *OutputV1DestroyRequest) Since() uint32 { return 1 }
 
+// OutputV1LogicalPositionEvent position of the output within the global compositor space.
+//
+// The position event describes the location of the wl_output within
+// the global compositor space.
+//
+// The logical_position event is sent after creating an xdg_output
+// (see xdg_output_manager.get_xdg_output) and whenever the location
+// of the output changes within the global compositor space.
 type OutputV1LogicalPositionEvent struct {
+	// X x position within the global compositor space.
 	X int32
+	// Y y position within the global compositor space.
 	Y int32
 }
 
@@ -67,8 +81,42 @@ func (e *OutputV1LogicalPositionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputV1LogicalPositionEvent) Since() uint32 { return 1 }
 
+// OutputV1LogicalSizeEvent size of the output in the global compositor space.
+//
+// The logical_size event describes the size of the output in the
+// global compositor space.
+//
+// Most regular Wayland clients should not pay attention to the
+// logical size and would rather rely on xdg_shell interfaces.
+//
+// Some clients such as Xwayland, however, need this to configure
+// their surfaces in the global compositor space as the compositor
+// may apply a different scale from what is advertised by the output
+// scaling property (to achieve fractional scaling, for example).
+//
+// For example, for a wl_output mode 3840×2160 and a scale factor 2:
+//
+//   - A compositor not scaling the monitor viewport in its compositing space
+//     will advertise a logical size of 3840×2160,
+//
+//   - A compositor scaling the monitor viewport with scale factor 2 will
+//     advertise a logical size of 1920×1080,
+//
+//   - A compositor scaling the monitor viewport using a fractional scale of
+//     1.5 will advertise a logical size of 2560×1440.
+//
+// For example, for a wl_output mode 1920×1080 and a 90 degree rotation,
+// the compositor will advertise a logical size of 1080x1920.
+//
+// The logical_size event is sent after creating an xdg_output
+// (see xdg_output_manager.get_xdg_output) and whenever the logical
+// size of the output changes, either as a result of a change in the
+// applied scale or because of a change in the corresponding output
+// mode(see wl_output.mode) or transform (see wl_output.transform).
 type OutputV1LogicalSizeEvent struct {
-	Width  int32
+	// Width width in global compositor space.
+	Width int32
+	// Height height in global compositor space.
 	Height int32
 }
 
@@ -90,7 +138,19 @@ func (e *OutputV1LogicalSizeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputV1LogicalSizeEvent) Since() uint32 { return 1 }
 
+// OutputV1DoneEvent all information about the output have been sent.
+//
 // Deprecated: since version 3.
+//
+// This event is sent after all other properties of an xdg_output
+// have been sent.
+//
+// This allows changes to the xdg_output properties to be seen as
+// atomic, even if they happen via multiple events.
+//
+// For objects version 3 onwards, this event is deprecated. Compositors
+// are not required to send it anymore and must send wl_output.done
+// instead.
 type OutputV1DoneEvent struct {
 }
 
@@ -102,7 +162,31 @@ func (e *OutputV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputV1DoneEvent) Since() uint32 { return 1 }
 
+// OutputV1NameEvent name of this output.
+//
+// Many compositors will assign names to their outputs, show them to the
+// user, allow them to be configured by name, etc. The client may wish to
+// know this name as well to offer the user similar behaviors.
+//
+// The naming convention is compositor defined, but limited to
+// alphanumeric characters and dashes (-). Each name is unique among all
+// wl_output globals, but if a wl_output global is destroyed the same name
+// may be reused later. The names will also remain consistent across
+// sessions with the same hardware and software configuration.
+//
+// Examples of names include 'HDMI-A-1', 'WL-1', 'X11-1', etc. However, do
+// not assume that the name is a reflection of an underlying DRM
+// connector, X11 connection, etc.
+//
+// The name event is sent after creating an xdg_output (see
+// xdg_output_manager.get_xdg_output). This event is only sent once per
+// xdg_output, and the name does not change over the lifetime of the
+// wl_output global.
+//
+//	This event is deprecated, instead clients should use wl_output.name.
+//	Compositors must still support this event.
 type OutputV1NameEvent struct {
+	// Name output name.
 	Name string
 }
 
@@ -119,7 +203,28 @@ func (e *OutputV1NameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputV1NameEvent) Since() uint32 { return 2 }
 
+// OutputV1DescriptionEvent human-readable description of this output.
+//
+// Many compositors can produce human-readable descriptions of their
+// outputs.  The client may wish to know this description as well, to
+// communicate the user for various purposes.
+//
+// The description is a UTF-8 string with no convention defined for its
+// contents. Examples might include 'Foocorp 11" Display' or 'Virtual X11
+// output via :1'.
+//
+// The description event is sent after creating an xdg_output (see
+// xdg_output_manager.get_xdg_output) and whenever the description
+// changes. The description is optional, and may not be sent at all.
+//
+// For objects of version 2 and lower, this event is only sent once per
+// xdg_output, and the description does not change over the lifetime of
+// the wl_output global.
+//
+// This event is deprecated, instead clients should use
+// wl_output.description. Compositors must still support this event.
 type OutputV1DescriptionEvent struct {
+	// Description output description.
 	Description string
 }
 
@@ -136,29 +241,48 @@ func (e *OutputV1DescriptionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *OutputV1DescriptionEvent) Since() uint32 { return 2 }
 
+// OutputV1LogicalPositionFunc is a callback for LogicalPosition events.
 type OutputV1LogicalPositionFunc func(ev OutputV1LogicalPositionEvent)
 
+// OutputV1LogicalSizeFunc is a callback for LogicalSize events.
 type OutputV1LogicalSizeFunc func(ev OutputV1LogicalSizeEvent)
 
+// OutputV1DoneFunc is a callback for Done events.
 type OutputV1DoneFunc func(ev OutputV1DoneEvent)
 
+// OutputV1NameFunc is a callback for Name events.
 type OutputV1NameFunc func(ev OutputV1NameEvent)
 
+// OutputV1DescriptionFunc is a callback for Description events.
 type OutputV1DescriptionFunc func(ev OutputV1DescriptionEvent)
 
+// OutputV1 compositor logical output region.
+//
+// An xdg_output describes part of the compositor geometry.
+//
+// This typically corresponds to a monitor that displays part of the
+// compositor space.
+//
+// For objects version 3 onwards, after all xdg_output properties have been
+// sent (when the object is created and when properties are updated), a
+// wl_output.done event is sent. This allows changes to the output
+// properties to be seen as atomic, even if they happen via multiple events.
 type OutputV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewOutputV1 wraps p in a OutputV1 proxy.
 func NewOutputV1(p *wayland.Proxy) *OutputV1 {
 	p.SetEventFDCounts(outputv1EventFDCounts)
 	return &OutputV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *OutputV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnLogicalPosition registers fn to receive LogicalPosition events.
 func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalPosition, func(r *wire.Reader) {
 		var ev OutputV1LogicalPositionEvent
@@ -172,6 +296,7 @@ func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 	})
 }
 
+// OnLogicalSize registers fn to receive LogicalSize events.
 func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalSize, func(r *wire.Reader) {
 		var ev OutputV1LogicalSizeEvent
@@ -185,6 +310,7 @@ func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDone, func(r *wire.Reader) {
 		var ev OutputV1DoneEvent
@@ -198,6 +324,7 @@ func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 	})
 }
 
+// OnName registers fn to receive Name events.
 func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 	o.proxy.RegisterEvent(OutputV1EventName, func(r *wire.Reader) {
 		var ev OutputV1NameEvent
@@ -211,6 +338,7 @@ func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 	})
 }
 
+// OnDescription registers fn to receive Description events.
 func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDescription, func(r *wire.Reader) {
 		var ev OutputV1DescriptionEvent
@@ -224,6 +352,10 @@ func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 	})
 }
 
+// Destroy destroy the xdg_output object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xdg_output object anymore.
 func (o *OutputV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

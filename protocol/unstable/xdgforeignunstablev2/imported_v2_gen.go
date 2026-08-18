@@ -26,12 +26,22 @@ var importedv2EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ImportedV2Error error values.
+//
+// These errors can be emitted in response to invalid xdg_imported
+// requests.
 type ImportedV2Error uint32
 
 const (
+	// ImportedV2ErrorInvalidSurface surface is not an xdg_toplevel.
 	ImportedV2ErrorInvalidSurface ImportedV2Error = 0
 )
 
+// ImportedV2DestroyRequest destroy the xdg_imported object.
+//
+// Notify the compositor that it will no longer use the xdg_imported
+// object. Any relationship that may have been set up will at this point
+// be invalidated.
 type ImportedV2DestroyRequest struct {
 }
 
@@ -43,7 +53,15 @@ func (r *ImportedV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImportedV2DestroyRequest) Since() uint32 { return 1 }
 
+// ImportedV2SetParentOfRequest set as the parent of some surface.
+//
+// Set the imported surface as the parent of some surface of the client.
+// The passed surface must be an xdg_toplevel equivalent, otherwise an
+// invalid_surface protocol error is sent. Calling this function sets up
+// a surface to surface relation with the same stacking and positioning
+// semantics as xdg_toplevel.set_parent.
 type ImportedV2SetParentOfRequest struct {
+	// Surface the child surface.
 	Surface wire.ObjectID
 }
 
@@ -58,6 +76,12 @@ func (r *ImportedV2SetParentOfRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImportedV2SetParentOfRequest) Since() uint32 { return 1 }
 
+// ImportedV2DestroyedEvent the imported surface handle has been destroyed.
+//
+// The imported surface handle has been destroyed and any relationship set
+// up has been invalidated. This may happen for various reasons, for
+// example if the exported surface or the exported surface handle has been
+// destroyed, if the handle used for importing was invalid.
 type ImportedV2DestroyedEvent struct {
 }
 
@@ -69,21 +93,30 @@ func (e *ImportedV2DestroyedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImportedV2DestroyedEvent) Since() uint32 { return 1 }
 
+// ImportedV2DestroyedFunc is a callback for Destroyed events.
 type ImportedV2DestroyedFunc func(ev ImportedV2DestroyedEvent)
 
+// ImportedV2 an imported surface handle.
+//
+// An xdg_imported object represents an imported reference to surface exported
+// by some client. A client can use this interface to manipulate
+// relationships between its own surfaces and the imported surface.
 type ImportedV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImportedV2 wraps p in a ImportedV2 proxy.
 func NewImportedV2(p *wayland.Proxy) *ImportedV2 {
 	p.SetEventFDCounts(importedv2EventFDCounts)
 	return &ImportedV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImportedV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDestroyed registers fn to receive Destroyed events.
 func (o *ImportedV2) OnDestroyed(fn ImportedV2DestroyedFunc) {
 	o.proxy.RegisterEvent(ImportedV2EventDestroyed, func(r *wire.Reader) {
 		var ev ImportedV2DestroyedEvent
@@ -97,6 +130,11 @@ func (o *ImportedV2) OnDestroyed(fn ImportedV2DestroyedFunc) {
 	})
 }
 
+// Destroy destroy the xdg_imported object.
+//
+// Notify the compositor that it will no longer use the xdg_imported
+// object. Any relationship that may have been set up will at this point
+// be invalidated.
 func (o *ImportedV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -108,6 +146,13 @@ func (o *ImportedV2) Destroy() error {
 	return nil
 }
 
+// SetParentOf set as the parent of some surface.
+//
+// Set the imported surface as the parent of some surface of the client.
+// The passed surface must be an xdg_toplevel equivalent, otherwise an
+// invalid_surface protocol error is sent. Calling this function sets up
+// a surface to surface relation with the same stacking and positioning
+// semantics as xdg_toplevel.set_parent.
 func (o *ImportedV2) SetParentOf(surface wire.ObjectID) error {
 	return o.proxy.SendRequest(ImportedV2RequestSetParentOf, &ImportedV2SetParentOfRequest{
 		Surface: surface,

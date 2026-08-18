@@ -53,18 +53,37 @@ var inputmethodv1EventFDCounts = map[uint16]int{
 type InputMethodV1Error uint32
 
 const (
+	// InputMethodV1ErrorSurfaceHasRole surface already has a role.
 	InputMethodV1ErrorSurfaceHasRole InputMethodV1Error = 0
-	InputMethodV1ErrorInactive       InputMethodV1Error = 1
+	// InputMethodV1ErrorInactive operation requires the input method to be active.
+	InputMethodV1ErrorInactive InputMethodV1Error = 1
 )
 
+// InputMethodV1ProtocolCompat protocol compatibility value.
+//
+// Tells the input method client what kinds of events the text input client supports.
 type InputMethodV1ProtocolCompat uint32
 
 const (
+	// InputMethodV1ProtocolCompatTextInputV3 zwp-text-input-v3 semantics.
 	InputMethodV1ProtocolCompatTextInputV3 InputMethodV1ProtocolCompat = 0
+	// InputMethodV1ProtocolCompatXxTextInput.
+	//
+	// Changes the meaning of serial compared to v3.
+	// The text input client now applies requested updates on a "best-effort" basis.
 	InputMethodV1ProtocolCompatXxTextInput InputMethodV1ProtocolCompat = 1
 )
 
+// InputMethodV1PerformActionRequest perform action.
+//
+// Perform an action on this text input.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next commit request.
+//
+// The initial value of action is none.
 type InputMethodV1PerformActionRequest struct {
+	// Action action to perform.
 	Action uint32
 }
 
@@ -79,6 +98,22 @@ func (r *InputMethodV1PerformActionRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1PerformActionRequest) Since() uint32 { return 3 }
 
+// InputMethodV1CommitStringRequest commit string.
+//
+// Send the commit string text for insertion to the application.
+//
+// Inserts a string at current cursor position (see commit event
+// sequence). The string to commit could be either just a single character
+// after a key press or the result of some composing.
+//
+// The argument text is a buffer containing the string to insert. There is
+// a maximum length of wayland messages, so text can not be longer than
+// 4000 bytes.
+//
+// Values set with this request are double-buffered. They must be applied
+// and reset to initial on the next .commit request.
+//
+// The initial value of text is an empty string.
 type InputMethodV1CommitStringRequest struct {
 	Text string
 }
@@ -94,6 +129,33 @@ func (r *InputMethodV1CommitStringRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1CommitStringRequest) Since() uint32 { return 1 }
 
+// InputMethodV1SetPreeditStringRequest pre-edit string.
+//
+// Send the pre-edit string text to the application text input.
+//
+// Place a new composing text (pre-edit) at the current cursor position.
+// Any previously set composing text must be removed. Any previously
+// existing selected text must be removed. The cursor is moved to a new
+// position within the preedit string.
+//
+// The argument text is a buffer containing the preedit string. There is
+// a maximum length of wayland messages, so text can not be longer than
+// 4000 bytes.
+//
+// The arguments cursor_begin and cursor_end are counted in bytes relative
+// to the beginning of the submitted string buffer. Cursor should be
+// hidden by the text input when both are equal to -1.
+//
+// cursor_begin indicates the beginning of the cursor. cursor_end
+// indicates the end of the cursor. It may be equal or different than
+// cursor_begin.
+//
+// Values set with this request are double-buffered. They must be applied on
+// the next xx_input_method_v1.commit request.
+// They must be reset to initial on the next committed .deactivate event.
+//
+// The initial value of text is an empty string. The initial value of
+// cursor_begin, and cursor_end are both 0.
 type InputMethodV1SetPreeditStringRequest struct {
 	Text        string
 	CursorBegin int32
@@ -119,6 +181,27 @@ func (r *InputMethodV1SetPreeditStringRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1SetPreeditStringRequest) Since() uint32 { return 1 }
 
+// InputMethodV1DeleteSurroundingTextRequest delete text.
+//
+// Remove the surrounding text.
+//
+// before_length and after_length are the number of bytes before and after
+// the current cursor index (excluding the preedit text) to delete.
+//
+// If text is selected, it must be deleted.
+//
+// If indices exceed the available text boundaries, they should be adjusted to fit in boundaries and deletion reattempted.
+// If indices do not lie on byte boundaries, then the text input client should delete at least that many bytes. In this case, the client decides the end point, but a character boundary same as when deleting using the keyboard is recommended.
+//
+// If any preedit text is present, it is replaced with the cursor for the
+// purpose of this event. In effect before_length is counted from the
+// beginning of preedit text, and after_length from its end (see commit
+// event sequence).
+//
+// Values set with this request are double-buffered. They must be applied
+// and reset to initial on the next xx_input_method_v1.commit request.
+//
+// The initial values of both before_length and after_length are 0.
 type InputMethodV1DeleteSurroundingTextRequest struct {
 	BeforeLength uint32
 	AfterLength  uint32
@@ -140,6 +223,29 @@ func (r *InputMethodV1DeleteSurroundingTextRequest) Marshal(w *wire.Writer) erro
 
 func (r *InputMethodV1DeleteSurroundingTextRequest) Since() uint32 { return 1 }
 
+// InputMethodV1MoveCursorRequest move cursor and change selection.
+//
+// Unselects text, moves the cursor and selects text.
+//
+// This is equivalent to dragging the mouse over some text: it deselects whatever might be currently selected and selects a new range of text.
+//
+// The offsets used in arguments are in bytes relative to the current cursor position. Cursor is the new position of the cursor, and anchor is the opposite end of selection. If there's no selection, anchor should be equal to cursor.
+//
+// The offsets do not take preedit contents into account, nor is preedit changed in any way with this request.
+//
+// Both cursor and anchor must fall on code point boundaries, otherwise text input client may ignore the request. It is therefore not recommended for an input method to move any of them beyond the text received in surrounding_text.
+//
+// When surrounding_text is not supported, the offsets must not be interpreted as bytes, but as some human-readable unit at least as big as a code point, for example a grapheme.
+//
+// The cursor and anchor arguments can also take the following special values:
+// BEGINNING := 0x8000_0000 = i32::MIN
+// END := 0x7fff_ffff = i32::MAX
+// meaning, respectively, the beginning and the end of of all text in the input field.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next commit request.
+//
+// The initial values of both cursor and anchor are 0.
 type InputMethodV1MoveCursorRequest struct {
 	Cursor int32
 	Anchor int32
@@ -159,6 +265,41 @@ func (r *InputMethodV1MoveCursorRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1MoveCursorRequest) Since() uint32 { return 3 }
 
+// InputMethodV1CommitRequest apply state.
+//
+// Apply state changes from commit_string, set_preedit_string and
+// delete_surrounding_text requests.
+//
+// The state relating to these events is double-buffered, and each one
+// modifies the pending state. This request replaces the current state
+// with the pending state.
+//
+// The connected text input is expected to proceed by evaluating the
+// changes in the following order:
+//
+// 1. Replace existing preedit string with the cursor.
+// 2. Delete requested surrounding text.
+// 3. Insert commit string with the cursor at its end.
+// 4. Move the cursor and selection.
+// 5. Calculate surrounding text to send.
+// 6. Insert new preedit text in cursor position.
+// 7. Place cursor inside preedit text.
+// 8. Perform the requested action.
+//
+// Note that the input method can not receive more than 4000 bytes of selection text, which might be the case for example when the entire document is selected. Nevertheless, the text input must delete the entire selected range before inserting the commit string.
+//
+// Serial handling with protocol_compat == xx_text_input
+//
+// The serial number should be set to 0.
+//
+// Serial handling with protocol_compat == text_input_v3
+//
+// The serial number reflects the last state of the xx_input_method_v1
+// object known to the client. The value of the serial argument must be
+// equal to the number of done events already issued by that object. When
+// the compositor receives a commit request with a serial different than
+// the number of past done events, it must proceed as normal, except it
+// should not change the current state of the xx_input_method_v1 object.
 type InputMethodV1CommitRequest struct {
 	Serial uint32
 }
@@ -174,6 +315,16 @@ func (r *InputMethodV1CommitRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1CommitRequest) Since() uint32 { return 1 }
 
+// InputMethodV1GetInputPopupSurfaceRequest create popup surface.
+//
+// Creates a new xx_input_popup_surface_v2 object wrapping a given
+// surface.
+//
+// The surface gets assigned the "input_popup" role. If the surface
+// already has an assigned role, the compositor must issue a protocol
+// error.
+//
+// Issuing this request before receiving a committed .activate causes the "inactive" error.
 type InputMethodV1GetInputPopupSurfaceRequest struct {
 	ID         wire.NewID
 	Surface    wire.ObjectID
@@ -199,6 +350,10 @@ func (r *InputMethodV1GetInputPopupSurfaceRequest) Marshal(w *wire.Writer) error
 
 func (r *InputMethodV1GetInputPopupSurfaceRequest) Since() uint32 { return 2 }
 
+// InputMethodV1DestroyRequest destroy the input method.
+//
+// Destroys the xx_input_method_v1 object and any associated child
+// objects.
 type InputMethodV1DestroyRequest struct {
 }
 
@@ -210,6 +365,26 @@ func (r *InputMethodV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodV1DestroyRequest) Since() uint32 { return 1 }
 
+// InputMethodV1ActivateEvent input method has been requested.
+//
+// Notification that a text input focused on this seat requested the input
+// method to be activated.
+//
+// This event serves the purpose of providing the compositor with an
+// active input method.
+//
+// This event resets all state associated with previous
+// surrounding_text, text_change_cause, and content_type events, as well
+// as the state associated with set_preedit_string, commit_string, and
+// delete_surrounding_text requests, and destroys any existing input_popup_surface objects.
+// In addition, it marks the xx_input_method_v1 object as active.
+//
+// The surrounding_text, and content_type events must follow before the
+// next done event if the text input supports the respective
+// functionality.
+//
+// State set with this event is double-buffered. It will get applied on
+// the next xx_input_method_v1.done event, and stay valid until changed.
 type InputMethodV1ActivateEvent struct {
 }
 
@@ -221,6 +396,21 @@ func (e *InputMethodV1ActivateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1ActivateEvent) Since() uint32 { return 1 }
 
+// InputMethodV1DeactivateEvent deactivate event.
+//
+// Notification that no focused text input currently needs an active
+// input method on this seat.
+//
+// This event marks the xx_input_method_v1 object as inactive.
+// compositor must destroy all existing xx_input_popup_surface_v2 objects.
+//
+// This event resets all state associated with previous
+// surrounding_text, text_change_cause, and content_type events, as well
+// as the state associated with set_preedit_string, commit_string, and
+// delete_surrounding_text requests.
+//
+// State set with this event is double-buffered. It will get applied on
+// the next xx_input_method_v1.done event, and stay valid until changed.
 type InputMethodV1DeactivateEvent struct {
 }
 
@@ -232,6 +422,37 @@ func (e *InputMethodV1DeactivateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1DeactivateEvent) Since() uint32 { return 1 }
 
+// InputMethodV1SurroundingTextEvent surrounding text event.
+//
+// Updates the surrounding plain text around the cursor, excluding the
+// preedit text.
+//
+// If any preedit text is present, it is replaced with the cursor for the
+// purpose of this event.
+//
+// The argument text is a buffer containing the preedit string, and must
+// include the cursor position, and the complete selection. It should
+// contain additional characters before and after these. There is a
+// maximum length of wayland messages, so text can not be longer than 4000
+// bytes.
+//
+// cursor is the byte offset of the cursor within the text buffer.
+//
+// anchor is the byte offset of the selection anchor within the text
+// buffer. If there is no selected text, anchor must be the same as
+// cursor.
+//
+// If this event does not arrive before the first done event, the input
+// method may assume that the text input does not support this
+// functionality and ignore following surrounding_text events.
+//
+// Values set with this event are double-buffered. They will get applied
+// and set to initial values on the next xx_input_method_v1.done
+// event.
+//
+// The initial state for affected fields is empty, meaning that the text
+// input does not support sending surrounding text. If the empty values
+// get applied, subsequent attempts to change them may have no effect.
 type InputMethodV1SurroundingTextEvent struct {
 	Text   string
 	Cursor uint32
@@ -261,6 +482,23 @@ func (e *InputMethodV1SurroundingTextEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1SurroundingTextEvent) Since() uint32 { return 1 }
 
+// InputMethodV1TextChangeCauseEvent indicates the cause of surrounding text change.
+//
+// Tells the input method why the text surrounding the cursor changed.
+//
+// Whenever the client detects an external change in text, cursor, or
+// anchor position, it must issue this request to the compositor. This
+// request is intended to give the input method a chance to update the
+// preedit text in an appropriate way, e.g. by removing it when the user
+// starts typing with a keyboard.
+//
+// cause describes the source of the change.
+//
+// The value set with this event is double-buffered. It will get applied
+// and set to its initial value on the next xx_input_method_v1.done
+// event.
+//
+// The initial value of cause is input_method.
 type InputMethodV1TextChangeCauseEvent struct {
 	Cause uint32
 }
@@ -278,6 +516,17 @@ func (e *InputMethodV1TextChangeCauseEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1TextChangeCauseEvent) Since() uint32 { return 1 }
 
+// InputMethodV1ContentTypeEvent content purpose and hint.
+//
+// Indicates the content type and hint for the current
+// xx_input_method_v1 instance.
+//
+// Values set with this event are double-buffered. They will get applied
+// on the next xx_input_method_v1.done event.
+// They get reset to initial on the next committed deactivate event.
+//
+// The initial value for hint is none, and the initial value for purpose
+// is normal.
 type InputMethodV1ContentTypeEvent struct {
 	Hint    uint32
 	Purpose uint32
@@ -301,7 +550,19 @@ func (e *InputMethodV1ContentTypeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1ContentTypeEvent) Since() uint32 { return 1 }
 
+// InputMethodV1SetAvailableActionsEvent announce the available actions.
+//
+// Announces the actions available for the currently active text input.
+//
+// Values set with this event are double-buffered. They will get applied
+// on the next .done event.
+// They get reset to the initial value on the next committed deactivate event.
+//
+// The initial value is an empty set: no actions are available.
+//
+// Values in the available_actions array come from text-input-v3.action.
 type InputMethodV1SetAvailableActionsEvent struct {
+	// AvailableActions available actions.
 	AvailableActions []byte
 }
 
@@ -320,6 +581,17 @@ func (e *InputMethodV1SetAvailableActionsEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *InputMethodV1SetAvailableActionsEvent) Since() uint32 { return 3 }
 
+// InputMethodV1AnnounceSupportedFeaturesEvent announce extra supported features.
+//
+// Notifies the input method what the currently active text input client is able to do.
+//
+// This event should come within the same .done sequence as .activate. Otherwise, the input method may ignore it.
+//
+// Values set with this event are double-buffered. They will get applied
+// on the next .done event.
+// They get reset to initial on the next committed deactivate event.
+//
+// The initial value for features is none.
 type InputMethodV1AnnounceSupportedFeaturesEvent struct {
 	Features uint32
 }
@@ -339,6 +611,17 @@ func (e *InputMethodV1AnnounceSupportedFeaturesEvent) Unmarshal(r *wire.Reader) 
 
 func (e *InputMethodV1AnnounceSupportedFeaturesEvent) Since() uint32 { return 3 }
 
+// InputMethodV1AnnounceProtocolCompatEvent set text input's compatibility level.
+//
+// Tells the input method client what kinds of events the text input client supports.
+//
+// Values set with this event are double-buffered. They will get applied
+// on the next .done event.
+// They get reset to initial on the next committed deactivate event.
+//
+// The compositor may send this event as part of a .done chain that switches the active state from inactive to active. It must not send this event otherwise.
+//
+// The initial value for version is text_input_v3.
 type InputMethodV1AnnounceProtocolCompatEvent struct {
 	CompatLevel InputMethodV1ProtocolCompat
 }
@@ -358,6 +641,25 @@ func (e *InputMethodV1AnnounceProtocolCompatEvent) Unmarshal(r *wire.Reader) err
 
 func (e *InputMethodV1AnnounceProtocolCompatEvent) Since() uint32 { return 3 }
 
+// InputMethodV1DoneEvent apply state.
+//
+// Atomically applies state changes recently sent to the client.
+//
+// The done event establishes and updates the state of the client, and
+// must be issued after any changes to apply them.
+//
+// Text input state (content purpose, content hint, surrounding text, and
+// change cause) is conceptually double-buffered within an input method
+// context.
+//
+// Events modify the pending state, as opposed to the current state in use
+// by the input method. A done event atomically applies all pending state,
+// replacing the current state. After done, the new pending state is as
+// documented for each related request.
+//
+// Events must be applied in the order of arrival.
+//
+// Neither current nor pending state are modified unless noted otherwise.
 type InputMethodV1DoneEvent struct {
 }
 
@@ -369,6 +671,20 @@ func (e *InputMethodV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1DoneEvent) Since() uint32 { return 1 }
 
+// InputMethodV1UnavailableEvent input method unavailable.
+//
+// The input method ceased to be available.
+//
+// The compositor must issue this event as the only event on the object if
+// there was another input_method object associated with the same seat at
+// the time of its creation.
+//
+// The compositor must issue this request when the object is no longer
+// usable, e.g. due to seat removal.
+//
+// The input method context becomes inert and should be destroyed after
+// deactivation is handled. Any further requests and events except for the
+// destroy request must be ignored.
 type InputMethodV1UnavailableEvent struct {
 }
 
@@ -380,39 +696,70 @@ func (e *InputMethodV1UnavailableEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1UnavailableEvent) Since() uint32 { return 1 }
 
+// InputMethodV1ActivateFunc is a callback for Activate events.
 type InputMethodV1ActivateFunc func(ev InputMethodV1ActivateEvent)
 
+// InputMethodV1DeactivateFunc is a callback for Deactivate events.
 type InputMethodV1DeactivateFunc func(ev InputMethodV1DeactivateEvent)
 
+// InputMethodV1SurroundingTextFunc is a callback for SurroundingText events.
 type InputMethodV1SurroundingTextFunc func(ev InputMethodV1SurroundingTextEvent)
 
+// InputMethodV1TextChangeCauseFunc is a callback for TextChangeCause events.
 type InputMethodV1TextChangeCauseFunc func(ev InputMethodV1TextChangeCauseEvent)
 
+// InputMethodV1ContentTypeFunc is a callback for ContentType events.
 type InputMethodV1ContentTypeFunc func(ev InputMethodV1ContentTypeEvent)
 
+// InputMethodV1SetAvailableActionsFunc is a callback for SetAvailableActions events.
 type InputMethodV1SetAvailableActionsFunc func(ev InputMethodV1SetAvailableActionsEvent)
 
+// InputMethodV1AnnounceSupportedFeaturesFunc is a callback for AnnounceSupportedFeatures events.
 type InputMethodV1AnnounceSupportedFeaturesFunc func(ev InputMethodV1AnnounceSupportedFeaturesEvent)
 
+// InputMethodV1AnnounceProtocolCompatFunc is a callback for AnnounceProtocolCompat events.
 type InputMethodV1AnnounceProtocolCompatFunc func(ev InputMethodV1AnnounceProtocolCompatEvent)
 
+// InputMethodV1DoneFunc is a callback for Done events.
 type InputMethodV1DoneFunc func(ev InputMethodV1DoneEvent)
 
+// InputMethodV1UnavailableFunc is a callback for Unavailable events.
 type InputMethodV1UnavailableFunc func(ev InputMethodV1UnavailableEvent)
 
+// InputMethodV1 input method.
+//
+// An input method object allows for clients to compose text.
+//
+// The objects connects the client to a text input in an application, and
+// lets the client to serve as an input method for a seat.
+//
+// The xx_input_method_v1 object can occupy two distinct states: active and
+// inactive. In the active state, the object is associated to and
+// communicates with a text input. In the inactive state, there is no
+// associated text input, and the only communication is with the compositor.
+// Initially, the input method is in the inactive state.
+//
+// Requests issued in the inactive state must be accepted by the compositor.
+// Because of the serial mechanism, and the state reset on activate event,
+// they will not have any effect on the state of the next text input.
+//
+// There must be no more than one input method object per seat.
 type InputMethodV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputMethodV1 wraps p in a InputMethodV1 proxy.
 func NewInputMethodV1(p *wayland.Proxy) *InputMethodV1 {
 	p.SetEventFDCounts(inputmethodv1EventFDCounts)
 	return &InputMethodV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputMethodV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnActivate registers fn to receive Activate events.
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
@@ -426,6 +773,7 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	})
 }
 
+// OnDeactivate registers fn to receive Deactivate events.
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
@@ -439,6 +787,7 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	})
 }
 
+// OnSurroundingText registers fn to receive SurroundingText events.
 func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodV1SurroundingTextEvent
@@ -452,6 +801,7 @@ func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 	})
 }
 
+// OnTextChangeCause registers fn to receive TextChangeCause events.
 func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventTextChangeCause, func(r *wire.Reader) {
 		var ev InputMethodV1TextChangeCauseEvent
@@ -465,6 +815,7 @@ func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 	})
 }
 
+// OnContentType registers fn to receive ContentType events.
 func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodV1ContentTypeEvent
@@ -478,6 +829,7 @@ func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 	})
 }
 
+// OnSetAvailableActions registers fn to receive SetAvailableActions events.
 func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableActionsFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSetAvailableActions, func(r *wire.Reader) {
 		var ev InputMethodV1SetAvailableActionsEvent
@@ -491,6 +843,7 @@ func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableAction
 	})
 }
 
+// OnAnnounceSupportedFeatures registers fn to receive AnnounceSupportedFeatures events.
 func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupportedFeaturesFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceSupportedFeatures, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceSupportedFeaturesEvent
@@ -504,6 +857,7 @@ func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupp
 	})
 }
 
+// OnAnnounceProtocolCompat registers fn to receive AnnounceProtocolCompat events.
 func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtocolCompatFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceProtocolCompat, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceProtocolCompatEvent
@@ -517,6 +871,7 @@ func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtoco
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDone, func(r *wire.Reader) {
 		var ev InputMethodV1DoneEvent
@@ -530,6 +885,7 @@ func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 	})
 }
 
+// OnUnavailable registers fn to receive Unavailable events.
 func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventUnavailable, func(r *wire.Reader) {
 		var ev InputMethodV1UnavailableEvent
@@ -543,6 +899,14 @@ func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 	})
 }
 
+// PerformAction perform action.
+//
+// Perform an action on this text input.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next commit request.
+//
+// The initial value of action is none.
 func (o *InputMethodV1) PerformAction(action uint32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
@@ -552,12 +916,55 @@ func (o *InputMethodV1) PerformAction(action uint32) error {
 	})
 }
 
+// CommitString commit string.
+//
+// Send the commit string text for insertion to the application.
+//
+// Inserts a string at current cursor position (see commit event
+// sequence). The string to commit could be either just a single character
+// after a key press or the result of some composing.
+//
+// The argument text is a buffer containing the string to insert. There is
+// a maximum length of wayland messages, so text can not be longer than
+// 4000 bytes.
+//
+// Values set with this request are double-buffered. They must be applied
+// and reset to initial on the next .commit request.
+//
+// The initial value of text is an empty string.
 func (o *InputMethodV1) CommitString(text string) error {
 	return o.proxy.SendRequest(InputMethodV1RequestCommitString, &InputMethodV1CommitStringRequest{
 		Text: text,
 	})
 }
 
+// SetPreeditString pre-edit string.
+//
+// Send the pre-edit string text to the application text input.
+//
+// Place a new composing text (pre-edit) at the current cursor position.
+// Any previously set composing text must be removed. Any previously
+// existing selected text must be removed. The cursor is moved to a new
+// position within the preedit string.
+//
+// The argument text is a buffer containing the preedit string. There is
+// a maximum length of wayland messages, so text can not be longer than
+// 4000 bytes.
+//
+// The arguments cursor_begin and cursor_end are counted in bytes relative
+// to the beginning of the submitted string buffer. Cursor should be
+// hidden by the text input when both are equal to -1.
+//
+// cursor_begin indicates the beginning of the cursor. cursor_end
+// indicates the end of the cursor. It may be equal or different than
+// cursor_begin.
+//
+// Values set with this request are double-buffered. They must be applied on
+// the next xx_input_method_v1.commit request.
+// They must be reset to initial on the next committed .deactivate event.
+//
+// The initial value of text is an empty string. The initial value of
+// cursor_begin, and cursor_end are both 0.
 func (o *InputMethodV1) SetPreeditString(text string, cursorBegin int32, cursorEnd int32) error {
 	return o.proxy.SendRequest(InputMethodV1RequestSetPreeditString, &InputMethodV1SetPreeditStringRequest{
 		Text:        text,
@@ -566,6 +973,27 @@ func (o *InputMethodV1) SetPreeditString(text string, cursorBegin int32, cursorE
 	})
 }
 
+// DeleteSurroundingText delete text.
+//
+// Remove the surrounding text.
+//
+// before_length and after_length are the number of bytes before and after
+// the current cursor index (excluding the preedit text) to delete.
+//
+// If text is selected, it must be deleted.
+//
+// If indices exceed the available text boundaries, they should be adjusted to fit in boundaries and deletion reattempted.
+// If indices do not lie on byte boundaries, then the text input client should delete at least that many bytes. In this case, the client decides the end point, but a character boundary same as when deleting using the keyboard is recommended.
+//
+// If any preedit text is present, it is replaced with the cursor for the
+// purpose of this event. In effect before_length is counted from the
+// beginning of preedit text, and after_length from its end (see commit
+// event sequence).
+//
+// Values set with this request are double-buffered. They must be applied
+// and reset to initial on the next xx_input_method_v1.commit request.
+//
+// The initial values of both before_length and after_length are 0.
 func (o *InputMethodV1) DeleteSurroundingText(beforeLength uint32, afterLength uint32) error {
 	return o.proxy.SendRequest(InputMethodV1RequestDeleteSurroundingText, &InputMethodV1DeleteSurroundingTextRequest{
 		BeforeLength: beforeLength,
@@ -573,6 +1001,29 @@ func (o *InputMethodV1) DeleteSurroundingText(beforeLength uint32, afterLength u
 	})
 }
 
+// MoveCursor move cursor and change selection.
+//
+// Unselects text, moves the cursor and selects text.
+//
+// This is equivalent to dragging the mouse over some text: it deselects whatever might be currently selected and selects a new range of text.
+//
+// The offsets used in arguments are in bytes relative to the current cursor position. Cursor is the new position of the cursor, and anchor is the opposite end of selection. If there's no selection, anchor should be equal to cursor.
+//
+// The offsets do not take preedit contents into account, nor is preedit changed in any way with this request.
+//
+// Both cursor and anchor must fall on code point boundaries, otherwise text input client may ignore the request. It is therefore not recommended for an input method to move any of them beyond the text received in surrounding_text.
+//
+// When surrounding_text is not supported, the offsets must not be interpreted as bytes, but as some human-readable unit at least as big as a code point, for example a grapheme.
+//
+// The cursor and anchor arguments can also take the following special values:
+// BEGINNING := 0x8000_0000 = i32::MIN
+// END := 0x7fff_ffff = i32::MAX
+// meaning, respectively, the beginning and the end of of all text in the input field.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next commit request.
+//
+// The initial values of both cursor and anchor are 0.
 func (o *InputMethodV1) MoveCursor(cursor int32, anchor int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
@@ -583,12 +1034,57 @@ func (o *InputMethodV1) MoveCursor(cursor int32, anchor int32) error {
 	})
 }
 
+// Commit apply state.
+//
+// Apply state changes from commit_string, set_preedit_string and
+// delete_surrounding_text requests.
+//
+// The state relating to these events is double-buffered, and each one
+// modifies the pending state. This request replaces the current state
+// with the pending state.
+//
+// The connected text input is expected to proceed by evaluating the
+// changes in the following order:
+//
+// 1. Replace existing preedit string with the cursor.
+// 2. Delete requested surrounding text.
+// 3. Insert commit string with the cursor at its end.
+// 4. Move the cursor and selection.
+// 5. Calculate surrounding text to send.
+// 6. Insert new preedit text in cursor position.
+// 7. Place cursor inside preedit text.
+// 8. Perform the requested action.
+//
+// Note that the input method can not receive more than 4000 bytes of selection text, which might be the case for example when the entire document is selected. Nevertheless, the text input must delete the entire selected range before inserting the commit string.
+//
+// Serial handling with protocol_compat == xx_text_input
+//
+// The serial number should be set to 0.
+//
+// Serial handling with protocol_compat == text_input_v3
+//
+// The serial number reflects the last state of the xx_input_method_v1
+// object known to the client. The value of the serial argument must be
+// equal to the number of done events already issued by that object. When
+// the compositor receives a commit request with a serial different than
+// the number of past done events, it must proceed as normal, except it
+// should not change the current state of the xx_input_method_v1 object.
 func (o *InputMethodV1) Commit(serial uint32) error {
 	return o.proxy.SendRequest(InputMethodV1RequestCommit, &InputMethodV1CommitRequest{
 		Serial: serial,
 	})
 }
 
+// GetInputPopupSurface create popup surface.
+//
+// Creates a new xx_input_popup_surface_v2 object wrapping a given
+// surface.
+//
+// The surface gets assigned the "input_popup" role. If the surface
+// already has an assigned role, the compositor must issue a protocol
+// error.
+//
+// Issuing this request before receiving a committed .activate causes the "inactive" error.
 func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner wire.ObjectID) (*InputPopupSurfaceV2, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch
@@ -611,6 +1107,10 @@ func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner w
 	return wrapped, nil
 }
 
+// Destroy destroy the input method.
+//
+// Destroys the xx_input_method_v1 object and any associated child
+// objects.
 func (o *InputMethodV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

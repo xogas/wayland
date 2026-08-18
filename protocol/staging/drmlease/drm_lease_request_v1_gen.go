@@ -18,11 +18,26 @@ const (
 type DrmLeaseRequestV1Error uint32
 
 const (
-	DrmLeaseRequestV1ErrorWrongDevice        DrmLeaseRequestV1Error = 0
+	// DrmLeaseRequestV1ErrorWrongDevice requested a connector from a different lease device.
+	DrmLeaseRequestV1ErrorWrongDevice DrmLeaseRequestV1Error = 0
+	// DrmLeaseRequestV1ErrorDuplicateConnector requested a connector twice.
 	DrmLeaseRequestV1ErrorDuplicateConnector DrmLeaseRequestV1Error = 1
-	DrmLeaseRequestV1ErrorEmptyLease         DrmLeaseRequestV1Error = 2
+	// DrmLeaseRequestV1ErrorEmptyLease requested a lease without requesting a connector.
+	DrmLeaseRequestV1ErrorEmptyLease DrmLeaseRequestV1Error = 2
 )
 
+// DrmLeaseRequestV1RequestConnectorRequest request a connector for this lease.
+//
+// Indicates that the client would like to lease the given connector.
+// This is only used as a suggestion, the compositor may choose to
+// include any resources in the lease it issues, or change the set of
+// leased resources at any time. Compositors are however encouraged to
+// include the requested connector and other resources necessary
+// to drive the connected output in the lease.
+//
+// Requesting a connector that was created from a different lease device
+// than this lease request raises the wrong_device error. Requesting a
+// connector twice will raise the duplicate_connector error.
 type DrmLeaseRequestV1RequestConnectorRequest struct {
 	Connector wire.ObjectID
 }
@@ -40,6 +55,15 @@ func (r *DrmLeaseRequestV1RequestConnectorRequest) Marshal(w *wire.Writer) error
 
 func (r *DrmLeaseRequestV1RequestConnectorRequest) Since() uint32 { return 1 }
 
+// DrmLeaseRequestV1SubmitRequest submit the lease request.
+//
+// Submits the lease request and creates a new wp_drm_lease_v1 object.
+// After calling submit the compositor will immediately destroy this
+// object, issuing any more requests will cause a wl_display error.
+// The compositor doesn't make any guarantees about the events of the
+// lease object, clients cannot expect an immediate response.
+// Not requesting any connectors before submitting the lease request
+// will raise the empty_lease error.
 type DrmLeaseRequestV1SubmitRequest struct {
 	ID wire.NewID
 }
@@ -55,24 +79,53 @@ func (r *DrmLeaseRequestV1SubmitRequest) Marshal(w *wire.Writer) error {
 
 func (r *DrmLeaseRequestV1SubmitRequest) Since() uint32 { return 1 }
 
+// DrmLeaseRequestV1 dRM lease request.
+//
+// A client that wishes to lease DRM resources will attach the list of
+// connectors advertised with wp_drm_lease_device_v1.connector that they
+// wish to lease, then use wp_drm_lease_request_v1.submit to submit the
+// request.
 type DrmLeaseRequestV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDrmLeaseRequestV1 wraps p in a DrmLeaseRequestV1 proxy.
 func NewDrmLeaseRequestV1(p *wayland.Proxy) *DrmLeaseRequestV1 {
 	return &DrmLeaseRequestV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DrmLeaseRequestV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// RequestConnector request a connector for this lease.
+//
+// Indicates that the client would like to lease the given connector.
+// This is only used as a suggestion, the compositor may choose to
+// include any resources in the lease it issues, or change the set of
+// leased resources at any time. Compositors are however encouraged to
+// include the requested connector and other resources necessary
+// to drive the connected output in the lease.
+//
+// Requesting a connector that was created from a different lease device
+// than this lease request raises the wrong_device error. Requesting a
+// connector twice will raise the duplicate_connector error.
 func (o *DrmLeaseRequestV1) RequestConnector(connector wire.ObjectID) error {
 	return o.proxy.SendRequest(DrmLeaseRequestV1RequestRequestConnector, &DrmLeaseRequestV1RequestConnectorRequest{
 		Connector: connector,
 	})
 }
 
+// Submit submit the lease request.
+//
+// Submits the lease request and creates a new wp_drm_lease_v1 object.
+// After calling submit the compositor will immediately destroy this
+// object, issuing any more requests will cause a wl_display error.
+// The compositor doesn't make any guarantees about the events of the
+// lease object, clients cannot expect an immediate response.
+// Not requesting any connectors before submitting the lease request
+// will raise the empty_lease error.
 func (o *DrmLeaseRequestV1) Submit() (*DrmLeaseV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

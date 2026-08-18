@@ -16,19 +16,45 @@ const (
 	PointerConstraintsV1RequestConfinePointer uint16 = 2
 )
 
+// PointerConstraintsV1Error wp_pointer_constraints error values.
+//
+// These errors can be emitted in response to wp_pointer_constraints
+// requests.
 type PointerConstraintsV1Error uint32
 
 const (
+	// PointerConstraintsV1ErrorAlreadyConstrained pointer constraint already requested on that surface.
 	PointerConstraintsV1ErrorAlreadyConstrained PointerConstraintsV1Error = 1
 )
 
+// PointerConstraintsV1Lifetime constraint lifetime.
+//
+// These values represent different lifetime semantics. They are passed
+// as arguments to the factory requests to specify how the constraint
+// lifetimes should be managed.
 type PointerConstraintsV1Lifetime uint32
 
 const (
-	PointerConstraintsV1LifetimeOneshot    PointerConstraintsV1Lifetime = 1
+	// PointerConstraintsV1LifetimeOneshot.
+	//
+	// A oneshot pointer constraint will never reactivate once it has been
+	// deactivated. See the corresponding deactivation event
+	// (wp_locked_pointer.unlocked and wp_confined_pointer.unconfined) for
+	// details.
+	PointerConstraintsV1LifetimeOneshot PointerConstraintsV1Lifetime = 1
+	// PointerConstraintsV1LifetimePersistent.
+	//
+	// A persistent pointer constraint may again reactivate once it has
+	// been deactivated. See the corresponding deactivation event
+	// (wp_locked_pointer.unlocked and wp_confined_pointer.unconfined) for
+	// details.
 	PointerConstraintsV1LifetimePersistent PointerConstraintsV1Lifetime = 2
 )
 
+// PointerConstraintsV1DestroyRequest destroy the pointer constraints manager object.
+//
+// Used by the client to notify the server that it will no longer use this
+// pointer constraints object.
 type PointerConstraintsV1DestroyRequest struct {
 }
 
@@ -42,11 +68,51 @@ func (r *PointerConstraintsV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerConstraintsV1DestroyRequest) Since() uint32 { return 1 }
 
+// PointerConstraintsV1LockPointerRequest lock pointer to a position.
+//
+// The lock_pointer request lets the client request to disable movements of
+// the virtual pointer (i.e. the cursor), effectively locking the pointer
+// to a position. This request may not take effect immediately; in the
+// future, when the compositor deems implementation-specific constraints
+// are satisfied, the pointer lock will be activated and the compositor
+// sends a locked event.
+//
+// The protocol provides no guarantee that the constraints are ever
+// satisfied, and does not require the compositor to send an error if the
+// constraints cannot ever be satisfied. It is thus possible to request a
+// lock that will never activate.
+//
+// There may not be another pointer constraint of any kind requested or
+// active on the surface for any of the wl_pointer objects of the seat of
+// the passed pointer when requesting a lock. If there is, an error will be
+// raised. See general pointer lock documentation for more details.
+//
+// The intersection of the region passed with this request and the input
+// region of the surface is used to determine where the pointer must be
+// in order for the lock to activate. It is up to the compositor whether to
+// warp the pointer or require some kind of user interaction for the lock
+// to activate. If the region is null the surface input region is used.
+//
+// A surface may receive pointer focus without the lock being activated.
+//
+// The request creates a new object wp_locked_pointer which is used to
+// interact with the lock as well as receive updates about its state. See
+// the the description of wp_locked_pointer for further information.
+//
+// Note that while a pointer is locked, the wl_pointer objects of the
+// corresponding seat will not emit any wl_pointer.motion events, but
+// relative motion events will still be emitted via wp_relative_pointer
+// objects of the same seat. wl_pointer.axis and wl_pointer.button events
+// are unaffected.
 type PointerConstraintsV1LockPointerRequest struct {
-	ID       wire.NewID
-	Surface  wire.ObjectID
-	Pointer  wire.ObjectID
-	Region   wire.ObjectID // nullable
+	ID wire.NewID
+	// Surface surface to lock pointer to.
+	Surface wire.ObjectID
+	// Pointer the pointer that should be locked.
+	Pointer wire.ObjectID
+	// Region region of surface.
+	Region wire.ObjectID // nullable
+	// Lifetime lock lifetime.
 	Lifetime PointerConstraintsV1Lifetime
 }
 
@@ -75,11 +141,34 @@ func (r *PointerConstraintsV1LockPointerRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerConstraintsV1LockPointerRequest) Since() uint32 { return 1 }
 
+// PointerConstraintsV1ConfinePointerRequest confine pointer to a region.
+//
+// The confine_pointer request lets the client request to confine the
+// pointer cursor to a given region. This request may not take effect
+// immediately; in the future, when the compositor deems implementation-
+// specific constraints are satisfied, the pointer confinement will be
+// activated and the compositor sends a confined event.
+//
+// The intersection of the region passed with this request and the input
+// region of the surface is used to determine where the pointer must be
+// in order for the confinement to activate. It is up to the compositor
+// whether to warp the pointer or require some kind of user interaction for
+// the confinement to activate. If the region is null the surface input
+// region is used.
+//
+// The request will create a new object wp_confined_pointer which is used
+// to interact with the confinement as well as receive updates about its
+// state. See the the description of wp_confined_pointer for further
+// information.
 type PointerConstraintsV1ConfinePointerRequest struct {
-	ID       wire.NewID
-	Surface  wire.ObjectID
-	Pointer  wire.ObjectID
-	Region   wire.ObjectID // nullable
+	ID wire.NewID
+	// Surface surface to lock pointer to.
+	Surface wire.ObjectID
+	// Pointer the pointer that should be confined.
+	Pointer wire.ObjectID
+	// Region region of surface.
+	Region wire.ObjectID // nullable
+	// Lifetime confinement lifetime.
 	Lifetime PointerConstraintsV1Lifetime
 }
 
@@ -108,18 +197,39 @@ func (r *PointerConstraintsV1ConfinePointerRequest) Marshal(w *wire.Writer) erro
 
 func (r *PointerConstraintsV1ConfinePointerRequest) Since() uint32 { return 1 }
 
+// PointerConstraintsV1 constrain the movement of a pointer.
+//
+// The global interface exposing pointer constraining functionality. It
+// exposes two requests: lock_pointer for locking the pointer to its
+// position, and confine_pointer for locking the pointer to a region.
+//
+// The lock_pointer and confine_pointer requests create the objects
+// wp_locked_pointer and wp_confined_pointer respectively, and the client can
+// use these objects to interact with the lock.
+//
+// For any surface, only one lock or confinement may be active across all
+// wl_pointer objects of the same seat. If a lock or confinement is requested
+// when another lock or confinement is active or requested on the same surface
+// and with any of the wl_pointer objects of the same seat, an
+// 'already_constrained' error will be raised.
 type PointerConstraintsV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPointerConstraintsV1 wraps p in a PointerConstraintsV1 proxy.
 func NewPointerConstraintsV1(p *wayland.Proxy) *PointerConstraintsV1 {
 	return &PointerConstraintsV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PointerConstraintsV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the pointer constraints manager object.
+//
+// Used by the client to notify the server that it will no longer use this
+// pointer constraints object.
 func (o *PointerConstraintsV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -131,6 +241,42 @@ func (o *PointerConstraintsV1) Destroy() error {
 	return nil
 }
 
+// LockPointer lock pointer to a position.
+//
+// The lock_pointer request lets the client request to disable movements of
+// the virtual pointer (i.e. the cursor), effectively locking the pointer
+// to a position. This request may not take effect immediately; in the
+// future, when the compositor deems implementation-specific constraints
+// are satisfied, the pointer lock will be activated and the compositor
+// sends a locked event.
+//
+// The protocol provides no guarantee that the constraints are ever
+// satisfied, and does not require the compositor to send an error if the
+// constraints cannot ever be satisfied. It is thus possible to request a
+// lock that will never activate.
+//
+// There may not be another pointer constraint of any kind requested or
+// active on the surface for any of the wl_pointer objects of the seat of
+// the passed pointer when requesting a lock. If there is, an error will be
+// raised. See general pointer lock documentation for more details.
+//
+// The intersection of the region passed with this request and the input
+// region of the surface is used to determine where the pointer must be
+// in order for the lock to activate. It is up to the compositor whether to
+// warp the pointer or require some kind of user interaction for the lock
+// to activate. If the region is null the surface input region is used.
+//
+// A surface may receive pointer focus without the lock being activated.
+//
+// The request creates a new object wp_locked_pointer which is used to
+// interact with the lock as well as receive updates about its state. See
+// the the description of wp_locked_pointer for further information.
+//
+// Note that while a pointer is locked, the wl_pointer objects of the
+// corresponding seat will not emit any wl_pointer.motion events, but
+// relative motion events will still be emitted via wp_relative_pointer
+// objects of the same seat. wl_pointer.axis and wl_pointer.button events
+// are unaffected.
 func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*LockedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -152,6 +298,25 @@ func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.O
 	return wrapped, nil
 }
 
+// ConfinePointer confine pointer to a region.
+//
+// The confine_pointer request lets the client request to confine the
+// pointer cursor to a given region. This request may not take effect
+// immediately; in the future, when the compositor deems implementation-
+// specific constraints are satisfied, the pointer confinement will be
+// activated and the compositor sends a confined event.
+//
+// The intersection of the region passed with this request and the input
+// region of the surface is used to determine where the pointer must be
+// in order for the confinement to activate. It is up to the compositor
+// whether to warp the pointer or require some kind of user interaction for
+// the confinement to activate. If the region is null the surface input
+// region is used.
+//
+// The request will create a new object wp_confined_pointer which is used
+// to interact with the confinement as well as receive updates about its
+// state. See the the description of wp_confined_pointer for further
+// information.
 func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*ConfinedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

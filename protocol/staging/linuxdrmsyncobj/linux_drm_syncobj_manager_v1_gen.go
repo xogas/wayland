@@ -19,10 +19,16 @@ const (
 type LinuxDrmSyncobjManagerV1Error uint32
 
 const (
-	LinuxDrmSyncobjManagerV1ErrorSurfaceExists   LinuxDrmSyncobjManagerV1Error = 0
+	// LinuxDrmSyncobjManagerV1ErrorSurfaceExists the surface already has a synchronization object associated.
+	LinuxDrmSyncobjManagerV1ErrorSurfaceExists LinuxDrmSyncobjManagerV1Error = 0
+	// LinuxDrmSyncobjManagerV1ErrorInvalidTimeline the timeline object could not be imported.
 	LinuxDrmSyncobjManagerV1ErrorInvalidTimeline LinuxDrmSyncobjManagerV1Error = 1
 )
 
+// LinuxDrmSyncobjManagerV1DestroyRequest destroy explicit synchronization factory object.
+//
+// Destroy this explicit synchronization factory object. Other objects
+// shall not be affected by this request.
 type LinuxDrmSyncobjManagerV1DestroyRequest struct {
 }
 
@@ -36,8 +42,23 @@ func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjManagerV1GetSurfaceRequest extend surface interface for explicit synchronization.
+//
+// Instantiate an interface extension for the given wl_surface to provide
+// explicit synchronization.
+//
+// If the given wl_surface already has an explicit synchronization object
+// associated, the surface_exists protocol error is raised.
+//
+// Graphics APIs, like EGL or Vulkan, that manage the buffer queue and
+// commits of a wl_surface themselves, are likely to be using this
+// extension internally. If a client is using such an API for a
+// wl_surface, it should not directly use this extension on that surface,
+// to avoid raising a surface_exists protocol error.
 type LinuxDrmSyncobjManagerV1GetSurfaceRequest struct {
-	ID      wire.NewID
+	// ID the new synchronization surface object id.
+	ID wire.NewID
+	// Surface the surface.
 	Surface wire.ObjectID
 }
 
@@ -57,8 +78,14 @@ func (r *LinuxDrmSyncobjManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) erro
 
 func (r *LinuxDrmSyncobjManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjManagerV1ImportTimelineRequest import a DRM syncobj timeline.
+//
+// Import a DRM synchronization object timeline.
+//
+// If the FD cannot be imported, the invalid_timeline error is raised.
 type LinuxDrmSyncobjManagerV1ImportTimelineRequest struct {
 	ID wire.NewID
+	// Fd drm_syncobj file descriptor.
 	Fd int
 }
 
@@ -78,18 +105,30 @@ func (r *LinuxDrmSyncobjManagerV1ImportTimelineRequest) Marshal(w *wire.Writer) 
 
 func (r *LinuxDrmSyncobjManagerV1ImportTimelineRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjManagerV1 global for providing explicit synchronization.
+//
+// This global is a factory interface, allowing clients to request
+// explicit synchronization for buffers on a per-surface basis.
+//
+// See wp_linux_drm_syncobj_surface_v1 for more information.
 type LinuxDrmSyncobjManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxDrmSyncobjManagerV1 wraps p in a LinuxDrmSyncobjManagerV1 proxy.
 func NewLinuxDrmSyncobjManagerV1(p *wayland.Proxy) *LinuxDrmSyncobjManagerV1 {
 	return &LinuxDrmSyncobjManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxDrmSyncobjManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy explicit synchronization factory object.
+//
+// Destroy this explicit synchronization factory object. Other objects
+// shall not be affected by this request.
 func (o *LinuxDrmSyncobjManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -101,6 +140,19 @@ func (o *LinuxDrmSyncobjManagerV1) Destroy() error {
 	return nil
 }
 
+// GetSurface extend surface interface for explicit synchronization.
+//
+// Instantiate an interface extension for the given wl_surface to provide
+// explicit synchronization.
+//
+// If the given wl_surface already has an explicit synchronization object
+// associated, the surface_exists protocol error is raised.
+//
+// Graphics APIs, like EGL or Vulkan, that manage the buffer queue and
+// commits of a wl_surface themselves, are likely to be using this
+// extension internally. If a client is using such an API for a
+// wl_surface, it should not directly use this extension on that surface,
+// to avoid raising a surface_exists protocol error.
 func (o *LinuxDrmSyncobjManagerV1) GetSurface(surface wire.ObjectID) (*LinuxDrmSyncobjSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -119,6 +171,11 @@ func (o *LinuxDrmSyncobjManagerV1) GetSurface(surface wire.ObjectID) (*LinuxDrmS
 	return wrapped, nil
 }
 
+// ImportTimeline import a DRM syncobj timeline.
+//
+// Import a DRM synchronization object timeline.
+//
+// If the FD cannot be imported, the invalid_timeline error is raised.
 func (o *LinuxDrmSyncobjManagerV1) ImportTimeline(fd int) (*LinuxDrmSyncobjTimelineV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

@@ -35,16 +35,27 @@ var tabletv2EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+// TabletV2Bustype bus type.
+//
+// Describes the bus types this tablet is connected to.
 type TabletV2Bustype uint32
 
 const (
-	TabletV2BustypeUsb       TabletV2Bustype = 3
+	// TabletV2BustypeUsb uSB.
+	TabletV2BustypeUsb TabletV2Bustype = 3
+	// TabletV2BustypeBluetooth bluetooth.
 	TabletV2BustypeBluetooth TabletV2Bustype = 5
-	TabletV2BustypeVirtual   TabletV2Bustype = 6
-	TabletV2BustypeSerial    TabletV2Bustype = 17
-	TabletV2BustypeI2c       TabletV2Bustype = 24
+	// TabletV2BustypeVirtual virtual.
+	TabletV2BustypeVirtual TabletV2Bustype = 6
+	// TabletV2BustypeSerial serial.
+	TabletV2BustypeSerial TabletV2Bustype = 17
+	// TabletV2BustypeI2c i2C.
+	TabletV2BustypeI2c TabletV2Bustype = 24
 )
 
+// TabletV2DestroyRequest destroy the tablet object.
+//
+// This destroys the client's resource for this tablet object.
 type TabletV2DestroyRequest struct {
 }
 
@@ -56,7 +67,17 @@ func (r *TabletV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletV2NameEvent tablet device name.
+//
+//	A descriptive name for the tablet device.
+//
+// If the device has no descriptive name, this event is not sent.
+//
+// This event is sent in the initial burst of events before the
+//
+//	zwp_tablet_v2.done event.
 type TabletV2NameEvent struct {
+	// Name the device name.
 	Name string
 }
 
@@ -73,8 +94,24 @@ func (e *TabletV2NameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2NameEvent) Since() uint32 { return 1 }
 
+// TabletV2IDEvent tablet device vendor/product id.
+//
+// The vendor and product IDs for the tablet device.
+//
+// The interpretation of the id depends on the zwp_tablet_v2.bustype.
+// Prior to version v2 of this protocol, the id was implied to be a USB
+// vendor and product ID. If no zwp_tablet_v2.bustype is sent, the ID
+// is to be interpreted as USB vendor and product ID.
+//
+// If the device has no vendor/product ID, this event is not sent.
+// This can happen for virtual devices or non-USB devices, for instance.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_v2.done event.
 type TabletV2IDEvent struct {
+	// Vid vendor id.
 	Vid uint32
+	// Pid product id.
 	Pid uint32
 }
 
@@ -96,7 +133,24 @@ func (e *TabletV2IDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2IDEvent) Since() uint32 { return 1 }
 
+// TabletV2PathEvent path to the device.
+//
+// A system-specific device path that indicates which device is behind
+// this zwp_tablet_v2. This information may be used to gather additional
+// information about the device, e.g. through libwacom.
+//
+// A device may have more than one device path. If so, multiple
+// zwp_tablet_v2.path events are sent. A device may be emulated and not
+// have a device path, and in that case this event will not be sent.
+//
+// The format of the path is unspecified, it may be a device node, a
+// sysfs path, or some other identifier. It is up to the client to
+// identify the string provided.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_v2.done event.
 type TabletV2PathEvent struct {
+	// Path path to local device.
 	Path string
 }
 
@@ -113,6 +167,12 @@ func (e *TabletV2PathEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2PathEvent) Since() uint32 { return 1 }
 
+// TabletV2DoneEvent tablet description events sequence complete.
+//
+// This event is sent immediately to signal the end of the initial
+// burst of descriptive events. A client may consider the static
+// description of the tablet to be complete and finalize initialization
+// of the tablet.
 type TabletV2DoneEvent struct {
 }
 
@@ -124,6 +184,13 @@ func (e *TabletV2DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2DoneEvent) Since() uint32 { return 1 }
 
+// TabletV2RemovedEvent tablet removed event.
+//
+// Sent when the tablet has been removed from the system. When a tablet
+// is removed, some tools may be removed.
+//
+// When this event is received, the client must zwp_tablet_v2.destroy
+// the object.
 type TabletV2RemovedEvent struct {
 }
 
@@ -135,7 +202,18 @@ func (e *TabletV2RemovedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2RemovedEvent) Since() uint32 { return 1 }
 
+// TabletV2BustypeEvent tablet device bus type.
+//
+// The bustype argument is one of the BUS_ defines in the Linux kernel's
+// linux/input.h
+//
+// If the device has no known bustype or the bustype cannot be
+// queried, this event is not sent.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_v2.done event.
 type TabletV2BustypeEvent struct {
+	// Bustype bus type.
 	Bustype TabletV2Bustype
 }
 
@@ -152,31 +230,50 @@ func (e *TabletV2BustypeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletV2BustypeEvent) Since() uint32 { return 2 }
 
+// TabletV2NameFunc is a callback for Name events.
 type TabletV2NameFunc func(ev TabletV2NameEvent)
 
+// TabletV2IDFunc is a callback for ID events.
 type TabletV2IDFunc func(ev TabletV2IDEvent)
 
+// TabletV2PathFunc is a callback for Path events.
 type TabletV2PathFunc func(ev TabletV2PathEvent)
 
+// TabletV2DoneFunc is a callback for Done events.
 type TabletV2DoneFunc func(ev TabletV2DoneEvent)
 
+// TabletV2RemovedFunc is a callback for Removed events.
 type TabletV2RemovedFunc func(ev TabletV2RemovedEvent)
 
+// TabletV2BustypeFunc is a callback for Bustype events.
 type TabletV2BustypeFunc func(ev TabletV2BustypeEvent)
 
+// TabletV2 graphics tablet device.
+//
+// The zwp_tablet_v2 interface represents one graphics tablet device. The
+// tablet interface itself does not generate events; all events are
+// generated by zwp_tablet_tool_v2 objects when in proximity above a tablet.
+//
+// A tablet has a number of static characteristics, e.g. device name and
+// pid/vid. These capabilities are sent in an event sequence after the
+// zwp_tablet_seat_v2.tablet_added event. This initial event sequence is
+// terminated by a zwp_tablet_v2.done event.
 type TabletV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletV2 wraps p in a TabletV2 proxy.
 func NewTabletV2(p *wayland.Proxy) *TabletV2 {
 	p.SetEventFDCounts(tabletv2EventFDCounts)
 	return &TabletV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnName registers fn to receive Name events.
 func (o *TabletV2) OnName(fn TabletV2NameFunc) {
 	o.proxy.RegisterEvent(TabletV2EventName, func(r *wire.Reader) {
 		var ev TabletV2NameEvent
@@ -190,6 +287,7 @@ func (o *TabletV2) OnName(fn TabletV2NameFunc) {
 	})
 }
 
+// OnID registers fn to receive ID events.
 func (o *TabletV2) OnID(fn TabletV2IDFunc) {
 	o.proxy.RegisterEvent(TabletV2EventID, func(r *wire.Reader) {
 		var ev TabletV2IDEvent
@@ -203,6 +301,7 @@ func (o *TabletV2) OnID(fn TabletV2IDFunc) {
 	})
 }
 
+// OnPath registers fn to receive Path events.
 func (o *TabletV2) OnPath(fn TabletV2PathFunc) {
 	o.proxy.RegisterEvent(TabletV2EventPath, func(r *wire.Reader) {
 		var ev TabletV2PathEvent
@@ -216,6 +315,7 @@ func (o *TabletV2) OnPath(fn TabletV2PathFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *TabletV2) OnDone(fn TabletV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletV2EventDone, func(r *wire.Reader) {
 		var ev TabletV2DoneEvent
@@ -229,6 +329,7 @@ func (o *TabletV2) OnDone(fn TabletV2DoneFunc) {
 	})
 }
 
+// OnRemoved registers fn to receive Removed events.
 func (o *TabletV2) OnRemoved(fn TabletV2RemovedFunc) {
 	o.proxy.RegisterEvent(TabletV2EventRemoved, func(r *wire.Reader) {
 		var ev TabletV2RemovedEvent
@@ -242,6 +343,7 @@ func (o *TabletV2) OnRemoved(fn TabletV2RemovedFunc) {
 	})
 }
 
+// OnBustype registers fn to receive Bustype events.
 func (o *TabletV2) OnBustype(fn TabletV2BustypeFunc) {
 	o.proxy.RegisterEvent(TabletV2EventBustype, func(r *wire.Reader) {
 		var ev TabletV2BustypeEvent
@@ -255,6 +357,9 @@ func (o *TabletV2) OnBustype(fn TabletV2BustypeFunc) {
 	})
 }
 
+// Destroy destroy the tablet object.
+//
+// This destroys the client's resource for this tablet object.
 func (o *TabletV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

@@ -21,6 +21,11 @@ const (
 	InputPanelSurfaceV1PositionCenterBottom InputPanelSurfaceV1Position = 0
 )
 
+// InputPanelSurfaceV1SetToplevelRequest set the surface type as a keyboard.
+//
+// Set the input_panel_surface type to keyboard.
+//
+// A keyboard surface is only shown when a text input is active.
 type InputPanelSurfaceV1SetToplevelRequest struct {
 	Output   wire.ObjectID
 	Position uint32
@@ -42,6 +47,12 @@ func (r *InputPanelSurfaceV1SetToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPanelSurfaceV1SetToplevelRequest) Since() uint32 { return 1 }
 
+// InputPanelSurfaceV1SetOverlayPanelRequest set the surface type as an overlay panel.
+//
+// Set the input_panel_surface to be an overlay panel.
+//
+// This is shown near the input cursor above the application window when
+// a text input is active.
 type InputPanelSurfaceV1SetOverlayPanelRequest struct {
 }
 
@@ -59,14 +70,21 @@ type InputPanelSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputPanelSurfaceV1 wraps p in a InputPanelSurfaceV1 proxy.
 func NewInputPanelSurfaceV1(p *wayland.Proxy) *InputPanelSurfaceV1 {
 	return &InputPanelSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputPanelSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// SetToplevel set the surface type as a keyboard.
+//
+// Set the input_panel_surface type to keyboard.
+//
+// A keyboard surface is only shown when a text input is active.
 func (o *InputPanelSurfaceV1) SetToplevel(output wire.ObjectID, position uint32) error {
 	return o.proxy.SendRequest(InputPanelSurfaceV1RequestSetToplevel, &InputPanelSurfaceV1SetToplevelRequest{
 		Output:   output,
@@ -74,6 +92,12 @@ func (o *InputPanelSurfaceV1) SetToplevel(output wire.ObjectID, position uint32)
 	})
 }
 
+// SetOverlayPanel set the surface type as an overlay panel.
+//
+// Set the input_panel_surface to be an overlay panel.
+//
+// This is shown near the input cursor above the application window when
+// a text input is active.
 func (o *InputPanelSurfaceV1) SetOverlayPanel() error {
 	return o.proxy.SendRequest(InputPanelSurfaceV1RequestSetOverlayPanel, &InputPanelSurfaceV1SetOverlayPanelRequest{})
 }

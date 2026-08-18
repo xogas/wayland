@@ -23,17 +23,56 @@ const (
 	ImageDescriptionCreatorParamsV1RequestSetMaxFall                   uint16 = 9
 )
 
+// ImageDescriptionCreatorParamsV1Error protocol errors.
 type ImageDescriptionCreatorParamsV1Error uint32
 
 const (
-	ImageDescriptionCreatorParamsV1ErrorIncompleteSet         ImageDescriptionCreatorParamsV1Error = 0
-	ImageDescriptionCreatorParamsV1ErrorAlreadySet            ImageDescriptionCreatorParamsV1Error = 1
-	ImageDescriptionCreatorParamsV1ErrorUnsupportedFeature    ImageDescriptionCreatorParamsV1Error = 2
-	ImageDescriptionCreatorParamsV1ErrorInvalidTf             ImageDescriptionCreatorParamsV1Error = 3
+	// ImageDescriptionCreatorParamsV1ErrorIncompleteSet incomplete parameter set.
+	ImageDescriptionCreatorParamsV1ErrorIncompleteSet ImageDescriptionCreatorParamsV1Error = 0
+	// ImageDescriptionCreatorParamsV1ErrorAlreadySet property already set.
+	ImageDescriptionCreatorParamsV1ErrorAlreadySet ImageDescriptionCreatorParamsV1Error = 1
+	// ImageDescriptionCreatorParamsV1ErrorUnsupportedFeature request not supported.
+	ImageDescriptionCreatorParamsV1ErrorUnsupportedFeature ImageDescriptionCreatorParamsV1Error = 2
+	// ImageDescriptionCreatorParamsV1ErrorInvalidTf invalid transfer characteristic.
+	ImageDescriptionCreatorParamsV1ErrorInvalidTf ImageDescriptionCreatorParamsV1Error = 3
+	// ImageDescriptionCreatorParamsV1ErrorInvalidPrimariesNamed invalid primaries named.
 	ImageDescriptionCreatorParamsV1ErrorInvalidPrimariesNamed ImageDescriptionCreatorParamsV1Error = 4
-	ImageDescriptionCreatorParamsV1ErrorInvalidLuminance      ImageDescriptionCreatorParamsV1Error = 5
+	// ImageDescriptionCreatorParamsV1ErrorInvalidLuminance invalid luminance value or range.
+	ImageDescriptionCreatorParamsV1ErrorInvalidLuminance ImageDescriptionCreatorParamsV1Error = 5
 )
 
+// ImageDescriptionCreatorParamsV1CreateRequest create the image description object using params.
+//
+// Create an image description object based on the parameters previously
+// set on this object.
+//
+// The completeness of the parameter set is verified. If the set is not
+// complete, the protocol error incomplete_set is raised. For the
+// definition of a complete set, see the description of this interface.
+//
+// When both max_cll and max_fall are set, max_fall must be less or equal
+// to max_cll otherwise the invalid_luminance protocol error is raised.
+//
+// In version 1, these following conditions also result in the
+// invalid_luminance protocol error. Version 2 and later do not have this
+// requirement.
+//   - When max_cll is set, it must be greater than min L and less or equal
+//     to max L of the mastering luminance range.
+//   - When max_fall is set, it must be greater than min L and less or equal
+//     to max L of the mastering luminance range.
+//
+// If the particular combination of the parameter set is not supported
+// by the compositor, the resulting image description object shall
+// immediately deliver the wp_image_description_v1.failed event with the
+// 'unsupported' cause. If a valid image description was created from the
+// parameter set, the wp_image_description_v1.ready event will eventually
+// be sent instead.
+//
+// This request destroys the wp_image_description_creator_params_v1
+// object.
+//
+// The resulting image description object does not allow get_information
+// request.
 type ImageDescriptionCreatorParamsV1CreateRequest struct {
 	ImageDescription wire.NewID
 }
@@ -51,7 +90,22 @@ func (r *ImageDescriptionCreatorParamsV1CreateRequest) Marshal(w *wire.Writer) e
 
 func (r *ImageDescriptionCreatorParamsV1CreateRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetTfNamedRequest named transfer characteristic.
+//
+// Sets the transfer characteristic using explicitly enumerated named
+// functions.
+//
+// When the resulting image description is attached to an image, the
+// content should be decoded according to the industry standard
+// practices for the transfer characteristic.
+//
+// Only names advertised with wp_color_manager_v1 event supported_tf_named
+// are allowed. Other values shall raise the protocol error invalid_tf.
+//
+// If transfer characteristic has already been set on this object, the
+// protocol error already_set is raised.
 type ImageDescriptionCreatorParamsV1SetTfNamedRequest struct {
+	// Tf named transfer function.
 	Tf ColorManagerV1TransferFunction
 }
 
@@ -68,7 +122,28 @@ func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Marshal(w *wire.Write
 
 func (r *ImageDescriptionCreatorParamsV1SetTfNamedRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetTfPowerRequest transfer characteristic as a power curve.
+//
+// Sets the color component transfer characteristic to a power curve with
+// the given exponent. Negative values are handled by mirroring the
+// positive half of the curve through the origin. The valid domain and
+// range of the curve are all finite real numbers. This curve represents
+// the conversion from electrical to optical color channel values.
+//
+// The curve exponent shall be multiplied by 10000 to get the argument eexp
+// value to carry the precision of 4 decimals.
+//
+// The curve exponent must be at least 1.0 and at most 10.0. Otherwise the
+// protocol error invalid_tf is raised.
+//
+// If transfer characteristic has already been set on this object, the
+// protocol error already_set is raised.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.set_tf_power. Otherwise this request raises
+// the protocol error unsupported_feature.
 type ImageDescriptionCreatorParamsV1SetTfPowerRequest struct {
+	// Eexp the exponent * 10000.
 	Eexp uint32
 }
 
@@ -85,7 +160,20 @@ func (r *ImageDescriptionCreatorParamsV1SetTfPowerRequest) Marshal(w *wire.Write
 
 func (r *ImageDescriptionCreatorParamsV1SetTfPowerRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest named primaries.
+//
+// Sets the color primaries and white point using explicitly named sets.
+// This describes the primary color volume which is the basis for color
+// value encoding.
+//
+// Only names advertised with wp_color_manager_v1 event
+// supported_primaries_named are allowed. Other values shall raise the
+// protocol error invalid_primaries_named.
+//
+// If primaries have already been set on this object, the protocol error
+// already_set is raised.
 type ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest struct {
+	// Primaries named primaries.
 	Primaries ColorManagerV1Primaries
 }
 
@@ -102,14 +190,37 @@ func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Marshal(w *wir
 
 func (r *ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetPrimariesRequest primaries as chromaticity coordinates.
+//
+// Sets the color primaries and white point using CIE 1931 xy chromaticity
+// coordinates. This describes the primary color volume which is the basis
+// for color value encoding.
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
+//
+// If primaries have already been set on this object, the protocol error
+// already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_primaries. Otherwise this request raises
+// the protocol error unsupported_feature.
 type ImageDescriptionCreatorParamsV1SetPrimariesRequest struct {
+	// RX red x * 1M.
 	RX int32
+	// RY red y * 1M.
 	RY int32
+	// GX green x * 1M.
 	GX int32
+	// GY green y * 1M.
 	GY int32
+	// BX blue x * 1M.
 	BX int32
+	// BY blue y * 1M.
 	BY int32
+	// WX white x * 1M.
 	WX int32
+	// WY white y * 1M.
 	WY int32
 }
 
@@ -147,9 +258,63 @@ func (r *ImageDescriptionCreatorParamsV1SetPrimariesRequest) Marshal(w *wire.Wri
 
 func (r *ImageDescriptionCreatorParamsV1SetPrimariesRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetLuminancesRequest primary color volume luminance range and reference white.
+//
+// Sets the primary color volume luminance range and the reference white
+// luminance level. These values include the minimum display emission, but
+// not external flare. The minimum display emission is assumed to have
+// the chromaticity of the primary color volume white point.
+//
+// The default luminances from
+// https://www.color.org/chardata/rgb/srgb.xalter are
+// - primary color volume minimum: 0.2 cd/m²
+// - primary color volume maximum: 80 cd/m²
+// - reference white: 80 cd/m²
+//
+// Setting a named transfer characteristic can imply other default
+// luminances.
+//
+// The default luminances get overwritten when this request is used.
+// With transfer_function.st2084_pq the given 'max_lum' value is ignored,
+// and 'max_lum' is taken as 'min_lum' + 10000 cd/m².
+//
+// 'min_lum' and 'max_lum' specify the minimum and maximum luminances of
+// the primary color volume as reproduced by the targeted display.
+//
+// 'reference_lum' specifies the luminance of the reference white as
+// reproduced by the targeted display, and reflects the targeted viewing
+// environment.
+//
+// Compositors should make sure that all content is anchored, meaning that
+// an input signal level of 'reference_lum' on one image description and
+// another input signal level of 'reference_lum' on another image
+// description should produce the same output level, even though the
+// 'reference_lum' on both image representations can be different.
+//
+// 'reference_lum' may be higher than 'max_lum'. In that case reaching
+// the reference white output level in image content requires the
+// 'extended_target_volume' feature support.
+//
+// If 'max_lum' or 'reference_lum' are less than or equal to 'min_lum',
+// the protocol error invalid_luminance is raised.
+//
+// The minimum luminance is multiplied by 10000 to get the argument
+// 'min_lum' value and carries precision of 4 decimals. The maximum
+// luminance and reference white luminance values are unscaled.
+//
+// If the primary color volume luminance range and the reference white
+// luminance level have already been set on this object, the protocol error
+// already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_luminances. Otherwise this request
+// raises the protocol error unsupported_feature.
 type ImageDescriptionCreatorParamsV1SetLuminancesRequest struct {
-	MinLum       uint32
-	MaxLum       uint32
+	// MinLum minimum luminance (cd/m²) * 10000.
+	MinLum uint32
+	// MaxLum maximum luminance (cd/m²).
+	MaxLum uint32
+	// ReferenceLum reference white luminance (cd/m²).
 	ReferenceLum uint32
 }
 
@@ -172,14 +337,70 @@ func (r *ImageDescriptionCreatorParamsV1SetLuminancesRequest) Marshal(w *wire.Wr
 
 func (r *ImageDescriptionCreatorParamsV1SetLuminancesRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest mastering display primaries as chromaticity coordinates.
+//
+// Provides the color primaries and white point of the mastering display
+// using CIE 1931 xy chromaticity coordinates. This is compatible with the
+// SMPTE ST 2086 definition of HDR static metadata.
+//
+// The mastering display primaries and mastering display luminances define
+// the target color volume.
+//
+// If mastering display primaries are not explicitly set, the target color
+// volume is assumed to have the same primaries as the primary color volume.
+//
+// The target color volume is defined by all tristimulus values between 0.0
+// and 1.0 (inclusive) of the color space defined by the given mastering
+// display primaries and white point. The colorimetry is identical between
+// the container color space and the mastering display color space,
+// including that no chromatic adaptation is applied even if the white
+// points differ.
+//
+// The target color volume can exceed the primary color volume to allow for
+// a greater color volume with an existing color space definition (for
+// example scRGB). It can be smaller than the primary color volume to
+// minimize gamut and tone mapping distances for big color spaces (HDR
+// metadata).
+//
+// To make use of the entire target color volume a suitable pixel format
+// has to be chosen (e.g. floating point to exceed the primary color
+// volume, or abusing limited quantization range as with xvYCC).
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
+//
+// If mastering display primaries have already been set on this object, the
+// protocol error already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_mastering_display_primaries. Otherwise
+// this request raises the protocol error unsupported_feature. The
+// advertisement implies support only for target color volumes fully
+// contained within the primary color volume.
+//
+// If a compositor additionally supports target color volume exceeding the
+// primary color volume, it must advertise
+// wp_color_manager_v1.feature.extended_target_volume. If a client uses
+// target color volume exceeding the primary color volume and the
+// compositor does not support it, the result is implementation defined.
+// Compositors are recommended to detect this case and fail the image
+// description gracefully, but it may as well result in color artifacts.
 type ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest struct {
+	// RX red x * 1M.
 	RX int32
+	// RY red y * 1M.
 	RY int32
+	// GX green x * 1M.
 	GX int32
+	// GY green y * 1M.
 	GY int32
+	// BX blue x * 1M.
 	BX int32
+	// BY blue y * 1M.
 	BY int32
+	// WX white x * 1M.
 	WX int32
+	// WY white y * 1M.
 	WY int32
 }
 
@@ -217,8 +438,45 @@ func (r *ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest) Mar
 
 func (r *ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest display mastering luminance range.
+//
+// Sets the luminance range that was used during the content mastering
+// process as the minimum and maximum absolute luminance L. These values
+// include the minimum display emission and ambient flare luminances,
+// assumed to be optically additive and have the chromaticity of the
+// primary color volume white point. This should be
+// compatible with the SMPTE ST 2086 definition of HDR static metadata.
+//
+// The mastering display primaries and mastering display luminances define
+// the target color volume.
+//
+// If mastering luminances are not explicitly set, the target color volume
+// is assumed to have the same min and max luminances as the primary color
+// volume.
+//
+// If max L is less than or equal to min L, the protocol error
+// invalid_luminance is raised.
+//
+// Min L value is multiplied by 10000 to get the argument min_lum value
+// and carry precision of 4 decimals. Max L value is unscaled for max_lum.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_mastering_display_primaries. Otherwise
+// this request raises the protocol error unsupported_feature. The
+// advertisement implies support only for target color volumes fully
+// contained within the primary color volume.
+//
+// If a compositor additionally supports target color volume exceeding the
+// primary color volume, it must advertise
+// wp_color_manager_v1.feature.extended_target_volume. If a client uses
+// target color volume exceeding the primary color volume and the
+// compositor does not support it, the result is implementation defined.
+// Compositors are recommended to detect this case and fail the image
+// description gracefully, but it may as well result in color artifacts.
 type ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest struct {
+	// MinLum min L (cd/m²) * 10000.
 	MinLum uint32
+	// MaxLum max L (cd/m²).
 	MaxLum uint32
 }
 
@@ -238,7 +496,13 @@ func (r *ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest) Marshal(w 
 
 func (r *ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetMaxCllRequest maximum content light level.
+//
+// Sets the maximum content light level (max_cll) as defined by CTA-861-H.
+//
+// max_cll is undefined by default.
 type ImageDescriptionCreatorParamsV1SetMaxCllRequest struct {
+	// MaxCll maximum content light level (cd/m²).
 	MaxCll uint32
 }
 
@@ -255,7 +519,14 @@ func (r *ImageDescriptionCreatorParamsV1SetMaxCllRequest) Marshal(w *wire.Writer
 
 func (r *ImageDescriptionCreatorParamsV1SetMaxCllRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1SetMaxFallRequest maximum frame-average light level.
+//
+// Sets the maximum frame-average light level (max_fall) as defined by
+// CTA-861-H.
+//
+// max_fall is undefined by default.
 type ImageDescriptionCreatorParamsV1SetMaxFallRequest struct {
+	// MaxFall maximum frame-average light level (cd/m²).
 	MaxFall uint32
 }
 
@@ -272,18 +543,95 @@ func (r *ImageDescriptionCreatorParamsV1SetMaxFallRequest) Marshal(w *wire.Write
 
 func (r *ImageDescriptionCreatorParamsV1SetMaxFallRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionCreatorParamsV1 holder of image description parameters.
+//
+// This type of object is used for collecting all the parameters required
+// to create a wp_image_description_v1 object. A complete set of required
+// parameters consists of these properties:
+// - transfer characteristic function (tf)
+// - chromaticities of primaries and white point (primary color volume)
+//
+// The following properties are optional and have a well-defined default
+// if not explicitly set:
+// - primary color volume luminance range
+// - reference white luminance level
+// - mastering display primaries and white point (target color volume)
+// - mastering luminance range
+//
+// The following properties are optional and will be ignored
+// if not explicitly set:
+// - maximum content light level
+// - maximum frame-average light level
+//
+// Each required property must be set exactly once if the client is to create
+// an image description. The set requests verify that a property was not
+// already set. The create request verifies that all required properties are
+// set. There may be several alternative requests for setting each property,
+// and in that case the client must choose one of them.
+//
+// Once all properties have been set, the create request must be used to
+// create the image description object, destroying the creator in the
+// process.
+//
+// A viewer, who is viewing the display defined by the resulting image
+// description (the viewing environment included), is assumed to be fully
+// adapted to the primary color volume's white point.
+//
+// Any of the following conditions will cause the colorimetry of a pixel
+// to become undefined:
+// - Values outside of the defined range of the transfer characteristic.
+// - Tristimulus that exceeds the target color volume.
+// - If extended_target_volume is not supported: tristimulus that exceeds
+// the primary color volume.
+//
+// The closest correspondence to an image description created through this
+// interface is the Display class of profiles in ICC.
 type ImageDescriptionCreatorParamsV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageDescriptionCreatorParamsV1 wraps p in a ImageDescriptionCreatorParamsV1 proxy.
 func NewImageDescriptionCreatorParamsV1(p *wayland.Proxy) *ImageDescriptionCreatorParamsV1 {
 	return &ImageDescriptionCreatorParamsV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageDescriptionCreatorParamsV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Create create the image description object using params.
+//
+// Create an image description object based on the parameters previously
+// set on this object.
+//
+// The completeness of the parameter set is verified. If the set is not
+// complete, the protocol error incomplete_set is raised. For the
+// definition of a complete set, see the description of this interface.
+//
+// When both max_cll and max_fall are set, max_fall must be less or equal
+// to max_cll otherwise the invalid_luminance protocol error is raised.
+//
+// In version 1, these following conditions also result in the
+// invalid_luminance protocol error. Version 2 and later do not have this
+// requirement.
+//   - When max_cll is set, it must be greater than min L and less or equal
+//     to max L of the mastering luminance range.
+//   - When max_fall is set, it must be greater than min L and less or equal
+//     to max L of the mastering luminance range.
+//
+// If the particular combination of the parameter set is not supported
+// by the compositor, the resulting image description object shall
+// immediately deliver the wp_image_description_v1.failed event with the
+// 'unsupported' cause. If a valid image description was created from the
+// parameter set, the wp_image_description_v1.ready event will eventually
+// be sent instead.
+//
+// This request destroys the wp_image_description_creator_params_v1
+// object.
+//
+// The resulting image description object does not allow get_information
+// request.
 func (o *ImageDescriptionCreatorParamsV1) Create() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -301,24 +649,85 @@ func (o *ImageDescriptionCreatorParamsV1) Create() (*ImageDescriptionV1, error) 
 	return wrapped, nil
 }
 
+// SetTfNamed named transfer characteristic.
+//
+// Sets the transfer characteristic using explicitly enumerated named
+// functions.
+//
+// When the resulting image description is attached to an image, the
+// content should be decoded according to the industry standard
+// practices for the transfer characteristic.
+//
+// Only names advertised with wp_color_manager_v1 event supported_tf_named
+// are allowed. Other values shall raise the protocol error invalid_tf.
+//
+// If transfer characteristic has already been set on this object, the
+// protocol error already_set is raised.
 func (o *ImageDescriptionCreatorParamsV1) SetTfNamed(tf ColorManagerV1TransferFunction) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetTfNamed, &ImageDescriptionCreatorParamsV1SetTfNamedRequest{
 		Tf: tf,
 	})
 }
 
+// SetTfPower transfer characteristic as a power curve.
+//
+// Sets the color component transfer characteristic to a power curve with
+// the given exponent. Negative values are handled by mirroring the
+// positive half of the curve through the origin. The valid domain and
+// range of the curve are all finite real numbers. This curve represents
+// the conversion from electrical to optical color channel values.
+//
+// The curve exponent shall be multiplied by 10000 to get the argument eexp
+// value to carry the precision of 4 decimals.
+//
+// The curve exponent must be at least 1.0 and at most 10.0. Otherwise the
+// protocol error invalid_tf is raised.
+//
+// If transfer characteristic has already been set on this object, the
+// protocol error already_set is raised.
+//
+// This request can be used when the compositor advertises
+// wp_color_manager_v1.feature.set_tf_power. Otherwise this request raises
+// the protocol error unsupported_feature.
 func (o *ImageDescriptionCreatorParamsV1) SetTfPower(eexp uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetTfPower, &ImageDescriptionCreatorParamsV1SetTfPowerRequest{
 		Eexp: eexp,
 	})
 }
 
+// SetPrimariesNamed named primaries.
+//
+// Sets the color primaries and white point using explicitly named sets.
+// This describes the primary color volume which is the basis for color
+// value encoding.
+//
+// Only names advertised with wp_color_manager_v1 event
+// supported_primaries_named are allowed. Other values shall raise the
+// protocol error invalid_primaries_named.
+//
+// If primaries have already been set on this object, the protocol error
+// already_set is raised.
 func (o *ImageDescriptionCreatorParamsV1) SetPrimariesNamed(primaries ColorManagerV1Primaries) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetPrimariesNamed, &ImageDescriptionCreatorParamsV1SetPrimariesNamedRequest{
 		Primaries: primaries,
 	})
 }
 
+// SetPrimaries primaries as chromaticity coordinates.
+//
+// Sets the color primaries and white point using CIE 1931 xy chromaticity
+// coordinates. This describes the primary color volume which is the basis
+// for color value encoding.
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
+//
+// If primaries have already been set on this object, the protocol error
+// already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_primaries. Otherwise this request raises
+// the protocol error unsupported_feature.
 func (o *ImageDescriptionCreatorParamsV1) SetPrimaries(rX int32, rY int32, gX int32, gY int32, bX int32, bY int32, wX int32, wY int32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetPrimaries, &ImageDescriptionCreatorParamsV1SetPrimariesRequest{
 		RX: rX,
@@ -332,6 +741,57 @@ func (o *ImageDescriptionCreatorParamsV1) SetPrimaries(rX int32, rY int32, gX in
 	})
 }
 
+// SetLuminances primary color volume luminance range and reference white.
+//
+// Sets the primary color volume luminance range and the reference white
+// luminance level. These values include the minimum display emission, but
+// not external flare. The minimum display emission is assumed to have
+// the chromaticity of the primary color volume white point.
+//
+// The default luminances from
+// https://www.color.org/chardata/rgb/srgb.xalter are
+// - primary color volume minimum: 0.2 cd/m²
+// - primary color volume maximum: 80 cd/m²
+// - reference white: 80 cd/m²
+//
+// Setting a named transfer characteristic can imply other default
+// luminances.
+//
+// The default luminances get overwritten when this request is used.
+// With transfer_function.st2084_pq the given 'max_lum' value is ignored,
+// and 'max_lum' is taken as 'min_lum' + 10000 cd/m².
+//
+// 'min_lum' and 'max_lum' specify the minimum and maximum luminances of
+// the primary color volume as reproduced by the targeted display.
+//
+// 'reference_lum' specifies the luminance of the reference white as
+// reproduced by the targeted display, and reflects the targeted viewing
+// environment.
+//
+// Compositors should make sure that all content is anchored, meaning that
+// an input signal level of 'reference_lum' on one image description and
+// another input signal level of 'reference_lum' on another image
+// description should produce the same output level, even though the
+// 'reference_lum' on both image representations can be different.
+//
+// 'reference_lum' may be higher than 'max_lum'. In that case reaching
+// the reference white output level in image content requires the
+// 'extended_target_volume' feature support.
+//
+// If 'max_lum' or 'reference_lum' are less than or equal to 'min_lum',
+// the protocol error invalid_luminance is raised.
+//
+// The minimum luminance is multiplied by 10000 to get the argument
+// 'min_lum' value and carries precision of 4 decimals. The maximum
+// luminance and reference white luminance values are unscaled.
+//
+// If the primary color volume luminance range and the reference white
+// luminance level have already been set on this object, the protocol error
+// already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_luminances. Otherwise this request
+// raises the protocol error unsupported_feature.
 func (o *ImageDescriptionCreatorParamsV1) SetLuminances(minLum uint32, maxLum uint32, referenceLum uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetLuminances, &ImageDescriptionCreatorParamsV1SetLuminancesRequest{
 		MinLum:       minLum,
@@ -340,6 +800,54 @@ func (o *ImageDescriptionCreatorParamsV1) SetLuminances(minLum uint32, maxLum ui
 	})
 }
 
+// SetMasteringDisplayPrimaries mastering display primaries as chromaticity coordinates.
+//
+// Provides the color primaries and white point of the mastering display
+// using CIE 1931 xy chromaticity coordinates. This is compatible with the
+// SMPTE ST 2086 definition of HDR static metadata.
+//
+// The mastering display primaries and mastering display luminances define
+// the target color volume.
+//
+// If mastering display primaries are not explicitly set, the target color
+// volume is assumed to have the same primaries as the primary color volume.
+//
+// The target color volume is defined by all tristimulus values between 0.0
+// and 1.0 (inclusive) of the color space defined by the given mastering
+// display primaries and white point. The colorimetry is identical between
+// the container color space and the mastering display color space,
+// including that no chromatic adaptation is applied even if the white
+// points differ.
+//
+// The target color volume can exceed the primary color volume to allow for
+// a greater color volume with an existing color space definition (for
+// example scRGB). It can be smaller than the primary color volume to
+// minimize gamut and tone mapping distances for big color spaces (HDR
+// metadata).
+//
+// To make use of the entire target color volume a suitable pixel format
+// has to be chosen (e.g. floating point to exceed the primary color
+// volume, or abusing limited quantization range as with xvYCC).
+//
+// Each coordinate value is multiplied by 1 million to get the argument
+// value to carry precision of 6 decimals.
+//
+// If mastering display primaries have already been set on this object, the
+// protocol error already_set is raised.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_mastering_display_primaries. Otherwise
+// this request raises the protocol error unsupported_feature. The
+// advertisement implies support only for target color volumes fully
+// contained within the primary color volume.
+//
+// If a compositor additionally supports target color volume exceeding the
+// primary color volume, it must advertise
+// wp_color_manager_v1.feature.extended_target_volume. If a client uses
+// target color volume exceeding the primary color volume and the
+// compositor does not support it, the result is implementation defined.
+// Compositors are recommended to detect this case and fail the image
+// description gracefully, but it may as well result in color artifacts.
 func (o *ImageDescriptionCreatorParamsV1) SetMasteringDisplayPrimaries(rX int32, rY int32, gX int32, gY int32, bX int32, bY int32, wX int32, wY int32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMasteringDisplayPrimaries, &ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest{
 		RX: rX,
@@ -353,6 +861,41 @@ func (o *ImageDescriptionCreatorParamsV1) SetMasteringDisplayPrimaries(rX int32,
 	})
 }
 
+// SetMasteringLuminance display mastering luminance range.
+//
+// Sets the luminance range that was used during the content mastering
+// process as the minimum and maximum absolute luminance L. These values
+// include the minimum display emission and ambient flare luminances,
+// assumed to be optically additive and have the chromaticity of the
+// primary color volume white point. This should be
+// compatible with the SMPTE ST 2086 definition of HDR static metadata.
+//
+// The mastering display primaries and mastering display luminances define
+// the target color volume.
+//
+// If mastering luminances are not explicitly set, the target color volume
+// is assumed to have the same min and max luminances as the primary color
+// volume.
+//
+// If max L is less than or equal to min L, the protocol error
+// invalid_luminance is raised.
+//
+// Min L value is multiplied by 10000 to get the argument min_lum value
+// and carry precision of 4 decimals. Max L value is unscaled for max_lum.
+//
+// This request can be used if the compositor advertises
+// wp_color_manager_v1.feature.set_mastering_display_primaries. Otherwise
+// this request raises the protocol error unsupported_feature. The
+// advertisement implies support only for target color volumes fully
+// contained within the primary color volume.
+//
+// If a compositor additionally supports target color volume exceeding the
+// primary color volume, it must advertise
+// wp_color_manager_v1.feature.extended_target_volume. If a client uses
+// target color volume exceeding the primary color volume and the
+// compositor does not support it, the result is implementation defined.
+// Compositors are recommended to detect this case and fail the image
+// description gracefully, but it may as well result in color artifacts.
 func (o *ImageDescriptionCreatorParamsV1) SetMasteringLuminance(minLum uint32, maxLum uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMasteringLuminance, &ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest{
 		MinLum: minLum,
@@ -360,12 +903,23 @@ func (o *ImageDescriptionCreatorParamsV1) SetMasteringLuminance(minLum uint32, m
 	})
 }
 
+// SetMaxCll maximum content light level.
+//
+// Sets the maximum content light level (max_cll) as defined by CTA-861-H.
+//
+// max_cll is undefined by default.
 func (o *ImageDescriptionCreatorParamsV1) SetMaxCll(maxCll uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMaxCll, &ImageDescriptionCreatorParamsV1SetMaxCllRequest{
 		MaxCll: maxCll,
 	})
 }
 
+// SetMaxFall maximum frame-average light level.
+//
+// Sets the maximum frame-average light level (max_fall) as defined by
+// CTA-861-H.
+//
+// max_fall is undefined by default.
 func (o *ImageDescriptionCreatorParamsV1) SetMaxFall(maxFall uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMaxFall, &ImageDescriptionCreatorParamsV1SetMaxFallRequest{
 		MaxFall: maxFall,

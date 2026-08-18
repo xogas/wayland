@@ -14,6 +14,9 @@ const (
 	TextInputManagerV1RequestCreateTextInput uint16 = 0
 )
 
+// TextInputManagerV1CreateTextInputRequest create text input.
+//
+// Creates a new text_input object.
 type TextInputManagerV1CreateTextInputRequest struct {
 	ID wire.NewID
 }
@@ -31,18 +34,26 @@ func (r *TextInputManagerV1CreateTextInputRequest) Marshal(w *wire.Writer) error
 
 func (r *TextInputManagerV1CreateTextInputRequest) Since() uint32 { return 1 }
 
+// TextInputManagerV1 text input manager.
+//
+// A factory for text_input objects. This object is a global singleton.
 type TextInputManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTextInputManagerV1 wraps p in a TextInputManagerV1 proxy.
 func NewTextInputManagerV1(p *wayland.Proxy) *TextInputManagerV1 {
 	return &TextInputManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TextInputManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateTextInput create text input.
+//
+// Creates a new text_input object.
 func (o *TextInputManagerV1) CreateTextInput() (*TextInputV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

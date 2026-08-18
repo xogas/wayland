@@ -25,6 +25,10 @@ var fractionalscalev1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// FractionalScaleV1DestroyRequest remove surface scale information for surface.
+//
+// Destroy the fractional scale object. When this object is destroyed,
+// preferred_scale events will no longer be sent.
 type FractionalScaleV1DestroyRequest struct {
 }
 
@@ -36,7 +40,14 @@ func (r *FractionalScaleV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FractionalScaleV1DestroyRequest) Since() uint32 { return 1 }
 
+// FractionalScaleV1PreferredScaleEvent notify of new preferred scale.
+//
+// Notification of a new preferred scale for this surface that the
+// compositor suggests that the client should use.
+//
+// The sent scale is the numerator of a fraction with a denominator of 120.
 type FractionalScaleV1PreferredScaleEvent struct {
+	// Scale the new preferred scale.
 	Scale uint32
 }
 
@@ -55,21 +66,29 @@ func (e *FractionalScaleV1PreferredScaleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *FractionalScaleV1PreferredScaleEvent) Since() uint32 { return 1 }
 
+// FractionalScaleV1PreferredScaleFunc is a callback for PreferredScale events.
 type FractionalScaleV1PreferredScaleFunc func(ev FractionalScaleV1PreferredScaleEvent)
 
+// FractionalScaleV1 fractional scale interface to a wl_surface.
+//
+// An additional interface to a wl_surface object which allows the compositor
+// to inform the client of the preferred scale.
 type FractionalScaleV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFractionalScaleV1 wraps p in a FractionalScaleV1 proxy.
 func NewFractionalScaleV1(p *wayland.Proxy) *FractionalScaleV1 {
 	p.SetEventFDCounts(fractionalscalev1EventFDCounts)
 	return &FractionalScaleV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FractionalScaleV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnPreferredScale registers fn to receive PreferredScale events.
 func (o *FractionalScaleV1) OnPreferredScale(fn FractionalScaleV1PreferredScaleFunc) {
 	o.proxy.RegisterEvent(FractionalScaleV1EventPreferredScale, func(r *wire.Reader) {
 		var ev FractionalScaleV1PreferredScaleEvent
@@ -83,6 +102,10 @@ func (o *FractionalScaleV1) OnPreferredScale(fn FractionalScaleV1PreferredScaleF
 	})
 }
 
+// Destroy remove surface scale information for surface.
+//
+// Destroy the fractional scale object. When this object is destroyed,
+// preferred_scale events will no longer be sent.
 func (o *FractionalScaleV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

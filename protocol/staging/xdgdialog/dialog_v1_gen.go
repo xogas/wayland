@@ -16,6 +16,11 @@ const (
 	DialogV1RequestUnsetModal uint16 = 2
 )
 
+// DialogV1DestroyRequest destroy the dialog object.
+//
+// Destroys the xdg_dialog_v1 object. If this object is destroyed
+// before the related xdg_toplevel, the compositor should unapply its
+// effects.
 type DialogV1DestroyRequest struct {
 }
 
@@ -27,6 +32,19 @@ func (r *DialogV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DialogV1DestroyRequest) Since() uint32 { return 1 }
 
+// DialogV1SetModalRequest mark dialog as modal.
+//
+// Hints that the dialog has "modal" behavior. Modal dialogs typically
+// require to be fully addressed by the user (i.e. closed) before resuming
+// interaction with the parent toplevel, and may require a distinct
+// presentation.
+//
+// Clients must implement the logic to filter events in the parent
+// toplevel on their own.
+//
+// Compositors may choose any policy in event delivery to the parent
+// toplevel, from delivering all events unfiltered to using them for
+// internal consumption.
 type DialogV1SetModalRequest struct {
 }
 
@@ -38,6 +56,10 @@ func (r *DialogV1SetModalRequest) Marshal(w *wire.Writer) error {
 
 func (r *DialogV1SetModalRequest) Since() uint32 { return 1 }
 
+// DialogV1UnsetModalRequest mark dialog as not modal.
+//
+// Drops the hint that this dialog has "modal" behavior. See
+// xdg_dialog_v1.set_modal for more details.
 type DialogV1UnsetModalRequest struct {
 }
 
@@ -49,18 +71,36 @@ func (r *DialogV1UnsetModalRequest) Marshal(w *wire.Writer) error {
 
 func (r *DialogV1UnsetModalRequest) Since() uint32 { return 1 }
 
+// DialogV1 dialog object.
+//
+// A xdg_dialog_v1 object is an ancillary object tied to a xdg_toplevel. Its
+// purpose is hinting the compositor that the toplevel is a "dialog" (e.g. a
+// temporary window) relative to another toplevel (see
+// xdg_toplevel.set_parent). If the xdg_toplevel is destroyed, the xdg_dialog_v1
+// becomes inert.
+//
+// Through this object, the client may provide additional hints about
+// the purpose of the secondary toplevel. This interface has no effect
+// on toplevels that are not attached to a parent toplevel.
 type DialogV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDialogV1 wraps p in a DialogV1 proxy.
 func NewDialogV1(p *wayland.Proxy) *DialogV1 {
 	return &DialogV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DialogV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the dialog object.
+//
+// Destroys the xdg_dialog_v1 object. If this object is destroyed
+// before the related xdg_toplevel, the compositor should unapply its
+// effects.
 func (o *DialogV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -72,10 +112,27 @@ func (o *DialogV1) Destroy() error {
 	return nil
 }
 
+// SetModal mark dialog as modal.
+//
+// Hints that the dialog has "modal" behavior. Modal dialogs typically
+// require to be fully addressed by the user (i.e. closed) before resuming
+// interaction with the parent toplevel, and may require a distinct
+// presentation.
+//
+// Clients must implement the logic to filter events in the parent
+// toplevel on their own.
+//
+// Compositors may choose any policy in event delivery to the parent
+// toplevel, from delivering all events unfiltered to using them for
+// internal consumption.
 func (o *DialogV1) SetModal() error {
 	return o.proxy.SendRequest(DialogV1RequestSetModal, &DialogV1SetModalRequest{})
 }
 
+// UnsetModal mark dialog as not modal.
+//
+// Drops the hint that this dialog has "modal" behavior. See
+// xdg_dialog_v1.set_modal for more details.
 func (o *DialogV1) UnsetModal() error {
 	return o.proxy.SendRequest(DialogV1RequestUnsetModal, &DialogV1UnsetModalRequest{})
 }

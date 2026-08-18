@@ -18,12 +18,39 @@ const (
 type SurfaceV1Error uint32
 
 const (
+	// SurfaceV1ErrorAlreadyAssociated given wl_surface is already associated with an X11 window.
 	SurfaceV1ErrorAlreadyAssociated SurfaceV1Error = 0
-	SurfaceV1ErrorInvalidSerial     SurfaceV1Error = 1
+	// SurfaceV1ErrorInvalidSerial serial was not valid.
+	SurfaceV1ErrorInvalidSerial SurfaceV1Error = 1
 )
 
+// SurfaceV1SetSerialRequest associates a Xwayland window to a wl_surface.
+//
+// Associates an Xwayland window to a wl_surface.
+// The association state is double-buffered, see wl_surface.commit.
+//
+// The `serial_lo` and `serial_hi` parameters specify a non-zero
+// monotonic serial number which is entirely unique and provided by the
+// Xwayland server equal to the serial value provided by a client message
+// with a message type of the `WL_SURFACE_SERIAL` atom on the X11 window
+// for this surface to be associated to.
+//
+// The serial value in the `WL_SURFACE_SERIAL` client message is specified
+// as having the lo-bits specified in `l[0]` and the hi-bits specified
+// in `l[1]`.
+//
+// If the serial value provided by `serial_lo` and `serial_hi` is not
+// valid, the `invalid_serial` protocol error will be raised.
+//
+// An X11 window may be associated with multiple surfaces throughout its
+// lifespan. (eg. unmapping and remapping a window).
+//
+// For each wl_surface, this state must not be committed more than once,
+// otherwise the `already_associated` protocol error will be raised.
 type SurfaceV1SetSerialRequest struct {
+	// SerialLo the lower 32-bits of the serial number associated with the X11 window.
 	SerialLo uint32
+	// SerialHi the upper 32-bits of the serial number associated with the X11 window.
 	SerialHi uint32
 }
 
@@ -41,6 +68,11 @@ func (r *SurfaceV1SetSerialRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceV1SetSerialRequest) Since() uint32 { return 1 }
 
+// SurfaceV1DestroyRequest destroy the Xwayland surface object.
+//
+// Destroy the xwayland_surface_v1 object.
+//
+// Any already existing associations are unaffected by this action.
 type SurfaceV1DestroyRequest struct {
 }
 
@@ -52,18 +84,53 @@ func (r *SurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// SurfaceV1 interface for associating Xwayland windows to wl_surfaces.
+//
+// An Xwayland surface is a surface managed by an Xwayland server.
+// It is used for associating surfaces to Xwayland windows.
+//
+// The Xwayland server associated with actions in this interface is
+// determined by the Wayland client making the request.
+//
+// The client must call wl_surface.commit on the corresponding wl_surface
+// for the xwayland_surface_v1 state to take effect.
 type SurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSurfaceV1 wraps p in a SurfaceV1 proxy.
 func NewSurfaceV1(p *wayland.Proxy) *SurfaceV1 {
 	return &SurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// SetSerial associates a Xwayland window to a wl_surface.
+//
+// Associates an Xwayland window to a wl_surface.
+// The association state is double-buffered, see wl_surface.commit.
+//
+// The `serial_lo` and `serial_hi` parameters specify a non-zero
+// monotonic serial number which is entirely unique and provided by the
+// Xwayland server equal to the serial value provided by a client message
+// with a message type of the `WL_SURFACE_SERIAL` atom on the X11 window
+// for this surface to be associated to.
+//
+// The serial value in the `WL_SURFACE_SERIAL` client message is specified
+// as having the lo-bits specified in `l[0]` and the hi-bits specified
+// in `l[1]`.
+//
+// If the serial value provided by `serial_lo` and `serial_hi` is not
+// valid, the `invalid_serial` protocol error will be raised.
+//
+// An X11 window may be associated with multiple surfaces throughout its
+// lifespan. (eg. unmapping and remapping a window).
+//
+// For each wl_surface, this state must not be committed more than once,
+// otherwise the `already_associated` protocol error will be raised.
 func (o *SurfaceV1) SetSerial(serialLo uint32, serialHi uint32) error {
 	return o.proxy.SendRequest(SurfaceV1RequestSetSerial, &SurfaceV1SetSerialRequest{
 		SerialLo: serialLo,
@@ -71,6 +138,11 @@ func (o *SurfaceV1) SetSerial(serialLo uint32, serialHi uint32) error {
 	})
 }
 
+// Destroy destroy the Xwayland surface object.
+//
+// Destroy the xwayland_surface_v1 object.
+//
+// Any already existing associations are unaffected by this action.
 func (o *SurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

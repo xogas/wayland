@@ -14,6 +14,9 @@ const (
 	IdleInhibitorV1RequestDestroy uint16 = 0
 )
 
+// IdleInhibitorV1DestroyRequest destroy the idle inhibitor object.
+//
+// Remove the inhibitor effect from the associated wl_surface.
 type IdleInhibitorV1DestroyRequest struct {
 }
 
@@ -25,18 +28,37 @@ func (r *IdleInhibitorV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *IdleInhibitorV1DestroyRequest) Since() uint32 { return 1 }
 
+// IdleInhibitorV1 context object for inhibiting idle behavior.
+//
+// An idle inhibitor prevents the output that the associated surface is
+// visible on from being set to a state where it is not visually usable due
+// to lack of user interaction (e.g. blanked, dimmed, locked, set to power
+// save, etc.)  Any screensaver processes are also blocked from displaying.
+//
+// If the surface is destroyed, unmapped, becomes occluded, loses
+// visibility, or otherwise becomes not visually relevant for the user, the
+// idle inhibitor will not be honored by the compositor; if the surface
+// subsequently regains visibility the inhibitor takes effect once again.
+// Likewise, the inhibitor isn't honored if the system was already idled at
+// the time the inhibitor was established, although if the system later
+// de-idles and re-idles the inhibitor will take effect.
 type IdleInhibitorV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewIdleInhibitorV1 wraps p in a IdleInhibitorV1 proxy.
 func NewIdleInhibitorV1(p *wayland.Proxy) *IdleInhibitorV1 {
 	return &IdleInhibitorV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *IdleInhibitorV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the idle inhibitor object.
+//
+// Remove the inhibitor effect from the associated wl_surface.
 func (o *IdleInhibitorV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

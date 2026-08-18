@@ -15,53 +15,109 @@ const (
 	CursorShapeDeviceV1RequestSetShape uint16 = 1
 )
 
+// CursorShapeDeviceV1Shape cursor shapes.
+//
+// This enum describes cursor shapes.
+//
+// The names are taken from the CSS W3C specification:
+// https://w3c.github.io/csswg-drafts/css-ui/#cursor
+// with a few additions.
+//
+// Note that there are some groups of cursor shapes that are related:
+// The first group is drag-and-drop cursors which are used to indicate
+// the selected action during dnd operations. The second group is resize
+// cursors which are used to indicate resizing and moving possibilities
+// on window borders. It is recommended that the shapes in these groups
+// should use visually compatible images and metaphors.
 type CursorShapeDeviceV1Shape uint32
 
 const (
-	CursorShapeDeviceV1ShapeDefault      CursorShapeDeviceV1Shape = 1
-	CursorShapeDeviceV1ShapeContextMenu  CursorShapeDeviceV1Shape = 2
-	CursorShapeDeviceV1ShapeHelp         CursorShapeDeviceV1Shape = 3
-	CursorShapeDeviceV1ShapePointer      CursorShapeDeviceV1Shape = 4
-	CursorShapeDeviceV1ShapeProgress     CursorShapeDeviceV1Shape = 5
-	CursorShapeDeviceV1ShapeWait         CursorShapeDeviceV1Shape = 6
-	CursorShapeDeviceV1ShapeCell         CursorShapeDeviceV1Shape = 7
-	CursorShapeDeviceV1ShapeCrosshair    CursorShapeDeviceV1Shape = 8
-	CursorShapeDeviceV1ShapeText         CursorShapeDeviceV1Shape = 9
+	// CursorShapeDeviceV1ShapeDefault default cursor.
+	CursorShapeDeviceV1ShapeDefault CursorShapeDeviceV1Shape = 1
+	// CursorShapeDeviceV1ShapeContextMenu a context menu is available for the object under the cursor.
+	CursorShapeDeviceV1ShapeContextMenu CursorShapeDeviceV1Shape = 2
+	// CursorShapeDeviceV1ShapeHelp help is available for the object under the cursor.
+	CursorShapeDeviceV1ShapeHelp CursorShapeDeviceV1Shape = 3
+	// CursorShapeDeviceV1ShapePointer pointer that indicates a link or another interactive element.
+	CursorShapeDeviceV1ShapePointer CursorShapeDeviceV1Shape = 4
+	// CursorShapeDeviceV1ShapeProgress progress indicator.
+	CursorShapeDeviceV1ShapeProgress CursorShapeDeviceV1Shape = 5
+	// CursorShapeDeviceV1ShapeWait program is busy, user should wait.
+	CursorShapeDeviceV1ShapeWait CursorShapeDeviceV1Shape = 6
+	// CursorShapeDeviceV1ShapeCell a cell or set of cells may be selected.
+	CursorShapeDeviceV1ShapeCell CursorShapeDeviceV1Shape = 7
+	// CursorShapeDeviceV1ShapeCrosshair simple crosshair.
+	CursorShapeDeviceV1ShapeCrosshair CursorShapeDeviceV1Shape = 8
+	// CursorShapeDeviceV1ShapeText text may be selected.
+	CursorShapeDeviceV1ShapeText CursorShapeDeviceV1Shape = 9
+	// CursorShapeDeviceV1ShapeVerticalText vertical text may be selected.
 	CursorShapeDeviceV1ShapeVerticalText CursorShapeDeviceV1Shape = 10
-	CursorShapeDeviceV1ShapeAlias        CursorShapeDeviceV1Shape = 11
-	CursorShapeDeviceV1ShapeCopy         CursorShapeDeviceV1Shape = 12
-	CursorShapeDeviceV1ShapeMove         CursorShapeDeviceV1Shape = 13
-	CursorShapeDeviceV1ShapeNoDrop       CursorShapeDeviceV1Shape = 14
-	CursorShapeDeviceV1ShapeNotAllowed   CursorShapeDeviceV1Shape = 15
-	CursorShapeDeviceV1ShapeGrab         CursorShapeDeviceV1Shape = 16
-	CursorShapeDeviceV1ShapeGrabbing     CursorShapeDeviceV1Shape = 17
-	CursorShapeDeviceV1ShapeEResize      CursorShapeDeviceV1Shape = 18
-	CursorShapeDeviceV1ShapeNResize      CursorShapeDeviceV1Shape = 19
-	CursorShapeDeviceV1ShapeNeResize     CursorShapeDeviceV1Shape = 20
-	CursorShapeDeviceV1ShapeNwResize     CursorShapeDeviceV1Shape = 21
-	CursorShapeDeviceV1ShapeSResize      CursorShapeDeviceV1Shape = 22
-	CursorShapeDeviceV1ShapeSeResize     CursorShapeDeviceV1Shape = 23
-	CursorShapeDeviceV1ShapeSwResize     CursorShapeDeviceV1Shape = 24
-	CursorShapeDeviceV1ShapeWResize      CursorShapeDeviceV1Shape = 25
-	CursorShapeDeviceV1ShapeEwResize     CursorShapeDeviceV1Shape = 26
-	CursorShapeDeviceV1ShapeNsResize     CursorShapeDeviceV1Shape = 27
-	CursorShapeDeviceV1ShapeNeswResize   CursorShapeDeviceV1Shape = 28
-	CursorShapeDeviceV1ShapeNwseResize   CursorShapeDeviceV1Shape = 29
-	CursorShapeDeviceV1ShapeColResize    CursorShapeDeviceV1Shape = 30
-	CursorShapeDeviceV1ShapeRowResize    CursorShapeDeviceV1Shape = 31
-	CursorShapeDeviceV1ShapeAllScroll    CursorShapeDeviceV1Shape = 32
-	CursorShapeDeviceV1ShapeZoomIn       CursorShapeDeviceV1Shape = 33
-	CursorShapeDeviceV1ShapeZoomOut      CursorShapeDeviceV1Shape = 34
-	CursorShapeDeviceV1ShapeDndAsk       CursorShapeDeviceV1Shape = 35
-	CursorShapeDeviceV1ShapeAllResize    CursorShapeDeviceV1Shape = 36
+	// CursorShapeDeviceV1ShapeAlias drag-and-drop: alias of/shortcut to something is to be created.
+	CursorShapeDeviceV1ShapeAlias CursorShapeDeviceV1Shape = 11
+	// CursorShapeDeviceV1ShapeCopy drag-and-drop: something is to be copied.
+	CursorShapeDeviceV1ShapeCopy CursorShapeDeviceV1Shape = 12
+	// CursorShapeDeviceV1ShapeMove drag-and-drop: something is to be moved.
+	CursorShapeDeviceV1ShapeMove CursorShapeDeviceV1Shape = 13
+	// CursorShapeDeviceV1ShapeNoDrop drag-and-drop: the dragged item cannot be dropped at the current cursor location.
+	CursorShapeDeviceV1ShapeNoDrop CursorShapeDeviceV1Shape = 14
+	// CursorShapeDeviceV1ShapeNotAllowed drag-and-drop: the requested action will not be carried out.
+	CursorShapeDeviceV1ShapeNotAllowed CursorShapeDeviceV1Shape = 15
+	// CursorShapeDeviceV1ShapeGrab drag-and-drop: something can be grabbed.
+	CursorShapeDeviceV1ShapeGrab CursorShapeDeviceV1Shape = 16
+	// CursorShapeDeviceV1ShapeGrabbing drag-and-drop: something is being grabbed.
+	CursorShapeDeviceV1ShapeGrabbing CursorShapeDeviceV1Shape = 17
+	// CursorShapeDeviceV1ShapeEResize resizing: the east border is to be moved.
+	CursorShapeDeviceV1ShapeEResize CursorShapeDeviceV1Shape = 18
+	// CursorShapeDeviceV1ShapeNResize resizing: the north border is to be moved.
+	CursorShapeDeviceV1ShapeNResize CursorShapeDeviceV1Shape = 19
+	// CursorShapeDeviceV1ShapeNeResize resizing: the north-east corner is to be moved.
+	CursorShapeDeviceV1ShapeNeResize CursorShapeDeviceV1Shape = 20
+	// CursorShapeDeviceV1ShapeNwResize resizing: the north-west corner is to be moved.
+	CursorShapeDeviceV1ShapeNwResize CursorShapeDeviceV1Shape = 21
+	// CursorShapeDeviceV1ShapeSResize resizing: the south border is to be moved.
+	CursorShapeDeviceV1ShapeSResize CursorShapeDeviceV1Shape = 22
+	// CursorShapeDeviceV1ShapeSeResize resizing: the south-east corner is to be moved.
+	CursorShapeDeviceV1ShapeSeResize CursorShapeDeviceV1Shape = 23
+	// CursorShapeDeviceV1ShapeSwResize resizing: the south-west corner is to be moved.
+	CursorShapeDeviceV1ShapeSwResize CursorShapeDeviceV1Shape = 24
+	// CursorShapeDeviceV1ShapeWResize resizing: the west border is to be moved.
+	CursorShapeDeviceV1ShapeWResize CursorShapeDeviceV1Shape = 25
+	// CursorShapeDeviceV1ShapeEwResize resizing: the east and west borders are to be moved.
+	CursorShapeDeviceV1ShapeEwResize CursorShapeDeviceV1Shape = 26
+	// CursorShapeDeviceV1ShapeNsResize resizing: the north and south borders are to be moved.
+	CursorShapeDeviceV1ShapeNsResize CursorShapeDeviceV1Shape = 27
+	// CursorShapeDeviceV1ShapeNeswResize resizing: the north-east and south-west corners are to be moved.
+	CursorShapeDeviceV1ShapeNeswResize CursorShapeDeviceV1Shape = 28
+	// CursorShapeDeviceV1ShapeNwseResize resizing: the north-west and south-east corners are to be moved.
+	CursorShapeDeviceV1ShapeNwseResize CursorShapeDeviceV1Shape = 29
+	// CursorShapeDeviceV1ShapeColResize resizing: that the item/column can be resized horizontally.
+	CursorShapeDeviceV1ShapeColResize CursorShapeDeviceV1Shape = 30
+	// CursorShapeDeviceV1ShapeRowResize resizing: that the item/row can be resized vertically.
+	CursorShapeDeviceV1ShapeRowResize CursorShapeDeviceV1Shape = 31
+	// CursorShapeDeviceV1ShapeAllScroll something can be scrolled in any direction.
+	CursorShapeDeviceV1ShapeAllScroll CursorShapeDeviceV1Shape = 32
+	// CursorShapeDeviceV1ShapeZoomIn something can be zoomed in.
+	CursorShapeDeviceV1ShapeZoomIn CursorShapeDeviceV1Shape = 33
+	// CursorShapeDeviceV1ShapeZoomOut something can be zoomed out.
+	CursorShapeDeviceV1ShapeZoomOut CursorShapeDeviceV1Shape = 34
+	// CursorShapeDeviceV1ShapeDndAsk drag-and-drop: the user will select which action will be carried out (non-css value).
+	CursorShapeDeviceV1ShapeDndAsk CursorShapeDeviceV1Shape = 35
+	// CursorShapeDeviceV1ShapeAllResize resizing: something can be moved or resized in any direction (non-css value).
+	CursorShapeDeviceV1ShapeAllResize CursorShapeDeviceV1Shape = 36
 )
 
 type CursorShapeDeviceV1Error uint32
 
 const (
+	// CursorShapeDeviceV1ErrorInvalidShape the specified shape value is invalid.
 	CursorShapeDeviceV1ErrorInvalidShape CursorShapeDeviceV1Error = 1
 )
 
+// CursorShapeDeviceV1DestroyRequest destroy the cursor shape device.
+//
+// Destroy the cursor shape device.
+//
+// The device cursor shape remains unchanged.
 type CursorShapeDeviceV1DestroyRequest struct {
 }
 
@@ -73,7 +129,28 @@ func (r *CursorShapeDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CursorShapeDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
+// CursorShapeDeviceV1SetShapeRequest set device cursor to the shape.
+//
+// Sets the device cursor to the specified shape. The compositor will
+// change the cursor image based on the specified shape.
+//
+// The cursor actually changes only if the input device focus is one of
+// the requesting client's surfaces. If any, the previous cursor image
+// (surface or shape) is replaced.
+//
+// The "shape" argument must be a valid enum entry, otherwise the
+// invalid_shape protocol error is raised.
+//
+// This is similar to the wl_pointer.set_cursor and
+// zwp_tablet_tool_v2.set_cursor requests, but this request accepts a
+// shape instead of contents in the form of a surface. Clients can mix
+// set_cursor and set_shape requests.
+//
+// The serial parameter must match the latest wl_pointer.enter or
+// zwp_tablet_tool_v2.proximity_in serial number sent to the client.
+// Otherwise the request will be ignored.
 type CursorShapeDeviceV1SetShapeRequest struct {
+	// Serial serial number of the enter event.
 	Serial uint32
 	Shape  CursorShapeDeviceV1Shape
 }
@@ -94,18 +171,28 @@ func (r *CursorShapeDeviceV1SetShapeRequest) Marshal(w *wire.Writer) error {
 
 func (r *CursorShapeDeviceV1SetShapeRequest) Since() uint32 { return 1 }
 
+// CursorShapeDeviceV1 cursor shape for a device.
+//
+// This interface allows clients to set the cursor shape.
 type CursorShapeDeviceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCursorShapeDeviceV1 wraps p in a CursorShapeDeviceV1 proxy.
 func NewCursorShapeDeviceV1(p *wayland.Proxy) *CursorShapeDeviceV1 {
 	return &CursorShapeDeviceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CursorShapeDeviceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the cursor shape device.
+//
+// Destroy the cursor shape device.
+//
+// The device cursor shape remains unchanged.
 func (o *CursorShapeDeviceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -117,6 +204,26 @@ func (o *CursorShapeDeviceV1) Destroy() error {
 	return nil
 }
 
+// SetShape set device cursor to the shape.
+//
+// Sets the device cursor to the specified shape. The compositor will
+// change the cursor image based on the specified shape.
+//
+// The cursor actually changes only if the input device focus is one of
+// the requesting client's surfaces. If any, the previous cursor image
+// (surface or shape) is replaced.
+//
+// The "shape" argument must be a valid enum entry, otherwise the
+// invalid_shape protocol error is raised.
+//
+// This is similar to the wl_pointer.set_cursor and
+// zwp_tablet_tool_v2.set_cursor requests, but this request accepts a
+// shape instead of contents in the form of a surface. Clients can mix
+// set_cursor and set_shape requests.
+//
+// The serial parameter must match the latest wl_pointer.enter or
+// zwp_tablet_tool_v2.proximity_in serial number sent to the client.
+// Otherwise the request will be ignored.
 func (o *CursorShapeDeviceV1) SetShape(serial uint32, shape CursorShapeDeviceV1Shape) error {
 	return o.proxy.SendRequest(CursorShapeDeviceV1RequestSetShape, &CursorShapeDeviceV1SetShapeRequest{
 		Serial: serial,

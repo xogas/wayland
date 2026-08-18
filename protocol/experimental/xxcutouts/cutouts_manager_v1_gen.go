@@ -18,10 +18,18 @@ const (
 type CutoutsManagerV1Error uint32
 
 const (
-	CutoutsManagerV1ErrorInvalidRole          CutoutsManagerV1Error = 0
+	// CutoutsManagerV1ErrorInvalidRole given wl_surface has incorrect role.
+	CutoutsManagerV1ErrorInvalidRole CutoutsManagerV1Error = 0
+	// CutoutsManagerV1ErrorDefunctCutoutsObject wl_surface or surface role was destroyed before the cutouts object.
 	CutoutsManagerV1ErrorDefunctCutoutsObject CutoutsManagerV1Error = 1
 )
 
+// CutoutsManagerV1DestroyRequest destroy the xx_cutouts_manager object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xx_cutouts_manger object anymore.
+//
+// Any objects already created through this instance are not affected.
 type CutoutsManagerV1DestroyRequest struct {
 }
 
@@ -33,6 +41,12 @@ func (r *CutoutsManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CutoutsManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// CutoutsManagerV1GetCutoutsRequest create a cutout notifier from a xdg toplevel.
+//
+// This creates a new xx_cutouts object for the given
+// surface. The role of the surface must be xdg_toplevel
+// otherwise an invalid_role protocol error will be raised. Later
+// versions of this protocol might allow for other surface roles.
 type CutoutsManagerV1GetCutoutsRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -52,18 +66,30 @@ func (r *CutoutsManagerV1GetCutoutsRequest) Marshal(w *wire.Writer) error {
 
 func (r *CutoutsManagerV1GetCutoutsRequest) Since() uint32 { return 1 }
 
+// CutoutsManagerV1 display cutouts area manager.
+//
+// This interface allows a compositor to announce support for
+// supplying cutout information to the client.
 type CutoutsManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCutoutsManagerV1 wraps p in a CutoutsManagerV1 proxy.
 func NewCutoutsManagerV1(p *wayland.Proxy) *CutoutsManagerV1 {
 	return &CutoutsManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CutoutsManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xx_cutouts_manager object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xx_cutouts_manger object anymore.
+//
+// Any objects already created through this instance are not affected.
 func (o *CutoutsManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -75,6 +101,12 @@ func (o *CutoutsManagerV1) Destroy() error {
 	return nil
 }
 
+// GetCutouts create a cutout notifier from a xdg toplevel.
+//
+// This creates a new xx_cutouts object for the given
+// surface. The role of the surface must be xdg_toplevel
+// otherwise an invalid_role protocol error will be raised. Later
+// versions of this protocol might allow for other surface roles.
 func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

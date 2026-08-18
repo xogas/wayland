@@ -16,12 +16,33 @@ const (
 	FifoV1RequestDestroy     uint16 = 2
 )
 
+// FifoV1Error fatal error.
+//
+// These fatal protocol errors may be emitted in response to
+// illegal requests.
 type FifoV1Error uint32
 
 const (
+	// FifoV1ErrorSurfaceDestroyed the associated surface no longer exists.
 	FifoV1ErrorSurfaceDestroyed FifoV1Error = 0
 )
 
+// FifoV1SetBarrierRequest sets the start point for a fifo constraint.
+//
+// When the content update containing the "set_barrier" is applied,
+// it sets a "fifo_barrier" condition on the surface associated with
+// the fifo object. The condition is cleared immediately after the
+// following latching deadline for non-tearing presentation.
+//
+// The compositor may clear the condition early if it must do so to
+// ensure client forward progress assumptions.
+//
+// To wait for this condition to clear, use the "wait_barrier" request.
+//
+// "set_barrier" is double-buffered state, see wl_surface.commit.
+//
+// Requesting set_barrier after the fifo object's surface is
+// destroyed will generate a "surface_destroyed" error.
 type FifoV1SetBarrierRequest struct {
 }
 
@@ -33,6 +54,28 @@ func (r *FifoV1SetBarrierRequest) Marshal(w *wire.Writer) error {
 
 func (r *FifoV1SetBarrierRequest) Since() uint32 { return 1 }
 
+// FifoV1WaitBarrierRequest adds a fifo constraint to a content update.
+//
+// Indicate that this content update is not ready while a
+// "fifo_barrier" condition is present on the surface.
+//
+// This means that when the content update containing "set_barrier"
+// was made active at a latching deadline, it will be active for
+// at least one refresh cycle. A content update which is allowed to
+// tear might become active after a latching deadline if no content
+// update became active at the deadline.
+//
+// The constraint must be ignored if the surface is a subsurface in
+// synchronized mode. If the surface is not being updated by the
+// compositor (off-screen, occluded) the compositor may ignore the
+// constraint. Clients must use an additional mechanism such as
+// frame callbacks or timestamps to ensure throttling occurs under
+// all conditions.
+//
+// "wait_barrier" is double-buffered state, see wl_surface.commit.
+//
+// Requesting "wait_barrier" after the fifo object's surface is
+// destroyed will generate a "surface_destroyed" error.
 type FifoV1WaitBarrierRequest struct {
 }
 
@@ -44,6 +87,13 @@ func (r *FifoV1WaitBarrierRequest) Marshal(w *wire.Writer) error {
 
 func (r *FifoV1WaitBarrierRequest) Since() uint32 { return 1 }
 
+// FifoV1DestroyRequest destroy the fifo interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object.
+//
+// Surface state changes previously made by this protocol are
+// unaffected by this object's destruction.
 type FifoV1DestroyRequest struct {
 }
 
@@ -55,26 +105,77 @@ func (r *FifoV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FifoV1DestroyRequest) Since() uint32 { return 1 }
 
+// FifoV1 fifo interface.
+//
+// A fifo object for a surface that may be used to add
+// display refresh constraints to content updates.
 type FifoV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFifoV1 wraps p in a FifoV1 proxy.
 func NewFifoV1(p *wayland.Proxy) *FifoV1 {
 	return &FifoV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FifoV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// SetBarrier sets the start point for a fifo constraint.
+//
+// When the content update containing the "set_barrier" is applied,
+// it sets a "fifo_barrier" condition on the surface associated with
+// the fifo object. The condition is cleared immediately after the
+// following latching deadline for non-tearing presentation.
+//
+// The compositor may clear the condition early if it must do so to
+// ensure client forward progress assumptions.
+//
+// To wait for this condition to clear, use the "wait_barrier" request.
+//
+// "set_barrier" is double-buffered state, see wl_surface.commit.
+//
+// Requesting set_barrier after the fifo object's surface is
+// destroyed will generate a "surface_destroyed" error.
 func (o *FifoV1) SetBarrier() error {
 	return o.proxy.SendRequest(FifoV1RequestSetBarrier, &FifoV1SetBarrierRequest{})
 }
 
+// WaitBarrier adds a fifo constraint to a content update.
+//
+// Indicate that this content update is not ready while a
+// "fifo_barrier" condition is present on the surface.
+//
+// This means that when the content update containing "set_barrier"
+// was made active at a latching deadline, it will be active for
+// at least one refresh cycle. A content update which is allowed to
+// tear might become active after a latching deadline if no content
+// update became active at the deadline.
+//
+// The constraint must be ignored if the surface is a subsurface in
+// synchronized mode. If the surface is not being updated by the
+// compositor (off-screen, occluded) the compositor may ignore the
+// constraint. Clients must use an additional mechanism such as
+// frame callbacks or timestamps to ensure throttling occurs under
+// all conditions.
+//
+// "wait_barrier" is double-buffered state, see wl_surface.commit.
+//
+// Requesting "wait_barrier" after the fifo object's surface is
+// destroyed will generate a "surface_destroyed" error.
 func (o *FifoV1) WaitBarrier() error {
 	return o.proxy.SendRequest(FifoV1RequestWaitBarrier, &FifoV1WaitBarrierRequest{})
 }
 
+// Destroy destroy the fifo interface.
+//
+// Informs the server that the client will no longer be using
+// this protocol object.
+//
+// Surface state changes previously made by this protocol are
+// unaffected by this object's destruction.
 func (o *FifoV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

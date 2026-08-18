@@ -34,21 +34,42 @@ var keyboardEventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+// KeyboardKeymapFormat keyboard mapping format.
+//
+// This specifies the format of the keymap provided to the
+// client with the wl_keyboard.keymap event.
 type KeyboardKeymapFormat uint32
 
 const (
+	// KeyboardKeymapFormatNoKeymap no keymap; client must understand how to interpret the raw keycode.
 	KeyboardKeymapFormatNoKeymap KeyboardKeymapFormat = 0
-	KeyboardKeymapFormatXkbV1    KeyboardKeymapFormat = 1
+	// KeyboardKeymapFormatXkbV1 libxkbcommon compatible, null-terminated string; to determine the xkb keycode, clients must add 8 to the key event keycode.
+	KeyboardKeymapFormatXkbV1 KeyboardKeymapFormat = 1
 )
 
+// KeyboardKeyState physical key state.
+//
+// Describes the physical state of a key that produced the key event.
+//
+// Since version 10, the key can be in a "repeated" pseudo-state which
+// means the same as "pressed", but is used to signal repetition in the
+// key event.
+//
+// The key may only enter the repeated state after entering the pressed
+// state and before entering the released state. This event may be
+// generated multiple times while the key is down.
 type KeyboardKeyState uint32
 
 const (
+	// KeyboardKeyStateReleased key is not pressed.
 	KeyboardKeyStateReleased KeyboardKeyState = 0
-	KeyboardKeyStatePressed  KeyboardKeyState = 1
+	// KeyboardKeyStatePressed key is pressed.
+	KeyboardKeyStatePressed KeyboardKeyState = 1
+	// KeyboardKeyStateRepeated key was repeated.
 	KeyboardKeyStateRepeated KeyboardKeyState = 2
 )
 
+// KeyboardReleaseRequest release the keyboard object.
 type KeyboardReleaseRequest struct {
 }
 
@@ -60,10 +81,21 @@ func (r *KeyboardReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *KeyboardReleaseRequest) Since() uint32 { return 3 }
 
+// KeyboardKeymapEvent keyboard mapping.
+//
+// This event provides a file descriptor to the client which can be
+// memory-mapped in read-only mode to provide a keyboard mapping
+// description.
+//
+// From version 7 onwards, the fd must be mapped with MAP_PRIVATE by
+// the recipient, as MAP_SHARED may fail.
 type KeyboardKeymapEvent struct {
+	// Format keymap format.
 	Format KeyboardKeymapFormat
-	Fd     int
-	Size   uint32
+	// Fd keymap file descriptor.
+	Fd int
+	// Size keymap size, in bytes.
+	Size uint32
 }
 
 func (e *KeyboardKeymapEvent) Opcode() uint16 { return KeyboardEventKeymap }
@@ -89,10 +121,28 @@ func (e *KeyboardKeymapEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardKeymapEvent) Since() uint32 { return 1 }
 
+// KeyboardEnterEvent enter event.
+//
+// Notification that this seat's keyboard focus is on a certain
+// surface.
+//
+// The compositor must send the wl_keyboard.modifiers event after this
+// event.
+//
+// In the wl_keyboard logical state, this event sets the active surface to
+// the surface argument and the keys currently logically down to the keys
+// in the keys argument. The compositor must not send this event if the
+// wl_keyboard already had an active surface immediately before this event.
+//
+// Clients should not use the list of pressed keys to emulate key-press
+// events. The order of keys in the list is unspecified.
 type KeyboardEnterEvent struct {
-	Serial  uint32
+	// Serial serial number of the enter event.
+	Serial uint32
+	// Surface surface gaining keyboard focus.
 	Surface wire.ObjectID
-	Keys    []byte
+	// Keys the keys currently logically down.
+	Keys []byte
 }
 
 func (e *KeyboardEnterEvent) Opcode() uint16 { return KeyboardEventEnter }
@@ -118,8 +168,22 @@ func (e *KeyboardEnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardEnterEvent) Since() uint32 { return 1 }
 
+// KeyboardLeaveEvent leave event.
+//
+// Notification that this seat's keyboard focus is no longer on
+// a certain surface.
+//
+// The leave notification is sent before the enter notification
+// for the new focus.
+//
+// In the wl_keyboard logical state, this event resets all values to their
+// defaults. The compositor must not send this event if the active surface
+// of the wl_keyboard was not equal to the surface argument immediately
+// before this event.
 type KeyboardLeaveEvent struct {
-	Serial  uint32
+	// Serial serial number of the leave event.
+	Serial uint32
+	// Surface surface that lost keyboard focus.
 	Surface wire.ObjectID
 }
 
@@ -141,11 +205,40 @@ func (e *KeyboardLeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardLeaveEvent) Since() uint32 { return 1 }
 
+// KeyboardKeyEvent key event.
+//
+// A key was pressed or released.
+// The time argument is a timestamp with millisecond
+// granularity, with an undefined base.
+//
+// The key is a platform-specific key code that can be interpreted
+// by feeding it to the keyboard mapping (see the keymap event).
+//
+// If this event produces a change in modifiers, then the resulting
+// wl_keyboard.modifiers event must be sent after this event.
+//
+// In the wl_keyboard logical state, this event adds the key to the keys
+// currently logically down (if the state argument is pressed) or removes
+// the key from the keys currently logically down (if the state argument is
+// released). The compositor must not send this event if the wl_keyboard
+// did not have an active surface immediately before this event. The
+// compositor must not send this event if state is pressed (resp. released)
+// and the key was already logically down (resp. was not logically down)
+// immediately before this event.
+//
+// Since version 10, compositors may send key events with the "repeated"
+// key state when a wl_keyboard.repeat_info event with a rate argument of
+// 0 has been received. This allows the compositor to take over the
+// responsibility of key repetition.
 type KeyboardKeyEvent struct {
+	// Serial serial number of the key event.
 	Serial uint32
-	Time   uint32
-	Key    uint32
-	State  KeyboardKeyState
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Key key that produced the event.
+	Key uint32
+	// State physical state of the key.
+	State KeyboardKeyState
 }
 
 func (e *KeyboardKeyEvent) Opcode() uint16 { return KeyboardEventKey }
@@ -176,12 +269,32 @@ func (e *KeyboardKeyEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardKeyEvent) Since() uint32 { return 1 }
 
+// KeyboardModifiersEvent modifier and group state.
+//
+// Notifies clients that the modifier and/or group state has
+// changed, and it should update its local state.
+//
+// The compositor may send this event without a surface of the client
+// having keyboard focus, for example to tie modifier information to
+// pointer focus instead. If a modifier event with pressed modifiers is sent
+// without a prior enter event, the client can assume the modifier state is
+// valid until it receives the next wl_keyboard.modifiers event. In order to
+// reset the modifier state again, the compositor can send a
+// wl_keyboard.modifiers event with no pressed modifiers.
+//
+// In the wl_keyboard logical state, this event updates the modifiers and
+// group.
 type KeyboardModifiersEvent struct {
-	Serial        uint32
+	// Serial serial number of the modifiers event.
+	Serial uint32
+	// ModsDepressed depressed modifiers.
 	ModsDepressed uint32
-	ModsLatched   uint32
-	ModsLocked    uint32
-	Group         uint32
+	// ModsLatched latched modifiers.
+	ModsLatched uint32
+	// ModsLocked locked modifiers.
+	ModsLocked uint32
+	// Group keyboard layout.
+	Group uint32
 }
 
 func (e *KeyboardModifiersEvent) Opcode() uint16 { return KeyboardEventModifiers }
@@ -217,8 +330,24 @@ func (e *KeyboardModifiersEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardModifiersEvent) Since() uint32 { return 1 }
 
+// KeyboardRepeatInfoEvent repeat rate and delay.
+//
+// Informs the client about the keyboard's repeat rate and delay.
+//
+// This event is sent as soon as the wl_keyboard object has been created,
+// and is guaranteed to be received by the client before any key press
+// event.
+//
+// Negative values for either rate or delay are illegal. A rate of zero
+// will disable any repeating (regardless of the value of delay).
+//
+// This event can be sent later on as well with a new value if necessary,
+// so clients should continue listening for the event past the creation
+// of wl_keyboard.
 type KeyboardRepeatInfoEvent struct {
-	Rate  int32
+	// Rate the rate of repeating keys in characters per second.
+	Rate int32
+	// Delay delay in milliseconds since key down until repeating starts.
 	Delay int32
 }
 
@@ -240,31 +369,54 @@ func (e *KeyboardRepeatInfoEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *KeyboardRepeatInfoEvent) Since() uint32 { return 4 }
 
+// KeyboardKeymapFunc is a callback for Keymap events.
 type KeyboardKeymapFunc func(ev KeyboardKeymapEvent)
 
+// KeyboardEnterFunc is a callback for Enter events.
 type KeyboardEnterFunc func(ev KeyboardEnterEvent)
 
+// KeyboardLeaveFunc is a callback for Leave events.
 type KeyboardLeaveFunc func(ev KeyboardLeaveEvent)
 
+// KeyboardKeyFunc is a callback for Key events.
 type KeyboardKeyFunc func(ev KeyboardKeyEvent)
 
+// KeyboardModifiersFunc is a callback for Modifiers events.
 type KeyboardModifiersFunc func(ev KeyboardModifiersEvent)
 
+// KeyboardRepeatInfoFunc is a callback for RepeatInfo events.
 type KeyboardRepeatInfoFunc func(ev KeyboardRepeatInfoEvent)
 
+// Keyboard keyboard input device.
+//
+// The wl_keyboard interface represents one or more keyboards
+// associated with a seat.
+//
+// Each wl_keyboard has the following logical state:
+//
+// - an active surface (possibly null),
+// - the keys currently logically down,
+// - the active modifiers,
+// - the active group.
+//
+// By default, the active surface is null, the keys currently logically down
+// are empty, the active modifiers and the active group are 0.
 type Keyboard struct {
 	proxy *Proxy
 }
 
+// NewKeyboard wraps p in a Keyboard proxy.
 func NewKeyboard(p *Proxy) *Keyboard {
 	p.SetEventFDCounts(keyboardEventFDCounts)
 	return &Keyboard{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Keyboard) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnKeymap registers fn to receive Keymap events.
 func (o *Keyboard) OnKeymap(fn KeyboardKeymapFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKeymap, func(r *wire.Reader) {
 		var ev KeyboardKeymapEvent
@@ -278,6 +430,7 @@ func (o *Keyboard) OnKeymap(fn KeyboardKeymapFunc) {
 	})
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *Keyboard) OnEnter(fn KeyboardEnterFunc) {
 	o.proxy.RegisterEvent(KeyboardEventEnter, func(r *wire.Reader) {
 		var ev KeyboardEnterEvent
@@ -291,6 +444,7 @@ func (o *Keyboard) OnEnter(fn KeyboardEnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *Keyboard) OnLeave(fn KeyboardLeaveFunc) {
 	o.proxy.RegisterEvent(KeyboardEventLeave, func(r *wire.Reader) {
 		var ev KeyboardLeaveEvent
@@ -304,6 +458,7 @@ func (o *Keyboard) OnLeave(fn KeyboardLeaveFunc) {
 	})
 }
 
+// OnKey registers fn to receive Key events.
 func (o *Keyboard) OnKey(fn KeyboardKeyFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKey, func(r *wire.Reader) {
 		var ev KeyboardKeyEvent
@@ -317,6 +472,7 @@ func (o *Keyboard) OnKey(fn KeyboardKeyFunc) {
 	})
 }
 
+// OnModifiers registers fn to receive Modifiers events.
 func (o *Keyboard) OnModifiers(fn KeyboardModifiersFunc) {
 	o.proxy.RegisterEvent(KeyboardEventModifiers, func(r *wire.Reader) {
 		var ev KeyboardModifiersEvent
@@ -330,6 +486,7 @@ func (o *Keyboard) OnModifiers(fn KeyboardModifiersFunc) {
 	})
 }
 
+// OnRepeatInfo registers fn to receive RepeatInfo events.
 func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 	o.proxy.RegisterEvent(KeyboardEventRepeatInfo, func(r *wire.Reader) {
 		var ev KeyboardRepeatInfoEvent
@@ -343,6 +500,7 @@ func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 	})
 }
 
+// Release release the keyboard object.
 func (o *Keyboard) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch

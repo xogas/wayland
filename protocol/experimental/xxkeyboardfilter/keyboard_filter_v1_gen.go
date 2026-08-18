@@ -19,16 +19,26 @@ const (
 type KeyboardFilterV1Error uint32
 
 const (
+	// KeyboardFilterV1ErrorInvalidSerial compositor received serial not adhering to requirements.
 	KeyboardFilterV1ErrorInvalidSerial KeyboardFilterV1Error = 1
 )
 
 type KeyboardFilterV1FilterAction uint32
 
 const (
-	KeyboardFilterV1FilterActionConsume     KeyboardFilterV1FilterAction = 0
+	// KeyboardFilterV1FilterActionConsume consume the key event.
+	KeyboardFilterV1FilterActionConsume KeyboardFilterV1FilterAction = 0
+	// KeyboardFilterV1FilterActionPassthrough pass the key event to the text input client.
 	KeyboardFilterV1FilterActionPassthrough KeyboardFilterV1FilterAction = 1
 )
 
+// KeyboardFilterV1UnbindRequest stop intercepting.
+//
+// Unbind the keyboard and stop intercepting events.
+//
+// Unbinds the bound keyboard and the input method. the compositor must stop redirecting keyboard events. Events that the keyboard_filter client has not yet responded to are treated as if they received the "passthrough" action.
+//
+// This request takes effect immediately.
 type KeyboardFilterV1UnbindRequest struct {
 }
 
@@ -40,6 +50,31 @@ func (r *KeyboardFilterV1UnbindRequest) Marshal(w *wire.Writer) error {
 
 func (r *KeyboardFilterV1UnbindRequest) Since() uint32 { return 1 }
 
+// KeyboardFilterV1FilterRequest decide the processing of a keyboard event.
+//
+// This request controls the filtering of keyboard input events before reaching the focused surface.
+//
+// Usage:
+//
+// While keyboard_filter is intercepting, the compositor must send every intercepted event to its bound wl_keyboard, and hold a copy of it in an internal queue.
+// When the client responds with the .filter request, the compositor either removes the event from the queue (filter_action.consume), or sends the copy to the original wl_keyboard objects (filter_action.passthrough).
+//
+// The compositor must process .filter the oldest event in the queue before processing more recent ones.
+// For this reason, the client sets the argument "serial" to the serial of the corresponding event it received.
+//
+// Exceptions:
+//
+// If the event is other than wl_keyboard.key or contains no serial, it cannot be filtered. The keyboard_filter client must not respond to it with .filter request. When such an event is oldest in the queue, the compositor must proceed as if the event had received a "passthrough" reply.
+//
+// As of wl_keyboard v10 and keyboard_filter_v1, the only event that can be filtered is the wl_keyboard.key event.
+//
+// Sequence:
+//
+// The wl_keyboard begins to receive events after input_method.activate is committed.
+// The valid serial is the serial of the oldest wl_keyboard event which has been sent after input_method.activate but which hasn't yet received a .filter confirmation.
+// The compositor may raise the invalid_serial error in response to events with serials it had not issued.
+// The compositor must ignore events with all other serials. (Particularly, this means events with repeating serials are accepted normally and are not ignored).
+// Events must be filtered in order of arrival.
 type KeyboardFilterV1FilterRequest struct {
 	Serial uint32
 	Action KeyboardFilterV1FilterAction
@@ -59,6 +94,9 @@ func (r *KeyboardFilterV1FilterRequest) Marshal(w *wire.Writer) error {
 
 func (r *KeyboardFilterV1FilterRequest) Since() uint32 { return 1 }
 
+// KeyboardFilterV1DestroyRequest destroy the keyboard.
+//
+// Destroys the keyboard_filter object, stops event interception, and unbinds the wl_keyboard and input_method objects bound to it.
 type KeyboardFilterV1DestroyRequest struct {
 }
 
@@ -70,22 +108,59 @@ func (r *KeyboardFilterV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *KeyboardFilterV1DestroyRequest) Since() uint32 { return 1 }
 
+// KeyboardFilterV1 keyboard event filtering functionality.
+//
+// Manages the filtering of key presses.
 type KeyboardFilterV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewKeyboardFilterV1 wraps p in a KeyboardFilterV1 proxy.
 func NewKeyboardFilterV1(p *wayland.Proxy) *KeyboardFilterV1 {
 	return &KeyboardFilterV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *KeyboardFilterV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Unbind stop intercepting.
+//
+// Unbind the keyboard and stop intercepting events.
+//
+// Unbinds the bound keyboard and the input method. the compositor must stop redirecting keyboard events. Events that the keyboard_filter client has not yet responded to are treated as if they received the "passthrough" action.
+//
+// This request takes effect immediately.
 func (o *KeyboardFilterV1) Unbind() error {
 	return o.proxy.SendRequest(KeyboardFilterV1RequestUnbind, &KeyboardFilterV1UnbindRequest{})
 }
 
+// Filter decide the processing of a keyboard event.
+//
+// This request controls the filtering of keyboard input events before reaching the focused surface.
+//
+// Usage:
+//
+// While keyboard_filter is intercepting, the compositor must send every intercepted event to its bound wl_keyboard, and hold a copy of it in an internal queue.
+// When the client responds with the .filter request, the compositor either removes the event from the queue (filter_action.consume), or sends the copy to the original wl_keyboard objects (filter_action.passthrough).
+//
+// The compositor must process .filter the oldest event in the queue before processing more recent ones.
+// For this reason, the client sets the argument "serial" to the serial of the corresponding event it received.
+//
+// Exceptions:
+//
+// If the event is other than wl_keyboard.key or contains no serial, it cannot be filtered. The keyboard_filter client must not respond to it with .filter request. When such an event is oldest in the queue, the compositor must proceed as if the event had received a "passthrough" reply.
+//
+// As of wl_keyboard v10 and keyboard_filter_v1, the only event that can be filtered is the wl_keyboard.key event.
+//
+// Sequence:
+//
+// The wl_keyboard begins to receive events after input_method.activate is committed.
+// The valid serial is the serial of the oldest wl_keyboard event which has been sent after input_method.activate but which hasn't yet received a .filter confirmation.
+// The compositor may raise the invalid_serial error in response to events with serials it had not issued.
+// The compositor must ignore events with all other serials. (Particularly, this means events with repeating serials are accepted normally and are not ignored).
+// Events must be filtered in order of arrival.
 func (o *KeyboardFilterV1) Filter(serial uint32, action KeyboardFilterV1FilterAction) error {
 	return o.proxy.SendRequest(KeyboardFilterV1RequestFilter, &KeyboardFilterV1FilterRequest{
 		Serial: serial,
@@ -93,6 +168,9 @@ func (o *KeyboardFilterV1) Filter(serial uint32, action KeyboardFilterV1FilterAc
 	})
 }
 
+// Destroy destroy the keyboard.
+//
+// Destroys the keyboard_filter object, stops event interception, and unbinds the wl_keyboard and input_method objects bound to it.
 func (o *KeyboardFilterV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

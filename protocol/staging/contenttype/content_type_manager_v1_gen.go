@@ -18,9 +18,14 @@ const (
 type ContentTypeManagerV1Error uint32
 
 const (
+	// ContentTypeManagerV1ErrorAlreadyConstructed wl_surface already has a content type object.
 	ContentTypeManagerV1ErrorAlreadyConstructed ContentTypeManagerV1Error = 0
 )
 
+// ContentTypeManagerV1DestroyRequest destroy the content type manager object.
+//
+// Destroy the content type manager. This doesn't destroy objects created
+// with the manager.
 type ContentTypeManagerV1DestroyRequest struct {
 }
 
@@ -34,6 +39,12 @@ func (r *ContentTypeManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ContentTypeManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ContentTypeManagerV1GetSurfaceContentTypeRequest create a new content type object.
+//
+// Create a new content type object associated with the given surface.
+//
+// Creating a wp_content_type_v1 from a wl_surface which already has one
+// attached is a client error: already_constructed.
 type ContentTypeManagerV1GetSurfaceContentTypeRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -55,18 +66,33 @@ func (r *ContentTypeManagerV1GetSurfaceContentTypeRequest) Marshal(w *wire.Write
 
 func (r *ContentTypeManagerV1GetSurfaceContentTypeRequest) Since() uint32 { return 1 }
 
+// ContentTypeManagerV1 surface content type manager.
+//
+// This interface allows a client to describe the kind of content a surface
+// will display, to allow the compositor to optimize its behavior for it.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type ContentTypeManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewContentTypeManagerV1 wraps p in a ContentTypeManagerV1 proxy.
 func NewContentTypeManagerV1(p *wayland.Proxy) *ContentTypeManagerV1 {
 	return &ContentTypeManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ContentTypeManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the content type manager object.
+//
+// Destroy the content type manager. This doesn't destroy objects created
+// with the manager.
 func (o *ContentTypeManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +104,12 @@ func (o *ContentTypeManagerV1) Destroy() error {
 	return nil
 }
 
+// GetSurfaceContentType create a new content type object.
+//
+// Create a new content type object associated with the given surface.
+//
+// Creating a wp_content_type_v1 from a wl_surface which already has one
+// attached is a client error: already_constructed.
 func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*ContentTypeV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

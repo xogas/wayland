@@ -39,14 +39,51 @@ var datadeviceEventFDCounts = map[uint16]int{
 type DataDeviceError uint32
 
 const (
-	DataDeviceErrorRole       DataDeviceError = 0
+	// DataDeviceErrorRole given wl_surface has another role.
+	DataDeviceErrorRole DataDeviceError = 0
+	// DataDeviceErrorUsedSource source has already been used.
 	DataDeviceErrorUsedSource DataDeviceError = 1
 )
 
+// DataDeviceStartDragRequest start drag-and-drop operation.
+//
+// This request asks the compositor to start a drag-and-drop
+// operation on behalf of the client.
+//
+// The source argument is the data source that provides the data
+// for the eventual data transfer. If source is NULL, enter, leave
+// and motion events are sent only to the client that initiated the
+// drag and the client is expected to handle the data passing
+// internally. If source is destroyed, the drag-and-drop session will be
+// cancelled.
+//
+// The origin surface is the surface where the drag originates and
+// the client must have an active implicit grab that matches the
+// serial.
+//
+// The icon surface is an optional (can be NULL) surface that
+// provides an icon to be moved around with the cursor.  Initially,
+// the top-left corner of the icon surface is placed at the cursor
+// hotspot, but subsequent wl_surface.offset requests can move the
+// relative position. Attach requests must be confirmed with
+// wl_surface.commit as usual. The icon surface is given the role of
+// a drag-and-drop icon. If the icon surface already has another role,
+// it raises a protocol error.
+//
+// The input region is ignored for wl_surfaces with the role of a
+// drag-and-drop icon.
+//
+// The given source may not be used in any further set_selection or
+// start_drag requests. Attempting to reuse a previously-used source
+// may send a used_source error.
 type DataDeviceStartDragRequest struct {
+	// Source data source for the eventual transfer.
 	Source wire.ObjectID // nullable
+	// Origin surface where the drag originates.
 	Origin wire.ObjectID
-	Icon   wire.ObjectID // nullable
+	// Icon drag-and-drop icon surface.
+	Icon wire.ObjectID // nullable
+	// Serial serial number of the implicit grab on the origin.
 	Serial uint32
 }
 
@@ -70,8 +107,20 @@ func (r *DataDeviceStartDragRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataDeviceStartDragRequest) Since() uint32 { return 1 }
 
+// DataDeviceSetSelectionRequest copy data to the selection.
+//
+// This request asks the compositor to set the selection
+// to the data from the source on behalf of the client.
+//
+// To unset the selection, set the source to NULL.
+//
+// The given source may not be used in any further set_selection or
+// start_drag requests. Attempting to reuse a previously-used source
+// may send a used_source error.
 type DataDeviceSetSelectionRequest struct {
+	// Source data source for the selection.
 	Source wire.ObjectID // nullable
+	// Serial serial number of the event that triggered this request.
 	Serial uint32
 }
 
@@ -89,6 +138,9 @@ func (r *DataDeviceSetSelectionRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataDeviceSetSelectionRequest) Since() uint32 { return 1 }
 
+// DataDeviceReleaseRequest destroy data device.
+//
+// This request destroys the data device.
 type DataDeviceReleaseRequest struct {
 }
 
@@ -100,7 +152,17 @@ func (r *DataDeviceReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataDeviceReleaseRequest) Since() uint32 { return 2 }
 
+// DataDeviceDataOfferEvent introduce a new wl_data_offer.
+//
+// The data_offer event introduces a new wl_data_offer object,
+// which will subsequently be used in either the
+// data_device.enter event (for drag-and-drop) or the
+// data_device.selection event (for selections).  Immediately
+// following the data_device.data_offer event, the new data_offer
+// object will send out data_offer.offer events to describe the
+// mime types it offers.
 type DataDeviceDataOfferEvent struct {
+	// ID the new data_offer object.
 	ID *DataOffer
 }
 
@@ -108,12 +170,23 @@ func (e *DataDeviceDataOfferEvent) Opcode() uint16 { return DataDeviceEventDataO
 
 func (e *DataDeviceDataOfferEvent) Since() uint32 { return 1 }
 
+// DataDeviceEnterEvent initiate drag-and-drop session.
+//
+// This event is sent when an active drag-and-drop pointer enters
+// a surface owned by the client.  The position of the pointer at
+// enter time is provided by the x and y arguments, in surface-local
+// coordinates.
 type DataDeviceEnterEvent struct {
-	Serial  uint32
+	// Serial serial number of the enter event.
+	Serial uint32
+	// Surface client surface entered.
 	Surface wire.ObjectID
-	X       wire.Fixed
-	Y       wire.Fixed
-	ID      wire.ObjectID // nullable
+	// X surface-local x coordinate.
+	X wire.Fixed
+	// Y surface-local y coordinate.
+	Y wire.Fixed
+	// ID source data_offer object.
+	ID wire.ObjectID // nullable
 }
 
 func (e *DataDeviceEnterEvent) Opcode() uint16 { return DataDeviceEventEnter }
@@ -149,6 +222,11 @@ func (e *DataDeviceEnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataDeviceEnterEvent) Since() uint32 { return 1 }
 
+// DataDeviceLeaveEvent end drag-and-drop session.
+//
+// This event is sent when the drag-and-drop pointer leaves the
+// surface and the session ends.  The client must destroy the
+// wl_data_offer introduced at enter time at this point.
 type DataDeviceLeaveEvent struct {
 }
 
@@ -160,10 +238,19 @@ func (e *DataDeviceLeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataDeviceLeaveEvent) Since() uint32 { return 1 }
 
+// DataDeviceMotionEvent drag-and-drop session motion.
+//
+// This event is sent when the drag-and-drop pointer moves within
+// the currently focused surface. The new position of the pointer
+// is provided by the x and y arguments, in surface-local
+// coordinates.
 type DataDeviceMotionEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
-	X    wire.Fixed
-	Y    wire.Fixed
+	// X surface-local x coordinate.
+	X wire.Fixed
+	// Y surface-local y coordinate.
+	Y wire.Fixed
 }
 
 func (e *DataDeviceMotionEvent) Opcode() uint16 { return DataDeviceEventMotion }
@@ -189,6 +276,21 @@ func (e *DataDeviceMotionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataDeviceMotionEvent) Since() uint32 { return 1 }
 
+// DataDeviceDropEvent end drag-and-drop session successfully.
+//
+// The event is sent when a drag-and-drop operation is ended
+// because the implicit grab is removed.
+//
+// The drag-and-drop destination is expected to honor the last action
+// received through wl_data_offer.action, if the resulting action is
+// "copy" or "move", the destination can still perform
+// wl_data_offer.receive requests, and is expected to end all
+// transfers with a wl_data_offer.finish request.
+//
+// If the resulting action is "ask", the action will not be considered
+// final. The drag-and-drop destination is expected to perform one last
+// wl_data_offer.set_actions request, or wl_data_offer.destroy in order
+// to cancel the operation.
 type DataDeviceDropEvent struct {
 }
 
@@ -200,7 +302,22 @@ func (e *DataDeviceDropEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataDeviceDropEvent) Since() uint32 { return 1 }
 
+// DataDeviceSelectionEvent advertise new selection.
+//
+// The selection event is sent out to notify the client of a new
+// wl_data_offer for the selection for this device.  The
+// data_device.data_offer and the data_offer.offer events are
+// sent out immediately before this event to introduce the data
+// offer object.  The selection event is sent to a client
+// immediately before receiving keyboard focus and when a new
+// selection is set while the client has keyboard focus.  The
+// data_offer is valid until a new data_offer or NULL is received
+// or until the client loses keyboard focus.  Switching surface with
+// keyboard focus within the same client doesn't mean a new selection
+// will be sent.  The client must destroy the previous selection
+// data_offer, if any, upon receiving this event.
 type DataDeviceSelectionEvent struct {
+	// ID selection data_offer object.
 	ID wire.ObjectID // nullable
 }
 
@@ -217,31 +334,47 @@ func (e *DataDeviceSelectionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataDeviceSelectionEvent) Since() uint32 { return 1 }
 
+// DataDeviceDataOfferFunc is a callback for DataOffer events.
 type DataDeviceDataOfferFunc func(ev DataDeviceDataOfferEvent)
 
+// DataDeviceEnterFunc is a callback for Enter events.
 type DataDeviceEnterFunc func(ev DataDeviceEnterEvent)
 
+// DataDeviceLeaveFunc is a callback for Leave events.
 type DataDeviceLeaveFunc func(ev DataDeviceLeaveEvent)
 
+// DataDeviceMotionFunc is a callback for Motion events.
 type DataDeviceMotionFunc func(ev DataDeviceMotionEvent)
 
+// DataDeviceDropFunc is a callback for Drop events.
 type DataDeviceDropFunc func(ev DataDeviceDropEvent)
 
+// DataDeviceSelectionFunc is a callback for Selection events.
 type DataDeviceSelectionFunc func(ev DataDeviceSelectionEvent)
 
+// DataDevice data transfer device.
+//
+// There is one wl_data_device per seat which can be obtained
+// from the global wl_data_device_manager singleton.
+//
+// A wl_data_device provides access to inter-client data transfer
+// mechanisms such as copy-and-paste and drag-and-drop.
 type DataDevice struct {
 	proxy *Proxy
 }
 
+// NewDataDevice wraps p in a DataDevice proxy.
 func NewDataDevice(p *Proxy) *DataDevice {
 	p.SetEventFDCounts(datadeviceEventFDCounts)
 	return &DataDevice{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataDevice) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnDataOffer registers fn to receive DataOffer events.
 func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDataOffer, func(r *wire.Reader) {
 		var ev DataDeviceDataOfferEvent
@@ -260,6 +393,7 @@ func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 	})
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventEnter, func(r *wire.Reader) {
 		var ev DataDeviceEnterEvent
@@ -273,6 +407,7 @@ func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventLeave, func(r *wire.Reader) {
 		var ev DataDeviceLeaveEvent
@@ -286,6 +421,7 @@ func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 	})
 }
 
+// OnMotion registers fn to receive Motion events.
 func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventMotion, func(r *wire.Reader) {
 		var ev DataDeviceMotionEvent
@@ -299,6 +435,7 @@ func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 	})
 }
 
+// OnDrop registers fn to receive Drop events.
 func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDrop, func(r *wire.Reader) {
 		var ev DataDeviceDropEvent
@@ -312,6 +449,7 @@ func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 	})
 }
 
+// OnSelection registers fn to receive Selection events.
 func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventSelection, func(r *wire.Reader) {
 		var ev DataDeviceSelectionEvent
@@ -325,6 +463,37 @@ func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 	})
 }
 
+// StartDrag start drag-and-drop operation.
+//
+// This request asks the compositor to start a drag-and-drop
+// operation on behalf of the client.
+//
+// The source argument is the data source that provides the data
+// for the eventual data transfer. If source is NULL, enter, leave
+// and motion events are sent only to the client that initiated the
+// drag and the client is expected to handle the data passing
+// internally. If source is destroyed, the drag-and-drop session will be
+// cancelled.
+//
+// The origin surface is the surface where the drag originates and
+// the client must have an active implicit grab that matches the
+// serial.
+//
+// The icon surface is an optional (can be NULL) surface that
+// provides an icon to be moved around with the cursor.  Initially,
+// the top-left corner of the icon surface is placed at the cursor
+// hotspot, but subsequent wl_surface.offset requests can move the
+// relative position. Attach requests must be confirmed with
+// wl_surface.commit as usual. The icon surface is given the role of
+// a drag-and-drop icon. If the icon surface already has another role,
+// it raises a protocol error.
+//
+// The input region is ignored for wl_surfaces with the role of a
+// drag-and-drop icon.
+//
+// The given source may not be used in any further set_selection or
+// start_drag requests. Attempting to reuse a previously-used source
+// may send a used_source error.
 func (o *DataDevice) StartDrag(source wire.ObjectID, origin wire.ObjectID, icon wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(DataDeviceRequestStartDrag, &DataDeviceStartDragRequest{
 		Source: source,
@@ -334,6 +503,16 @@ func (o *DataDevice) StartDrag(source wire.ObjectID, origin wire.ObjectID, icon 
 	})
 }
 
+// SetSelection copy data to the selection.
+//
+// This request asks the compositor to set the selection
+// to the data from the source on behalf of the client.
+//
+// To unset the selection, set the source to NULL.
+//
+// The given source may not be used in any further set_selection or
+// start_drag requests. Attempting to reuse a previously-used source
+// may send a used_source error.
 func (o *DataDevice) SetSelection(source wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(DataDeviceRequestSetSelection, &DataDeviceSetSelectionRequest{
 		Source: source,
@@ -341,6 +520,9 @@ func (o *DataDevice) SetSelection(source wire.ObjectID, serial uint32) error {
 	})
 }
 
+// Release destroy data device.
+//
+// This request destroys the data device.
 func (o *DataDevice) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return ErrVersionMismatch

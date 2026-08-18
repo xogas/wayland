@@ -15,6 +15,13 @@ const (
 	TransientSeatManagerV1RequestDestroy uint16 = 1
 )
 
+// TransientSeatManagerV1CreateRequest create a transient seat.
+//
+// Create a new seat that is removed when the client side transient seat
+// object is destroyed.
+//
+// The actual seat may be removed sooner, in which case the transient seat
+// object shall become inert.
 type TransientSeatManagerV1CreateRequest struct {
 	Seat wire.NewID
 }
@@ -32,6 +39,12 @@ func (r *TransientSeatManagerV1CreateRequest) Marshal(w *wire.Writer) error {
 
 func (r *TransientSeatManagerV1CreateRequest) Since() uint32 { return 1 }
 
+// TransientSeatManagerV1DestroyRequest destroy the manager.
+//
+// Destroy the manager.
+//
+// All objects created by the manager will remain valid until they are
+// destroyed themselves.
 type TransientSeatManagerV1DestroyRequest struct {
 }
 
@@ -45,18 +58,30 @@ func (r *TransientSeatManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TransientSeatManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// TransientSeatManagerV1 transient seat manager.
+//
+// The transient seat manager creates short-lived seats.
 type TransientSeatManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTransientSeatManagerV1 wraps p in a TransientSeatManagerV1 proxy.
 func NewTransientSeatManagerV1(p *wayland.Proxy) *TransientSeatManagerV1 {
 	return &TransientSeatManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TransientSeatManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Create create a transient seat.
+//
+// Create a new seat that is removed when the client side transient seat
+// object is destroyed.
+//
+// The actual seat may be removed sooner, in which case the transient seat
+// object shall become inert.
 func (o *TransientSeatManagerV1) Create() (*TransientSeatV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -74,6 +99,12 @@ func (o *TransientSeatManagerV1) Create() (*TransientSeatV1, error) {
 	return wrapped, nil
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the manager.
+//
+// All objects created by the manager will remain valid until they are
+// destroyed themselves.
 func (o *TransientSeatManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

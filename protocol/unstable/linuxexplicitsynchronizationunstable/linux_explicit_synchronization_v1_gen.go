@@ -18,9 +18,15 @@ const (
 type LinuxExplicitSynchronizationV1Error uint32
 
 const (
+	// LinuxExplicitSynchronizationV1ErrorSynchronizationExists the surface already has a synchronization object associated.
 	LinuxExplicitSynchronizationV1ErrorSynchronizationExists LinuxExplicitSynchronizationV1Error = 0
 )
 
+// LinuxExplicitSynchronizationV1DestroyRequest destroy explicit synchronization factory object.
+//
+// Destroy this explicit synchronization factory object. Other objects,
+// including zwp_linux_surface_synchronization_v1 objects created by this
+// factory, shall not be affected by this request.
 type LinuxExplicitSynchronizationV1DestroyRequest struct {
 }
 
@@ -34,8 +40,23 @@ func (r *LinuxExplicitSynchronizationV1DestroyRequest) Marshal(w *wire.Writer) e
 
 func (r *LinuxExplicitSynchronizationV1DestroyRequest) Since() uint32 { return 1 }
 
+// LinuxExplicitSynchronizationV1GetSynchronizationRequest extend surface interface for explicit synchronization.
+//
+// Instantiate an interface extension for the given wl_surface to provide
+// explicit synchronization.
+//
+// If the given wl_surface already has an explicit synchronization object
+// associated, the synchronization_exists protocol error is raised.
+//
+// Graphics APIs, like EGL or Vulkan, that manage the buffer queue and
+// commits of a wl_surface themselves, are likely to be using this
+// extension internally. If a client is using such an API for a
+// wl_surface, it should not directly use this extension on that surface,
+// to avoid raising a synchronization_exists protocol error.
 type LinuxExplicitSynchronizationV1GetSynchronizationRequest struct {
-	ID      wire.NewID
+	// ID the new synchronization interface id.
+	ID wire.NewID
+	// Surface the surface.
 	Surface wire.ObjectID
 }
 
@@ -55,18 +76,45 @@ func (r *LinuxExplicitSynchronizationV1GetSynchronizationRequest) Marshal(w *wir
 
 func (r *LinuxExplicitSynchronizationV1GetSynchronizationRequest) Since() uint32 { return 1 }
 
+// LinuxExplicitSynchronizationV1 protocol for providing explicit synchronization.
+//
+// This global is a factory interface, allowing clients to request
+// explicit synchronization for buffers on a per-surface basis.
+//
+// See zwp_linux_surface_synchronization_v1 for more information.
+//
+// This interface is derived from Chromium's
+// zcr_linux_explicit_synchronization_v1.
+//
+// Note: this protocol is superseded by linux-drm-syncobj.
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type LinuxExplicitSynchronizationV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxExplicitSynchronizationV1 wraps p in a LinuxExplicitSynchronizationV1 proxy.
 func NewLinuxExplicitSynchronizationV1(p *wayland.Proxy) *LinuxExplicitSynchronizationV1 {
 	return &LinuxExplicitSynchronizationV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxExplicitSynchronizationV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy explicit synchronization factory object.
+//
+// Destroy this explicit synchronization factory object. Other objects,
+// including zwp_linux_surface_synchronization_v1 objects created by this
+// factory, shall not be affected by this request.
 func (o *LinuxExplicitSynchronizationV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +126,19 @@ func (o *LinuxExplicitSynchronizationV1) Destroy() error {
 	return nil
 }
 
+// GetSynchronization extend surface interface for explicit synchronization.
+//
+// Instantiate an interface extension for the given wl_surface to provide
+// explicit synchronization.
+//
+// If the given wl_surface already has an explicit synchronization object
+// associated, the synchronization_exists protocol error is raised.
+//
+// Graphics APIs, like EGL or Vulkan, that manage the buffer queue and
+// commits of a wl_surface themselves, are likely to be using this
+// extension internally. If a client is using such an API for a
+// wl_surface, it should not directly use this extension on that surface,
+// to avoid raising a synchronization_exists protocol error.
 func (o *LinuxExplicitSynchronizationV1) GetSynchronization(surface wire.ObjectID) (*LinuxSurfaceSynchronizationV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

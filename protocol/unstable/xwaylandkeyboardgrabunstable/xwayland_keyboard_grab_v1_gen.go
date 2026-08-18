@@ -14,6 +14,10 @@ const (
 	XwaylandKeyboardGrabV1RequestDestroy uint16 = 0
 )
 
+// XwaylandKeyboardGrabV1DestroyRequest destroy the grabbed keyboard object.
+//
+// Destroy the grabbed keyboard object. If applicable, the compositor
+// will ungrab the keyboard.
 type XwaylandKeyboardGrabV1DestroyRequest struct {
 }
 
@@ -27,18 +31,27 @@ func (r *XwaylandKeyboardGrabV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *XwaylandKeyboardGrabV1DestroyRequest) Since() uint32 { return 1 }
 
+// XwaylandKeyboardGrabV1 interface for grabbing the keyboard.
+//
+// A global interface used for grabbing the keyboard.
 type XwaylandKeyboardGrabV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewXwaylandKeyboardGrabV1 wraps p in a XwaylandKeyboardGrabV1 proxy.
 func NewXwaylandKeyboardGrabV1(p *wayland.Proxy) *XwaylandKeyboardGrabV1 {
 	return &XwaylandKeyboardGrabV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *XwaylandKeyboardGrabV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the grabbed keyboard object.
+//
+// Destroy the grabbed keyboard object. If applicable, the compositor
+// will ungrab the keyboard.
 func (o *XwaylandKeyboardGrabV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

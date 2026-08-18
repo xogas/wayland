@@ -26,6 +26,17 @@ var primaryselectionofferv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// PrimarySelectionOfferV1ReceiveRequest request that the data is transferred.
+//
+// To transfer the contents of the primary selection clipboard, the client
+// issues this request and indicates the mime type that it wants to
+// receive. The transfer happens through the passed file descriptor
+// (typically created with the pipe system call). The source client writes
+// the data in the mime type representation requested and then closes the
+// file descriptor.
+//
+// The receiving client reads from the read end of the pipe until EOF and
+// closes its end, at which point the transfer is complete.
 type PrimarySelectionOfferV1ReceiveRequest struct {
 	MimeType string
 	Fd       int
@@ -47,6 +58,9 @@ func (r *PrimarySelectionOfferV1ReceiveRequest) Marshal(w *wire.Writer) error {
 
 func (r *PrimarySelectionOfferV1ReceiveRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionOfferV1DestroyRequest destroy the primary selection offer.
+//
+// Destroy the primary selection offer.
 type PrimarySelectionOfferV1DestroyRequest struct {
 }
 
@@ -60,6 +74,12 @@ func (r *PrimarySelectionOfferV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PrimarySelectionOfferV1DestroyRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionOfferV1OfferEvent advertise offered mime type.
+//
+// Sent immediately after creating announcing the
+// wp_primary_selection_offer through
+// wp_primary_selection_device.data_offer. One event is sent per offered
+// mime type.
 type PrimarySelectionOfferV1OfferEvent struct {
 	MimeType string
 }
@@ -77,21 +97,32 @@ func (e *PrimarySelectionOfferV1OfferEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PrimarySelectionOfferV1OfferEvent) Since() uint32 { return 1 }
 
+// PrimarySelectionOfferV1OfferFunc is a callback for Offer events.
 type PrimarySelectionOfferV1OfferFunc func(ev PrimarySelectionOfferV1OfferEvent)
 
+// PrimarySelectionOfferV1 offer to transfer primary selection contents.
+//
+// A wp_primary_selection_offer represents an offer to transfer the contents
+// of the primary selection clipboard to the client. Similar to
+// wl_data_offer, the offer also describes the mime types that the data can
+// be converted to and provides the mechanisms for transferring the data
+// directly to the client.
 type PrimarySelectionOfferV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPrimarySelectionOfferV1 wraps p in a PrimarySelectionOfferV1 proxy.
 func NewPrimarySelectionOfferV1(p *wayland.Proxy) *PrimarySelectionOfferV1 {
 	p.SetEventFDCounts(primaryselectionofferv1EventFDCounts)
 	return &PrimarySelectionOfferV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PrimarySelectionOfferV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnOffer registers fn to receive Offer events.
 func (o *PrimarySelectionOfferV1) OnOffer(fn PrimarySelectionOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionOfferV1EventOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionOfferV1OfferEvent
@@ -105,6 +136,17 @@ func (o *PrimarySelectionOfferV1) OnOffer(fn PrimarySelectionOfferV1OfferFunc) {
 	})
 }
 
+// Receive request that the data is transferred.
+//
+// To transfer the contents of the primary selection clipboard, the client
+// issues this request and indicates the mime type that it wants to
+// receive. The transfer happens through the passed file descriptor
+// (typically created with the pipe system call). The source client writes
+// the data in the mime type representation requested and then closes the
+// file descriptor.
+//
+// The receiving client reads from the read end of the pipe until EOF and
+// closes its end, at which point the transfer is complete.
 func (o *PrimarySelectionOfferV1) Receive(mimeType string, fd int) error {
 	return o.proxy.SendRequest(PrimarySelectionOfferV1RequestReceive, &PrimarySelectionOfferV1ReceiveRequest{
 		MimeType: mimeType,
@@ -112,6 +154,9 @@ func (o *PrimarySelectionOfferV1) Receive(mimeType string, fd int) error {
 	})
 }
 
+// Destroy destroy the primary selection offer.
+//
+// Destroy the primary selection offer.
 func (o *PrimarySelectionOfferV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

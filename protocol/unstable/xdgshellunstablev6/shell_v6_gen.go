@@ -31,14 +31,27 @@ var shellv6EventFDCounts = map[uint16]int{
 type ShellV6Error uint32
 
 const (
-	ShellV6ErrorRole                ShellV6Error = 0
-	ShellV6ErrorDefunctSurfaces     ShellV6Error = 1
-	ShellV6ErrorNotTheTopmostPopup  ShellV6Error = 2
-	ShellV6ErrorInvalidPopupParent  ShellV6Error = 3
+	// ShellV6ErrorRole given wl_surface has another role.
+	ShellV6ErrorRole ShellV6Error = 0
+	// ShellV6ErrorDefunctSurfaces xdg_shell was destroyed before children.
+	ShellV6ErrorDefunctSurfaces ShellV6Error = 1
+	// ShellV6ErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
+	ShellV6ErrorNotTheTopmostPopup ShellV6Error = 2
+	// ShellV6ErrorInvalidPopupParent the client specified an invalid popup parent surface.
+	ShellV6ErrorInvalidPopupParent ShellV6Error = 3
+	// ShellV6ErrorInvalidSurfaceState the client provided an invalid surface state.
 	ShellV6ErrorInvalidSurfaceState ShellV6Error = 4
-	ShellV6ErrorInvalidPositioner   ShellV6Error = 5
+	// ShellV6ErrorInvalidPositioner the client provided an invalid positioner.
+	ShellV6ErrorInvalidPositioner ShellV6Error = 5
 )
 
+// ShellV6DestroyRequest destroy xdg_shell.
+//
+// Destroy this xdg_shell object.
+//
+// Destroying a bound xdg_shell object while there are surfaces
+// still alive created by this xdg_shell object instance is illegal
+// and will result in a protocol error.
 type ShellV6DestroyRequest struct {
 }
 
@@ -50,6 +63,11 @@ func (r *ShellV6DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV6DestroyRequest) Since() uint32 { return 1 }
 
+// ShellV6CreatePositionerRequest create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 type ShellV6CreatePositionerRequest struct {
 	ID wire.NewID
 }
@@ -65,6 +83,19 @@ func (r *ShellV6CreatePositionerRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV6CreatePositionerRequest) Since() uint32 { return 1 }
 
+// ShellV6GetXdgSurfaceRequest create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface. While xdg_surface
+// itself is not a role, the corresponding surface may only be assigned
+// a role extending xdg_surface, such as xdg_toplevel or xdg_popup.
+//
+// This creates an xdg_surface for the given surface. An xdg_surface is
+// used as basis to define a role to a given surface, such as xdg_toplevel
+// or xdg_popup. It also manages functionality shared between xdg_surface
+// based surface roles.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 type ShellV6GetXdgSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -84,7 +115,12 @@ func (r *ShellV6GetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV6GetXdgSurfaceRequest) Since() uint32 { return 1 }
 
+// ShellV6PongRequest respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive. See xdg_shell.ping.
 type ShellV6PongRequest struct {
+	// Serial serial of the ping event.
 	Serial uint32
 }
 
@@ -99,7 +135,21 @@ func (r *ShellV6PongRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV6PongRequest) Since() uint32 { return 1 }
 
+// ShellV6PingEvent check if the client is alive.
+//
+// The ping event asks the client if it's still alive. Pass the
+// serial specified in the event back to the compositor by sending
+// a "pong" request back with the specified serial. See xdg_shell.ping.
+//
+// Compositors can use this to determine if the client is still
+// alive. It's unspecified what will happen if the client doesn't
+// respond to the ping request, or in what timeframe. Clients should
+// try to respond in a reasonable amount of time.
+//
+// A compositor is free to ping in any way it wants, but a client must
+// always respond to any xdg_shell object it created.
 type ShellV6PingEvent struct {
+	// Serial pass this to the pong request.
 	Serial uint32
 }
 
@@ -116,21 +166,31 @@ func (e *ShellV6PingEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ShellV6PingEvent) Since() uint32 { return 1 }
 
+// ShellV6PingFunc is a callback for Ping events.
 type ShellV6PingFunc func(ev ShellV6PingEvent)
 
+// ShellV6 create desktop-style surfaces.
+//
+// xdg_shell allows clients to turn a wl_surface into a "real window"
+// which can be dragged, resized, stacked, and moved around by the
+// user. Everything about this interface is suited towards traditional
+// desktop environments.
 type ShellV6 struct {
 	proxy *wayland.Proxy
 }
 
+// NewShellV6 wraps p in a ShellV6 proxy.
 func NewShellV6(p *wayland.Proxy) *ShellV6 {
 	p.SetEventFDCounts(shellv6EventFDCounts)
 	return &ShellV6{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ShellV6) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnPing registers fn to receive Ping events.
 func (o *ShellV6) OnPing(fn ShellV6PingFunc) {
 	o.proxy.RegisterEvent(ShellV6EventPing, func(r *wire.Reader) {
 		var ev ShellV6PingEvent
@@ -144,6 +204,13 @@ func (o *ShellV6) OnPing(fn ShellV6PingFunc) {
 	})
 }
 
+// Destroy destroy xdg_shell.
+//
+// Destroy this xdg_shell object.
+//
+// Destroying a bound xdg_shell object while there are surfaces
+// still alive created by this xdg_shell object instance is illegal
+// and will result in a protocol error.
 func (o *ShellV6) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -155,6 +222,11 @@ func (o *ShellV6) Destroy() error {
 	return nil
 }
 
+// CreatePositioner create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 func (o *ShellV6) CreatePositioner() (*PositionerV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -172,6 +244,19 @@ func (o *ShellV6) CreatePositioner() (*PositionerV6, error) {
 	return wrapped, nil
 }
 
+// GetXdgSurface create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface. While xdg_surface
+// itself is not a role, the corresponding surface may only be assigned
+// a role extending xdg_surface, such as xdg_toplevel or xdg_popup.
+//
+// This creates an xdg_surface for the given surface. An xdg_surface is
+// used as basis to define a role to a given surface, such as xdg_toplevel
+// or xdg_popup. It also manages functionality shared between xdg_surface
+// based surface roles.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 func (o *ShellV6) GetXdgSurface(surface wire.ObjectID) (*SurfaceV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -190,6 +275,10 @@ func (o *ShellV6) GetXdgSurface(surface wire.ObjectID) (*SurfaceV6, error) {
 	return wrapped, nil
 }
 
+// Pong respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive. See xdg_shell.ping.
 func (o *ShellV6) Pong(serial uint32) error {
 	return o.proxy.SendRequest(ShellV6RequestPong, &ShellV6PongRequest{
 		Serial: serial,

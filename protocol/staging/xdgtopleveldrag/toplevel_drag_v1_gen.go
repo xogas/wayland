@@ -18,10 +18,18 @@ const (
 type ToplevelDragV1Error uint32
 
 const (
+	// ToplevelDragV1ErrorToplevelAttached valid toplevel already attached.
 	ToplevelDragV1ErrorToplevelAttached ToplevelDragV1Error = 0
-	ToplevelDragV1ErrorOngoingDrag      ToplevelDragV1Error = 1
+	// ToplevelDragV1ErrorOngoingDrag drag has not ended.
+	ToplevelDragV1ErrorOngoingDrag ToplevelDragV1Error = 1
 )
 
+// ToplevelDragV1DestroyRequest destroy an xdg_toplevel_drag_v1 object.
+//
+// Destroy this xdg_toplevel_drag_v1 object. This request must only be
+// called after the underlying wl_data_source drag has ended, as indicated
+// by the dnd_drop_performed or cancelled events. In any other case an
+// ongoing_drag error is raised.
 type ToplevelDragV1DestroyRequest struct {
 }
 
@@ -33,10 +41,29 @@ func (r *ToplevelDragV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDragV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelDragV1AttachRequest move a toplevel with the drag operation.
+//
+// Request that the window will be moved with the cursor during the drag
+// operation. The offset is a hint to the compositor how the toplevel
+// should be positioned relative to the cursor hotspot in surface local
+// coordinates and relative to the geometry of the toplevel being attached.
+// See xdg_surface.set_window_geometry. For example it might only
+// be used when an unmapped window is attached. The attached window
+// does not participate in the selection of the drag target.
+//
+// If the toplevel is unmapped while it is attached, it is automatically
+// detached from the drag. In this case this request has to be called again
+// if the window should be attached after it is remapped.
+//
+// This request can be called multiple times but issuing it while a
+// toplevel with an active role is attached raises a toplevel_attached
+// error.
 type ToplevelDragV1AttachRequest struct {
 	Toplevel wire.ObjectID
-	XOffset  int32
-	YOffset  int32
+	// XOffset dragged surface x offset.
+	XOffset int32
+	// YOffset dragged surface y offset.
+	YOffset int32
 }
 
 func (r *ToplevelDragV1AttachRequest) Opcode() uint16 { return ToplevelDragV1RequestAttach }
@@ -56,18 +83,27 @@ func (r *ToplevelDragV1AttachRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDragV1AttachRequest) Since() uint32 { return 1 }
 
+// ToplevelDragV1 object representing a toplevel move during a drag.
 type ToplevelDragV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelDragV1 wraps p in a ToplevelDragV1 proxy.
 func NewToplevelDragV1(p *wayland.Proxy) *ToplevelDragV1 {
 	return &ToplevelDragV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelDragV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy an xdg_toplevel_drag_v1 object.
+//
+// Destroy this xdg_toplevel_drag_v1 object. This request must only be
+// called after the underlying wl_data_source drag has ended, as indicated
+// by the dnd_drop_performed or cancelled events. In any other case an
+// ongoing_drag error is raised.
 func (o *ToplevelDragV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -79,6 +115,23 @@ func (o *ToplevelDragV1) Destroy() error {
 	return nil
 }
 
+// Attach move a toplevel with the drag operation.
+//
+// Request that the window will be moved with the cursor during the drag
+// operation. The offset is a hint to the compositor how the toplevel
+// should be positioned relative to the cursor hotspot in surface local
+// coordinates and relative to the geometry of the toplevel being attached.
+// See xdg_surface.set_window_geometry. For example it might only
+// be used when an unmapped window is attached. The attached window
+// does not participate in the selection of the drag target.
+//
+// If the toplevel is unmapped while it is attached, it is automatically
+// detached from the drag. In this case this request has to be called again
+// if the window should be attached after it is remapped.
+//
+// This request can be called multiple times but issuing it while a
+// toplevel with an active role is attached raises a toplevel_attached
+// error.
 func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset int32, yOffset int32) error {
 	return o.proxy.SendRequest(ToplevelDragV1RequestAttach, &ToplevelDragV1AttachRequest{
 		Toplevel: toplevel,

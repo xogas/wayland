@@ -15,19 +15,43 @@ const (
 	ShmPoolRequestResize       uint16 = 2
 )
 
+// ShmPoolError wl_shm_pool error values.
+//
+// These errors can be emitted in response to wl_shm_pool requests.
 type ShmPoolError uint32
 
 const (
+	// ShmPoolErrorInvalidFormat buffer format is not known.
 	ShmPoolErrorInvalidFormat ShmPoolError = 0
+	// ShmPoolErrorInvalidStride invalid size or stride during buffer creation.
 	ShmPoolErrorInvalidStride ShmPoolError = 1
 )
 
+// ShmPoolCreateBufferRequest create a buffer from the pool.
+//
+// Create a wl_buffer object from the pool.
+//
+// The buffer is created offset bytes into the pool and has
+// width and height as specified.  The stride argument specifies
+// the number of bytes from the beginning of one row to the beginning
+// of the next.  The format is the pixel format of the buffer and
+// must be one of those advertised through the wl_shm.format event.
+//
+// A buffer will keep a reference to the pool it was created from
+// so it is valid to destroy the pool immediately after creating
+// a buffer from it.
 type ShmPoolCreateBufferRequest struct {
-	ID     wire.NewID
+	// ID buffer to create.
+	ID wire.NewID
+	// Offset buffer byte offset within the pool.
 	Offset int32
-	Width  int32
+	// Width buffer width, in pixels.
+	Width int32
+	// Height buffer height, in pixels.
 	Height int32
+	// Stride number of bytes from the beginning of one row to the beginning of the next row.
 	Stride int32
+	// Format buffer pixel format.
 	Format ShmFormat
 }
 
@@ -57,6 +81,13 @@ func (r *ShmPoolCreateBufferRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShmPoolCreateBufferRequest) Since() uint32 { return 1 }
 
+// ShmPoolDestroyRequest destroy the pool.
+//
+// Destroy the shared memory pool.
+//
+// The mmapped memory will be released when all
+// buffers that have been created from this pool
+// are gone.
 type ShmPoolDestroyRequest struct {
 }
 
@@ -68,7 +99,20 @@ func (r *ShmPoolDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShmPoolDestroyRequest) Since() uint32 { return 1 }
 
+// ShmPoolResizeRequest change the size of the pool mapping.
+//
+// This request will cause the server to remap the backing memory
+// for the pool from the file descriptor passed when the pool was
+// created, but using the new size.  This request can only be
+// used to make the pool bigger.
+//
+// This request only changes the amount of bytes that are mmapped
+// by the server and does not touch the file corresponding to the
+// file descriptor passed at creation time. It is the client's
+// responsibility to ensure that the file is at least as big as
+// the new pool size.
 type ShmPoolResizeRequest struct {
+	// Size new size of the pool, in bytes.
 	Size int32
 }
 
@@ -83,18 +127,42 @@ func (r *ShmPoolResizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShmPoolResizeRequest) Since() uint32 { return 1 }
 
+// ShmPool a shared memory pool.
+//
+// The wl_shm_pool object encapsulates a piece of memory shared
+// between the compositor and client.  Through the wl_shm_pool
+// object, the client can allocate shared memory wl_buffer objects.
+// All objects created through the same pool share the same
+// underlying mapped memory. Reusing the mapped memory avoids the
+// setup/teardown overhead and is useful when interactively resizing
+// a surface or for many small buffers.
 type ShmPool struct {
 	proxy *Proxy
 }
 
+// NewShmPool wraps p in a ShmPool proxy.
 func NewShmPool(p *Proxy) *ShmPool {
 	return &ShmPool{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ShmPool) Proxy() *Proxy {
 	return o.proxy
 }
 
+// CreateBuffer create a buffer from the pool.
+//
+// Create a wl_buffer object from the pool.
+//
+// The buffer is created offset bytes into the pool and has
+// width and height as specified.  The stride argument specifies
+// the number of bytes from the beginning of one row to the beginning
+// of the next.  The format is the pixel format of the buffer and
+// must be one of those advertised through the wl_shm.format event.
+//
+// A buffer will keep a reference to the pool it was created from
+// so it is valid to destroy the pool immediately after creating
+// a buffer from it.
 func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format ShmFormat) (*Buffer, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -117,6 +185,13 @@ func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride i
 	return wrapped, nil
 }
 
+// Destroy destroy the pool.
+//
+// Destroy the shared memory pool.
+//
+// The mmapped memory will be released when all
+// buffers that have been created from this pool
+// are gone.
 func (o *ShmPool) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -128,6 +203,18 @@ func (o *ShmPool) Destroy() error {
 	return nil
 }
 
+// Resize change the size of the pool mapping.
+//
+// This request will cause the server to remap the backing memory
+// for the pool from the file descriptor passed when the pool was
+// created, but using the new size.  This request can only be
+// used to make the pool bigger.
+//
+// This request only changes the amount of bytes that are mmapped
+// by the server and does not touch the file corresponding to the
+// file descriptor passed at creation time. It is the client's
+// responsibility to ensure that the file is at least as big as
+// the new pool size.
 func (o *ShmPool) Resize(size int32) error {
 	return o.proxy.SendRequest(ShmPoolRequestResize, &ShmPoolResizeRequest{
 		Size: size,

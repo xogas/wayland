@@ -16,7 +16,11 @@ const (
 	DataControlManagerV1RequestDestroy          uint16 = 2
 )
 
+// DataControlManagerV1CreateDataSourceRequest create a new data source.
+//
+// Create a new data source.
 type DataControlManagerV1CreateDataSourceRequest struct {
+	// ID data source to create.
 	ID wire.NewID
 }
 
@@ -33,6 +37,9 @@ func (r *DataControlManagerV1CreateDataSourceRequest) Marshal(w *wire.Writer) er
 
 func (r *DataControlManagerV1CreateDataSourceRequest) Since() uint32 { return 1 }
 
+// DataControlManagerV1GetDataDeviceRequest get a data device for a seat.
+//
+// Create a data device that can be used to manage a seat's selection.
 type DataControlManagerV1GetDataDeviceRequest struct {
 	ID   wire.NewID
 	Seat wire.ObjectID
@@ -54,6 +61,10 @@ func (r *DataControlManagerV1GetDataDeviceRequest) Marshal(w *wire.Writer) error
 
 func (r *DataControlManagerV1GetDataDeviceRequest) Since() uint32 { return 1 }
 
+// DataControlManagerV1DestroyRequest destroy the manager.
+//
+// All objects created by the manager will still remain valid, until their
+// appropriate destroy request has been called.
 type DataControlManagerV1DestroyRequest struct {
 }
 
@@ -67,18 +78,27 @@ func (r *DataControlManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// DataControlManagerV1 manager to control data devices.
+//
+// This interface is a manager that allows creating per-seat data device
+// controls.
 type DataControlManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDataControlManagerV1 wraps p in a DataControlManagerV1 proxy.
 func NewDataControlManagerV1(p *wayland.Proxy) *DataControlManagerV1 {
 	return &DataControlManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataControlManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateDataSource create a new data source.
+//
+// Create a new data source.
 func (o *DataControlManagerV1) CreateDataSource() (*DataControlSourceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -96,6 +116,9 @@ func (o *DataControlManagerV1) CreateDataSource() (*DataControlSourceV1, error) 
 	return wrapped, nil
 }
 
+// GetDataDevice get a data device for a seat.
+//
+// Create a data device that can be used to manage a seat's selection.
 func (o *DataControlManagerV1) GetDataDevice(seat wire.ObjectID) (*DataControlDeviceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -114,6 +137,10 @@ func (o *DataControlManagerV1) GetDataDevice(seat wire.ObjectID) (*DataControlDe
 	return wrapped, nil
 }
 
+// Destroy destroy the manager.
+//
+// All objects created by the manager will still remain valid, until their
+// appropriate destroy request has been called.
 func (o *DataControlManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

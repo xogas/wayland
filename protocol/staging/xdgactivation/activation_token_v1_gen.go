@@ -32,12 +32,29 @@ var activationtokenv1EventFDCounts = map[uint16]int{
 type ActivationTokenV1Error uint32
 
 const (
+	// ActivationTokenV1ErrorAlreadyUsed the token has already been used previously.
 	ActivationTokenV1ErrorAlreadyUsed ActivationTokenV1Error = 0
 )
 
+// ActivationTokenV1SetSerialRequest specifies the seat and serial of the activating event.
+//
+// Provides information about the seat and serial event that requested the
+// token.
+//
+// The serial can come from an input or focus event. For instance, if a
+// click triggers the launch of a third-party client, the launcher client
+// should send a set_serial request with the serial and seat from the
+// wl_pointer.button event.
+//
+// Some compositors might refuse to activate toplevels when the token
+// doesn't have a valid and recent enough event serial.
+//
+// Must be sent before commit. This information is optional.
 type ActivationTokenV1SetSerialRequest struct {
+	// Serial the serial of the event that triggered the activation.
 	Serial uint32
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the event.
+	Seat wire.ObjectID
 }
 
 func (r *ActivationTokenV1SetSerialRequest) Opcode() uint16 { return ActivationTokenV1RequestSetSerial }
@@ -54,7 +71,14 @@ func (r *ActivationTokenV1SetSerialRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationTokenV1SetSerialRequest) Since() uint32 { return 1 }
 
+// ActivationTokenV1SetAppIDRequest specifies the application being activated.
+//
+// The requesting client can specify an app_id to associate the token
+// being created with it.
+//
+// Must be sent before commit. This information is optional.
 type ActivationTokenV1SetAppIDRequest struct {
+	// AppID the application id of the client being activated..
 	AppID string
 }
 
@@ -69,7 +93,17 @@ func (r *ActivationTokenV1SetAppIDRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationTokenV1SetAppIDRequest) Since() uint32 { return 1 }
 
+// ActivationTokenV1SetSurfaceRequest specifies the surface requesting activation.
+//
+// This request sets the surface requesting the activation. Note, this is
+// different from the surface that will be activated.
+//
+// Some compositors might refuse to activate toplevels when the token
+// doesn't have a requesting surface.
+//
+// Must be sent before commit. This information is optional.
 type ActivationTokenV1SetSurfaceRequest struct {
+	// Surface the requesting surface.
 	Surface wire.ObjectID
 }
 
@@ -86,6 +120,10 @@ func (r *ActivationTokenV1SetSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationTokenV1SetSurfaceRequest) Since() uint32 { return 1 }
 
+// ActivationTokenV1CommitRequest issues the token request.
+//
+// Requests an activation token based on the different parameters that
+// have been offered through set_serial, set_surface and set_app_id.
 type ActivationTokenV1CommitRequest struct {
 }
 
@@ -97,6 +135,10 @@ func (r *ActivationTokenV1CommitRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationTokenV1CommitRequest) Since() uint32 { return 1 }
 
+// ActivationTokenV1DestroyRequest destroy the xdg_activation_token_v1 object.
+//
+// Notify the compositor that the xdg_activation_token_v1 object will no
+// longer be used. The received token stays valid.
 type ActivationTokenV1DestroyRequest struct {
 }
 
@@ -108,7 +150,12 @@ func (r *ActivationTokenV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ActivationTokenV1DestroyRequest) Since() uint32 { return 1 }
 
+// ActivationTokenV1DoneEvent the exported activation token.
+//
+// The 'done' event contains the unique token of this activation request
+// and notifies that the provider is done.
 type ActivationTokenV1DoneEvent struct {
+	// Token the exported activation token.
 	Token string
 }
 
@@ -125,21 +172,35 @@ func (e *ActivationTokenV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ActivationTokenV1DoneEvent) Since() uint32 { return 1 }
 
+// ActivationTokenV1DoneFunc is a callback for Done events.
 type ActivationTokenV1DoneFunc func(ev ActivationTokenV1DoneEvent)
 
+// ActivationTokenV1 an exported activation handle.
+//
+// An object for setting up a token and receiving a token handle that can
+// be passed as an activation token to another client.
+//
+// The object is created using the xdg_activation_v1.get_activation_token
+// request. This object should then be populated with the app_id, surface
+// and serial information and committed. The compositor shall then issue a
+// done event with the token. In case the request's parameters are invalid,
+// the compositor will provide an invalid token.
 type ActivationTokenV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewActivationTokenV1 wraps p in a ActivationTokenV1 proxy.
 func NewActivationTokenV1(p *wayland.Proxy) *ActivationTokenV1 {
 	p.SetEventFDCounts(activationtokenv1EventFDCounts)
 	return &ActivationTokenV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ActivationTokenV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ActivationTokenV1) OnDone(fn ActivationTokenV1DoneFunc) {
 	o.proxy.RegisterEvent(ActivationTokenV1EventDone, func(r *wire.Reader) {
 		var ev ActivationTokenV1DoneEvent
@@ -153,6 +214,20 @@ func (o *ActivationTokenV1) OnDone(fn ActivationTokenV1DoneFunc) {
 	})
 }
 
+// SetSerial specifies the seat and serial of the activating event.
+//
+// Provides information about the seat and serial event that requested the
+// token.
+//
+// The serial can come from an input or focus event. For instance, if a
+// click triggers the launch of a third-party client, the launcher client
+// should send a set_serial request with the serial and seat from the
+// wl_pointer.button event.
+//
+// Some compositors might refuse to activate toplevels when the token
+// doesn't have a valid and recent enough event serial.
+//
+// Must be sent before commit. This information is optional.
 func (o *ActivationTokenV1) SetSerial(serial uint32, seat wire.ObjectID) error {
 	return o.proxy.SendRequest(ActivationTokenV1RequestSetSerial, &ActivationTokenV1SetSerialRequest{
 		Serial: serial,
@@ -160,22 +235,45 @@ func (o *ActivationTokenV1) SetSerial(serial uint32, seat wire.ObjectID) error {
 	})
 }
 
+// SetAppID specifies the application being activated.
+//
+// The requesting client can specify an app_id to associate the token
+// being created with it.
+//
+// Must be sent before commit. This information is optional.
 func (o *ActivationTokenV1) SetAppID(appID string) error {
 	return o.proxy.SendRequest(ActivationTokenV1RequestSetAppID, &ActivationTokenV1SetAppIDRequest{
 		AppID: appID,
 	})
 }
 
+// SetSurface specifies the surface requesting activation.
+//
+// This request sets the surface requesting the activation. Note, this is
+// different from the surface that will be activated.
+//
+// Some compositors might refuse to activate toplevels when the token
+// doesn't have a requesting surface.
+//
+// Must be sent before commit. This information is optional.
 func (o *ActivationTokenV1) SetSurface(surface wire.ObjectID) error {
 	return o.proxy.SendRequest(ActivationTokenV1RequestSetSurface, &ActivationTokenV1SetSurfaceRequest{
 		Surface: surface,
 	})
 }
 
+// Commit issues the token request.
+//
+// Requests an activation token based on the different parameters that
+// have been offered through set_serial, set_surface and set_app_id.
 func (o *ActivationTokenV1) Commit() error {
 	return o.proxy.SendRequest(ActivationTokenV1RequestCommit, &ActivationTokenV1CommitRequest{})
 }
 
+// Destroy destroy the xdg_activation_token_v1 object.
+//
+// Notify the compositor that the xdg_activation_token_v1 object will no
+// longer be used. The received token stays valid.
 func (o *ActivationTokenV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

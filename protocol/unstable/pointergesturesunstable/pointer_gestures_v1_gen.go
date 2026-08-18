@@ -17,6 +17,10 @@ const (
 	PointerGesturesV1RequestGetHoldGesture  uint16 = 3
 )
 
+// PointerGesturesV1GetSwipeGestureRequest get swipe gesture.
+//
+// Create a swipe gesture object. See the
+// wl_pointer_gesture_swipe interface for details.
 type PointerGesturesV1GetSwipeGestureRequest struct {
 	ID      wire.NewID
 	Pointer wire.ObjectID
@@ -38,6 +42,10 @@ func (r *PointerGesturesV1GetSwipeGestureRequest) Marshal(w *wire.Writer) error 
 
 func (r *PointerGesturesV1GetSwipeGestureRequest) Since() uint32 { return 1 }
 
+// PointerGesturesV1GetPinchGestureRequest get pinch gesture.
+//
+// Create a pinch gesture object. See the
+// wl_pointer_gesture_pinch interface for details.
 type PointerGesturesV1GetPinchGestureRequest struct {
 	ID      wire.NewID
 	Pointer wire.ObjectID
@@ -59,6 +67,10 @@ func (r *PointerGesturesV1GetPinchGestureRequest) Marshal(w *wire.Writer) error 
 
 func (r *PointerGesturesV1GetPinchGestureRequest) Since() uint32 { return 1 }
 
+// PointerGesturesV1ReleaseRequest destroy the pointer gesture object.
+//
+// Destroy the pointer gesture object. Swipe, pinch and hold objects
+// created via this gesture object remain valid.
 type PointerGesturesV1ReleaseRequest struct {
 }
 
@@ -70,6 +82,10 @@ func (r *PointerGesturesV1ReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerGesturesV1ReleaseRequest) Since() uint32 { return 2 }
 
+// PointerGesturesV1GetHoldGestureRequest get hold gesture.
+//
+// Create a hold gesture object. See the
+// wl_pointer_gesture_hold interface for details.
 type PointerGesturesV1GetHoldGestureRequest struct {
 	ID      wire.NewID
 	Pointer wire.ObjectID
@@ -91,18 +107,42 @@ func (r *PointerGesturesV1GetHoldGestureRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerGesturesV1GetHoldGestureRequest) Since() uint32 { return 3 }
 
+// PointerGesturesV1 touchpad gestures.
+//
+// A global interface to provide semantic touchpad gestures for a given
+// pointer.
+//
+// Three gestures are currently supported: swipe, pinch, and hold.
+// Pinch and swipe gestures follow a three-stage cycle: begin, update,
+// end. Hold gestures follow a two-stage cycle: begin and end. All
+// gestures are identified by a unique id.
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type PointerGesturesV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPointerGesturesV1 wraps p in a PointerGesturesV1 proxy.
 func NewPointerGesturesV1(p *wayland.Proxy) *PointerGesturesV1 {
 	return &PointerGesturesV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PointerGesturesV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// GetSwipeGesture get swipe gesture.
+//
+// Create a swipe gesture object. See the
+// wl_pointer_gesture_swipe interface for details.
 func (o *PointerGesturesV1) GetSwipeGesture(pointer wire.ObjectID) (*PointerGestureSwipeV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -121,6 +161,10 @@ func (o *PointerGesturesV1) GetSwipeGesture(pointer wire.ObjectID) (*PointerGest
 	return wrapped, nil
 }
 
+// GetPinchGesture get pinch gesture.
+//
+// Create a pinch gesture object. See the
+// wl_pointer_gesture_pinch interface for details.
 func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGesturePinchV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -139,6 +183,10 @@ func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGest
 	return wrapped, nil
 }
 
+// Release destroy the pointer gesture object.
+//
+// Destroy the pointer gesture object. Swipe, pinch and hold objects
+// created via this gesture object remain valid.
 func (o *PointerGesturesV1) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return wayland.ErrVersionMismatch
@@ -153,6 +201,10 @@ func (o *PointerGesturesV1) Release() error {
 	return nil
 }
 
+// GetHoldGesture get hold gesture.
+//
+// Create a hold gesture object. See the
+// wl_pointer_gesture_hold interface for details.
 func (o *PointerGesturesV1) GetHoldGesture(pointer wire.ObjectID) (*PointerGestureHoldV1, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return nil, wayland.ErrVersionMismatch

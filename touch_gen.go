@@ -36,6 +36,7 @@ var touchEventFDCounts = map[uint16]int{
 	6: 0,
 }
 
+// TouchReleaseRequest release the touch object.
 type TouchReleaseRequest struct {
 }
 
@@ -47,13 +48,25 @@ func (r *TouchReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *TouchReleaseRequest) Since() uint32 { return 3 }
 
+// TouchDownEvent touch down event and beginning of a touch sequence.
+//
+// A new touch point has appeared on the surface. This touch point is
+// assigned a unique ID. Future events from this touch point reference
+// this ID. The ID ceases to be valid after a touch up event and may be
+// reused in the future.
 type TouchDownEvent struct {
-	Serial  uint32
-	Time    uint32
+	// Serial serial number of the touch down event.
+	Serial uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Surface surface touched.
 	Surface wire.ObjectID
-	ID      int32
-	X       wire.Fixed
-	Y       wire.Fixed
+	// ID the unique ID of this touch point.
+	ID int32
+	// X surface-local x coordinate.
+	X wire.Fixed
+	// Y surface-local y coordinate.
+	Y wire.Fixed
 }
 
 func (e *TouchDownEvent) Opcode() uint16 { return TouchEventDown }
@@ -94,10 +107,18 @@ func (e *TouchDownEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchDownEvent) Since() uint32 { return 1 }
 
+// TouchUpEvent end of a touch event sequence.
+//
+// The touch point has disappeared. No further events will be sent for
+// this touch point and the touch point's ID is released and may be
+// reused in a future touch down event.
 type TouchUpEvent struct {
+	// Serial serial number of the touch up event.
 	Serial uint32
-	Time   uint32
-	ID     int32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// ID the unique ID of this touch point.
+	ID int32
 }
 
 func (e *TouchUpEvent) Opcode() uint16 { return TouchEventUp }
@@ -123,11 +144,18 @@ func (e *TouchUpEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchUpEvent) Since() uint32 { return 1 }
 
+// TouchMotionEvent update of touch point coordinates.
+//
+// A touch point has changed coordinates.
 type TouchMotionEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
-	ID   int32
-	X    wire.Fixed
-	Y    wire.Fixed
+	// ID the unique ID of this touch point.
+	ID int32
+	// X surface-local x coordinate.
+	X wire.Fixed
+	// Y surface-local y coordinate.
+	Y wire.Fixed
 }
 
 func (e *TouchMotionEvent) Opcode() uint16 { return TouchEventMotion }
@@ -158,6 +186,16 @@ func (e *TouchMotionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchMotionEvent) Since() uint32 { return 1 }
 
+// TouchFrameEvent end of touch frame event.
+//
+// Indicates the end of a set of events that logically belong together.
+// A client is expected to accumulate the data in all events within the
+// frame before proceeding.
+//
+// A wl_touch.frame terminates at least one event but otherwise no
+// guarantee is provided about the set of events within a frame. A client
+// must assume that any state not updated in a frame is unchanged from the
+// previously known state.
 type TouchFrameEvent struct {
 }
 
@@ -169,6 +207,16 @@ func (e *TouchFrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchFrameEvent) Since() uint32 { return 1 }
 
+// TouchCancelEvent touch session cancelled.
+//
+// Sent if the compositor decides the touch stream is a global
+// gesture. No further events are sent to the clients from that
+// particular gesture. Touch cancellation applies to all touch points
+// currently active on this client's surface. The client is
+// responsible for finalizing the touch points, future touch points on
+// this surface may reuse the touch point ID.
+//
+// No frame event is required after the cancel event.
 type TouchCancelEvent struct {
 }
 
@@ -180,9 +228,39 @@ func (e *TouchCancelEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchCancelEvent) Since() uint32 { return 1 }
 
+// TouchShapeEvent update shape of touch point.
+//
+// Sent when a touchpoint has changed its shape.
+//
+// This event does not occur on its own. It is sent before a
+// wl_touch.frame event and carries the new shape information for
+// any previously reported, or new touch points of that frame.
+//
+// Other events describing the touch point such as wl_touch.down,
+// wl_touch.motion or wl_touch.orientation may be sent within the
+// same wl_touch.frame. A client should treat these events as a single
+// logical touch point update. The order of wl_touch.shape,
+// wl_touch.orientation and wl_touch.motion is not guaranteed.
+// A wl_touch.down event is guaranteed to occur before the first
+// wl_touch.shape event for this touch ID but both events may occur within
+// the same wl_touch.frame.
+//
+// A touchpoint shape is approximated by an ellipse through the major and
+// minor axis length. The major axis length describes the longer diameter
+// of the ellipse, while the minor axis length describes the shorter
+// diameter. Major and minor are orthogonal and both are specified in
+// surface-local coordinates. The center of the ellipse is always at the
+// touchpoint location as reported by wl_touch.down or wl_touch.motion.
+//
+// This event is only sent by the compositor if the touch device supports
+// shape reports. The client has to make reasonable assumptions about the
+// shape if it did not receive this event.
 type TouchShapeEvent struct {
-	ID    int32
+	// ID the unique ID of this touch point.
+	ID int32
+	// Major length of the major axis in surface-local coordinates.
 	Major wire.Fixed
+	// Minor length of the minor axis in surface-local coordinates.
 	Minor wire.Fixed
 }
 
@@ -209,8 +287,35 @@ func (e *TouchShapeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchShapeEvent) Since() uint32 { return 6 }
 
+// TouchOrientationEvent update orientation of touch point.
+//
+// Sent when a touchpoint has changed its orientation.
+//
+// This event does not occur on its own. It is sent before a
+// wl_touch.frame event and carries the new shape information for
+// any previously reported, or new touch points of that frame.
+//
+// Other events describing the touch point such as wl_touch.down,
+// wl_touch.motion or wl_touch.shape may be sent within the
+// same wl_touch.frame. A client should treat these events as a single
+// logical touch point update. The order of wl_touch.shape,
+// wl_touch.orientation and wl_touch.motion is not guaranteed.
+// A wl_touch.down event is guaranteed to occur before the first
+// wl_touch.orientation event for this touch ID but both events may occur
+// within the same wl_touch.frame.
+//
+// The orientation describes the clockwise angle of a touchpoint's major
+// axis to the positive surface y-axis and is normalized to the -180 to
+// +180 degree range. The granularity of orientation depends on the touch
+// device, some devices only support binary rotation values between 0 and
+// 90 degrees.
+//
+// This event is only sent by the compositor if the touch device supports
+// orientation reports.
 type TouchOrientationEvent struct {
-	ID          int32
+	// ID the unique ID of this touch point.
+	ID int32
+	// Orientation angle between major axis and positive surface y-axis in degrees.
 	Orientation wire.Fixed
 }
 
@@ -232,33 +337,53 @@ func (e *TouchOrientationEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TouchOrientationEvent) Since() uint32 { return 6 }
 
+// TouchDownFunc is a callback for Down events.
 type TouchDownFunc func(ev TouchDownEvent)
 
+// TouchUpFunc is a callback for Up events.
 type TouchUpFunc func(ev TouchUpEvent)
 
+// TouchMotionFunc is a callback for Motion events.
 type TouchMotionFunc func(ev TouchMotionEvent)
 
+// TouchFrameFunc is a callback for Frame events.
 type TouchFrameFunc func(ev TouchFrameEvent)
 
+// TouchCancelFunc is a callback for Cancel events.
 type TouchCancelFunc func(ev TouchCancelEvent)
 
+// TouchShapeFunc is a callback for Shape events.
 type TouchShapeFunc func(ev TouchShapeEvent)
 
+// TouchOrientationFunc is a callback for Orientation events.
 type TouchOrientationFunc func(ev TouchOrientationEvent)
 
+// Touch touchscreen input device.
+//
+// The wl_touch interface represents a touchscreen
+// associated with a seat.
+//
+// Touch interactions can consist of one or more contacts.
+// For each contact, a series of events is generated, starting
+// with a down event, followed by zero or more motion events,
+// and ending with an up event. Events relating to the same
+// contact point can be identified by the ID of the sequence.
 type Touch struct {
 	proxy *Proxy
 }
 
+// NewTouch wraps p in a Touch proxy.
 func NewTouch(p *Proxy) *Touch {
 	p.SetEventFDCounts(touchEventFDCounts)
 	return &Touch{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Touch) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnDown registers fn to receive Down events.
 func (o *Touch) OnDown(fn TouchDownFunc) {
 	o.proxy.RegisterEvent(TouchEventDown, func(r *wire.Reader) {
 		var ev TouchDownEvent
@@ -272,6 +397,7 @@ func (o *Touch) OnDown(fn TouchDownFunc) {
 	})
 }
 
+// OnUp registers fn to receive Up events.
 func (o *Touch) OnUp(fn TouchUpFunc) {
 	o.proxy.RegisterEvent(TouchEventUp, func(r *wire.Reader) {
 		var ev TouchUpEvent
@@ -285,6 +411,7 @@ func (o *Touch) OnUp(fn TouchUpFunc) {
 	})
 }
 
+// OnMotion registers fn to receive Motion events.
 func (o *Touch) OnMotion(fn TouchMotionFunc) {
 	o.proxy.RegisterEvent(TouchEventMotion, func(r *wire.Reader) {
 		var ev TouchMotionEvent
@@ -298,6 +425,7 @@ func (o *Touch) OnMotion(fn TouchMotionFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *Touch) OnFrame(fn TouchFrameFunc) {
 	o.proxy.RegisterEvent(TouchEventFrame, func(r *wire.Reader) {
 		var ev TouchFrameEvent
@@ -311,6 +439,7 @@ func (o *Touch) OnFrame(fn TouchFrameFunc) {
 	})
 }
 
+// OnCancel registers fn to receive Cancel events.
 func (o *Touch) OnCancel(fn TouchCancelFunc) {
 	o.proxy.RegisterEvent(TouchEventCancel, func(r *wire.Reader) {
 		var ev TouchCancelEvent
@@ -324,6 +453,7 @@ func (o *Touch) OnCancel(fn TouchCancelFunc) {
 	})
 }
 
+// OnShape registers fn to receive Shape events.
 func (o *Touch) OnShape(fn TouchShapeFunc) {
 	o.proxy.RegisterEvent(TouchEventShape, func(r *wire.Reader) {
 		var ev TouchShapeEvent
@@ -337,6 +467,7 @@ func (o *Touch) OnShape(fn TouchShapeFunc) {
 	})
 }
 
+// OnOrientation registers fn to receive Orientation events.
 func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 	o.proxy.RegisterEvent(TouchEventOrientation, func(r *wire.Reader) {
 		var ev TouchOrientationEvent
@@ -350,6 +481,7 @@ func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 	})
 }
 
+// Release release the touch object.
 func (o *Touch) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch

@@ -34,9 +34,17 @@ var popupEventFDCounts = map[uint16]int{
 type PopupError uint32
 
 const (
+	// PopupErrorInvalidGrab tried to grab after being mapped.
 	PopupErrorInvalidGrab PopupError = 0
 )
 
+// PopupDestroyRequest remove xdg_popup interface.
+//
+// This destroys the popup. Explicitly destroying the xdg_popup
+// object will also dismiss the popup, and unmap the surface.
+//
+// If this xdg_popup is not the "topmost" popup, the
+// xdg_wm_base.not_the_topmost_popup protocol error will be sent.
 type PopupDestroyRequest struct {
 }
 
@@ -48,8 +56,49 @@ func (r *PopupDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PopupDestroyRequest) Since() uint32 { return 1 }
 
+// PopupGrabRequest make the popup take an explicit grab.
+//
+// This request makes the created popup take an explicit grab. An explicit
+// grab will be dismissed when the user dismisses the popup, or when the
+// client destroys the xdg_popup. This can be done by the user clicking
+// outside the surface, using the keyboard, or even locking the screen
+// through closing the lid or a timeout.
+//
+// If the compositor denies the grab, the popup will be immediately
+// dismissed.
+//
+// This request must be used in response to some sort of user action like a
+// button press, key press, or touch down event. The serial number of the
+// event should be passed as 'serial'.
+//
+// The parent of a grabbing popup must either be an xdg_toplevel surface or
+// another xdg_popup with an explicit grab. If the parent is another
+// xdg_popup it means that the popups are nested, with this popup now being
+// the topmost popup.
+//
+// Nested popups must be destroyed in the reverse order they were created
+// in, e.g. the only popup you are allowed to destroy at all times is the
+// topmost one.
+//
+// When compositors choose to dismiss a popup, they may dismiss every
+// nested grabbing popup as well. When a compositor dismisses popups, it
+// will follow the same dismissing order as required from the client.
+//
+// If the topmost grabbing popup is destroyed, the grab will be returned to
+// the parent of the popup, if that parent previously had an explicit grab.
+//
+// If the parent is a grabbing popup which has already been dismissed, this
+// popup will be immediately dismissed. If the parent is a popup that did
+// not take an explicit grab, an error will be raised.
+//
+// During a popup grab, the client owning the grab will receive pointer
+// and touch events for all their surfaces as normal (similar to an
+// "owner-events" grab in X11 parlance), while the top most grabbing popup
+// will always have keyboard focus.
 type PopupGrabRequest struct {
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
 	Serial uint32
 }
 
@@ -67,9 +116,35 @@ func (r *PopupGrabRequest) Marshal(w *wire.Writer) error {
 
 func (r *PopupGrabRequest) Since() uint32 { return 1 }
 
+// PopupRepositionRequest recalculate the popup's location.
+//
+// Reposition an already-mapped popup. The popup will be placed given the
+// details in the passed xdg_positioner object, and a
+// xdg_popup.repositioned followed by xdg_popup.configure and
+// xdg_surface.configure will be emitted in response. Any parameters set
+// by the previous positioner will be discarded.
+//
+// The passed token will be sent in the corresponding
+// xdg_popup.repositioned event. The new popup position will not take
+// effect until the corresponding configure event is acknowledged by the
+// client. See xdg_popup.repositioned for details. The token itself is
+// opaque, and has no other special meaning.
+//
+// If multiple reposition requests are sent, the compositor may skip all
+// but the last one.
+//
+// If the popup is repositioned in response to a configure event for its
+// parent, the client should send an xdg_positioner.set_parent_configure
+// and possibly an xdg_positioner.set_parent_size request to allow the
+// compositor to properly constrain the popup.
+//
+// If the popup is repositioned together with a parent that is being
+// resized, but not in response to a configure event, the client should
+// send an xdg_positioner.set_parent_size request.
 type PopupRepositionRequest struct {
 	Positioner wire.ObjectID
-	Token      uint32
+	// Token reposition request token.
+	Token uint32
 }
 
 func (r *PopupRepositionRequest) Opcode() uint16 { return PopupRequestReposition }
@@ -86,10 +161,28 @@ func (r *PopupRepositionRequest) Marshal(w *wire.Writer) error {
 
 func (r *PopupRepositionRequest) Since() uint32 { return 3 }
 
+// PopupConfigureEvent configure the popup surface.
+//
+// This event asks the popup surface to configure itself given the
+// configuration. The configured state should not be applied immediately.
+// See xdg_surface.configure for details.
+//
+// The x and y arguments represent the position the popup was placed at
+// given the xdg_positioner rule, relative to the upper left corner of the
+// window geometry of the parent surface.
+//
+// For version 2 or older, the configure event for an xdg_popup is only
+// ever sent once for the initial configuration. Starting with version 3,
+// it may be sent again if the popup is setup with an xdg_positioner with
+// set_reactive requested, or in response to xdg_popup.reposition requests.
 type PopupConfigureEvent struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X x position relative to parent surface window geometry.
+	X int32
+	// Y y position relative to parent surface window geometry.
+	Y int32
+	// Width window geometry width.
+	Width int32
+	// Height window geometry height.
 	Height int32
 }
 
@@ -121,6 +214,11 @@ func (e *PopupConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PopupConfigureEvent) Since() uint32 { return 1 }
 
+// PopupPopupDoneEvent popup interaction is done.
+//
+// The popup_done event is sent out when a popup is dismissed by the
+// compositor. The client should destroy the xdg_popup object at this
+// point.
 type PopupPopupDoneEvent struct {
 }
 
@@ -132,7 +230,25 @@ func (e *PopupPopupDoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PopupPopupDoneEvent) Since() uint32 { return 1 }
 
+// PopupRepositionedEvent signal the completion of a repositioned request.
+//
+// The repositioned event is sent as part of a popup configuration
+// sequence, together with xdg_popup.configure and lastly
+// xdg_surface.configure to notify the completion of a reposition request.
+//
+// The repositioned event is to notify about the completion of a
+// xdg_popup.reposition request. The token argument is the token passed
+// in the xdg_popup.reposition request.
+//
+// Immediately after this event is emitted, xdg_popup.configure and
+// xdg_surface.configure will be sent with the updated size and position,
+// as well as a new configure serial.
+//
+// The client should optionally update the content of the popup, but must
+// acknowledge the new popup configuration for the new position to take
+// effect. See xdg_surface.ack_configure for details.
 type PopupRepositionedEvent struct {
+	// Token reposition request token.
 	Token uint32
 }
 
@@ -149,25 +265,57 @@ func (e *PopupRepositionedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PopupRepositionedEvent) Since() uint32 { return 3 }
 
+// PopupConfigureFunc is a callback for Configure events.
 type PopupConfigureFunc func(ev PopupConfigureEvent)
 
+// PopupPopupDoneFunc is a callback for PopupDone events.
 type PopupPopupDoneFunc func(ev PopupPopupDoneEvent)
 
+// PopupRepositionedFunc is a callback for Repositioned events.
 type PopupRepositionedFunc func(ev PopupRepositionedEvent)
 
+// Popup short-lived, popup surfaces for menus.
+//
+// A popup surface is a short-lived, temporary surface. It can be used to
+// implement for example menus, popovers, tooltips and other similar user
+// interface concepts.
+//
+// A popup can be made to take an explicit grab. See xdg_popup.grab for
+// details.
+//
+// When the popup is dismissed, a popup_done event will be sent out, and at
+// the same time the surface will be unmapped. See the xdg_popup.popup_done
+// event for details.
+//
+// Explicitly destroying the xdg_popup object will also dismiss the popup and
+// unmap the surface. Clients that want to dismiss the popup when another
+// surface of their own is clicked should dismiss the popup using the destroy
+// request.
+//
+// A newly created xdg_popup will be stacked on top of all previously created
+// xdg_popup surfaces associated with the same xdg_toplevel.
+//
+// The parent of an xdg_popup must be mapped (see the xdg_surface
+// description) before the xdg_popup itself.
+//
+// The client must call wl_surface.commit on the corresponding wl_surface
+// for the xdg_popup state to take effect.
 type Popup struct {
 	proxy *wayland.Proxy
 }
 
+// NewPopup wraps p in a Popup proxy.
 func NewPopup(p *wayland.Proxy) *Popup {
 	p.SetEventFDCounts(popupEventFDCounts)
 	return &Popup{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Popup) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *Popup) OnConfigure(fn PopupConfigureFunc) {
 	o.proxy.RegisterEvent(PopupEventConfigure, func(r *wire.Reader) {
 		var ev PopupConfigureEvent
@@ -181,6 +329,7 @@ func (o *Popup) OnConfigure(fn PopupConfigureFunc) {
 	})
 }
 
+// OnPopupDone registers fn to receive PopupDone events.
 func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupEventPopupDone, func(r *wire.Reader) {
 		var ev PopupPopupDoneEvent
@@ -194,6 +343,7 @@ func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 	})
 }
 
+// OnRepositioned registers fn to receive Repositioned events.
 func (o *Popup) OnRepositioned(fn PopupRepositionedFunc) {
 	o.proxy.RegisterEvent(PopupEventRepositioned, func(r *wire.Reader) {
 		var ev PopupRepositionedEvent
@@ -207,6 +357,13 @@ func (o *Popup) OnRepositioned(fn PopupRepositionedFunc) {
 	})
 }
 
+// Destroy remove xdg_popup interface.
+//
+// This destroys the popup. Explicitly destroying the xdg_popup
+// object will also dismiss the popup, and unmap the surface.
+//
+// If this xdg_popup is not the "topmost" popup, the
+// xdg_wm_base.not_the_topmost_popup protocol error will be sent.
 func (o *Popup) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -218,6 +375,45 @@ func (o *Popup) Destroy() error {
 	return nil
 }
 
+// Grab make the popup take an explicit grab.
+//
+// This request makes the created popup take an explicit grab. An explicit
+// grab will be dismissed when the user dismisses the popup, or when the
+// client destroys the xdg_popup. This can be done by the user clicking
+// outside the surface, using the keyboard, or even locking the screen
+// through closing the lid or a timeout.
+//
+// If the compositor denies the grab, the popup will be immediately
+// dismissed.
+//
+// This request must be used in response to some sort of user action like a
+// button press, key press, or touch down event. The serial number of the
+// event should be passed as 'serial'.
+//
+// The parent of a grabbing popup must either be an xdg_toplevel surface or
+// another xdg_popup with an explicit grab. If the parent is another
+// xdg_popup it means that the popups are nested, with this popup now being
+// the topmost popup.
+//
+// Nested popups must be destroyed in the reverse order they were created
+// in, e.g. the only popup you are allowed to destroy at all times is the
+// topmost one.
+//
+// When compositors choose to dismiss a popup, they may dismiss every
+// nested grabbing popup as well. When a compositor dismisses popups, it
+// will follow the same dismissing order as required from the client.
+//
+// If the topmost grabbing popup is destroyed, the grab will be returned to
+// the parent of the popup, if that parent previously had an explicit grab.
+//
+// If the parent is a grabbing popup which has already been dismissed, this
+// popup will be immediately dismissed. If the parent is a popup that did
+// not take an explicit grab, an error will be raised.
+//
+// During a popup grab, the client owning the grab will receive pointer
+// and touch events for all their surfaces as normal (similar to an
+// "owner-events" grab in X11 parlance), while the top most grabbing popup
+// will always have keyboard focus.
 func (o *Popup) Grab(seat wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(PopupRequestGrab, &PopupGrabRequest{
 		Seat:   seat,
@@ -225,6 +421,31 @@ func (o *Popup) Grab(seat wire.ObjectID, serial uint32) error {
 	})
 }
 
+// Reposition recalculate the popup's location.
+//
+// Reposition an already-mapped popup. The popup will be placed given the
+// details in the passed xdg_positioner object, and a
+// xdg_popup.repositioned followed by xdg_popup.configure and
+// xdg_surface.configure will be emitted in response. Any parameters set
+// by the previous positioner will be discarded.
+//
+// The passed token will be sent in the corresponding
+// xdg_popup.repositioned event. The new popup position will not take
+// effect until the corresponding configure event is acknowledged by the
+// client. See xdg_popup.repositioned for details. The token itself is
+// opaque, and has no other special meaning.
+//
+// If multiple reposition requests are sent, the compositor may skip all
+// but the last one.
+//
+// If the popup is repositioned in response to a configure event for its
+// parent, the client should send an xdg_positioner.set_parent_configure
+// and possibly an xdg_positioner.set_parent_size request to allow the
+// compositor to properly constrain the popup.
+//
+// If the popup is repositioned together with a parent that is being
+// resized, but not in response to a configure event, the client should
+// send an xdg_positioner.set_parent_size request.
 func (o *Popup) Reposition(positioner wire.ObjectID, token uint32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch

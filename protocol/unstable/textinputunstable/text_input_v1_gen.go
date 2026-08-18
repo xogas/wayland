@@ -59,47 +59,87 @@ var textinputv1EventFDCounts = map[uint16]int{
 	12: 0,
 }
 
-// TextInputV1ContentHint is a bitfield of flags.
+// TextInputV1ContentHint content hint.
+//
+// Content hint is a bitmask to allow to modify the behavior of the text
+// input.
+//
+// This is a bitfield of flags.
 type TextInputV1ContentHint uint32
 
 const (
-	TextInputV1ContentHintNone               TextInputV1ContentHint = 0
-	TextInputV1ContentHintDefault            TextInputV1ContentHint = 7
-	TextInputV1ContentHintPassword           TextInputV1ContentHint = 192
-	TextInputV1ContentHintAutoCompletion     TextInputV1ContentHint = 1
-	TextInputV1ContentHintAutoCorrection     TextInputV1ContentHint = 2
+	// TextInputV1ContentHintNone no special behaviour.
+	TextInputV1ContentHintNone TextInputV1ContentHint = 0
+	// TextInputV1ContentHintDefault auto completion, correction and capitalization.
+	TextInputV1ContentHintDefault TextInputV1ContentHint = 7
+	// TextInputV1ContentHintPassword hidden and sensitive text.
+	TextInputV1ContentHintPassword TextInputV1ContentHint = 192
+	// TextInputV1ContentHintAutoCompletion suggest word completions.
+	TextInputV1ContentHintAutoCompletion TextInputV1ContentHint = 1
+	// TextInputV1ContentHintAutoCorrection suggest word corrections.
+	TextInputV1ContentHintAutoCorrection TextInputV1ContentHint = 2
+	// TextInputV1ContentHintAutoCapitalization switch to uppercase letters at the start of a sentence.
 	TextInputV1ContentHintAutoCapitalization TextInputV1ContentHint = 4
-	TextInputV1ContentHintLowercase          TextInputV1ContentHint = 8
-	TextInputV1ContentHintUppercase          TextInputV1ContentHint = 16
-	TextInputV1ContentHintTitlecase          TextInputV1ContentHint = 32
-	TextInputV1ContentHintHiddenText         TextInputV1ContentHint = 64
-	TextInputV1ContentHintSensitiveData      TextInputV1ContentHint = 128
-	TextInputV1ContentHintLatin              TextInputV1ContentHint = 256
-	TextInputV1ContentHintMultiline          TextInputV1ContentHint = 512
+	// TextInputV1ContentHintLowercase prefer lowercase letters.
+	TextInputV1ContentHintLowercase TextInputV1ContentHint = 8
+	// TextInputV1ContentHintUppercase prefer uppercase letters.
+	TextInputV1ContentHintUppercase TextInputV1ContentHint = 16
+	// TextInputV1ContentHintTitlecase prefer casing for titles and headings (can be language dependent).
+	TextInputV1ContentHintTitlecase TextInputV1ContentHint = 32
+	// TextInputV1ContentHintHiddenText characters should be hidden.
+	TextInputV1ContentHintHiddenText TextInputV1ContentHint = 64
+	// TextInputV1ContentHintSensitiveData typed text should not be stored.
+	TextInputV1ContentHintSensitiveData TextInputV1ContentHint = 128
+	// TextInputV1ContentHintLatin just latin characters should be entered.
+	TextInputV1ContentHintLatin TextInputV1ContentHint = 256
+	// TextInputV1ContentHintMultiline the text input is multiline.
+	TextInputV1ContentHintMultiline TextInputV1ContentHint = 512
 )
 
+// TextInputV1ContentPurpose content purpose.
+//
+// The content purpose allows to specify the primary purpose of a text
+// input.
+//
+// This allows an input method to show special purpose input panels with
+// extra characters or to disallow some characters.
 type TextInputV1ContentPurpose uint32
 
 const (
-	TextInputV1ContentPurposeNormal   TextInputV1ContentPurpose = 0
-	TextInputV1ContentPurposeAlpha    TextInputV1ContentPurpose = 1
-	TextInputV1ContentPurposeDigits   TextInputV1ContentPurpose = 2
-	TextInputV1ContentPurposeNumber   TextInputV1ContentPurpose = 3
-	TextInputV1ContentPurposePhone    TextInputV1ContentPurpose = 4
-	TextInputV1ContentPurposeUrl      TextInputV1ContentPurpose = 5
-	TextInputV1ContentPurposeEmail    TextInputV1ContentPurpose = 6
-	TextInputV1ContentPurposeName     TextInputV1ContentPurpose = 7
+	// TextInputV1ContentPurposeNormal default input, allowing all characters.
+	TextInputV1ContentPurposeNormal TextInputV1ContentPurpose = 0
+	// TextInputV1ContentPurposeAlpha allow only alphabetic characters.
+	TextInputV1ContentPurposeAlpha TextInputV1ContentPurpose = 1
+	// TextInputV1ContentPurposeDigits allow only digits.
+	TextInputV1ContentPurposeDigits TextInputV1ContentPurpose = 2
+	// TextInputV1ContentPurposeNumber input a number (including decimal separator and sign).
+	TextInputV1ContentPurposeNumber TextInputV1ContentPurpose = 3
+	// TextInputV1ContentPurposePhone input a phone number.
+	TextInputV1ContentPurposePhone TextInputV1ContentPurpose = 4
+	// TextInputV1ContentPurposeUrl input an URL.
+	TextInputV1ContentPurposeUrl TextInputV1ContentPurpose = 5
+	// TextInputV1ContentPurposeEmail input an email address.
+	TextInputV1ContentPurposeEmail TextInputV1ContentPurpose = 6
+	// TextInputV1ContentPurposeName input a name of a person.
+	TextInputV1ContentPurposeName TextInputV1ContentPurpose = 7
+	// TextInputV1ContentPurposePassword input a password (combine with password or sensitive_data hint).
 	TextInputV1ContentPurposePassword TextInputV1ContentPurpose = 8
-	TextInputV1ContentPurposeDate     TextInputV1ContentPurpose = 9
-	TextInputV1ContentPurposeTime     TextInputV1ContentPurpose = 10
+	// TextInputV1ContentPurposeDate input a date.
+	TextInputV1ContentPurposeDate TextInputV1ContentPurpose = 9
+	// TextInputV1ContentPurposeTime input a time.
+	TextInputV1ContentPurposeTime TextInputV1ContentPurpose = 10
+	// TextInputV1ContentPurposeDatetime input a date and time.
 	TextInputV1ContentPurposeDatetime TextInputV1ContentPurpose = 11
+	// TextInputV1ContentPurposeTerminal input for a terminal.
 	TextInputV1ContentPurposeTerminal TextInputV1ContentPurpose = 12
 )
 
 type TextInputV1PreeditStyle uint32
 
 const (
-	TextInputV1PreeditStyleDefault   TextInputV1PreeditStyle = 0
+	// TextInputV1PreeditStyleDefault default style for composing text.
+	TextInputV1PreeditStyleDefault TextInputV1PreeditStyle = 0
+	// TextInputV1PreeditStyleNone style should be the same as in non-composing text.
 	TextInputV1PreeditStyleNone      TextInputV1PreeditStyle = 1
 	TextInputV1PreeditStyleActive    TextInputV1PreeditStyle = 2
 	TextInputV1PreeditStyleInactive  TextInputV1PreeditStyle = 3
@@ -112,11 +152,23 @@ const (
 type TextInputV1TextDirection uint32
 
 const (
+	// TextInputV1TextDirectionAuto automatic text direction based on text and language.
 	TextInputV1TextDirectionAuto TextInputV1TextDirection = 0
-	TextInputV1TextDirectionLtr  TextInputV1TextDirection = 1
-	TextInputV1TextDirectionRtl  TextInputV1TextDirection = 2
+	// TextInputV1TextDirectionLtr left-to-right.
+	TextInputV1TextDirectionLtr TextInputV1TextDirection = 1
+	// TextInputV1TextDirectionRtl right-to-left.
+	TextInputV1TextDirectionRtl TextInputV1TextDirection = 2
 )
 
+// TextInputV1ActivateRequest request activation.
+//
+// Requests the text_input object to be activated (typically when the
+// text entry gets focus).
+//
+// The seat argument is a wl_seat which maintains the focus for this
+// activation. The surface argument is a wl_surface assigned to the
+// text_input object and tracked for focus lost. The enter event
+// is emitted on successful activation.
 type TextInputV1ActivateRequest struct {
 	Seat    wire.ObjectID
 	Surface wire.ObjectID
@@ -136,6 +188,11 @@ func (r *TextInputV1ActivateRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1ActivateRequest) Since() uint32 { return 1 }
 
+// TextInputV1DeactivateRequest request deactivation.
+//
+// Requests the text_input object to be deactivated (typically when the
+// text entry lost focus). The seat argument is a wl_seat which was used
+// for activation.
 type TextInputV1DeactivateRequest struct {
 	Seat wire.ObjectID
 }
@@ -151,6 +208,9 @@ func (r *TextInputV1DeactivateRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1DeactivateRequest) Since() uint32 { return 1 }
 
+// TextInputV1ShowInputPanelRequest show input panels.
+//
+// Requests input panels (virtual keyboard) to show.
 type TextInputV1ShowInputPanelRequest struct {
 }
 
@@ -162,6 +222,9 @@ func (r *TextInputV1ShowInputPanelRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1ShowInputPanelRequest) Since() uint32 { return 1 }
 
+// TextInputV1HideInputPanelRequest hide input panels.
+//
+// Requests input panels (virtual keyboard) to hide.
 type TextInputV1HideInputPanelRequest struct {
 }
 
@@ -173,6 +236,11 @@ func (r *TextInputV1HideInputPanelRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1HideInputPanelRequest) Since() uint32 { return 1 }
 
+// TextInputV1ResetRequest reset.
+//
+// Should be called by an editor widget when the input state should be
+// reset, for example after the text was changed outside of the normal
+// input method flow.
 type TextInputV1ResetRequest struct {
 }
 
@@ -184,6 +252,13 @@ func (r *TextInputV1ResetRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1ResetRequest) Since() uint32 { return 1 }
 
+// TextInputV1SetSurroundingTextRequest sets the surrounding text.
+//
+// Sets the plain surrounding text around the input position. Text is
+// UTF-8 encoded. Cursor is the byte offset within the
+// surrounding text. Anchor is the byte offset of the
+// selection anchor within the surrounding text. If there is no selected
+// text anchor, then it is the same as cursor.
 type TextInputV1SetSurroundingTextRequest struct {
 	Text   string
 	Cursor uint32
@@ -209,6 +284,15 @@ func (r *TextInputV1SetSurroundingTextRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1SetSurroundingTextRequest) Since() uint32 { return 1 }
 
+// TextInputV1SetContentTypeRequest set content purpose and hint.
+//
+// Sets the content purpose and content hint. While the purpose is the
+// basic purpose of an input field, the hint flags allow to modify some
+// of the behavior.
+//
+// When no content type is explicitly set, a normal content purpose with
+// default hints (auto completion, auto correction, auto capitalization)
+// should be assumed.
 type TextInputV1SetContentTypeRequest struct {
 	Hint    TextInputV1ContentHint
 	Purpose TextInputV1ContentPurpose
@@ -257,6 +341,15 @@ func (r *TextInputV1SetCursorRectangleRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1SetCursorRectangleRequest) Since() uint32 { return 1 }
 
+// TextInputV1SetPreferredLanguageRequest sets preferred language.
+//
+// Sets a specific language. This allows for example a virtual keyboard to
+// show a language specific layout. The "language" argument is an RFC-3066
+// format language tag.
+//
+// It could be used for example in a word processor to indicate the
+// language of the currently edited document or in an instant message
+// application which tracks languages of contacts.
 type TextInputV1SetPreferredLanguageRequest struct {
 	Language string
 }
@@ -275,6 +368,7 @@ func (r *TextInputV1SetPreferredLanguageRequest) Marshal(w *wire.Writer) error {
 func (r *TextInputV1SetPreferredLanguageRequest) Since() uint32 { return 1 }
 
 type TextInputV1CommitStateRequest struct {
+	// Serial used to identify the known state.
 	Serial uint32
 }
 
@@ -308,6 +402,10 @@ func (r *TextInputV1InvokeActionRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV1InvokeActionRequest) Since() uint32 { return 1 }
 
+// TextInputV1EnterEvent enter event.
+//
+// Notify the text_input object when it received focus. Typically in
+// response to an activate request.
 type TextInputV1EnterEvent struct {
 	Surface wire.ObjectID
 }
@@ -325,6 +423,11 @@ func (e *TextInputV1EnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1EnterEvent) Since() uint32 { return 1 }
 
+// TextInputV1LeaveEvent leave event.
+//
+// Notify the text_input object when it lost focus. Either in response
+// to a deactivate request or when the assigned surface lost focus or was
+// destroyed.
 type TextInputV1LeaveEvent struct {
 }
 
@@ -336,6 +439,11 @@ func (e *TextInputV1LeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1LeaveEvent) Since() uint32 { return 1 }
 
+// TextInputV1ModifiersMapEvent modifiers map.
+//
+// Transfer an array of 0-terminated modifier names. The position in
+// the array is the index of the modifier as used in the modifiers
+// bitmask in the keysym event.
 type TextInputV1ModifiersMapEvent struct {
 	Map []byte
 }
@@ -353,6 +461,9 @@ func (e *TextInputV1ModifiersMapEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1ModifiersMapEvent) Since() uint32 { return 1 }
 
+// TextInputV1InputPanelStateEvent state of the input panel.
+//
+// Notify when the visibility state of the input panel changed.
 type TextInputV1InputPanelStateEvent struct {
 	State uint32
 }
@@ -370,7 +481,19 @@ func (e *TextInputV1InputPanelStateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1InputPanelStateEvent) Since() uint32 { return 1 }
 
+// TextInputV1PreeditStringEvent pre-edit.
+//
+// Notify when a new composing text (pre-edit) should be set around the
+// current cursor position. Any previously set composing text should
+// be removed.
+//
+// The commit text can be used to replace the preedit text on reset
+// (for example on unfocus).
+//
+// The text input should also handle all preedit_style and preedit_cursor
+// events occurring directly before preedit_string.
 type TextInputV1PreeditStringEvent struct {
+	// Serial serial of the latest known text input state.
 	Serial uint32
 	Text   string
 	Commit string
@@ -399,6 +522,15 @@ func (e *TextInputV1PreeditStringEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1PreeditStringEvent) Since() uint32 { return 1 }
 
+// TextInputV1PreeditStylingEvent pre-edit styling.
+//
+// Sets styling information on composing text. The style is applied for
+// length bytes from index relative to the beginning of the composing
+// text (as byte offset). Multiple styles can
+// be applied to a composing text by sending multiple preedit_styling
+// events.
+//
+// This event is handled as part of a following preedit_string event.
 type TextInputV1PreeditStylingEvent struct {
 	Index  uint32
 	Length uint32
@@ -428,6 +560,13 @@ func (e *TextInputV1PreeditStylingEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1PreeditStylingEvent) Since() uint32 { return 1 }
 
+// TextInputV1PreeditCursorEvent pre-edit cursor.
+//
+// Sets the cursor position inside the composing text (as byte
+// offset) relative to the start of the composing text. When index is a
+// negative number no cursor is shown.
+//
+// This event is handled as part of a following preedit_string event.
 type TextInputV1PreeditCursorEvent struct {
 	Index int32
 }
@@ -445,7 +584,17 @@ func (e *TextInputV1PreeditCursorEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1PreeditCursorEvent) Since() uint32 { return 1 }
 
+// TextInputV1CommitStringEvent commit.
+//
+// Notify when text should be inserted into the editor widget. The text to
+// commit could be either just a single character after a key press or the
+// result of some composing (pre-edit). It could also be an empty text
+// when some text should be removed (see delete_surrounding_text) or when
+// the input cursor should be moved (see cursor_position).
+//
+// Any previously set composing text should be removed.
 type TextInputV1CommitStringEvent struct {
+	// Serial serial of the latest known text input state.
 	Serial uint32
 	Text   string
 }
@@ -468,6 +617,12 @@ func (e *TextInputV1CommitStringEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1CommitStringEvent) Since() uint32 { return 1 }
 
+// TextInputV1CursorPositionEvent set cursor to new position.
+//
+// Notify when the cursor or anchor position should be modified.
+//
+// This event should be handled as part of a following commit_string
+// event.
 type TextInputV1CursorPositionEvent struct {
 	Index  int32
 	Anchor int32
@@ -491,6 +646,16 @@ func (e *TextInputV1CursorPositionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1CursorPositionEvent) Since() uint32 { return 1 }
 
+// TextInputV1DeleteSurroundingTextEvent delete surrounding text.
+//
+// Notify when the text around the current cursor position should be
+// deleted.
+//
+// Index is relative to the current cursor (in bytes).
+// Length is the length of deleted text (in bytes).
+//
+// This event should be handled as part of a following commit_string
+// event.
 type TextInputV1DeleteSurroundingTextEvent struct {
 	Index  int32
 	Length uint32
@@ -516,7 +681,16 @@ func (e *TextInputV1DeleteSurroundingTextEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *TextInputV1DeleteSurroundingTextEvent) Since() uint32 { return 1 }
 
+// TextInputV1KeysymEvent keysym.
+//
+// Notify when a key event was sent. Key events should not be used
+// for normal text input operations, which should be done with
+// commit_string, delete_surrounding_text, etc. The key event follows
+// the wl_keyboard key event convention. Sym is an XKB keysym, state a
+// wl_keyboard key_state. Modifiers are a mask for effective modifiers
+// (where the modifier indices are set by the modifiers_map event)
 type TextInputV1KeysymEvent struct {
+	// Serial serial of the latest known text input state.
 	Serial    uint32
 	Time      uint32
 	Sym       uint32
@@ -557,7 +731,12 @@ func (e *TextInputV1KeysymEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1KeysymEvent) Since() uint32 { return 1 }
 
+// TextInputV1LanguageEvent language.
+//
+// Sets the language of the input text. The "language" argument is an
+// RFC-3066 format language tag.
 type TextInputV1LanguageEvent struct {
+	// Serial serial of the latest known text input state.
 	Serial   uint32
 	Language string
 }
@@ -580,7 +759,15 @@ func (e *TextInputV1LanguageEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1LanguageEvent) Since() uint32 { return 1 }
 
+// TextInputV1TextDirectionEvent text direction.
+//
+// Sets the text direction of input text.
+//
+// It is mainly needed for showing an input cursor on the correct side of
+// the editor when there is no input done yet and making sure neutral
+// direction text is laid out properly.
 type TextInputV1TextDirectionEvent struct {
+	// Serial serial of the latest known text input state.
 	Serial    uint32
 	Direction TextInputV1TextDirection
 }
@@ -603,45 +790,92 @@ func (e *TextInputV1TextDirectionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV1TextDirectionEvent) Since() uint32 { return 1 }
 
+// TextInputV1EnterFunc is a callback for Enter events.
 type TextInputV1EnterFunc func(ev TextInputV1EnterEvent)
 
+// TextInputV1LeaveFunc is a callback for Leave events.
 type TextInputV1LeaveFunc func(ev TextInputV1LeaveEvent)
 
+// TextInputV1ModifiersMapFunc is a callback for ModifiersMap events.
 type TextInputV1ModifiersMapFunc func(ev TextInputV1ModifiersMapEvent)
 
+// TextInputV1InputPanelStateFunc is a callback for InputPanelState events.
 type TextInputV1InputPanelStateFunc func(ev TextInputV1InputPanelStateEvent)
 
+// TextInputV1PreeditStringFunc is a callback for PreeditString events.
 type TextInputV1PreeditStringFunc func(ev TextInputV1PreeditStringEvent)
 
+// TextInputV1PreeditStylingFunc is a callback for PreeditStyling events.
 type TextInputV1PreeditStylingFunc func(ev TextInputV1PreeditStylingEvent)
 
+// TextInputV1PreeditCursorFunc is a callback for PreeditCursor events.
 type TextInputV1PreeditCursorFunc func(ev TextInputV1PreeditCursorEvent)
 
+// TextInputV1CommitStringFunc is a callback for CommitString events.
 type TextInputV1CommitStringFunc func(ev TextInputV1CommitStringEvent)
 
+// TextInputV1CursorPositionFunc is a callback for CursorPosition events.
 type TextInputV1CursorPositionFunc func(ev TextInputV1CursorPositionEvent)
 
+// TextInputV1DeleteSurroundingTextFunc is a callback for DeleteSurroundingText events.
 type TextInputV1DeleteSurroundingTextFunc func(ev TextInputV1DeleteSurroundingTextEvent)
 
+// TextInputV1KeysymFunc is a callback for Keysym events.
 type TextInputV1KeysymFunc func(ev TextInputV1KeysymEvent)
 
+// TextInputV1LanguageFunc is a callback for Language events.
 type TextInputV1LanguageFunc func(ev TextInputV1LanguageEvent)
 
+// TextInputV1TextDirectionFunc is a callback for TextDirection events.
 type TextInputV1TextDirectionFunc func(ev TextInputV1TextDirectionEvent)
 
+// TextInputV1 text input.
+//
+// An object used for text input. Adds support for text input and input
+// methods to applications. A text_input object is created from a
+// wl_text_input_manager and corresponds typically to a text entry in an
+// application.
+//
+// Requests are used to activate/deactivate the text_input object and set
+// state information like surrounding and selected text or the content type.
+// The information about entered text is sent to the text_input object via
+// the pre-edit and commit events. Using this interface removes the need
+// for applications to directly process hardware key events and compose text
+// out of them.
+//
+// Text is generally UTF-8 encoded, indices and lengths are in bytes.
+//
+// Serials are used to synchronize the state between the text input and
+// an input method. New serials are sent by the text input in the
+// commit_state request and are used by the input method to indicate
+// the known text input state in events like preedit_string, commit_string,
+// and keysym. The text input can then ignore events from the input method
+// which are based on an outdated state (for example after a reset).
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type TextInputV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTextInputV1 wraps p in a TextInputV1 proxy.
 func NewTextInputV1(p *wayland.Proxy) *TextInputV1 {
 	p.SetEventFDCounts(textinputv1EventFDCounts)
 	return &TextInputV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TextInputV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventEnter, func(r *wire.Reader) {
 		var ev TextInputV1EnterEvent
@@ -655,6 +889,7 @@ func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLeave, func(r *wire.Reader) {
 		var ev TextInputV1LeaveEvent
@@ -668,6 +903,7 @@ func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 	})
 }
 
+// OnModifiersMap registers fn to receive ModifiersMap events.
 func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventModifiersMap, func(r *wire.Reader) {
 		var ev TextInputV1ModifiersMapEvent
@@ -681,6 +917,7 @@ func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 	})
 }
 
+// OnInputPanelState registers fn to receive InputPanelState events.
 func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventInputPanelState, func(r *wire.Reader) {
 		var ev TextInputV1InputPanelStateEvent
@@ -694,6 +931,7 @@ func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 	})
 }
 
+// OnPreeditString registers fn to receive PreeditString events.
 func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStringEvent
@@ -707,6 +945,7 @@ func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 	})
 }
 
+// OnPreeditStyling registers fn to receive PreeditStyling events.
 func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditStyling, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStylingEvent
@@ -720,6 +959,7 @@ func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 	})
 }
 
+// OnPreeditCursor registers fn to receive PreeditCursor events.
 func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditCursor, func(r *wire.Reader) {
 		var ev TextInputV1PreeditCursorEvent
@@ -733,6 +973,7 @@ func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 	})
 }
 
+// OnCommitString registers fn to receive CommitString events.
 func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV1CommitStringEvent
@@ -746,6 +987,7 @@ func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 	})
 }
 
+// OnCursorPosition registers fn to receive CursorPosition events.
 func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCursorPosition, func(r *wire.Reader) {
 		var ev TextInputV1CursorPositionEvent
@@ -759,6 +1001,7 @@ func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 	})
 }
 
+// OnDeleteSurroundingText registers fn to receive DeleteSurroundingText events.
 func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV1DeleteSurroundingTextEvent
@@ -772,6 +1015,7 @@ func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTex
 	})
 }
 
+// OnKeysym registers fn to receive Keysym events.
 func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventKeysym, func(r *wire.Reader) {
 		var ev TextInputV1KeysymEvent
@@ -785,6 +1029,7 @@ func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 	})
 }
 
+// OnLanguage registers fn to receive Language events.
 func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLanguage, func(r *wire.Reader) {
 		var ev TextInputV1LanguageEvent
@@ -798,6 +1043,7 @@ func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 	})
 }
 
+// OnTextDirection registers fn to receive TextDirection events.
 func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventTextDirection, func(r *wire.Reader) {
 		var ev TextInputV1TextDirectionEvent
@@ -811,6 +1057,15 @@ func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 	})
 }
 
+// Activate request activation.
+//
+// Requests the text_input object to be activated (typically when the
+// text entry gets focus).
+//
+// The seat argument is a wl_seat which maintains the focus for this
+// activation. The surface argument is a wl_surface assigned to the
+// text_input object and tracked for focus lost. The enter event
+// is emitted on successful activation.
 func (o *TextInputV1) Activate(seat wire.ObjectID, surface wire.ObjectID) error {
 	return o.proxy.SendRequest(TextInputV1RequestActivate, &TextInputV1ActivateRequest{
 		Seat:    seat,
@@ -818,24 +1073,47 @@ func (o *TextInputV1) Activate(seat wire.ObjectID, surface wire.ObjectID) error 
 	})
 }
 
+// Deactivate request deactivation.
+//
+// Requests the text_input object to be deactivated (typically when the
+// text entry lost focus). The seat argument is a wl_seat which was used
+// for activation.
 func (o *TextInputV1) Deactivate(seat wire.ObjectID) error {
 	return o.proxy.SendRequest(TextInputV1RequestDeactivate, &TextInputV1DeactivateRequest{
 		Seat: seat,
 	})
 }
 
+// ShowInputPanel show input panels.
+//
+// Requests input panels (virtual keyboard) to show.
 func (o *TextInputV1) ShowInputPanel() error {
 	return o.proxy.SendRequest(TextInputV1RequestShowInputPanel, &TextInputV1ShowInputPanelRequest{})
 }
 
+// HideInputPanel hide input panels.
+//
+// Requests input panels (virtual keyboard) to hide.
 func (o *TextInputV1) HideInputPanel() error {
 	return o.proxy.SendRequest(TextInputV1RequestHideInputPanel, &TextInputV1HideInputPanelRequest{})
 }
 
+// Reset reset.
+//
+// Should be called by an editor widget when the input state should be
+// reset, for example after the text was changed outside of the normal
+// input method flow.
 func (o *TextInputV1) Reset() error {
 	return o.proxy.SendRequest(TextInputV1RequestReset, &TextInputV1ResetRequest{})
 }
 
+// SetSurroundingText sets the surrounding text.
+//
+// Sets the plain surrounding text around the input position. Text is
+// UTF-8 encoded. Cursor is the byte offset within the
+// surrounding text. Anchor is the byte offset of the
+// selection anchor within the surrounding text. If there is no selected
+// text anchor, then it is the same as cursor.
 func (o *TextInputV1) SetSurroundingText(text string, cursor uint32, anchor uint32) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetSurroundingText, &TextInputV1SetSurroundingTextRequest{
 		Text:   text,
@@ -844,6 +1122,15 @@ func (o *TextInputV1) SetSurroundingText(text string, cursor uint32, anchor uint
 	})
 }
 
+// SetContentType set content purpose and hint.
+//
+// Sets the content purpose and content hint. While the purpose is the
+// basic purpose of an input field, the hint flags allow to modify some
+// of the behavior.
+//
+// When no content type is explicitly set, a normal content purpose with
+// default hints (auto completion, auto correction, auto capitalization)
+// should be assumed.
 func (o *TextInputV1) SetContentType(hint TextInputV1ContentHint, purpose TextInputV1ContentPurpose) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetContentType, &TextInputV1SetContentTypeRequest{
 		Hint:    hint,
@@ -860,6 +1147,15 @@ func (o *TextInputV1) SetCursorRectangle(x int32, y int32, width int32, height i
 	})
 }
 
+// SetPreferredLanguage sets preferred language.
+//
+// Sets a specific language. This allows for example a virtual keyboard to
+// show a language specific layout. The "language" argument is an RFC-3066
+// format language tag.
+//
+// It could be used for example in a word processor to indicate the
+// language of the currently edited document or in an instant message
+// application which tracks languages of contacts.
 func (o *TextInputV1) SetPreferredLanguage(language string) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetPreferredLanguage, &TextInputV1SetPreferredLanguageRequest{
 		Language: language,

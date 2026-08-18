@@ -18,10 +18,16 @@ const (
 type SecurityContextManagerV1Error uint32
 
 const (
+	// SecurityContextManagerV1ErrorInvalidListenFd listening socket FD is invalid.
 	SecurityContextManagerV1ErrorInvalidListenFd SecurityContextManagerV1Error = 1
-	SecurityContextManagerV1ErrorNested          SecurityContextManagerV1Error = 2
+	// SecurityContextManagerV1ErrorNested nested security contexts are forbidden.
+	SecurityContextManagerV1ErrorNested SecurityContextManagerV1Error = 2
 )
 
+// SecurityContextManagerV1DestroyRequest destroy the manager object.
+//
+// Destroy the manager. This doesn't destroy objects created with the
+// manager.
 type SecurityContextManagerV1DestroyRequest struct {
 }
 
@@ -35,10 +41,29 @@ func (r *SecurityContextManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SecurityContextManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// SecurityContextManagerV1CreateListenerRequest create a new security context.
+//
+// Creates a new security context with a socket listening FD.
+//
+// The compositor will accept new client connections on listen_fd.
+// listen_fd must be ready to accept new connections when this request is
+// sent by the client. In other words, the client must call bind(2) and
+// listen(2) before sending the FD.
+//
+// close_fd is a FD that will signal hangup when the compositor should stop
+// accepting new connections on listen_fd.
+//
+// The compositor must continue to accept connections on listen_fd when
+// the Wayland client which created the security context disconnects.
+//
+// After sending this request, closing listen_fd and close_fd remains the
+// only valid operation on them.
 type SecurityContextManagerV1CreateListenerRequest struct {
-	ID       wire.NewID
+	ID wire.NewID
+	// ListenFd listening socket FD.
 	ListenFd int
-	CloseFd  int
+	// CloseFd fD signaling when done.
+	CloseFd int
 }
 
 func (r *SecurityContextManagerV1CreateListenerRequest) Opcode() uint16 {
@@ -60,18 +85,44 @@ func (r *SecurityContextManagerV1CreateListenerRequest) Marshal(w *wire.Writer) 
 
 func (r *SecurityContextManagerV1CreateListenerRequest) Since() uint32 { return 1 }
 
+// SecurityContextManagerV1 client security context manager.
+//
+// This interface allows a client to register a new Wayland connection to
+// the compositor and attach a security context to it.
+//
+// This is intended to be used by sandboxes. Sandbox engines attach a
+// security context to all connections coming from inside the sandbox. The
+// compositor can then restrict the features that the sandboxed connections
+// can use.
+//
+// Compositors should forbid nesting multiple security contexts by not
+// exposing wp_security_context_manager_v1 global to clients with a security
+// context attached, or by sending the nested protocol error. Nested
+// security contexts are dangerous because they can potentially allow
+// privilege escalation of a sandboxed client.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type SecurityContextManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSecurityContextManagerV1 wraps p in a SecurityContextManagerV1 proxy.
 func NewSecurityContextManagerV1(p *wayland.Proxy) *SecurityContextManagerV1 {
 	return &SecurityContextManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SecurityContextManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the manager object.
+//
+// Destroy the manager. This doesn't destroy objects created with the
+// manager.
 func (o *SecurityContextManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -83,6 +134,23 @@ func (o *SecurityContextManagerV1) Destroy() error {
 	return nil
 }
 
+// CreateListener create a new security context.
+//
+// Creates a new security context with a socket listening FD.
+//
+// The compositor will accept new client connections on listen_fd.
+// listen_fd must be ready to accept new connections when this request is
+// sent by the client. In other words, the client must call bind(2) and
+// listen(2) before sending the FD.
+//
+// close_fd is a FD that will signal hangup when the compositor should stop
+// accepting new connections on listen_fd.
+//
+// The compositor must continue to accept connections on listen_fd when
+// the Wayland client which created the security context disconnects.
+//
+// After sending this request, closing listen_fd and close_fd remains the
+// only valid operation on them.
 func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*SecurityContextV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

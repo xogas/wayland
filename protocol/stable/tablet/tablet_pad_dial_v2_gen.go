@@ -28,9 +28,32 @@ var tabletpaddialv2EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// TabletPadDialV2SetFeedbackRequest set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this dial. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever the dial is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the dial, and compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// dial. Requests providing other serials than the most recent one will be
+// ignored.
 type TabletPadDialV2SetFeedbackRequest struct {
+	// Description dial description.
 	Description string
-	Serial      uint32
+	// Serial serial of the mode switch event.
+	Serial uint32
 }
 
 func (r *TabletPadDialV2SetFeedbackRequest) Opcode() uint16 { return TabletPadDialV2RequestSetFeedback }
@@ -47,6 +70,9 @@ func (r *TabletPadDialV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadDialV2SetFeedbackRequest) Since() uint32 { return 1 }
 
+// TabletPadDialV2DestroyRequest destroy the dial object.
+//
+// This destroys the client's resource for this dial object.
 type TabletPadDialV2DestroyRequest struct {
 }
 
@@ -58,7 +84,20 @@ func (r *TabletPadDialV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadDialV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletPadDialV2DeltaEvent delta movement.
+//
+// Sent whenever the position on a dial changes.
+//
+// This event carries the wheel delta as multiples or fractions
+// of 120 with each multiple of 120 representing one logical wheel detent.
+// For example, an axis_value120 of 30 is one quarter of
+// a logical wheel step in the positive direction, a value120 of
+// -240 are two logical wheel steps in the negative direction within the
+// same hardware event. See the wl_pointer.axis_value120 for more details.
+//
+// The value120 must not be zero.
 type TabletPadDialV2DeltaEvent struct {
+	// Value120 rotation distance as fraction of 120.
 	Value120 int32
 }
 
@@ -75,7 +114,21 @@ func (e *TabletPadDialV2DeltaEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadDialV2DeltaEvent) Since() uint32 { return 1 }
 
+// TabletPadDialV2FrameEvent end of a dial event sequence.
+//
+// Indicates the end of a set of events that represent one logical
+// hardware dial event. A client is expected to accumulate the data
+// in all events within the frame before proceeding.
+//
+// All zwp_tablet_pad_dial_v2 events before a zwp_tablet_pad_dial_v2.frame event belong
+// logically together.
+//
+// A zwp_tablet_pad_dial_v2.frame event is sent for every logical event
+// group, even if the group only contains a single zwp_tablet_pad_dial_v2
+// event. Specifically, a client may get a sequence: delta, frame,
+// delta, frame, etc.
 type TabletPadDialV2FrameEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
 }
 
@@ -92,23 +145,34 @@ func (e *TabletPadDialV2FrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadDialV2FrameEvent) Since() uint32 { return 1 }
 
+// TabletPadDialV2DeltaFunc is a callback for Delta events.
 type TabletPadDialV2DeltaFunc func(ev TabletPadDialV2DeltaEvent)
 
+// TabletPadDialV2FrameFunc is a callback for Frame events.
 type TabletPadDialV2FrameFunc func(ev TabletPadDialV2FrameEvent)
 
+// TabletPadDialV2 pad dial.
+//
+// A rotary control, e.g. a dial or a wheel.
+//
+// Events on a dial are logically grouped by the zwp_tablet_pad_dial_v2.frame
+// event.
 type TabletPadDialV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletPadDialV2 wraps p in a TabletPadDialV2 proxy.
 func NewTabletPadDialV2(p *wayland.Proxy) *TabletPadDialV2 {
 	p.SetEventFDCounts(tabletpaddialv2EventFDCounts)
 	return &TabletPadDialV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletPadDialV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDelta registers fn to receive Delta events.
 func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventDelta, func(r *wire.Reader) {
 		var ev TabletPadDialV2DeltaEvent
@@ -122,6 +186,7 @@ func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *TabletPadDialV2) OnFrame(fn TabletPadDialV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadDialV2FrameEvent
@@ -135,6 +200,27 @@ func (o *TabletPadDialV2) OnFrame(fn TabletPadDialV2FrameFunc) {
 	})
 }
 
+// SetFeedback set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this dial. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever the dial is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with the dial, and compositors may use this
+// information to offer visual feedback about the button layout
+// (eg. on-screen displays).
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// dial. Requests providing other serials than the most recent one will be
+// ignored.
 func (o *TabletPadDialV2) SetFeedback(description string, serial uint32) error {
 	return o.proxy.SendRequest(TabletPadDialV2RequestSetFeedback, &TabletPadDialV2SetFeedbackRequest{
 		Description: description,
@@ -142,6 +228,9 @@ func (o *TabletPadDialV2) SetFeedback(description string, serial uint32) error {
 	})
 }
 
+// Destroy destroy the dial object.
+//
+// This destroys the client's resource for this dial object.
 func (o *TabletPadDialV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

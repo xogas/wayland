@@ -18,9 +18,15 @@ const (
 type ViewporterError uint32
 
 const (
+	// ViewporterErrorViewportExists the surface already has a viewport object associated.
 	ViewporterErrorViewportExists ViewporterError = 0
 )
 
+// ViewporterDestroyRequest unbind from the cropping and scaling interface.
+//
+// Informs the server that the client will not be using this
+// protocol object anymore. This does not affect any other objects,
+// wp_viewport objects included.
 type ViewporterDestroyRequest struct {
 }
 
@@ -32,8 +38,16 @@ func (r *ViewporterDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ViewporterDestroyRequest) Since() uint32 { return 1 }
 
+// ViewporterGetViewportRequest extend surface interface for crop and scale.
+//
+// Instantiate an interface extension for the given wl_surface to
+// crop and scale its content. If the given wl_surface already has
+// a wp_viewport object associated, the viewport_exists
+// protocol error is raised.
 type ViewporterGetViewportRequest struct {
-	ID      wire.NewID
+	// ID the new viewport interface id.
+	ID wire.NewID
+	// Surface the surface.
 	Surface wire.ObjectID
 }
 
@@ -51,18 +65,33 @@ func (r *ViewporterGetViewportRequest) Marshal(w *wire.Writer) error {
 
 func (r *ViewporterGetViewportRequest) Since() uint32 { return 1 }
 
+// Viewporter surface cropping and scaling.
+//
+// The global interface exposing surface cropping and scaling
+// capabilities is used to instantiate an interface extension for a
+// wl_surface object. This extended interface will then allow
+// cropping and scaling the surface contents, effectively
+// disconnecting the direct relationship between the buffer and the
+// surface size.
 type Viewporter struct {
 	proxy *wayland.Proxy
 }
 
+// NewViewporter wraps p in a Viewporter proxy.
 func NewViewporter(p *wayland.Proxy) *Viewporter {
 	return &Viewporter{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Viewporter) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy unbind from the cropping and scaling interface.
+//
+// Informs the server that the client will not be using this
+// protocol object anymore. This does not affect any other objects,
+// wp_viewport objects included.
 func (o *Viewporter) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +103,12 @@ func (o *Viewporter) Destroy() error {
 	return nil
 }
 
+// GetViewport extend surface interface for crop and scale.
+//
+// Instantiate an interface extension for the given wl_surface to
+// crop and scale its content. If the given wl_surface already has
+// a wp_viewport object associated, the viewport_exists
+// protocol error is raised.
 func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

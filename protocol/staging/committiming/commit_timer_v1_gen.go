@@ -18,15 +18,37 @@ const (
 type CommitTimerV1Error uint32
 
 const (
+	// CommitTimerV1ErrorInvalidTimestamp timestamp contains an invalid value.
 	CommitTimerV1ErrorInvalidTimestamp CommitTimerV1Error = 0
-	CommitTimerV1ErrorTimestampExists  CommitTimerV1Error = 1
+	// CommitTimerV1ErrorTimestampExists timestamp exists.
+	CommitTimerV1ErrorTimestampExists CommitTimerV1Error = 1
+	// CommitTimerV1ErrorSurfaceDestroyed the associated surface no longer exists.
 	CommitTimerV1ErrorSurfaceDestroyed CommitTimerV1Error = 2
 )
 
+// CommitTimerV1SetTimestampRequest specify time the following commit takes effect.
+//
+// Provide a timing constraint for a surface content update.
+//
+// A set_timestamp request may be made before a wl_surface.commit to
+// tell the compositor that the content is intended to be presented
+// as closely as possible to, but not before, the specified time.
+// The time is in the domain of the compositor's presentation clock.
+//
+// An invalid_timestamp error will be generated for invalid tv_nsec.
+//
+// If a timestamp already exists on the surface, a timestamp_exists
+// error is generated.
+//
+// Requesting set_timestamp after the commit_timer object's surface is
+// destroyed will generate a "surface_destroyed" error.
 type CommitTimerV1SetTimestampRequest struct {
+	// TvSecHi high 32 bits of the seconds part of target time.
 	TvSecHi uint32
+	// TvSecLo low 32 bits of the seconds part of target time.
 	TvSecLo uint32
-	TvNsec  uint32
+	// TvNsec nanoseconds part of target time.
+	TvNsec uint32
 }
 
 func (r *CommitTimerV1SetTimestampRequest) Opcode() uint16 { return CommitTimerV1RequestSetTimestamp }
@@ -46,6 +68,12 @@ func (r *CommitTimerV1SetTimestampRequest) Marshal(w *wire.Writer) error {
 
 func (r *CommitTimerV1SetTimestampRequest) Since() uint32 { return 1 }
 
+// CommitTimerV1DestroyRequest destroy the timer.
+//
+// Informs the server that the client will no longer be using
+// this protocol object.
+//
+// Existing timing constraints are not affected by the destruction.
 type CommitTimerV1DestroyRequest struct {
 }
 
@@ -57,18 +85,39 @@ func (r *CommitTimerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CommitTimerV1DestroyRequest) Since() uint32 { return 1 }
 
+// CommitTimerV1 surface commit timer.
+//
+// An object to set a time constraint for a content update on a surface.
 type CommitTimerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCommitTimerV1 wraps p in a CommitTimerV1 proxy.
 func NewCommitTimerV1(p *wayland.Proxy) *CommitTimerV1 {
 	return &CommitTimerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CommitTimerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// SetTimestamp specify time the following commit takes effect.
+//
+// Provide a timing constraint for a surface content update.
+//
+// A set_timestamp request may be made before a wl_surface.commit to
+// tell the compositor that the content is intended to be presented
+// as closely as possible to, but not before, the specified time.
+// The time is in the domain of the compositor's presentation clock.
+//
+// An invalid_timestamp error will be generated for invalid tv_nsec.
+//
+// If a timestamp already exists on the surface, a timestamp_exists
+// error is generated.
+//
+// Requesting set_timestamp after the commit_timer object's surface is
+// destroyed will generate a "surface_destroyed" error.
 func (o *CommitTimerV1) SetTimestamp(tvSecHi uint32, tvSecLo uint32, tvNsec uint32) error {
 	return o.proxy.SendRequest(CommitTimerV1RequestSetTimestamp, &CommitTimerV1SetTimestampRequest{
 		TvSecHi: tvSecHi,
@@ -77,6 +126,12 @@ func (o *CommitTimerV1) SetTimestamp(tvSecHi uint32, tvSecLo uint32, tvNsec uint
 	})
 }
 
+// Destroy destroy the timer.
+//
+// Informs the server that the client will no longer be using
+// this protocol object.
+//
+// Existing timing constraints are not affected by the destruction.
 func (o *CommitTimerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

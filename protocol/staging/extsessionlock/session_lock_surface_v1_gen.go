@@ -29,12 +29,27 @@ var sessionlocksurfacev1EventFDCounts = map[uint16]int{
 type SessionLockSurfaceV1Error uint32
 
 const (
+	// SessionLockSurfaceV1ErrorCommitBeforeFirstAck surface committed before first ack_configure request.
 	SessionLockSurfaceV1ErrorCommitBeforeFirstAck SessionLockSurfaceV1Error = 0
-	SessionLockSurfaceV1ErrorNullBuffer           SessionLockSurfaceV1Error = 1
-	SessionLockSurfaceV1ErrorDimensionsMismatch   SessionLockSurfaceV1Error = 2
-	SessionLockSurfaceV1ErrorInvalidSerial        SessionLockSurfaceV1Error = 3
+	// SessionLockSurfaceV1ErrorNullBuffer surface committed with a null buffer.
+	SessionLockSurfaceV1ErrorNullBuffer SessionLockSurfaceV1Error = 1
+	// SessionLockSurfaceV1ErrorDimensionsMismatch failed to match ack'd width/height.
+	SessionLockSurfaceV1ErrorDimensionsMismatch SessionLockSurfaceV1Error = 2
+	// SessionLockSurfaceV1ErrorInvalidSerial serial provided in ack_configure is invalid.
+	SessionLockSurfaceV1ErrorInvalidSerial SessionLockSurfaceV1Error = 3
 )
 
+// SessionLockSurfaceV1DestroyRequest destroy the lock surface object.
+//
+// This informs the compositor that the lock surface object will no
+// longer be used.
+//
+// It is recommended for a lock client to destroy lock surfaces if
+// their corresponding wl_output global is removed.
+//
+// If a lock surface on an active output is destroyed before the
+// ext_session_lock_v1.unlock_and_destroy event is sent, the compositor
+// must fall back to rendering a solid color.
 type SessionLockSurfaceV1DestroyRequest struct {
 }
 
@@ -48,7 +63,34 @@ func (r *SessionLockSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionLockSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// SessionLockSurfaceV1AckConfigureRequest ack a configure event.
+//
+// When a configure event is received, if a client commits the surface
+// in response to the configure event, then the client must make an
+// ack_configure request sometime before the commit request, passing
+// along the serial of the configure event.
+//
+// If the client receives multiple configure events before it can
+// respond to one, it only has to ack the last configure event.
+//
+// A client is not required to commit immediately after sending an
+// ack_configure request - it may even ack_configure several times
+// before its next surface commit.
+//
+// A client may send multiple ack_configure requests before committing,
+// but only the last request sent before a commit indicates which
+// configure event the client really is responding to.
+//
+// Sending an ack_configure request consumes the configure event
+// referenced by the given serial, as well as all older configure events
+// sent on this object.
+//
+// It is a protocol error to issue multiple ack_configure requests
+// referencing the same configure event or to issue an ack_configure
+// request referencing a configure event older than the last configure
+// event acked for a given lock surface.
 type SessionLockSurfaceV1AckConfigureRequest struct {
+	// Serial serial from the configure event.
 	Serial uint32
 }
 
@@ -65,7 +107,16 @@ func (r *SessionLockSurfaceV1AckConfigureRequest) Marshal(w *wire.Writer) error 
 
 func (r *SessionLockSurfaceV1AckConfigureRequest) Since() uint32 { return 1 }
 
+// SessionLockSurfaceV1ConfigureEvent the client should resize its surface.
+//
+// This event is sent once on binding the interface and may be sent again
+// at the compositor's discretion, for example if output geometry changes.
+//
+// The width and height are in surface-local coordinates and are exact
+// requirements. Failing to match these surface dimensions in the next
+// commit after acking a configure is a protocol error.
 type SessionLockSurfaceV1ConfigureEvent struct {
+	// Serial serial for use in ack_configure.
 	Serial uint32
 	Width  uint32
 	Height uint32
@@ -96,21 +147,42 @@ func (e *SessionLockSurfaceV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionLockSurfaceV1ConfigureEvent) Since() uint32 { return 1 }
 
+// SessionLockSurfaceV1ConfigureFunc is a callback for Configure events.
 type SessionLockSurfaceV1ConfigureFunc func(ev SessionLockSurfaceV1ConfigureEvent)
 
+// SessionLockSurfaceV1 a surface displayed while the session is locked.
+//
+// The client may use lock surfaces to display a screensaver, render a
+// dialog to enter a password and unlock the session, or however else it
+// sees fit.
+//
+// On binding this interface the compositor will immediately send the
+// first configure event. After making the ack_configure request in
+// response to this event the client should attach and commit the first
+// buffer. Committing the surface before acking the first configure is a
+// protocol error. Committing the surface with a null buffer at any time
+// is a protocol error.
+//
+// The compositor is free to handle keyboard/pointer focus for lock
+// surfaces however it chooses. A reasonable way to do this would be to
+// give the first lock surface created keyboard focus and change keyboard
+// focus if the user clicks on other surfaces.
 type SessionLockSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSessionLockSurfaceV1 wraps p in a SessionLockSurfaceV1 proxy.
 func NewSessionLockSurfaceV1(p *wayland.Proxy) *SessionLockSurfaceV1 {
 	p.SetEventFDCounts(sessionlocksurfacev1EventFDCounts)
 	return &SessionLockSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SessionLockSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc) {
 	o.proxy.RegisterEvent(SessionLockSurfaceV1EventConfigure, func(r *wire.Reader) {
 		var ev SessionLockSurfaceV1ConfigureEvent
@@ -124,6 +196,17 @@ func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc)
 	})
 }
 
+// Destroy destroy the lock surface object.
+//
+// This informs the compositor that the lock surface object will no
+// longer be used.
+//
+// It is recommended for a lock client to destroy lock surfaces if
+// their corresponding wl_output global is removed.
+//
+// If a lock surface on an active output is destroyed before the
+// ext_session_lock_v1.unlock_and_destroy event is sent, the compositor
+// must fall back to rendering a solid color.
 func (o *SessionLockSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -135,6 +218,32 @@ func (o *SessionLockSurfaceV1) Destroy() error {
 	return nil
 }
 
+// AckConfigure ack a configure event.
+//
+// When a configure event is received, if a client commits the surface
+// in response to the configure event, then the client must make an
+// ack_configure request sometime before the commit request, passing
+// along the serial of the configure event.
+//
+// If the client receives multiple configure events before it can
+// respond to one, it only has to ack the last configure event.
+//
+// A client is not required to commit immediately after sending an
+// ack_configure request - it may even ack_configure several times
+// before its next surface commit.
+//
+// A client may send multiple ack_configure requests before committing,
+// but only the last request sent before a commit indicates which
+// configure event the client really is responding to.
+//
+// Sending an ack_configure request consumes the configure event
+// referenced by the given serial, as well as all older configure events
+// sent on this object.
+//
+// It is a protocol error to issue multiple ack_configure requests
+// referencing the same configure event or to issue an ack_configure
+// request referencing a configure event older than the last configure
+// event acked for a given lock surface.
 func (o *SessionLockSurfaceV1) AckConfigure(serial uint32) error {
 	return o.proxy.SendRequest(SessionLockSurfaceV1RequestAckConfigure, &SessionLockSurfaceV1AckConfigureRequest{
 		Serial: serial,

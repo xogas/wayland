@@ -28,8 +28,15 @@ var primaryselectiondevicev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// PrimarySelectionDeviceV1SetSelectionRequest set the primary selection.
+//
+// Replaces the current selection. The previous owner of the primary
+// selection will receive a wp_primary_selection_source.cancelled event.
+//
+// To unset the selection, set the source to NULL.
 type PrimarySelectionDeviceV1SetSelectionRequest struct {
 	Source wire.ObjectID // nullable
+	// Serial serial of the event that triggered this request.
 	Serial uint32
 }
 
@@ -49,6 +56,9 @@ func (r *PrimarySelectionDeviceV1SetSelectionRequest) Marshal(w *wire.Writer) er
 
 func (r *PrimarySelectionDeviceV1SetSelectionRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceV1DestroyRequest destroy the primary selection device.
+//
+// Destroy the primary selection device.
 type PrimarySelectionDeviceV1DestroyRequest struct {
 }
 
@@ -62,6 +72,13 @@ func (r *PrimarySelectionDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PrimarySelectionDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceV1DataOfferEvent introduce a new wp_primary_selection_offer.
+//
+// Introduces a new wp_primary_selection_offer object that may be used
+// to receive the current primary selection. Immediately following this
+// event, the new wp_primary_selection_offer object will send
+// wp_primary_selection_offer.offer events to describe the offered mime
+// types.
 type PrimarySelectionDeviceV1DataOfferEvent struct {
 	Offer *PrimarySelectionOfferV1
 }
@@ -72,6 +89,17 @@ func (e *PrimarySelectionDeviceV1DataOfferEvent) Opcode() uint16 {
 
 func (e *PrimarySelectionDeviceV1DataOfferEvent) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceV1SelectionEvent advertise a new primary selection.
+//
+// The wp_primary_selection_device.selection event is sent to notify the
+// client of a new primary selection. This event is sent after the
+// wp_primary_selection.data_offer event introducing this object, and after
+// the offer has announced its mimetypes through
+// wp_primary_selection_offer.offer.
+//
+// The data_offer is valid until a new offer or NULL is received
+// or until the client loses keyboard focus. The client must destroy the
+// previous selection data_offer, if any, upon receiving this event.
 type PrimarySelectionDeviceV1SelectionEvent struct {
 	ID wire.ObjectID // nullable
 }
@@ -91,23 +119,28 @@ func (e *PrimarySelectionDeviceV1SelectionEvent) Unmarshal(r *wire.Reader) error
 
 func (e *PrimarySelectionDeviceV1SelectionEvent) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceV1DataOfferFunc is a callback for DataOffer events.
 type PrimarySelectionDeviceV1DataOfferFunc func(ev PrimarySelectionDeviceV1DataOfferEvent)
 
+// PrimarySelectionDeviceV1SelectionFunc is a callback for Selection events.
 type PrimarySelectionDeviceV1SelectionFunc func(ev PrimarySelectionDeviceV1SelectionEvent)
 
 type PrimarySelectionDeviceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPrimarySelectionDeviceV1 wraps p in a PrimarySelectionDeviceV1 proxy.
 func NewPrimarySelectionDeviceV1(p *wayland.Proxy) *PrimarySelectionDeviceV1 {
 	p.SetEventFDCounts(primaryselectiondevicev1EventFDCounts)
 	return &PrimarySelectionDeviceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PrimarySelectionDeviceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDataOffer registers fn to receive DataOffer events.
 func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1DataOfferEvent
@@ -126,6 +159,7 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 	})
 }
 
+// OnSelection registers fn to receive Selection events.
 func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1SelectionEvent
@@ -139,6 +173,12 @@ func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1Select
 	})
 }
 
+// SetSelection set the primary selection.
+//
+// Replaces the current selection. The previous owner of the primary
+// selection will receive a wp_primary_selection_source.cancelled event.
+//
+// To unset the selection, set the source to NULL.
 func (o *PrimarySelectionDeviceV1) SetSelection(source wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(PrimarySelectionDeviceV1RequestSetSelection, &PrimarySelectionDeviceV1SetSelectionRequest{
 		Source: source,
@@ -146,6 +186,9 @@ func (o *PrimarySelectionDeviceV1) SetSelection(source wire.ObjectID, serial uin
 	})
 }
 
+// Destroy destroy the primary selection device.
+//
+// Destroy the primary selection device.
 func (o *PrimarySelectionDeviceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

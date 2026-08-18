@@ -14,6 +14,10 @@ const (
 	ImageDescriptionReferenceV1RequestDestroy uint16 = 0
 )
 
+// ImageDescriptionReferenceV1DestroyRequest destroy the reference.
+//
+// Destroy this object. This has no effect on the referenced image
+// description.
 type ImageDescriptionReferenceV1DestroyRequest struct {
 }
 
@@ -27,18 +31,32 @@ func (r *ImageDescriptionReferenceV1DestroyRequest) Marshal(w *wire.Writer) erro
 
 func (r *ImageDescriptionReferenceV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionReferenceV1 reference to an image description.
+//
+// This object is a reference to an image description. This interface is
+// frozen at version 1 to allow other protocols to create
+// wp_image_description_v1 objects.
+//
+// The wp_color_manager_v1.get_image_description request can be used to
+// retrieve the underlying image description.
 type ImageDescriptionReferenceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageDescriptionReferenceV1 wraps p in a ImageDescriptionReferenceV1 proxy.
 func NewImageDescriptionReferenceV1(p *wayland.Proxy) *ImageDescriptionReferenceV1 {
 	return &ImageDescriptionReferenceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageDescriptionReferenceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the reference.
+//
+// Destroy this object. This has no effect on the referenced image
+// description.
 func (o *ImageDescriptionReferenceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

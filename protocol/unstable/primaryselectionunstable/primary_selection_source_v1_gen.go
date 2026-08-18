@@ -28,6 +28,10 @@ var primaryselectionsourcev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// PrimarySelectionSourceV1OfferRequest add an offered mime type.
+//
+// This request adds a mime type to the set of mime types advertised to
+// targets. Can be called several times to offer multiple types.
 type PrimarySelectionSourceV1OfferRequest struct {
 	MimeType string
 }
@@ -45,6 +49,9 @@ func (r *PrimarySelectionSourceV1OfferRequest) Marshal(w *wire.Writer) error {
 
 func (r *PrimarySelectionSourceV1OfferRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionSourceV1DestroyRequest destroy the primary selection source.
+//
+// Destroy the primary selection source.
 type PrimarySelectionSourceV1DestroyRequest struct {
 }
 
@@ -58,6 +65,11 @@ func (r *PrimarySelectionSourceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PrimarySelectionSourceV1DestroyRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionSourceV1SendEvent send the primary selection contents.
+//
+// Request for the current primary selection contents from the client.
+// Send the specified mime type over the passed file descriptor, then
+// close it.
 type PrimarySelectionSourceV1SendEvent struct {
 	MimeType string
 	Fd       int
@@ -81,6 +93,10 @@ func (e *PrimarySelectionSourceV1SendEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PrimarySelectionSourceV1SendEvent) Since() uint32 { return 1 }
 
+// PrimarySelectionSourceV1CancelledEvent request for primary selection contents was canceled.
+//
+// This primary selection source is no longer valid. The client should
+// clean up and destroy this primary selection source.
 type PrimarySelectionSourceV1CancelledEvent struct {
 }
 
@@ -94,23 +110,33 @@ func (e *PrimarySelectionSourceV1CancelledEvent) Unmarshal(r *wire.Reader) error
 
 func (e *PrimarySelectionSourceV1CancelledEvent) Since() uint32 { return 1 }
 
+// PrimarySelectionSourceV1SendFunc is a callback for Send events.
 type PrimarySelectionSourceV1SendFunc func(ev PrimarySelectionSourceV1SendEvent)
 
+// PrimarySelectionSourceV1CancelledFunc is a callback for Cancelled events.
 type PrimarySelectionSourceV1CancelledFunc func(ev PrimarySelectionSourceV1CancelledEvent)
 
+// PrimarySelectionSourceV1 offer to replace the contents of the primary selection.
+//
+// The source side of a wp_primary_selection_offer, it provides a way to
+// describe the offered data and respond to requests to transfer the
+// requested contents of the primary selection clipboard.
 type PrimarySelectionSourceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPrimarySelectionSourceV1 wraps p in a PrimarySelectionSourceV1 proxy.
 func NewPrimarySelectionSourceV1(p *wayland.Proxy) *PrimarySelectionSourceV1 {
 	p.SetEventFDCounts(primaryselectionsourcev1EventFDCounts)
 	return &PrimarySelectionSourceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PrimarySelectionSourceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSend registers fn to receive Send events.
 func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventSend, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1SendEvent
@@ -124,6 +150,7 @@ func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 	})
 }
 
+// OnCancelled registers fn to receive Cancelled events.
 func (o *PrimarySelectionSourceV1) OnCancelled(fn PrimarySelectionSourceV1CancelledFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventCancelled, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1CancelledEvent
@@ -137,12 +164,19 @@ func (o *PrimarySelectionSourceV1) OnCancelled(fn PrimarySelectionSourceV1Cancel
 	})
 }
 
+// Offer add an offered mime type.
+//
+// This request adds a mime type to the set of mime types advertised to
+// targets. Can be called several times to offer multiple types.
 func (o *PrimarySelectionSourceV1) Offer(mimeType string) error {
 	return o.proxy.SendRequest(PrimarySelectionSourceV1RequestOffer, &PrimarySelectionSourceV1OfferRequest{
 		MimeType: mimeType,
 	})
 }
 
+// Destroy destroy the primary selection source.
+//
+// Destroy the primary selection source.
 func (o *PrimarySelectionSourceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

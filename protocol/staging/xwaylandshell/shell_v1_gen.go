@@ -18,9 +18,15 @@ const (
 type ShellV1Error uint32
 
 const (
+	// ShellV1ErrorRole given wl_surface has another role.
 	ShellV1ErrorRole ShellV1Error = 0
 )
 
+// ShellV1DestroyRequest destroy the Xwayland shell object.
+//
+// Destroy the xwayland_shell_v1 object.
+//
+// The child objects created via this interface are unaffected.
 type ShellV1DestroyRequest struct {
 }
 
@@ -32,6 +38,17 @@ func (r *ShellV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV1DestroyRequest) Since() uint32 { return 1 }
 
+// ShellV1GetXwaylandSurfaceRequest assign the xwayland_surface surface role.
+//
+// Create an xwayland_surface_v1 interface for a given wl_surface
+// object and gives it the xwayland_surface role.
+//
+// It is illegal to create an xwayland_surface_v1 for a wl_surface
+// which already has an assigned role and this will result in the
+// `role` protocol error.
+//
+// See the documentation of xwayland_surface_v1 for more details
+// about what an xwayland_surface_v1 is and how it is used.
 type ShellV1GetXwaylandSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -51,18 +68,42 @@ func (r *ShellV1GetXwaylandSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellV1GetXwaylandSurfaceRequest) Since() uint32 { return 1 }
 
+// ShellV1 context object for Xwayland shell.
+//
+// xwayland_shell_v1 is a singleton global object that
+// provides the ability to create a xwayland_surface_v1 object
+// for a given wl_surface.
+//
+// This interface is intended to be bound by the Xwayland server.
+//
+// A compositor must not allow clients other than Xwayland to
+// bind to this interface. A compositor should hide this global
+// from other clients' wl_registry.
+// A client the compositor does not consider to be an Xwayland
+// server attempting to bind this interface will result in
+// an implementation-defined error.
+//
+// An Xwayland server that has bound this interface must not
+// set the `WL_SURFACE_ID` atom on a window.
 type ShellV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewShellV1 wraps p in a ShellV1 proxy.
 func NewShellV1(p *wayland.Proxy) *ShellV1 {
 	return &ShellV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ShellV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the Xwayland shell object.
+//
+// Destroy the xwayland_shell_v1 object.
+//
+// The child objects created via this interface are unaffected.
 func (o *ShellV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +115,17 @@ func (o *ShellV1) Destroy() error {
 	return nil
 }
 
+// GetXwaylandSurface assign the xwayland_surface surface role.
+//
+// Create an xwayland_surface_v1 interface for a given wl_surface
+// object and gives it the xwayland_surface role.
+//
+// It is illegal to create an xwayland_surface_v1 for a wl_surface
+// which already has an assigned role and this will result in the
+// `role` protocol error.
+//
+// See the documentation of xwayland_surface_v1 for more details
+// about what an xwayland_surface_v1 is and how it is used.
 func (o *ShellV1) GetXwaylandSurface(surface wire.ObjectID) (*SurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

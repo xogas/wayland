@@ -40,17 +40,52 @@ var tabletpadv2EventFDCounts = map[uint16]int{
 	7: 0,
 }
 
+// TabletPadV2ButtonState physical button state.
+//
+// Describes the physical state of a button that caused the button
+// event.
 type TabletPadV2ButtonState uint32
 
 const (
+	// TabletPadV2ButtonStateReleased the button is not pressed.
 	TabletPadV2ButtonStateReleased TabletPadV2ButtonState = 0
-	TabletPadV2ButtonStatePressed  TabletPadV2ButtonState = 1
+	// TabletPadV2ButtonStatePressed the button is pressed.
+	TabletPadV2ButtonStatePressed TabletPadV2ButtonState = 1
 )
 
+// TabletPadV2SetFeedbackRequest set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this button. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever a button is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with each button, and compositors may use
+// this information to offer visual feedback on the button layout
+// (e.g. on-screen displays).
+//
+// Button indices start at 0. Setting the feedback string on a button
+// that is reserved by the compositor (i.e. not belonging to any
+// zwp_tablet_pad_group_v2) does not generate an error but the compositor
+// is free to ignore the request.
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// button. Requests providing other serials than the most recent one will
+// be ignored.
 type TabletPadV2SetFeedbackRequest struct {
-	Button      uint32
+	// Button button index.
+	Button uint32
+	// Description button description.
 	Description string
-	Serial      uint32
+	// Serial serial of the mode switch event.
+	Serial uint32
 }
 
 func (r *TabletPadV2SetFeedbackRequest) Opcode() uint16 { return TabletPadV2RequestSetFeedback }
@@ -70,6 +105,10 @@ func (r *TabletPadV2SetFeedbackRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadV2SetFeedbackRequest) Since() uint32 { return 1 }
 
+// TabletPadV2DestroyRequest destroy the pad object.
+//
+// Destroy the zwp_tablet_pad_v2 object. Objects created from this object
+// are unaffected and should be destroyed separately.
 type TabletPadV2DestroyRequest struct {
 }
 
@@ -81,6 +120,13 @@ func (r *TabletPadV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletPadV2GroupEvent group announced.
+//
+// Sent on zwp_tablet_pad_v2 initialization to announce available groups.
+// One event is sent for each pad group available.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_pad_v2.done event. At least one group will be announced.
 type TabletPadV2GroupEvent struct {
 	PadGroup *TabletPadGroupV2
 }
@@ -89,7 +135,20 @@ func (e *TabletPadV2GroupEvent) Opcode() uint16 { return TabletPadV2EventGroup }
 
 func (e *TabletPadV2GroupEvent) Since() uint32 { return 1 }
 
+// TabletPadV2PathEvent path to the device.
+//
+// A system-specific device path that indicates which device is behind
+// this zwp_tablet_pad_v2. This information may be used to gather additional
+// information about the device, e.g. through libwacom.
+//
+// The format of the path is unspecified, it may be a device node, a
+// sysfs path, or some other identifier. It is up to the client to
+// identify the string provided.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_pad_v2.done event.
 type TabletPadV2PathEvent struct {
+	// Path path to local device.
 	Path string
 }
 
@@ -106,7 +165,16 @@ func (e *TabletPadV2PathEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2PathEvent) Since() uint32 { return 1 }
 
+// TabletPadV2ButtonsEvent buttons announced.
+//
+// Sent on zwp_tablet_pad_v2 initialization to announce the available
+// buttons.
+//
+// This event is sent in the initial burst of events before the
+// zwp_tablet_pad_v2.done event. This event is only sent when at least one
+// button is available.
 type TabletPadV2ButtonsEvent struct {
+	// Buttons the number of buttons.
 	Buttons uint32
 }
 
@@ -123,6 +191,11 @@ func (e *TabletPadV2ButtonsEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2ButtonsEvent) Since() uint32 { return 1 }
 
+// TabletPadV2DoneEvent pad description event sequence complete.
+//
+// This event signals the end of the initial burst of descriptive
+// events. A client may consider the static description of the pad to
+// be complete and finalize initialization of the pad.
 type TabletPadV2DoneEvent struct {
 }
 
@@ -134,8 +207,13 @@ func (e *TabletPadV2DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2DoneEvent) Since() uint32 { return 1 }
 
+// TabletPadV2ButtonEvent physical button state.
+//
+// Sent whenever the physical state of a button changes.
 type TabletPadV2ButtonEvent struct {
-	Time   uint32
+	// Time the time of the event with millisecond granularity.
+	Time uint32
+	// Button the index of the button that changed state.
 	Button uint32
 	State  TabletPadV2ButtonState
 }
@@ -163,9 +241,15 @@ func (e *TabletPadV2ButtonEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2ButtonEvent) Since() uint32 { return 1 }
 
+// TabletPadV2EnterEvent enter event.
+//
+// Notification that this pad is focused on the specified surface.
 type TabletPadV2EnterEvent struct {
-	Serial  uint32
-	Tablet  wire.ObjectID
+	// Serial serial number of the enter event.
+	Serial uint32
+	// Tablet the tablet the pad is attached to.
+	Tablet wire.ObjectID
+	// Surface surface the pad is focused on.
 	Surface wire.ObjectID
 }
 
@@ -192,8 +276,14 @@ func (e *TabletPadV2EnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2EnterEvent) Since() uint32 { return 1 }
 
+// TabletPadV2LeaveEvent leave event.
+//
+// Notification that this pad is no longer focused on the specified
+// surface.
 type TabletPadV2LeaveEvent struct {
-	Serial  uint32
+	// Serial serial number of the leave event.
+	Serial uint32
+	// Surface surface the pad is no longer focused on.
 	Surface wire.ObjectID
 }
 
@@ -215,6 +305,14 @@ func (e *TabletPadV2LeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2LeaveEvent) Since() uint32 { return 1 }
 
+// TabletPadV2RemovedEvent pad removed event.
+//
+// Sent when the pad has been removed from the system. When a tablet
+// is removed its pad(s) will be removed too.
+//
+// When this event is received, the client must destroy all rings, strips
+// and groups that were offered by this pad, and issue zwp_tablet_pad_v2.destroy
+// the pad itself.
 type TabletPadV2RemovedEvent struct {
 }
 
@@ -226,35 +324,70 @@ func (e *TabletPadV2RemovedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadV2RemovedEvent) Since() uint32 { return 1 }
 
+// TabletPadV2GroupFunc is a callback for Group events.
 type TabletPadV2GroupFunc func(ev TabletPadV2GroupEvent)
 
+// TabletPadV2PathFunc is a callback for Path events.
 type TabletPadV2PathFunc func(ev TabletPadV2PathEvent)
 
+// TabletPadV2ButtonsFunc is a callback for Buttons events.
 type TabletPadV2ButtonsFunc func(ev TabletPadV2ButtonsEvent)
 
+// TabletPadV2DoneFunc is a callback for Done events.
 type TabletPadV2DoneFunc func(ev TabletPadV2DoneEvent)
 
+// TabletPadV2ButtonFunc is a callback for Button events.
 type TabletPadV2ButtonFunc func(ev TabletPadV2ButtonEvent)
 
+// TabletPadV2EnterFunc is a callback for Enter events.
 type TabletPadV2EnterFunc func(ev TabletPadV2EnterEvent)
 
+// TabletPadV2LeaveFunc is a callback for Leave events.
 type TabletPadV2LeaveFunc func(ev TabletPadV2LeaveEvent)
 
+// TabletPadV2RemovedFunc is a callback for Removed events.
 type TabletPadV2RemovedFunc func(ev TabletPadV2RemovedEvent)
 
+// TabletPadV2 a set of buttons, rings, strips and dials.
+//
+// A pad device is a set of buttons, rings, strips and dials
+// usually physically present on the tablet device itself. Some
+// exceptions exist where the pad device is physically detached, e.g. the
+// Wacom ExpressKey Remote.
+//
+// Pad devices have no axes that control the cursor and are generally
+// auxiliary devices to the tool devices used on the tablet surface.
+//
+// A pad device has a number of static characteristics, e.g. the number
+// of rings. These capabilities are sent in an event sequence after the
+// zwp_tablet_seat_v2.pad_added event before any actual events from this pad.
+// This initial event sequence is terminated by a zwp_tablet_pad_v2.done
+// event.
+//
+// All pad features (buttons, rings, strips and dials) are logically divided into
+// groups and all pads have at least one group. The available groups are
+// notified through the zwp_tablet_pad_v2.group event; the compositor will
+// emit one event per group before emitting zwp_tablet_pad_v2.done.
+//
+// Groups may have multiple modes. Modes allow clients to map multiple
+// actions to a single pad feature. Only one mode can be active per group,
+// although different groups may have different active modes.
 type TabletPadV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletPadV2 wraps p in a TabletPadV2 proxy.
 func NewTabletPadV2(p *wayland.Proxy) *TabletPadV2 {
 	p.SetEventFDCounts(tabletpadv2EventFDCounts)
 	return &TabletPadV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletPadV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnGroup registers fn to receive Group events.
 func (o *TabletPadV2) OnGroup(fn TabletPadV2GroupFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventGroup, func(r *wire.Reader) {
 		var ev TabletPadV2GroupEvent
@@ -273,6 +406,7 @@ func (o *TabletPadV2) OnGroup(fn TabletPadV2GroupFunc) {
 	})
 }
 
+// OnPath registers fn to receive Path events.
 func (o *TabletPadV2) OnPath(fn TabletPadV2PathFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventPath, func(r *wire.Reader) {
 		var ev TabletPadV2PathEvent
@@ -286,6 +420,7 @@ func (o *TabletPadV2) OnPath(fn TabletPadV2PathFunc) {
 	})
 }
 
+// OnButtons registers fn to receive Buttons events.
 func (o *TabletPadV2) OnButtons(fn TabletPadV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadV2ButtonsEvent
@@ -299,6 +434,7 @@ func (o *TabletPadV2) OnButtons(fn TabletPadV2ButtonsFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *TabletPadV2) OnDone(fn TabletPadV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadV2DoneEvent
@@ -312,6 +448,7 @@ func (o *TabletPadV2) OnDone(fn TabletPadV2DoneFunc) {
 	})
 }
 
+// OnButton registers fn to receive Button events.
 func (o *TabletPadV2) OnButton(fn TabletPadV2ButtonFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventButton, func(r *wire.Reader) {
 		var ev TabletPadV2ButtonEvent
@@ -325,6 +462,7 @@ func (o *TabletPadV2) OnButton(fn TabletPadV2ButtonFunc) {
 	})
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *TabletPadV2) OnEnter(fn TabletPadV2EnterFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventEnter, func(r *wire.Reader) {
 		var ev TabletPadV2EnterEvent
@@ -338,6 +476,7 @@ func (o *TabletPadV2) OnEnter(fn TabletPadV2EnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *TabletPadV2) OnLeave(fn TabletPadV2LeaveFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventLeave, func(r *wire.Reader) {
 		var ev TabletPadV2LeaveEvent
@@ -351,6 +490,7 @@ func (o *TabletPadV2) OnLeave(fn TabletPadV2LeaveFunc) {
 	})
 }
 
+// OnRemoved registers fn to receive Removed events.
 func (o *TabletPadV2) OnRemoved(fn TabletPadV2RemovedFunc) {
 	o.proxy.RegisterEvent(TabletPadV2EventRemoved, func(r *wire.Reader) {
 		var ev TabletPadV2RemovedEvent
@@ -364,6 +504,32 @@ func (o *TabletPadV2) OnRemoved(fn TabletPadV2RemovedFunc) {
 	})
 }
 
+// SetFeedback set compositor feedback.
+//
+// Requests the compositor to use the provided feedback string
+// associated with this button. This request should be issued immediately
+// after a zwp_tablet_pad_group_v2.mode_switch event from the corresponding
+// group is received, or whenever a button is mapped to a different
+// action. See zwp_tablet_pad_group_v2.mode_switch for more details.
+//
+// Clients are encouraged to provide context-aware descriptions for
+// the actions associated with each button, and compositors may use
+// this information to offer visual feedback on the button layout
+// (e.g. on-screen displays).
+//
+// Button indices start at 0. Setting the feedback string on a button
+// that is reserved by the compositor (i.e. not belonging to any
+// zwp_tablet_pad_group_v2) does not generate an error but the compositor
+// is free to ignore the request.
+//
+// The provided string 'description' is a UTF-8 encoded string to be
+// associated with this ring, and is considered user-visible; general
+// internationalization rules apply.
+//
+// The serial argument will be that of the last
+// zwp_tablet_pad_group_v2.mode_switch event received for the group of this
+// button. Requests providing other serials than the most recent one will
+// be ignored.
 func (o *TabletPadV2) SetFeedback(button uint32, description string, serial uint32) error {
 	return o.proxy.SendRequest(TabletPadV2RequestSetFeedback, &TabletPadV2SetFeedbackRequest{
 		Button:      button,
@@ -372,6 +538,10 @@ func (o *TabletPadV2) SetFeedback(button uint32, description string, serial uint
 	})
 }
 
+// Destroy destroy the pad object.
+//
+// Destroy the zwp_tablet_pad_v2 object. Objects created from this object
+// are unaffected and should be destroyed separately.
 func (o *TabletPadV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

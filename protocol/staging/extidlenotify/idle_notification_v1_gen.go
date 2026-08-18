@@ -27,6 +27,9 @@ var idlenotificationv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// IdleNotificationV1DestroyRequest destroy the notification object.
+//
+// Destroy the notification object.
 type IdleNotificationV1DestroyRequest struct {
 }
 
@@ -38,6 +41,12 @@ func (r *IdleNotificationV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *IdleNotificationV1DestroyRequest) Since() uint32 { return 1 }
 
+// IdleNotificationV1IdledEvent notification object is idle.
+//
+// This event is sent when the notification object becomes idle.
+//
+// It's a compositor protocol error to send this event twice without a
+// resumed event in-between.
 type IdleNotificationV1IdledEvent struct {
 }
 
@@ -49,6 +58,13 @@ func (e *IdleNotificationV1IdledEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *IdleNotificationV1IdledEvent) Since() uint32 { return 1 }
 
+// IdleNotificationV1ResumedEvent notification object is no longer idle.
+//
+// This event is sent when the notification object stops being idle.
+//
+// It's a compositor protocol error to send this event twice without an
+// idled event in-between. It's a compositor protocol error to send this
+// event prior to any idled event.
 type IdleNotificationV1ResumedEvent struct {
 }
 
@@ -60,23 +76,52 @@ func (e *IdleNotificationV1ResumedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *IdleNotificationV1ResumedEvent) Since() uint32 { return 1 }
 
+// IdleNotificationV1IdledFunc is a callback for Idled events.
 type IdleNotificationV1IdledFunc func(ev IdleNotificationV1IdledEvent)
 
+// IdleNotificationV1ResumedFunc is a callback for Resumed events.
 type IdleNotificationV1ResumedFunc func(ev IdleNotificationV1ResumedEvent)
 
+// IdleNotificationV1 idle notification.
+//
+// This interface is used by the compositor to send idle notification events
+// to clients.
+//
+// Initially the notification object is not idle. The notification object
+// becomes idle when no user activity has happened for at least the timeout
+// duration, starting from the creation of the notification object. User
+// activity may include input events or a presence sensor, but is
+// compositor-specific.
+//
+// How this notification responds to idle inhibitors depends on how
+// it was constructed. If constructed from the
+// get_idle_notification request, then if an idle inhibitor is
+// active (e.g. another client has created a zwp_idle_inhibitor_v1
+// on a visible surface), the compositor must not make the
+// notification object idle. However, if constructed from the
+// get_input_idle_notification request, then idle inhibitors are
+// ignored, and only input from the user, e.g. from a keyboard or
+// mouse, counts as activity.
+//
+// When the notification object becomes idle, an idled event is sent. When
+// user activity starts again, the notification object stops being idle,
+// a resumed event is sent and the timeout is restarted.
 type IdleNotificationV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewIdleNotificationV1 wraps p in a IdleNotificationV1 proxy.
 func NewIdleNotificationV1(p *wayland.Proxy) *IdleNotificationV1 {
 	p.SetEventFDCounts(idlenotificationv1EventFDCounts)
 	return &IdleNotificationV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *IdleNotificationV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnIdled registers fn to receive Idled events.
 func (o *IdleNotificationV1) OnIdled(fn IdleNotificationV1IdledFunc) {
 	o.proxy.RegisterEvent(IdleNotificationV1EventIdled, func(r *wire.Reader) {
 		var ev IdleNotificationV1IdledEvent
@@ -90,6 +135,7 @@ func (o *IdleNotificationV1) OnIdled(fn IdleNotificationV1IdledFunc) {
 	})
 }
 
+// OnResumed registers fn to receive Resumed events.
 func (o *IdleNotificationV1) OnResumed(fn IdleNotificationV1ResumedFunc) {
 	o.proxy.RegisterEvent(IdleNotificationV1EventResumed, func(r *wire.Reader) {
 		var ev IdleNotificationV1ResumedEvent
@@ -103,6 +149,9 @@ func (o *IdleNotificationV1) OnResumed(fn IdleNotificationV1ResumedFunc) {
 	})
 }
 
+// Destroy destroy the notification object.
+//
+// Destroy the notification object.
 func (o *IdleNotificationV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

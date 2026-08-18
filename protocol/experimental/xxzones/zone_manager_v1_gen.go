@@ -17,6 +17,9 @@ const (
 	ZoneManagerV1RequestGetZoneFromHandle uint16 = 3
 )
 
+// ZoneManagerV1DestroyRequest destroy this object.
+//
+// This has no effect other than to destroy the xx_zone_manager object.
 type ZoneManagerV1DestroyRequest struct {
 }
 
@@ -28,8 +31,14 @@ func (r *ZoneManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ZoneManagerV1GetZoneItemRequest create a positionable item representing a toplevel.
+//
+// Create a new positionable zone item from an 'xdg_toplevel'.
+// The resulting wrapper object can then be used to position the
+// toplevel window in a zone.
 type ZoneManagerV1GetZoneItemRequest struct {
-	ID       wire.NewID
+	ID wire.NewID
+	// Toplevel the toplevel window.
 	Toplevel wire.ObjectID
 }
 
@@ -47,8 +56,34 @@ func (r *ZoneManagerV1GetZoneItemRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneManagerV1GetZoneItemRequest) Since() uint32 { return 1 }
 
+// ZoneManagerV1GetZoneRequest join a zone or request a new one.
+//
+// Create a new zone. While the zone object exists, the compositor
+// must consider it "used" and keep track of it.
+//
+// A zone is represented by a string 'handle'.
+//
+// The compositor must keep zone handles valid while any client is
+// referencing the corresponding zone.
+// The compositor may always give a client the same zone for a given
+// output, and remember its position and size for the client, but
+// clients should not rely on this behavior.
+//
+// A client can request a zone to be placed on a specific
+// output by passing a wl_output as 'output'. If a valid output
+// is set, the compositor should place the zone on that output.
+// If NULL is passed, the compositor decides the output.
+//
+// The compositor should provide the biggest reasonable zone space
+// for the client, governed by its own policy.
+//
+// If the compositor wants to deny zone creation (e.g. on a specific
+// output), the returned zone must be "invalid". A zone is invalid
+// if it has a negative size, in which case the client is forbidden
+// to place items in it.
 type ZoneManagerV1GetZoneRequest struct {
-	ID     wire.NewID
+	ID wire.NewID
+	// Output the preferred output to place the zone on, or NULL.
 	Output wire.ObjectID // nullable
 }
 
@@ -66,8 +101,29 @@ func (r *ZoneManagerV1GetZoneRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneManagerV1GetZoneRequest) Since() uint32 { return 1 }
 
+// ZoneManagerV1GetZoneFromHandleRequest join a zone via its handle.
+//
+// Create a new zone object using the zone's handle.
+// For the returned zone, the same rules as described in
+// 'get_zone' apply.
+//
+// This request returns a reference to an existing or remembered zone
+// that is represented by 'handle'.
+// The zone may potentially have been created by a different client.
+//
+// This allows cooperating clients to share the same coordinate space.
+//
+// If the zone handle was invalid or unknown, a new zone must
+// be created and returned instead, following the rules outlined
+// in 'get_zone' and assuming no output preference.
+//
+// Every new zone object created by this request emits its initial event
+// sequence, including the 'handle' event, which must return a different
+// handle from the one passed to this request in case the existing zone
+// could not be joined.
 type ZoneManagerV1GetZoneFromHandleRequest struct {
-	ID     wire.NewID
+	ID wire.NewID
+	// Handle the handle of a zone.
 	Handle string
 }
 
@@ -87,18 +143,27 @@ func (r *ZoneManagerV1GetZoneFromHandleRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneManagerV1GetZoneFromHandleRequest) Since() uint32 { return 1 }
 
+// ZoneManagerV1 manage zones for clients.
+//
+// The 'xx_zone_manager' interface defines base requests for obtaining and
+// managing zones for a client.
 type ZoneManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewZoneManagerV1 wraps p in a ZoneManagerV1 proxy.
 func NewZoneManagerV1(p *wayland.Proxy) *ZoneManagerV1 {
 	return &ZoneManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ZoneManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy this object.
+//
+// This has no effect other than to destroy the xx_zone_manager object.
 func (o *ZoneManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -110,6 +175,11 @@ func (o *ZoneManagerV1) Destroy() error {
 	return nil
 }
 
+// GetZoneItem create a positionable item representing a toplevel.
+//
+// Create a new positionable zone item from an 'xdg_toplevel'.
+// The resulting wrapper object can then be used to position the
+// toplevel window in a zone.
 func (o *ZoneManagerV1) GetZoneItem(toplevel wire.ObjectID) (*ZoneItemV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -128,6 +198,31 @@ func (o *ZoneManagerV1) GetZoneItem(toplevel wire.ObjectID) (*ZoneItemV1, error)
 	return wrapped, nil
 }
 
+// GetZone join a zone or request a new one.
+//
+// Create a new zone. While the zone object exists, the compositor
+// must consider it "used" and keep track of it.
+//
+// A zone is represented by a string 'handle'.
+//
+// The compositor must keep zone handles valid while any client is
+// referencing the corresponding zone.
+// The compositor may always give a client the same zone for a given
+// output, and remember its position and size for the client, but
+// clients should not rely on this behavior.
+//
+// A client can request a zone to be placed on a specific
+// output by passing a wl_output as 'output'. If a valid output
+// is set, the compositor should place the zone on that output.
+// If NULL is passed, the compositor decides the output.
+//
+// The compositor should provide the biggest reasonable zone space
+// for the client, governed by its own policy.
+//
+// If the compositor wants to deny zone creation (e.g. on a specific
+// output), the returned zone must be "invalid". A zone is invalid
+// if it has a negative size, in which case the client is forbidden
+// to place items in it.
 func (o *ZoneManagerV1) GetZone(output wire.ObjectID) (*ZoneV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -146,6 +241,26 @@ func (o *ZoneManagerV1) GetZone(output wire.ObjectID) (*ZoneV1, error) {
 	return wrapped, nil
 }
 
+// GetZoneFromHandle join a zone via its handle.
+//
+// Create a new zone object using the zone's handle.
+// For the returned zone, the same rules as described in
+// 'get_zone' apply.
+//
+// This request returns a reference to an existing or remembered zone
+// that is represented by 'handle'.
+// The zone may potentially have been created by a different client.
+//
+// This allows cooperating clients to share the same coordinate space.
+//
+// If the zone handle was invalid or unknown, a new zone must
+// be created and returned instead, following the rules outlined
+// in 'get_zone' and assuming no output preference.
+//
+// Every new zone object created by this request emits its initial event
+// sequence, including the 'handle' event, which must return a different
+// handle from the one passed to this request in case the existing zone
+// could not be joined.
 func (o *ZoneManagerV1) GetZoneFromHandle(handle string) (*ZoneV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

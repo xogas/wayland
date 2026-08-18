@@ -61,7 +61,19 @@ func (r *InputMethodContextV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodContextV1DestroyRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1CommitStringRequest commit string.
+//
+// Send the commit string text for insertion to the application.
+//
+// The text to commit could be either just a single character after a key
+// press or the result of some composing (pre-edit). It could be also an
+// empty text when some text should be removed (see
+// delete_surrounding_text) or when the input cursor should be moved (see
+// cursor_position).
+//
+// Any previously set composing text will be removed.
 type InputMethodContextV1CommitStringRequest struct {
+	// Serial serial of the latest known text input state.
 	Serial uint32
 	Text   string
 }
@@ -82,7 +94,17 @@ func (r *InputMethodContextV1CommitStringRequest) Marshal(w *wire.Writer) error 
 
 func (r *InputMethodContextV1CommitStringRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1PreeditStringRequest pre-edit string.
+//
+// Send the pre-edit string text to the application text input.
+//
+// The commit text can be used to replace the pre-edit text on reset (for
+// example on unfocus).
+//
+// Previously sent preedit_style and preedit_cursor requests are also
+// processed by the text_input.
 type InputMethodContextV1PreeditStringRequest struct {
+	// Serial serial of the latest known text input state.
 	Serial uint32
 	Text   string
 	Commit string
@@ -107,6 +129,14 @@ func (r *InputMethodContextV1PreeditStringRequest) Marshal(w *wire.Writer) error
 
 func (r *InputMethodContextV1PreeditStringRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1PreeditStylingRequest pre-edit styling.
+//
+// Set the styling information on composing text. The style is applied for
+// length in bytes from index relative to the beginning of
+// the composing text (as byte offset). Multiple styles can
+// be applied to a composing text.
+//
+// This request should be sent before sending a preedit_string request.
 type InputMethodContextV1PreeditStylingRequest struct {
 	Index  uint32
 	Length uint32
@@ -132,6 +162,14 @@ func (r *InputMethodContextV1PreeditStylingRequest) Marshal(w *wire.Writer) erro
 
 func (r *InputMethodContextV1PreeditStylingRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1PreeditCursorRequest pre-edit cursor.
+//
+// Set the cursor position inside the composing text (as byte offset)
+// relative to the start of the composing text.
+//
+// When index is negative no cursor should be displayed.
+//
+// This request should be sent before sending a preedit_string request.
 type InputMethodContextV1PreeditCursorRequest struct {
 	Index int32
 }
@@ -149,6 +187,12 @@ func (r *InputMethodContextV1PreeditCursorRequest) Marshal(w *wire.Writer) error
 
 func (r *InputMethodContextV1PreeditCursorRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1DeleteSurroundingTextRequest delete text.
+//
+// Remove the surrounding text.
+//
+// This request will be handled on the text_input side directly following
+// a commit_string request.
 type InputMethodContextV1DeleteSurroundingTextRequest struct {
 	Index  int32
 	Length uint32
@@ -170,6 +214,18 @@ func (r *InputMethodContextV1DeleteSurroundingTextRequest) Marshal(w *wire.Write
 
 func (r *InputMethodContextV1DeleteSurroundingTextRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1CursorPositionRequest set cursor to a new position.
+//
+// Set the cursor and anchor to a new position. Index is the new cursor
+// position in bytes (when >= 0 this is relative to the end of the inserted text,
+// otherwise it is relative to the beginning of the inserted text). Anchor is
+// the new anchor position in bytes (when >= 0 this is relative to the end of the
+// inserted text, otherwise it is relative to the beginning of the inserted
+// text). When there should be no selected text, anchor should be the same
+// as index.
+//
+// This request will be handled on the text_input side directly following
+// a commit_string request.
 type InputMethodContextV1CursorPositionRequest struct {
 	Index  int32
 	Anchor int32
@@ -208,7 +264,14 @@ func (r *InputMethodContextV1ModifiersMapRequest) Marshal(w *wire.Writer) error 
 
 func (r *InputMethodContextV1ModifiersMapRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1KeysymRequest keysym.
+//
+// Notify when a key event was sent. Key events should not be used for
+// normal text input operations, which should be done with commit_string,
+// delete_surrounding_text, etc. The key event follows the wl_keyboard key
+// event convention. Sym is an XKB keysym, state is a wl_keyboard key_state.
 type InputMethodContextV1KeysymRequest struct {
+	// Serial serial of the latest known text input state.
 	Serial    uint32
 	Time      uint32
 	Sym       uint32
@@ -239,6 +302,12 @@ func (r *InputMethodContextV1KeysymRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodContextV1KeysymRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1GrabKeyboardRequest grab hardware keyboard.
+//
+// Allow an input method to receive hardware keyboard input and process
+// key events to generate text events (with pre-edit) over the wire. This
+// allows input methods which compose multiple key events for inputting
+// text like it is done for CJK languages.
 type InputMethodContextV1GrabKeyboardRequest struct {
 	Keyboard wire.NewID
 }
@@ -256,11 +325,23 @@ func (r *InputMethodContextV1GrabKeyboardRequest) Marshal(w *wire.Writer) error 
 
 func (r *InputMethodContextV1GrabKeyboardRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1KeyRequest forward key event.
+//
+// Forward a wl_keyboard::key event to the client that was not processed
+// by the input method itself. Should be used when filtering key events
+// with grab_keyboard.  The arguments should be the ones from the
+// wl_keyboard::key event.
+//
+// For generating custom key events use the keysym request instead.
 type InputMethodContextV1KeyRequest struct {
+	// Serial serial from wl_keyboard::key.
 	Serial uint32
-	Time   uint32
-	Key    uint32
-	State  uint32
+	// Time time from wl_keyboard::key.
+	Time uint32
+	// Key key from wl_keyboard::key.
+	Key uint32
+	// State state from wl_keyboard::key.
+	State uint32
 }
 
 func (r *InputMethodContextV1KeyRequest) Opcode() uint16 { return InputMethodContextV1RequestKey }
@@ -283,12 +364,23 @@ func (r *InputMethodContextV1KeyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodContextV1KeyRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1ModifiersRequest forward modifiers event.
+//
+// Forward a wl_keyboard::modifiers event to the client that was not
+// processed by the input method itself.  Should be used when filtering
+// key events with grab_keyboard. The arguments should be the ones
+// from the wl_keyboard::modifiers event.
 type InputMethodContextV1ModifiersRequest struct {
-	Serial        uint32
+	// Serial serial from wl_keyboard::modifiers.
+	Serial uint32
+	// ModsDepressed mods_depressed from wl_keyboard::modifiers.
 	ModsDepressed uint32
-	ModsLatched   uint32
-	ModsLocked    uint32
-	Group         uint32
+	// ModsLatched mods_latched from wl_keyboard::modifiers.
+	ModsLatched uint32
+	// ModsLocked mods_locked from wl_keyboard::modifiers.
+	ModsLocked uint32
+	// Group group from wl_keyboard::modifiers.
+	Group uint32
 }
 
 func (r *InputMethodContextV1ModifiersRequest) Opcode() uint16 {
@@ -317,6 +409,7 @@ func (r *InputMethodContextV1ModifiersRequest) Marshal(w *wire.Writer) error {
 func (r *InputMethodContextV1ModifiersRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1LanguageRequest struct {
+	// Serial serial of the latest known text input state.
 	Serial   uint32
 	Language string
 }
@@ -338,6 +431,7 @@ func (r *InputMethodContextV1LanguageRequest) Marshal(w *wire.Writer) error {
 func (r *InputMethodContextV1LanguageRequest) Since() uint32 { return 1 }
 
 type InputMethodContextV1TextDirectionRequest struct {
+	// Serial serial of the latest known text input state.
 	Serial    uint32
 	Direction uint32
 }
@@ -358,6 +452,13 @@ func (r *InputMethodContextV1TextDirectionRequest) Marshal(w *wire.Writer) error
 
 func (r *InputMethodContextV1TextDirectionRequest) Since() uint32 { return 1 }
 
+// InputMethodContextV1SurroundingTextEvent surrounding text event.
+//
+// The plain surrounding text around the input position. Cursor is the
+// position in bytes within the surrounding text relative to the beginning
+// of the text. Anchor is the position in bytes of the selection anchor
+// within the surrounding text relative to the beginning of the text. If
+// there is no selected text then anchor is the same as cursor.
 type InputMethodContextV1SurroundingTextEvent struct {
 	Text   string
 	Cursor uint32
@@ -451,6 +552,7 @@ func (e *InputMethodContextV1InvokeActionEvent) Unmarshal(r *wire.Reader) error 
 func (e *InputMethodContextV1InvokeActionEvent) Since() uint32 { return 1 }
 
 type InputMethodContextV1CommitStateEvent struct {
+	// Serial serial of text input state.
 	Serial uint32
 }
 
@@ -488,31 +590,65 @@ func (e *InputMethodContextV1PreferredLanguageEvent) Unmarshal(r *wire.Reader) e
 
 func (e *InputMethodContextV1PreferredLanguageEvent) Since() uint32 { return 1 }
 
+// InputMethodContextV1SurroundingTextFunc is a callback for SurroundingText events.
 type InputMethodContextV1SurroundingTextFunc func(ev InputMethodContextV1SurroundingTextEvent)
 
+// InputMethodContextV1ResetFunc is a callback for Reset events.
 type InputMethodContextV1ResetFunc func(ev InputMethodContextV1ResetEvent)
 
+// InputMethodContextV1ContentTypeFunc is a callback for ContentType events.
 type InputMethodContextV1ContentTypeFunc func(ev InputMethodContextV1ContentTypeEvent)
 
+// InputMethodContextV1InvokeActionFunc is a callback for InvokeAction events.
 type InputMethodContextV1InvokeActionFunc func(ev InputMethodContextV1InvokeActionEvent)
 
+// InputMethodContextV1CommitStateFunc is a callback for CommitState events.
 type InputMethodContextV1CommitStateFunc func(ev InputMethodContextV1CommitStateEvent)
 
+// InputMethodContextV1PreferredLanguageFunc is a callback for PreferredLanguage events.
 type InputMethodContextV1PreferredLanguageFunc func(ev InputMethodContextV1PreferredLanguageEvent)
 
+// InputMethodContextV1 input method context.
+//
+// Corresponds to a text input on the input method side. An input method context
+// is created on text input activation on the input method side. It allows
+// receiving information about the text input from the application via events.
+// Input method contexts do not keep state after deactivation and should be
+// destroyed after deactivation is handled.
+//
+// Text is generally UTF-8 encoded, indices and lengths are in bytes.
+//
+// Serials are used to synchronize the state between the text input and
+// an input method. New serials are sent by the text input in the
+// commit_state request and are used by the input method to indicate
+// the known text input state in events like preedit_string, commit_string,
+// and keysym. The text input can then ignore events from the input method
+// which are based on an outdated state (for example after a reset).
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type InputMethodContextV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputMethodContextV1 wraps p in a InputMethodContextV1 proxy.
 func NewInputMethodContextV1(p *wayland.Proxy) *InputMethodContextV1 {
 	p.SetEventFDCounts(inputmethodcontextv1EventFDCounts)
 	return &InputMethodContextV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputMethodContextV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSurroundingText registers fn to receive SurroundingText events.
 func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1SurroundingTextFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodContextV1SurroundingTextEvent
@@ -526,6 +662,7 @@ func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1Surround
 	})
 }
 
+// OnReset registers fn to receive Reset events.
 func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventReset, func(r *wire.Reader) {
 		var ev InputMethodContextV1ResetEvent
@@ -539,6 +676,7 @@ func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 	})
 }
 
+// OnContentType registers fn to receive ContentType events.
 func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodContextV1ContentTypeEvent
@@ -552,6 +690,7 @@ func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeF
 	})
 }
 
+// OnInvokeAction registers fn to receive InvokeAction events.
 func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActionFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventInvokeAction, func(r *wire.Reader) {
 		var ev InputMethodContextV1InvokeActionEvent
@@ -565,6 +704,7 @@ func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActio
 	})
 }
 
+// OnCommitState registers fn to receive CommitState events.
 func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventCommitState, func(r *wire.Reader) {
 		var ev InputMethodContextV1CommitStateEvent
@@ -578,6 +718,7 @@ func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateF
 	})
 }
 
+// OnPreferredLanguage registers fn to receive PreferredLanguage events.
 func (o *InputMethodContextV1) OnPreferredLanguage(fn InputMethodContextV1PreferredLanguageFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventPreferredLanguage, func(r *wire.Reader) {
 		var ev InputMethodContextV1PreferredLanguageEvent
@@ -602,6 +743,17 @@ func (o *InputMethodContextV1) Destroy() error {
 	return nil
 }
 
+// CommitString commit string.
+//
+// Send the commit string text for insertion to the application.
+//
+// The text to commit could be either just a single character after a key
+// press or the result of some composing (pre-edit). It could be also an
+// empty text when some text should be removed (see
+// delete_surrounding_text) or when the input cursor should be moved (see
+// cursor_position).
+//
+// Any previously set composing text will be removed.
 func (o *InputMethodContextV1) CommitString(serial uint32, text string) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestCommitString, &InputMethodContextV1CommitStringRequest{
 		Serial: serial,
@@ -609,6 +761,15 @@ func (o *InputMethodContextV1) CommitString(serial uint32, text string) error {
 	})
 }
 
+// PreeditString pre-edit string.
+//
+// Send the pre-edit string text to the application text input.
+//
+// The commit text can be used to replace the pre-edit text on reset (for
+// example on unfocus).
+//
+// Previously sent preedit_style and preedit_cursor requests are also
+// processed by the text_input.
 func (o *InputMethodContextV1) PreeditString(serial uint32, text string, commit string) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestPreeditString, &InputMethodContextV1PreeditStringRequest{
 		Serial: serial,
@@ -617,6 +778,14 @@ func (o *InputMethodContextV1) PreeditString(serial uint32, text string, commit 
 	})
 }
 
+// PreeditStyling pre-edit styling.
+//
+// Set the styling information on composing text. The style is applied for
+// length in bytes from index relative to the beginning of
+// the composing text (as byte offset). Multiple styles can
+// be applied to a composing text.
+//
+// This request should be sent before sending a preedit_string request.
 func (o *InputMethodContextV1) PreeditStyling(index uint32, length uint32, style uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestPreeditStyling, &InputMethodContextV1PreeditStylingRequest{
 		Index:  index,
@@ -625,12 +794,26 @@ func (o *InputMethodContextV1) PreeditStyling(index uint32, length uint32, style
 	})
 }
 
+// PreeditCursor pre-edit cursor.
+//
+// Set the cursor position inside the composing text (as byte offset)
+// relative to the start of the composing text.
+//
+// When index is negative no cursor should be displayed.
+//
+// This request should be sent before sending a preedit_string request.
 func (o *InputMethodContextV1) PreeditCursor(index int32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestPreeditCursor, &InputMethodContextV1PreeditCursorRequest{
 		Index: index,
 	})
 }
 
+// DeleteSurroundingText delete text.
+//
+// Remove the surrounding text.
+//
+// This request will be handled on the text_input side directly following
+// a commit_string request.
 func (o *InputMethodContextV1) DeleteSurroundingText(index int32, length uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestDeleteSurroundingText, &InputMethodContextV1DeleteSurroundingTextRequest{
 		Index:  index,
@@ -638,6 +821,18 @@ func (o *InputMethodContextV1) DeleteSurroundingText(index int32, length uint32)
 	})
 }
 
+// CursorPosition set cursor to a new position.
+//
+// Set the cursor and anchor to a new position. Index is the new cursor
+// position in bytes (when >= 0 this is relative to the end of the inserted text,
+// otherwise it is relative to the beginning of the inserted text). Anchor is
+// the new anchor position in bytes (when >= 0 this is relative to the end of the
+// inserted text, otherwise it is relative to the beginning of the inserted
+// text). When there should be no selected text, anchor should be the same
+// as index.
+//
+// This request will be handled on the text_input side directly following
+// a commit_string request.
 func (o *InputMethodContextV1) CursorPosition(index int32, anchor int32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestCursorPosition, &InputMethodContextV1CursorPositionRequest{
 		Index:  index,
@@ -651,6 +846,12 @@ func (o *InputMethodContextV1) ModifiersMap(map_ []byte) error {
 	})
 }
 
+// Keysym keysym.
+//
+// Notify when a key event was sent. Key events should not be used for
+// normal text input operations, which should be done with commit_string,
+// delete_surrounding_text, etc. The key event follows the wl_keyboard key
+// event convention. Sym is an XKB keysym, state is a wl_keyboard key_state.
 func (o *InputMethodContextV1) Keysym(serial uint32, time uint32, sym uint32, state uint32, modifiers uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestKeysym, &InputMethodContextV1KeysymRequest{
 		Serial:    serial,
@@ -661,6 +862,12 @@ func (o *InputMethodContextV1) Keysym(serial uint32, time uint32, sym uint32, st
 	})
 }
 
+// GrabKeyboard grab hardware keyboard.
+//
+// Allow an input method to receive hardware keyboard input and process
+// key events to generate text events (with pre-edit) over the wire. This
+// allows input methods which compose multiple key events for inputting
+// text like it is done for CJK languages.
 func (o *InputMethodContextV1) GrabKeyboard() (*wayland.Proxy, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -677,6 +884,14 @@ func (o *InputMethodContextV1) GrabKeyboard() (*wayland.Proxy, error) {
 	return p, nil
 }
 
+// Key forward key event.
+//
+// Forward a wl_keyboard::key event to the client that was not processed
+// by the input method itself. Should be used when filtering key events
+// with grab_keyboard.  The arguments should be the ones from the
+// wl_keyboard::key event.
+//
+// For generating custom key events use the keysym request instead.
 func (o *InputMethodContextV1) Key(serial uint32, time uint32, key uint32, state uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestKey, &InputMethodContextV1KeyRequest{
 		Serial: serial,
@@ -686,6 +901,12 @@ func (o *InputMethodContextV1) Key(serial uint32, time uint32, key uint32, state
 	})
 }
 
+// Modifiers forward modifiers event.
+//
+// Forward a wl_keyboard::modifiers event to the client that was not
+// processed by the input method itself.  Should be used when filtering
+// key events with grab_keyboard. The arguments should be the ones
+// from the wl_keyboard::modifiers event.
 func (o *InputMethodContextV1) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestModifiers, &InputMethodContextV1ModifiersRequest{
 		Serial:        serial,

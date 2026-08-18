@@ -32,6 +32,11 @@ var drmleasedevicev1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+// DrmLeaseDeviceV1CreateLeaseRequestRequest create a lease request object.
+//
+// Creates a lease request object.
+//
+// See the documentation for wp_drm_lease_request_v1 for details.
 type DrmLeaseDeviceV1CreateLeaseRequestRequest struct {
 	ID wire.NewID
 }
@@ -49,6 +54,14 @@ func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Marshal(w *wire.Writer) erro
 
 func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1ReleaseRequest release this object.
+//
+// Indicates the client no longer wishes to use this object. In response
+// the compositor will immediately send the released event and destroy
+// this object. It can however not guarantee that the client won't receive
+// connector events before the released event. The client must not send any
+// requests after this one, doing so will raise a wl_display error.
+// Existing connectors, lease request and leases will not be affected.
 type DrmLeaseDeviceV1ReleaseRequest struct {
 }
 
@@ -60,7 +73,18 @@ func (r *DrmLeaseDeviceV1ReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *DrmLeaseDeviceV1ReleaseRequest) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1DrmFdEvent open a non-master fd for this DRM node.
+//
+// The compositor will send this event when the wp_drm_lease_device_v1
+// global is bound, although there are no guarantees as to how long this
+// takes - the compositor might need to wait until regaining DRM master.
+// The included fd is a non-master DRM file descriptor opened for this
+// device and the compositor must not authenticate it.
+// The purpose of this event is to give the client the ability to
+// query DRM and discover information which may help them pick the
+// appropriate DRM device or select the appropriate connectors therein.
 type DrmLeaseDeviceV1DrmFdEvent struct {
+	// Fd dRM file descriptor.
 	Fd int
 }
 
@@ -77,6 +101,18 @@ func (e *DrmLeaseDeviceV1DrmFdEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseDeviceV1DrmFdEvent) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1ConnectorEvent advertise connectors available for leases.
+//
+// The compositor will use this event to advertise connectors available for
+// lease by clients. This object may be passed into a lease request to
+// indicate the client would like to lease that connector, see
+// wp_drm_lease_request_v1.request_connector for details. While the
+// compositor will make a best effort to not send disconnected connectors,
+// no guarantees can be made.
+//
+// The compositor must send the drm_fd event before sending connectors.
+// After the drm_fd event it will send all available connectors but may
+// send additional connectors at any time.
 type DrmLeaseDeviceV1ConnectorEvent struct {
 	ID *DrmLeaseConnectorV1
 }
@@ -85,6 +121,14 @@ func (e *DrmLeaseDeviceV1ConnectorEvent) Opcode() uint16 { return DrmLeaseDevice
 
 func (e *DrmLeaseDeviceV1ConnectorEvent) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1DoneEvent signals grouping of connectors.
+//
+// The compositor will send this event to indicate that it has sent all
+// currently available connectors after the client binds to the global or
+// when it updates the connector list, for example on hotplug, drm master
+// change or when a leased connector becomes available again. It will
+// similarly send this event to group wp_drm_lease_connector_v1.withdrawn
+// events of connectors of this device.
 type DrmLeaseDeviceV1DoneEvent struct {
 }
 
@@ -96,6 +140,13 @@ func (e *DrmLeaseDeviceV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseDeviceV1DoneEvent) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1ReleasedEvent the compositor has finished using the device.
+//
+// This event is sent in response to the release request and indicates
+// that the compositor is done sending connector events.
+// The compositor will destroy this object immediately after sending the
+// event and it will become invalid. The client should release any
+// resources associated with this device after receiving this event.
 type DrmLeaseDeviceV1ReleasedEvent struct {
 }
 
@@ -107,27 +158,66 @@ func (e *DrmLeaseDeviceV1ReleasedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseDeviceV1ReleasedEvent) Since() uint32 { return 1 }
 
+// DrmLeaseDeviceV1DrmFdFunc is a callback for DrmFd events.
 type DrmLeaseDeviceV1DrmFdFunc func(ev DrmLeaseDeviceV1DrmFdEvent)
 
+// DrmLeaseDeviceV1ConnectorFunc is a callback for Connector events.
 type DrmLeaseDeviceV1ConnectorFunc func(ev DrmLeaseDeviceV1ConnectorEvent)
 
+// DrmLeaseDeviceV1DoneFunc is a callback for Done events.
 type DrmLeaseDeviceV1DoneFunc func(ev DrmLeaseDeviceV1DoneEvent)
 
+// DrmLeaseDeviceV1ReleasedFunc is a callback for Released events.
 type DrmLeaseDeviceV1ReleasedFunc func(ev DrmLeaseDeviceV1ReleasedEvent)
 
+// DrmLeaseDeviceV1 lease device.
+//
+// This protocol is used by Wayland compositors which act as Direct
+// Rendering Manager (DRM) masters to lease DRM resources to Wayland
+// clients.
+//
+// The compositor will advertise one wp_drm_lease_device_v1 global for each
+// DRM node. Some time after a client binds to the wp_drm_lease_device_v1
+// global, the compositor will send a drm_fd event followed by zero, one or
+// more connector events. After all currently available connectors have been
+// sent, the compositor will send a wp_drm_lease_device_v1.done event.
+//
+// When the list of connectors available for lease changes the compositor
+// will send wp_drm_lease_device_v1.connector events for added connectors and
+// wp_drm_lease_connector_v1.withdrawn events for removed connectors,
+// followed by a wp_drm_lease_device_v1.done event.
+//
+// The compositor will indicate when a device is gone by removing the global
+// via a wl_registry.global_remove event. Upon receiving this event, the
+// client should destroy any matching wp_drm_lease_device_v1 object.
+//
+// To destroy a wp_drm_lease_device_v1 object, the client must first issue
+// a release request. Upon receiving this request, the compositor will
+// immediately send a released event and destroy the object. The client must
+// continue to process and discard drm_fd and connector events until it
+// receives the released event. Upon receiving the released event, the
+// client can safely cleanup any client-side resources.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type DrmLeaseDeviceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDrmLeaseDeviceV1 wraps p in a DrmLeaseDeviceV1 proxy.
 func NewDrmLeaseDeviceV1(p *wayland.Proxy) *DrmLeaseDeviceV1 {
 	p.SetEventFDCounts(drmleasedevicev1EventFDCounts)
 	return &DrmLeaseDeviceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DrmLeaseDeviceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDrmFd registers fn to receive DrmFd events.
 func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDrmFd, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DrmFdEvent
@@ -141,6 +231,7 @@ func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 	})
 }
 
+// OnConnector registers fn to receive Connector events.
 func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventConnector, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ConnectorEvent
@@ -159,6 +250,7 @@ func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDone, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DoneEvent
@@ -172,6 +264,7 @@ func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 	})
 }
 
+// OnReleased registers fn to receive Released events.
 func (o *DrmLeaseDeviceV1) OnReleased(fn DrmLeaseDeviceV1ReleasedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventReleased, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ReleasedEvent
@@ -185,6 +278,11 @@ func (o *DrmLeaseDeviceV1) OnReleased(fn DrmLeaseDeviceV1ReleasedFunc) {
 	})
 }
 
+// CreateLeaseRequest create a lease request object.
+//
+// Creates a lease request object.
+//
+// See the documentation for wp_drm_lease_request_v1 for details.
 func (o *DrmLeaseDeviceV1) CreateLeaseRequest() (*DrmLeaseRequestV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -202,6 +300,14 @@ func (o *DrmLeaseDeviceV1) CreateLeaseRequest() (*DrmLeaseRequestV1, error) {
 	return wrapped, nil
 }
 
+// Release release this object.
+//
+// Indicates the client no longer wishes to use this object. In response
+// the compositor will immediately send the released event and destroy
+// this object. It can however not guarantee that the client won't receive
+// connector events before the released event. The client must not send any
+// requests after this one, doing so will raise a wl_display error.
+// Existing connectors, lease request and leases will not be affected.
 func (o *DrmLeaseDeviceV1) Release() error {
 	return o.proxy.SendRequest(DrmLeaseDeviceV1RequestRelease, &DrmLeaseDeviceV1ReleaseRequest{})
 }

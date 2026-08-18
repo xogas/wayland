@@ -30,19 +30,33 @@ var topleveldecorationv1EventFDCounts = map[uint16]int{
 type ToplevelDecorationV1Error uint32
 
 const (
+	// ToplevelDecorationV1ErrorUnconfiguredBuffer xdg_toplevel has a buffer attached before configure.
 	ToplevelDecorationV1ErrorUnconfiguredBuffer ToplevelDecorationV1Error = 0
+	// ToplevelDecorationV1ErrorAlreadyConstructed xdg_toplevel already has a decoration object.
 	ToplevelDecorationV1ErrorAlreadyConstructed ToplevelDecorationV1Error = 1
-	ToplevelDecorationV1ErrorOrphaned           ToplevelDecorationV1Error = 2
-	ToplevelDecorationV1ErrorInvalidMode        ToplevelDecorationV1Error = 3
+	// ToplevelDecorationV1ErrorOrphaned xdg_toplevel destroyed before the decoration object.
+	ToplevelDecorationV1ErrorOrphaned ToplevelDecorationV1Error = 2
+	// ToplevelDecorationV1ErrorInvalidMode invalid mode.
+	ToplevelDecorationV1ErrorInvalidMode ToplevelDecorationV1Error = 3
 )
 
+// ToplevelDecorationV1Mode window decoration modes.
+//
+// These values describe window decoration modes.
 type ToplevelDecorationV1Mode uint32
 
 const (
+	// ToplevelDecorationV1ModeClientSide no server-side window decoration.
 	ToplevelDecorationV1ModeClientSide ToplevelDecorationV1Mode = 1
+	// ToplevelDecorationV1ModeServerSide server-side window decoration.
 	ToplevelDecorationV1ModeServerSide ToplevelDecorationV1Mode = 2
 )
 
+// ToplevelDecorationV1DestroyRequest destroy the decoration object.
+//
+// Switch back to a mode without any server-side decorations at the next
+// commit, unless a new xdg_toplevel_decoration is created for the surface
+// first.
 type ToplevelDecorationV1DestroyRequest struct {
 }
 
@@ -56,7 +70,31 @@ func (r *ToplevelDecorationV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDecorationV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelDecorationV1SetModeRequest set the decoration mode.
+//
+// Set the toplevel surface decoration mode. This informs the compositor
+// that the client prefers the provided decoration mode.
+//
+// After requesting a decoration mode, the compositor will respond by
+// emitting an xdg_surface.configure event. The client should then update
+// its content, drawing it without decorations if the received mode is
+// server-side decorations. The client must also acknowledge the configure
+// when committing the new content (see xdg_surface.ack_configure).
+//
+// The compositor can decide not to use the client's mode and enforce a
+// different mode instead.
+//
+// Clients whose decoration mode depend on the xdg_toplevel state may send
+// a set_mode request in response to an xdg_surface.configure event and wait
+// for the next xdg_surface.configure event to prevent unwanted state.
+// Such clients are responsible for preventing configure loops and must
+// make sure not to send multiple successive set_mode requests with the
+// same decoration mode.
+//
+// If an invalid mode is supplied by the client, the invalid_mode protocol
+// error is raised by the compositor.
 type ToplevelDecorationV1SetModeRequest struct {
+	// Mode the decoration mode.
 	Mode ToplevelDecorationV1Mode
 }
 
@@ -73,6 +111,12 @@ func (r *ToplevelDecorationV1SetModeRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDecorationV1SetModeRequest) Since() uint32 { return 1 }
 
+// ToplevelDecorationV1UnsetModeRequest unset the decoration mode.
+//
+// Unset the toplevel surface decoration mode. This informs the compositor
+// that the client doesn't prefer a particular decoration mode.
+//
+// This request has the same semantics as set_mode.
 type ToplevelDecorationV1UnsetModeRequest struct {
 }
 
@@ -86,7 +130,17 @@ func (r *ToplevelDecorationV1UnsetModeRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDecorationV1UnsetModeRequest) Since() uint32 { return 1 }
 
+// ToplevelDecorationV1ConfigureEvent notify a decoration mode change.
+//
+// The configure event configures the effective decoration mode. The
+// configured state should not be applied immediately. Clients must send an
+// ack_configure in response to this event. See xdg_surface.configure and
+// xdg_surface.ack_configure for details.
+//
+// A configure event can be sent at any time. The specified mode must be
+// obeyed by the client.
 type ToplevelDecorationV1ConfigureEvent struct {
+	// Mode the decoration mode.
 	Mode ToplevelDecorationV1Mode
 }
 
@@ -105,21 +159,33 @@ func (e *ToplevelDecorationV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ToplevelDecorationV1ConfigureEvent) Since() uint32 { return 1 }
 
+// ToplevelDecorationV1ConfigureFunc is a callback for Configure events.
 type ToplevelDecorationV1ConfigureFunc func(ev ToplevelDecorationV1ConfigureEvent)
 
+// ToplevelDecorationV1 decoration object for a toplevel surface.
+//
+// The decoration object allows the compositor to toggle server-side window
+// decorations for a toplevel surface. The client can request to switch to
+// another mode.
+//
+// The xdg_toplevel_decoration object must be destroyed before its
+// xdg_toplevel.
 type ToplevelDecorationV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelDecorationV1 wraps p in a ToplevelDecorationV1 proxy.
 func NewToplevelDecorationV1(p *wayland.Proxy) *ToplevelDecorationV1 {
 	p.SetEventFDCounts(topleveldecorationv1EventFDCounts)
 	return &ToplevelDecorationV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelDecorationV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *ToplevelDecorationV1) OnConfigure(fn ToplevelDecorationV1ConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelDecorationV1EventConfigure, func(r *wire.Reader) {
 		var ev ToplevelDecorationV1ConfigureEvent
@@ -133,6 +199,11 @@ func (o *ToplevelDecorationV1) OnConfigure(fn ToplevelDecorationV1ConfigureFunc)
 	})
 }
 
+// Destroy destroy the decoration object.
+//
+// Switch back to a mode without any server-side decorations at the next
+// commit, unless a new xdg_toplevel_decoration is created for the surface
+// first.
 func (o *ToplevelDecorationV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -144,12 +215,41 @@ func (o *ToplevelDecorationV1) Destroy() error {
 	return nil
 }
 
+// SetMode set the decoration mode.
+//
+// Set the toplevel surface decoration mode. This informs the compositor
+// that the client prefers the provided decoration mode.
+//
+// After requesting a decoration mode, the compositor will respond by
+// emitting an xdg_surface.configure event. The client should then update
+// its content, drawing it without decorations if the received mode is
+// server-side decorations. The client must also acknowledge the configure
+// when committing the new content (see xdg_surface.ack_configure).
+//
+// The compositor can decide not to use the client's mode and enforce a
+// different mode instead.
+//
+// Clients whose decoration mode depend on the xdg_toplevel state may send
+// a set_mode request in response to an xdg_surface.configure event and wait
+// for the next xdg_surface.configure event to prevent unwanted state.
+// Such clients are responsible for preventing configure loops and must
+// make sure not to send multiple successive set_mode requests with the
+// same decoration mode.
+//
+// If an invalid mode is supplied by the client, the invalid_mode protocol
+// error is raised by the compositor.
 func (o *ToplevelDecorationV1) SetMode(mode ToplevelDecorationV1Mode) error {
 	return o.proxy.SendRequest(ToplevelDecorationV1RequestSetMode, &ToplevelDecorationV1SetModeRequest{
 		Mode: mode,
 	})
 }
 
+// UnsetMode unset the decoration mode.
+//
+// Unset the toplevel surface decoration mode. This informs the compositor
+// that the client doesn't prefer a particular decoration mode.
+//
+// This request has the same semantics as set_mode.
 func (o *ToplevelDecorationV1) UnsetMode() error {
 	return o.proxy.SendRequest(ToplevelDecorationV1RequestUnsetMode, &ToplevelDecorationV1UnsetModeRequest{})
 }

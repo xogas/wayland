@@ -36,12 +36,21 @@ var sessionv1EventFDCounts = map[uint16]int{
 type SessionV1Error uint32
 
 const (
-	SessionV1ErrorNameInUse     SessionV1Error = 1
+	// SessionV1ErrorNameInUse toplevel name is already in use.
+	SessionV1ErrorNameInUse SessionV1Error = 1
+	// SessionV1ErrorAlreadyMapped toplevel was already mapped when restored.
 	SessionV1ErrorAlreadyMapped SessionV1Error = 2
-	SessionV1ErrorInvalidName   SessionV1Error = 3
-	SessionV1ErrorAlreadyAdded  SessionV1Error = 4
+	// SessionV1ErrorInvalidName provided toplevel name is invalid.
+	SessionV1ErrorInvalidName SessionV1Error = 3
+	// SessionV1ErrorAlreadyAdded toplevel already added.
+	SessionV1ErrorAlreadyAdded SessionV1Error = 4
 )
 
+// SessionV1DestroyRequest destroy the session.
+//
+// Destroy a session object, preserving the current state but not continuing
+// to make further updates if state changes occur. This makes the associated
+// xdg_toplevel_session_v1 objects inert.
 type SessionV1DestroyRequest struct {
 }
 
@@ -53,6 +62,11 @@ func (r *SessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// SessionV1RemoveRequest remove the session.
+//
+// Remove the session, making it no longer available for restoration. A
+// compositor should in response to this request remove the data related to
+// this session from its storage.
 type SessionV1RemoveRequest struct {
 }
 
@@ -64,10 +78,34 @@ func (r *SessionV1RemoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1RemoveRequest) Since() uint32 { return 1 }
 
+// SessionV1AddToplevelRequest add a new surface to the session.
+//
+// Attempt to add a given surface to the session. The passed name is used
+// to identify what window is being restored, and may be used to store
+// window specific state within the session.
+//
+// The name given to the toplevel must not correspond to any previously
+// existing toplevel names in the session. If the name matches an already
+// known toplevel name in the session, a 'name_in_use' protocol error will
+// be raised.
+//
+// The toplevel object must not be added more than once to any session
+// created by the client, otherwise the 'already_added' protocol error
+// will be raised.
+//
+// This request will return a xdg_toplevel_session_v1 for later
+// manipulation. As this resource is created from an empty initial state,
+// compositors must not emit a xdg_toplevel_session_v1.restored event for
+// resources created through this request.
+//
+// The name string must be UTF-8 encoded. It is also limited by the maximum
+// length of wayland messages (around 4KB). The 'invalid_name' protocol
+// error will be raised if an invalid string is provided.
 type SessionV1AddToplevelRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
-	Name     string
+	// Name name identifying the toplevel.
+	Name string
 }
 
 func (r *SessionV1AddToplevelRequest) Opcode() uint16 { return SessionV1RequestAddToplevel }
@@ -87,10 +125,37 @@ func (r *SessionV1AddToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1AddToplevelRequest) Since() uint32 { return 1 }
 
+// SessionV1RestoreToplevelRequest restore a surface state.
+//
+// Inform the compositor that the toplevel associated with the passed name
+// should have its window management state restored.
+//
+// If the toplevel name was previously granted to another xdg_toplevel,
+// the 'name_in_use' protocol error will be raised.
+//
+// The toplevel object must not be added more than once to any session
+// created by the client, otherwise the 'already_added' protocol error
+// will be raised.
+//
+// This request must be called prior to the first commit on the associated
+// wl_surface after creating the toplevel, otherwise an 'already_mapped'
+// error is raised.
+//
+// As part of the initial configure sequence, if the toplevel was
+// successfully restored, a xdg_toplevel_session_v1.restored event is
+// emitted. If the toplevel name was not known in the session, this request
+// will be equivalent to the xdg_toplevel_session_v1.add_toplevel request,
+// and no such event will be emitted. See the xdg_toplevel_session_v1.restored
+// event for further details.
+//
+// The name string must be UTF-8 encoded. It is also limited by the maximum
+// length of wayland messages (around 4KB). The 'invalid_name' protocol
+// error will be raised if an invalid string is provided.
 type SessionV1RestoreToplevelRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
-	Name     string
+	// Name name identifying the toplevel.
+	Name string
 }
 
 func (r *SessionV1RestoreToplevelRequest) Opcode() uint16 { return SessionV1RequestRestoreToplevel }
@@ -110,7 +175,18 @@ func (r *SessionV1RestoreToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1RestoreToplevelRequest) Since() uint32 { return 1 }
 
+// SessionV1RemoveToplevelRequest remove a surface from the session.
+//
+// Remove a specified surface from the session and render any related
+// xdg_toplevel_session_v1 object inert. The compositor should remove any
+// data related to the toplevel in the corresponding session from its internal
+// storage.
+//
+// The window is specified by its name in the session. The name string
+// must be encoded in UTF-8, and it is limited in size by the maximum
+// length of wayland messages (around 4KB).
 type SessionV1RemoveToplevelRequest struct {
+	// Name name identifying the toplevel.
 	Name string
 }
 
@@ -125,6 +201,12 @@ func (r *SessionV1RemoveToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1RemoveToplevelRequest) Since() uint32 { return 1 }
 
+// SessionV1CreatedEvent newly-created session id.
+//
+// Emitted at most once some time after getting a new session object. It
+// means that no previous state was restored, and a new session was created.
+// The passed id can be persistently stored and used to restore previous
+// sessions.
 type SessionV1CreatedEvent struct {
 	SessionID string
 }
@@ -142,6 +224,11 @@ func (e *SessionV1CreatedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1CreatedEvent) Since() uint32 { return 1 }
 
+// SessionV1RestoredEvent the session has been restored.
+//
+// Emitted at most once some time after getting a new session object. It
+// means that previous state was at least partially restored. The same id
+// can again be used to restore previous sessions.
 type SessionV1RestoredEvent struct {
 }
 
@@ -153,6 +240,11 @@ func (e *SessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1RestoredEvent) Since() uint32 { return 1 }
 
+// SessionV1ReplacedEvent the session has been replaced.
+//
+// Emitted at most once, if the session was taken over by some other
+// client. When this happens, the session and all its toplevel session
+// objects become inert, and should be destroyed.
 type SessionV1ReplacedEvent struct {
 }
 
@@ -164,25 +256,40 @@ func (e *SessionV1ReplacedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1ReplacedEvent) Since() uint32 { return 1 }
 
+// SessionV1CreatedFunc is a callback for Created events.
 type SessionV1CreatedFunc func(ev SessionV1CreatedEvent)
 
+// SessionV1RestoredFunc is a callback for Restored events.
 type SessionV1RestoredFunc func(ev SessionV1RestoredEvent)
 
+// SessionV1ReplacedFunc is a callback for Replaced events.
 type SessionV1ReplacedFunc func(ev SessionV1ReplacedEvent)
 
+// SessionV1 a session for an application.
+//
+// A xdg_session_v1 object represents a session for an application. While the
+// object exists, all surfaces which have been added to the session will
+// have states stored by the compositor which can be reapplied at a later
+// time. Two sessions cannot exist for the same identifier string.
+//
+// States for surfaces added to a session are automatically updated by the
+// compositor when they are changed.
 type SessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSessionV1 wraps p in a SessionV1 proxy.
 func NewSessionV1(p *wayland.Proxy) *SessionV1 {
 	p.SetEventFDCounts(sessionv1EventFDCounts)
 	return &SessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCreated registers fn to receive Created events.
 func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventCreated, func(r *wire.Reader) {
 		var ev SessionV1CreatedEvent
@@ -196,6 +303,7 @@ func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	})
 }
 
+// OnRestored registers fn to receive Restored events.
 func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(SessionV1EventRestored, func(r *wire.Reader) {
 		var ev SessionV1RestoredEvent
@@ -209,6 +317,7 @@ func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	})
 }
 
+// OnReplaced registers fn to receive Replaced events.
 func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventReplaced, func(r *wire.Reader) {
 		var ev SessionV1ReplacedEvent
@@ -222,6 +331,11 @@ func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	})
 }
 
+// Destroy destroy the session.
+//
+// Destroy a session object, preserving the current state but not continuing
+// to make further updates if state changes occur. This makes the associated
+// xdg_toplevel_session_v1 objects inert.
 func (o *SessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -233,6 +347,11 @@ func (o *SessionV1) Destroy() error {
 	return nil
 }
 
+// Remove remove the session.
+//
+// Remove the session, making it no longer available for restoration. A
+// compositor should in response to this request remove the data related to
+// this session from its storage.
 func (o *SessionV1) Remove() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -244,6 +363,29 @@ func (o *SessionV1) Remove() error {
 	return nil
 }
 
+// AddToplevel add a new surface to the session.
+//
+// Attempt to add a given surface to the session. The passed name is used
+// to identify what window is being restored, and may be used to store
+// window specific state within the session.
+//
+// The name given to the toplevel must not correspond to any previously
+// existing toplevel names in the session. If the name matches an already
+// known toplevel name in the session, a 'name_in_use' protocol error will
+// be raised.
+//
+// The toplevel object must not be added more than once to any session
+// created by the client, otherwise the 'already_added' protocol error
+// will be raised.
+//
+// This request will return a xdg_toplevel_session_v1 for later
+// manipulation. As this resource is created from an empty initial state,
+// compositors must not emit a xdg_toplevel_session_v1.restored event for
+// resources created through this request.
+//
+// The name string must be UTF-8 encoded. It is also limited by the maximum
+// length of wayland messages (around 4KB). The 'invalid_name' protocol
+// error will be raised if an invalid string is provided.
 func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -263,6 +405,32 @@ func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelS
 	return wrapped, nil
 }
 
+// RestoreToplevel restore a surface state.
+//
+// Inform the compositor that the toplevel associated with the passed name
+// should have its window management state restored.
+//
+// If the toplevel name was previously granted to another xdg_toplevel,
+// the 'name_in_use' protocol error will be raised.
+//
+// The toplevel object must not be added more than once to any session
+// created by the client, otherwise the 'already_added' protocol error
+// will be raised.
+//
+// This request must be called prior to the first commit on the associated
+// wl_surface after creating the toplevel, otherwise an 'already_mapped'
+// error is raised.
+//
+// As part of the initial configure sequence, if the toplevel was
+// successfully restored, a xdg_toplevel_session_v1.restored event is
+// emitted. If the toplevel name was not known in the session, this request
+// will be equivalent to the xdg_toplevel_session_v1.add_toplevel request,
+// and no such event will be emitted. See the xdg_toplevel_session_v1.restored
+// event for further details.
+//
+// The name string must be UTF-8 encoded. It is also limited by the maximum
+// length of wayland messages (around 4KB). The 'invalid_name' protocol
+// error will be raised if an invalid string is provided.
 func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*ToplevelSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -282,6 +450,16 @@ func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*Tople
 	return wrapped, nil
 }
 
+// RemoveToplevel remove a surface from the session.
+//
+// Remove a specified surface from the session and render any related
+// xdg_toplevel_session_v1 object inert. The compositor should remove any
+// data related to the toplevel in the corresponding session from its internal
+// storage.
+//
+// The window is specified by its name in the session. The name string
+// must be encoded in UTF-8, and it is limited in size by the maximum
+// length of wayland messages (around 4KB).
 func (o *SessionV1) RemoveToplevel(name string) error {
 	return o.proxy.SendRequest(SessionV1RequestRemoveToplevel, &SessionV1RemoveToplevelRequest{
 		Name: name,

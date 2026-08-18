@@ -15,12 +15,17 @@ const (
 	FixesRequestAckGlobalRemove uint16 = 2
 )
 
+// FixesError wl_fixes error values.
+//
+// These errors can be emitted in response to wl_fixes requests.
 type FixesError uint32
 
 const (
+	// FixesErrorInvalidAckRemove unknown global or the global is not removed.
 	FixesErrorInvalidAckRemove FixesError = 0
 )
 
+// FixesDestroyRequest destroys this object.
 type FixesDestroyRequest struct {
 }
 
@@ -32,7 +37,19 @@ func (r *FixesDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FixesDestroyRequest) Since() uint32 { return 1 }
 
+// FixesDestroyRegistryRequest destroy a wl_registry.
+//
+// This request destroys a wl_registry object.
+//
+// The client should no longer use the wl_registry after making this
+// request.
+//
+// The compositor will emit a wl_display.delete_id event with the object ID
+// of the registry and will no longer emit any events on the registry. The
+// client should re-use the object ID once it receives the
+// wl_display.delete_id event.
 type FixesDestroyRegistryRequest struct {
+	// Registry the registry to destroy.
 	Registry wire.ObjectID
 }
 
@@ -47,9 +64,35 @@ func (r *FixesDestroyRegistryRequest) Marshal(w *wire.Writer) error {
 
 func (r *FixesDestroyRegistryRequest) Since() uint32 { return 1 }
 
+// FixesAckGlobalRemoveRequest acknowledge global removal.
+//
+// Acknowledge the removal of the specified global.
+//
+// If no global with the specified name exists or the global is not removed,
+// the wl_fixes.invalid_ack_remove protocol error will be posted.
+//
+// Due to the Wayland protocol being asynchronous, the wl_global objects
+// cannot be destroyed immediately. For example, if a wl_global is removed
+// and a client attempts to bind that global around same time, it can
+// result in a protocol error due to an unknown global name in the bind
+// request.
+//
+// In order to avoid crashing clients, the compositor should remove the
+// wl_global once it is guaranteed that no more bind requests will come.
+//
+// The wl_fixes.ack_global_remove() request is used to signal to the
+// compositor that the client will not bind the given global anymore. After
+// all clients acknowledge the removal of the global, the compositor can
+// safely destroy it.
+//
+// The client must call the wl_fixes.ack_global_remove() request in
+// response to a wl_registry.global_remove() event even if it did not bind
+// the corresponding global.
 type FixesAckGlobalRemoveRequest struct {
+	// Registry the registry object.
 	Registry wire.ObjectID
-	Name     uint32
+	// Name unique name of the global.
+	Name uint32
 }
 
 func (r *FixesAckGlobalRemoveRequest) Opcode() uint16 { return FixesRequestAckGlobalRemove }
@@ -66,18 +109,25 @@ func (r *FixesAckGlobalRemoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *FixesAckGlobalRemoveRequest) Since() uint32 { return 2 }
 
+// Fixes wayland protocol fixes.
+//
+// This global fixes problems with other core-protocol interfaces that
+// cannot be fixed in these interfaces themselves.
 type Fixes struct {
 	proxy *Proxy
 }
 
+// NewFixes wraps p in a Fixes proxy.
 func NewFixes(p *Proxy) *Fixes {
 	return &Fixes{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Fixes) Proxy() *Proxy {
 	return o.proxy
 }
 
+// Destroy destroys this object.
 func (o *Fixes) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -89,12 +139,47 @@ func (o *Fixes) Destroy() error {
 	return nil
 }
 
+// DestroyRegistry destroy a wl_registry.
+//
+// This request destroys a wl_registry object.
+//
+// The client should no longer use the wl_registry after making this
+// request.
+//
+// The compositor will emit a wl_display.delete_id event with the object ID
+// of the registry and will no longer emit any events on the registry. The
+// client should re-use the object ID once it receives the
+// wl_display.delete_id event.
 func (o *Fixes) DestroyRegistry(registry wire.ObjectID) error {
 	return o.proxy.SendRequest(FixesRequestDestroyRegistry, &FixesDestroyRegistryRequest{
 		Registry: registry,
 	})
 }
 
+// AckGlobalRemove acknowledge global removal.
+//
+// Acknowledge the removal of the specified global.
+//
+// If no global with the specified name exists or the global is not removed,
+// the wl_fixes.invalid_ack_remove protocol error will be posted.
+//
+// Due to the Wayland protocol being asynchronous, the wl_global objects
+// cannot be destroyed immediately. For example, if a wl_global is removed
+// and a client attempts to bind that global around same time, it can
+// result in a protocol error due to an unknown global name in the bind
+// request.
+//
+// In order to avoid crashing clients, the compositor should remove the
+// wl_global once it is guaranteed that no more bind requests will come.
+//
+// The wl_fixes.ack_global_remove() request is used to signal to the
+// compositor that the client will not bind the given global anymore. After
+// all clients acknowledge the removal of the global, the compositor can
+// safely destroy it.
+//
+// The client must call the wl_fixes.ack_global_remove() request in
+// response to a wl_registry.global_remove() event even if it did not bind
+// the corresponding global.
 func (o *Fixes) AckGlobalRemove(registry wire.ObjectID, name uint32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return ErrVersionMismatch

@@ -16,6 +16,9 @@ const (
 	CursorShapeManagerV1RequestGetTabletToolV2 uint16 = 2
 )
 
+// CursorShapeManagerV1DestroyRequest destroy the manager.
+//
+// Destroy the cursor shape manager.
 type CursorShapeManagerV1DestroyRequest struct {
 }
 
@@ -29,6 +32,12 @@ func (r *CursorShapeManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CursorShapeManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// CursorShapeManagerV1GetPointerRequest manage the cursor shape of a pointer device.
+//
+// Obtain a wp_cursor_shape_device_v1 for a wl_pointer object.
+//
+// When the pointer capability is removed from the wl_seat, the
+// wp_cursor_shape_device_v1 object becomes inert.
 type CursorShapeManagerV1GetPointerRequest struct {
 	CursorShapeDevice wire.NewID
 	Pointer           wire.ObjectID
@@ -50,6 +59,12 @@ func (r *CursorShapeManagerV1GetPointerRequest) Marshal(w *wire.Writer) error {
 
 func (r *CursorShapeManagerV1GetPointerRequest) Since() uint32 { return 1 }
 
+// CursorShapeManagerV1GetTabletToolV2Request manage the cursor shape of a tablet tool device.
+//
+// Obtain a wp_cursor_shape_device_v1 for a zwp_tablet_tool_v2 object.
+//
+// When the zwp_tablet_tool_v2 is removed, the wp_cursor_shape_device_v1
+// object becomes inert.
 type CursorShapeManagerV1GetTabletToolV2Request struct {
 	CursorShapeDevice wire.NewID
 	TabletTool        wire.ObjectID
@@ -71,18 +86,33 @@ func (r *CursorShapeManagerV1GetTabletToolV2Request) Marshal(w *wire.Writer) err
 
 func (r *CursorShapeManagerV1GetTabletToolV2Request) Since() uint32 { return 1 }
 
+// CursorShapeManagerV1 cursor shape manager.
+//
+// This global offers an alternative, optional way to set cursor images. This
+// new way uses enumerated cursors instead of a wl_surface like
+// wl_pointer.set_cursor does.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type CursorShapeManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCursorShapeManagerV1 wraps p in a CursorShapeManagerV1 proxy.
 func NewCursorShapeManagerV1(p *wayland.Proxy) *CursorShapeManagerV1 {
 	return &CursorShapeManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CursorShapeManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the cursor shape manager.
 func (o *CursorShapeManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -94,6 +124,12 @@ func (o *CursorShapeManagerV1) Destroy() error {
 	return nil
 }
 
+// GetPointer manage the cursor shape of a pointer device.
+//
+// Obtain a wp_cursor_shape_device_v1 for a wl_pointer object.
+//
+// When the pointer capability is removed from the wl_seat, the
+// wp_cursor_shape_device_v1 object becomes inert.
 func (o *CursorShapeManagerV1) GetPointer(pointer wire.ObjectID) (*CursorShapeDeviceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -112,6 +148,12 @@ func (o *CursorShapeManagerV1) GetPointer(pointer wire.ObjectID) (*CursorShapeDe
 	return wrapped, nil
 }
 
+// GetTabletToolV2 manage the cursor shape of a tablet tool device.
+//
+// Obtain a wp_cursor_shape_device_v1 for a zwp_tablet_tool_v2 object.
+//
+// When the zwp_tablet_tool_v2 is removed, the wp_cursor_shape_device_v1
+// object becomes inert.
 func (o *CursorShapeManagerV1) GetTabletToolV2(tabletTool wire.ObjectID) (*CursorShapeDeviceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

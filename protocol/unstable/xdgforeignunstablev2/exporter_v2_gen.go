@@ -15,12 +15,21 @@ const (
 	ExporterV2RequestExportToplevel uint16 = 1
 )
 
+// ExporterV2Error error values.
+//
+// These errors can be emitted in response to invalid xdg_exporter
+// requests.
 type ExporterV2Error uint32
 
 const (
+	// ExporterV2ErrorInvalidSurface surface is not an xdg_toplevel.
 	ExporterV2ErrorInvalidSurface ExporterV2Error = 0
 )
 
+// ExporterV2DestroyRequest destroy the xdg_exporter object.
+//
+// Notify the compositor that the xdg_exporter object will no longer be
+// used.
 type ExporterV2DestroyRequest struct {
 }
 
@@ -32,8 +41,22 @@ func (r *ExporterV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ExporterV2DestroyRequest) Since() uint32 { return 1 }
 
+// ExporterV2ExportToplevelRequest export a toplevel surface.
+//
+// The export_toplevel request exports the passed surface so that it can later be
+// imported via xdg_importer. When called, a new xdg_exported object will
+// be created and xdg_exported.handle will be sent immediately. See the
+// corresponding interface and event for details.
+//
+// A surface may be exported multiple times, and each exported handle may
+// be used to create an xdg_imported multiple times. Only xdg_toplevel
+//
+//	equivalent surfaces may be exported, otherwise an invalid_surface
+//	protocol error is sent.
 type ExporterV2ExportToplevelRequest struct {
-	ID      wire.NewID
+	// ID the new xdg_exported object.
+	ID wire.NewID
+	// Surface the surface to export.
 	Surface wire.ObjectID
 }
 
@@ -51,18 +74,28 @@ func (r *ExporterV2ExportToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *ExporterV2ExportToplevelRequest) Since() uint32 { return 1 }
 
+// ExporterV2 interface for exporting surfaces.
+//
+// A global interface used for exporting surfaces that can later be imported
+// using xdg_importer.
 type ExporterV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewExporterV2 wraps p in a ExporterV2 proxy.
 func NewExporterV2(p *wayland.Proxy) *ExporterV2 {
 	return &ExporterV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ExporterV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_exporter object.
+//
+// Notify the compositor that the xdg_exporter object will no longer be
+// used.
 func (o *ExporterV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +107,18 @@ func (o *ExporterV2) Destroy() error {
 	return nil
 }
 
+// ExportToplevel export a toplevel surface.
+//
+// The export_toplevel request exports the passed surface so that it can later be
+// imported via xdg_importer. When called, a new xdg_exported object will
+// be created and xdg_exported.handle will be sent immediately. See the
+// corresponding interface and event for details.
+//
+// A surface may be exported multiple times, and each exported handle may
+// be used to create an xdg_imported multiple times. Only xdg_toplevel
+//
+//	equivalent surfaces may be exported, otherwise an invalid_surface
+//	protocol error is sent.
 func (o *ExporterV2) ExportToplevel(surface wire.ObjectID) (*ExportedV2, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

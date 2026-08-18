@@ -32,6 +32,16 @@ var workspacemanagerv1EventFDCounts = map[uint16]int{
 	3: 0,
 }
 
+// WorkspaceManagerV1CommitRequest all requests about the workspaces have been sent.
+//
+// The client must send this request after it has finished sending other
+// requests. The compositor must process a series of requests preceding a
+// commit request atomically.
+//
+// This allows changes to the workspace properties to be seen as atomic,
+// even if they happen via multiple events, and even if they involve
+// multiple ext_workspace_handle_v1 objects, for example, deactivating one
+// workspace and activating another.
 type WorkspaceManagerV1CommitRequest struct {
 }
 
@@ -43,6 +53,15 @@ func (r *WorkspaceManagerV1CommitRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceManagerV1CommitRequest) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1StopRequest stop sending events.
+//
+// Indicates the client no longer wishes to receive events for new
+// workspace groups. However the compositor may emit further workspace
+// events, until the finished event is emitted. The compositor is expected
+// to send the finished event eventually once the stop request has been processed.
+//
+// The client must not send any requests after this one, doing so will raise a wl_display
+// invalid_object error.
 type WorkspaceManagerV1StopRequest struct {
 }
 
@@ -54,6 +73,13 @@ func (r *WorkspaceManagerV1StopRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceManagerV1StopRequest) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1WorkspaceGroupEvent a workspace group has been created.
+//
+// This event is emitted whenever a new workspace group has been created.
+//
+// All initial details of the workspace group (outputs) will be
+// sent immediately after this event via the corresponding events in
+// ext_workspace_group_handle_v1 and ext_workspace_handle_v1.
 type WorkspaceManagerV1WorkspaceGroupEvent struct {
 	WorkspaceGroup *WorkspaceGroupHandleV1
 }
@@ -64,6 +90,15 @@ func (e *WorkspaceManagerV1WorkspaceGroupEvent) Opcode() uint16 {
 
 func (e *WorkspaceManagerV1WorkspaceGroupEvent) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1WorkspaceEvent workspace has been created.
+//
+// This event is emitted whenever a new workspace has been created.
+//
+// All initial details of the workspace (name, coordinates, state) will
+// be sent immediately after this event via the corresponding events in
+// ext_workspace_handle_v1.
+//
+// Workspaces start off unassigned to any workspace group.
 type WorkspaceManagerV1WorkspaceEvent struct {
 	Workspace *WorkspaceHandleV1
 }
@@ -72,6 +107,19 @@ func (e *WorkspaceManagerV1WorkspaceEvent) Opcode() uint16 { return WorkspaceMan
 
 func (e *WorkspaceManagerV1WorkspaceEvent) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1DoneEvent all information about the workspaces and workspace groups has been sent.
+//
+// This event is sent after all changes in all workspaces and workspace groups have been
+// sent.
+//
+// This allows changes to one or more ext_workspace_group_handle_v1
+// properties and ext_workspace_handle_v1 properties
+// to be seen as atomic, even if they happen via multiple events.
+// In particular, an output moving from one workspace group to
+// another sends an output_enter event and an output_leave event to the two
+// ext_workspace_group_handle_v1 objects in question. The compositor sends
+// the done event only after updating the output information in both
+// workspace groups.
 type WorkspaceManagerV1DoneEvent struct {
 }
 
@@ -83,6 +131,11 @@ func (e *WorkspaceManagerV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceManagerV1DoneEvent) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1FinishedEvent the compositor has finished with the workspace_manager.
+//
+// This event indicates that the compositor is done sending events to the
+// ext_workspace_manager_v1. The server will destroy the object
+// immediately after sending this request.
 type WorkspaceManagerV1FinishedEvent struct {
 }
 
@@ -94,27 +147,55 @@ func (e *WorkspaceManagerV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceManagerV1FinishedEvent) Since() uint32 { return 1 }
 
+// WorkspaceManagerV1WorkspaceGroupFunc is a callback for WorkspaceGroup events.
 type WorkspaceManagerV1WorkspaceGroupFunc func(ev WorkspaceManagerV1WorkspaceGroupEvent)
 
+// WorkspaceManagerV1WorkspaceFunc is a callback for Workspace events.
 type WorkspaceManagerV1WorkspaceFunc func(ev WorkspaceManagerV1WorkspaceEvent)
 
+// WorkspaceManagerV1DoneFunc is a callback for Done events.
 type WorkspaceManagerV1DoneFunc func(ev WorkspaceManagerV1DoneEvent)
 
+// WorkspaceManagerV1FinishedFunc is a callback for Finished events.
 type WorkspaceManagerV1FinishedFunc func(ev WorkspaceManagerV1FinishedEvent)
 
+// WorkspaceManagerV1 list and control workspaces.
+//
+// Workspaces, also called virtual desktops, are groups of surfaces. A
+// compositor with a concept of workspaces may only show some such groups of
+// surfaces (those of 'active' workspaces) at a time. 'Activating' a
+// workspace is a request for the compositor to display that workspace's
+// surfaces as normal, whereas the compositor may hide or otherwise
+// de-emphasise surfaces that are associated only with 'inactive' workspaces.
+// Workspaces are grouped by which sets of outputs they correspond to, and
+// may contain surfaces only from those outputs. In this way, it is possible
+// for each output to have its own set of workspaces, or for all outputs (or
+// any other arbitrary grouping) to share workspaces. Compositors may
+// optionally conceptually arrange each group of workspaces in an
+// N-dimensional grid.
+//
+// The purpose of this protocol is to enable the creation of taskbars and
+// docks by providing them with a list of workspaces and their properties,
+// and allowing them to activate and deactivate workspaces.
+//
+// After a client binds the ext_workspace_manager_v1, each workspace will be
+// sent via the workspace event.
 type WorkspaceManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewWorkspaceManagerV1 wraps p in a WorkspaceManagerV1 proxy.
 func NewWorkspaceManagerV1(p *wayland.Proxy) *WorkspaceManagerV1 {
 	p.SetEventFDCounts(workspacemanagerv1EventFDCounts)
 	return &WorkspaceManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *WorkspaceManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnWorkspaceGroup registers fn to receive WorkspaceGroup events.
 func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGroupFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspaceGroup, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceGroupEvent
@@ -133,6 +214,7 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 	})
 }
 
+// OnWorkspace registers fn to receive Workspace events.
 func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspace, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceEvent
@@ -151,6 +233,7 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventDone, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1DoneEvent
@@ -164,6 +247,7 @@ func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 	})
 }
 
+// OnFinished registers fn to receive Finished events.
 func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventFinished, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1FinishedEvent
@@ -177,10 +261,29 @@ func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 	})
 }
 
+// Commit all requests about the workspaces have been sent.
+//
+// The client must send this request after it has finished sending other
+// requests. The compositor must process a series of requests preceding a
+// commit request atomically.
+//
+// This allows changes to the workspace properties to be seen as atomic,
+// even if they happen via multiple events, and even if they involve
+// multiple ext_workspace_handle_v1 objects, for example, deactivating one
+// workspace and activating another.
 func (o *WorkspaceManagerV1) Commit() error {
 	return o.proxy.SendRequest(WorkspaceManagerV1RequestCommit, &WorkspaceManagerV1CommitRequest{})
 }
 
+// Stop stop sending events.
+//
+// Indicates the client no longer wishes to receive events for new
+// workspace groups. However the compositor may emit further workspace
+// events, until the finished event is emitted. The compositor is expected
+// to send the finished event eventually once the stop request has been processed.
+//
+// The client must not send any requests after this one, doing so will raise a wl_display
+// invalid_object error.
 func (o *WorkspaceManagerV1) Stop() error {
 	return o.proxy.SendRequest(WorkspaceManagerV1RequestStop, &WorkspaceManagerV1StopRequest{})
 }

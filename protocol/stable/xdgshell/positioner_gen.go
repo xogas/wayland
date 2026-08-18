@@ -26,6 +26,7 @@ const (
 type PositionerError uint32
 
 const (
+	// PositionerErrorInvalidInput invalid input provided.
 	PositionerErrorInvalidInput PositionerError = 0
 )
 
@@ -57,19 +58,97 @@ const (
 	PositionerGravityBottomRight PositionerGravity = 8
 )
 
-// PositionerConstraintAdjustment is a bitfield of flags.
+// PositionerConstraintAdjustment constraint adjustments.
+//
+// The constraint adjustment value define ways the compositor will adjust
+// the position of the surface, if the unadjusted position would result
+// in the surface being partly constrained.
+//
+// Whether a surface is considered 'constrained' is left to the compositor
+// to determine. For example, the surface may be partly outside the
+// compositor's defined 'work area', thus necessitating the child surface's
+// position be adjusted until it is entirely inside the work area.
+//
+// The adjustments can be combined, according to a defined precedence: 1)
+// Flip, 2) Slide, 3) Resize.
+//
+// This is a bitfield of flags.
 type PositionerConstraintAdjustment uint32
 
 const (
-	PositionerConstraintAdjustmentNone    PositionerConstraintAdjustment = 0
-	PositionerConstraintAdjustmentSlideX  PositionerConstraintAdjustment = 1
-	PositionerConstraintAdjustmentSlideY  PositionerConstraintAdjustment = 2
-	PositionerConstraintAdjustmentFlipX   PositionerConstraintAdjustment = 4
-	PositionerConstraintAdjustmentFlipY   PositionerConstraintAdjustment = 8
+	// PositionerConstraintAdjustmentNone.
+	//
+	// Don't alter the surface position even if it is constrained on some
+	// axis, for example partially outside the edge of an output.
+	PositionerConstraintAdjustmentNone PositionerConstraintAdjustment = 0
+	// PositionerConstraintAdjustmentSlideX.
+	//
+	// Slide the surface along the x axis until it is no longer constrained.
+	//
+	// First try to slide towards the direction of the gravity on the x axis
+	// until either the edge in the opposite direction of the gravity is
+	// unconstrained or the edge in the direction of the gravity is
+	// constrained.
+	//
+	// Then try to slide towards the opposite direction of the gravity on the
+	// x axis until either the edge in the direction of the gravity is
+	// unconstrained or the edge in the opposite direction of the gravity is
+	// constrained.
+	PositionerConstraintAdjustmentSlideX PositionerConstraintAdjustment = 1
+	// PositionerConstraintAdjustmentSlideY.
+	//
+	// Slide the surface along the y axis until it is no longer constrained.
+	//
+	// First try to slide towards the direction of the gravity on the y axis
+	// until either the edge in the opposite direction of the gravity is
+	// unconstrained or the edge in the direction of the gravity is
+	// constrained.
+	//
+	// Then try to slide towards the opposite direction of the gravity on the
+	// y axis until either the edge in the direction of the gravity is
+	// unconstrained or the edge in the opposite direction of the gravity is
+	// constrained.
+	PositionerConstraintAdjustmentSlideY PositionerConstraintAdjustment = 2
+	// PositionerConstraintAdjustmentFlipX.
+	//
+	// Invert the anchor and gravity on the x axis if the surface is
+	// constrained on the x axis. For example, if the left edge of the
+	// surface is constrained, the gravity is 'left' and the anchor is
+	// 'left', change the gravity to 'right' and the anchor to 'right'.
+	//
+	// If the adjusted position also ends up being constrained, the resulting
+	// position of the flip_x adjustment will be the one before the
+	// adjustment.
+	PositionerConstraintAdjustmentFlipX PositionerConstraintAdjustment = 4
+	// PositionerConstraintAdjustmentFlipY.
+	//
+	// Invert the anchor and gravity on the y axis if the surface is
+	// constrained on the y axis. For example, if the bottom edge of the
+	// surface is constrained, the gravity is 'bottom' and the anchor is
+	// 'bottom', change the gravity to 'top' and the anchor to 'top'.
+	//
+	// The adjusted position is calculated given the original anchor
+	// rectangle and offset, but with the new flipped anchor and gravity
+	// values.
+	//
+	// If the adjusted position also ends up being constrained, the resulting
+	// position of the flip_y adjustment will be the one before the
+	// adjustment.
+	PositionerConstraintAdjustmentFlipY PositionerConstraintAdjustment = 8
+	// PositionerConstraintAdjustmentResizeX.
+	//
+	// Resize the surface horizontally so that it is completely
+	// unconstrained.
 	PositionerConstraintAdjustmentResizeX PositionerConstraintAdjustment = 16
+	// PositionerConstraintAdjustmentResizeY.
+	//
+	// Resize the surface vertically so that it is completely unconstrained.
 	PositionerConstraintAdjustmentResizeY PositionerConstraintAdjustment = 32
 )
 
+// PositionerDestroyRequest destroy the xdg_positioner object.
+//
+// Notify the compositor that the xdg_positioner will no longer be used.
 type PositionerDestroyRequest struct {
 }
 
@@ -81,8 +160,17 @@ func (r *PositionerDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerDestroyRequest) Since() uint32 { return 1 }
 
+// PositionerSetSizeRequest set the size of the to-be positioned rectangle.
+//
+// Set the size of the surface that is to be positioned with the positioner
+// object. The size is in surface-local coordinates and corresponds to the
+// window geometry. See xdg_surface.set_window_geometry.
+//
+// If a zero or negative size is set the invalid_input error is raised.
 type PositionerSetSizeRequest struct {
-	Width  int32
+	// Width width of positioned rectangle.
+	Width int32
+	// Height height of positioned rectangle.
 	Height int32
 }
 
@@ -100,10 +188,26 @@ func (r *PositionerSetSizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetSizeRequest) Since() uint32 { return 1 }
 
+// PositionerSetAnchorRectRequest set the anchor rectangle within the parent surface.
+//
+// Specify the anchor rectangle within the parent surface that the child
+// surface will be placed relative to. The rectangle is relative to the
+// window geometry as defined by xdg_surface.set_window_geometry of the
+// parent surface.
+//
+// When the xdg_positioner object is used to position a child surface, the
+// anchor rectangle may not extend outside the window geometry of the
+// positioned child's parent surface.
+//
+// If a negative size is set the invalid_input error is raised.
 type PositionerSetAnchorRectRequest struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X x position of anchor rectangle.
+	X int32
+	// Y y position of anchor rectangle.
+	Y int32
+	// Width width of anchor rectangle.
+	Width int32
+	// Height height of anchor rectangle.
 	Height int32
 }
 
@@ -127,7 +231,16 @@ func (r *PositionerSetAnchorRectRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetAnchorRectRequest) Since() uint32 { return 1 }
 
+// PositionerSetAnchorRequest set anchor rectangle anchor.
+//
+// Defines the anchor point for the anchor rectangle. The specified anchor
+// is used to derive an anchor point that the child surface will be
+// positioned relative to. If a corner anchor is set (e.g. 'top_left' or
+// 'bottom_right'), the anchor point will be at the specified corner;
+// otherwise, the derived anchor point will be centered on the specified
+// edge, or in the center of the anchor rectangle if no edge is specified.
 type PositionerSetAnchorRequest struct {
+	// Anchor anchor point.
 	Anchor PositionerAnchor
 }
 
@@ -142,7 +255,17 @@ func (r *PositionerSetAnchorRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetAnchorRequest) Since() uint32 { return 1 }
 
+// PositionerSetGravityRequest set child surface gravity.
+//
+// Defines in what direction a surface should be positioned, relative to
+// the anchor point of the parent surface. If a corner gravity is
+// specified (e.g. 'bottom_right' or 'top_left'), then the child surface
+// will be placed towards the specified gravity; otherwise, the child
+// surface will be centered over the anchor point on any axis that had no
+// gravity specified. If the gravity is not in the ‘gravity’ enum, an
+// invalid_input error is raised.
 type PositionerSetGravityRequest struct {
+	// Gravity gravity direction.
 	Gravity PositionerGravity
 }
 
@@ -157,7 +280,23 @@ func (r *PositionerSetGravityRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetGravityRequest) Since() uint32 { return 1 }
 
+// PositionerSetConstraintAdjustmentRequest set the adjustment to be done when constrained.
+//
+// Specify how the window should be positioned if the originally intended
+// position caused the surface to be constrained, meaning at least
+// partially outside positioning boundaries set by the compositor. The
+// adjustment is set by constructing a bitmask describing the adjustment to
+// be made when the surface is constrained on that axis.
+//
+// If no bit for one axis is set, the compositor will assume that the child
+// surface should not change its position on that axis when constrained.
+//
+// If more than one bit for one axis is set, the order of how adjustments
+// are applied is specified in the corresponding adjustment descriptions.
+//
+// The default adjustment is none.
 type PositionerSetConstraintAdjustmentRequest struct {
+	// ConstraintAdjustment bit mask of constraint adjustments.
 	ConstraintAdjustment PositionerConstraintAdjustment
 }
 
@@ -174,8 +313,23 @@ func (r *PositionerSetConstraintAdjustmentRequest) Marshal(w *wire.Writer) error
 
 func (r *PositionerSetConstraintAdjustmentRequest) Since() uint32 { return 1 }
 
+// PositionerSetOffsetRequest set surface position offset.
+//
+// Specify the surface position offset relative to the position of the
+// anchor on the anchor rectangle and the anchor on the surface. For
+// example if the anchor of the anchor rectangle is at (x, y), the surface
+// has the gravity bottom|right, and the offset is (ox, oy), the calculated
+// surface position will be (x + ox, y + oy). The offset position of the
+// surface is the one used for constraint testing. See
+// set_constraint_adjustment.
+//
+// An example use case is placing a popup menu on top of a user interface
+// element, while aligning the user interface element of the parent surface
+// with some user interface element placed somewhere in the popup surface.
 type PositionerSetOffsetRequest struct {
+	// X surface position x offset.
 	X int32
+	// Y surface position y offset.
 	Y int32
 }
 
@@ -193,6 +347,14 @@ func (r *PositionerSetOffsetRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetOffsetRequest) Since() uint32 { return 1 }
 
+// PositionerSetReactiveRequest continuously reconstrain the surface.
+//
+// When set reactive, the surface is reconstrained if the conditions used
+// for constraining changed, e.g. the parent window moved.
+//
+// If the conditions changed and the popup was reconstrained, an
+// xdg_popup.configure event is sent with updated geometry, followed by an
+// xdg_surface.configure event.
 type PositionerSetReactiveRequest struct {
 }
 
@@ -204,8 +366,19 @@ func (r *PositionerSetReactiveRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetReactiveRequest) Since() uint32 { return 3 }
 
+// PositionerSetParentSizeRequest set parent size.
+//
+// Set the parent window geometry the compositor should use when
+// positioning the popup. The compositor may use this information to
+// determine the future state the popup should be constrained using. If
+// this doesn't match the dimension of the parent the popup is eventually
+// positioned against, the behavior is undefined.
+//
+// The arguments are given in the surface-local coordinate space.
 type PositionerSetParentSizeRequest struct {
-	ParentWidth  int32
+	// ParentWidth future window geometry width of parent.
+	ParentWidth int32
+	// ParentHeight future window geometry height of parent.
 	ParentHeight int32
 }
 
@@ -223,7 +396,14 @@ func (r *PositionerSetParentSizeRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetParentSizeRequest) Since() uint32 { return 3 }
 
+// PositionerSetParentConfigureRequest set parent configure this is a response to.
+//
+// Set the serial of an xdg_surface.configure event this positioner will be
+// used in response to. The compositor may use this information together
+// with set_parent_size to determine what future state the popup should be
+// constrained using.
 type PositionerSetParentConfigureRequest struct {
+	// Serial serial of parent configure event.
 	Serial uint32
 }
 
@@ -240,18 +420,44 @@ func (r *PositionerSetParentConfigureRequest) Marshal(w *wire.Writer) error {
 
 func (r *PositionerSetParentConfigureRequest) Since() uint32 { return 3 }
 
+// Positioner child surface positioner.
+//
+// The xdg_positioner provides a collection of rules for the placement of a
+// child surface relative to a parent surface. Rules can be defined to ensure
+// the child surface remains within the visible area's borders, and to
+// specify how the child surface changes its position, such as sliding along
+// an axis, or flipping around a rectangle. These positioner-created rules are
+// constrained by the requirement that a child surface must intersect with or
+// be at least partially adjacent to its parent surface.
+//
+// See the various requests for details about possible rules.
+//
+// At the time of the request, the compositor makes a copy of the rules
+// specified by the xdg_positioner. Thus, after the request is complete the
+// xdg_positioner object can be destroyed or reused; further changes to the
+// object will have no effect on previous usages.
+//
+// For an xdg_positioner object to be considered complete, it must have a
+// non-zero size set by set_size, and a non-zero anchor rectangle set by
+// set_anchor_rect. Passing an incomplete xdg_positioner object when
+// positioning a surface raises an invalid_positioner error.
 type Positioner struct {
 	proxy *wayland.Proxy
 }
 
+// NewPositioner wraps p in a Positioner proxy.
 func NewPositioner(p *wayland.Proxy) *Positioner {
 	return &Positioner{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Positioner) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_positioner object.
+//
+// Notify the compositor that the xdg_positioner will no longer be used.
 func (o *Positioner) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -263,6 +469,13 @@ func (o *Positioner) Destroy() error {
 	return nil
 }
 
+// SetSize set the size of the to-be positioned rectangle.
+//
+// Set the size of the surface that is to be positioned with the positioner
+// object. The size is in surface-local coordinates and corresponds to the
+// window geometry. See xdg_surface.set_window_geometry.
+//
+// If a zero or negative size is set the invalid_input error is raised.
 func (o *Positioner) SetSize(width int32, height int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetSize, &PositionerSetSizeRequest{
 		Width:  width,
@@ -270,6 +483,18 @@ func (o *Positioner) SetSize(width int32, height int32) error {
 	})
 }
 
+// SetAnchorRect set the anchor rectangle within the parent surface.
+//
+// Specify the anchor rectangle within the parent surface that the child
+// surface will be placed relative to. The rectangle is relative to the
+// window geometry as defined by xdg_surface.set_window_geometry of the
+// parent surface.
+//
+// When the xdg_positioner object is used to position a child surface, the
+// anchor rectangle may not extend outside the window geometry of the
+// positioned child's parent surface.
+//
+// If a negative size is set the invalid_input error is raised.
 func (o *Positioner) SetAnchorRect(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetAnchorRect, &PositionerSetAnchorRectRequest{
 		X:      x,
@@ -279,24 +504,69 @@ func (o *Positioner) SetAnchorRect(x int32, y int32, width int32, height int32) 
 	})
 }
 
+// SetAnchor set anchor rectangle anchor.
+//
+// Defines the anchor point for the anchor rectangle. The specified anchor
+// is used to derive an anchor point that the child surface will be
+// positioned relative to. If a corner anchor is set (e.g. 'top_left' or
+// 'bottom_right'), the anchor point will be at the specified corner;
+// otherwise, the derived anchor point will be centered on the specified
+// edge, or in the center of the anchor rectangle if no edge is specified.
 func (o *Positioner) SetAnchor(anchor PositionerAnchor) error {
 	return o.proxy.SendRequest(PositionerRequestSetAnchor, &PositionerSetAnchorRequest{
 		Anchor: anchor,
 	})
 }
 
+// SetGravity set child surface gravity.
+//
+// Defines in what direction a surface should be positioned, relative to
+// the anchor point of the parent surface. If a corner gravity is
+// specified (e.g. 'bottom_right' or 'top_left'), then the child surface
+// will be placed towards the specified gravity; otherwise, the child
+// surface will be centered over the anchor point on any axis that had no
+// gravity specified. If the gravity is not in the ‘gravity’ enum, an
+// invalid_input error is raised.
 func (o *Positioner) SetGravity(gravity PositionerGravity) error {
 	return o.proxy.SendRequest(PositionerRequestSetGravity, &PositionerSetGravityRequest{
 		Gravity: gravity,
 	})
 }
 
+// SetConstraintAdjustment set the adjustment to be done when constrained.
+//
+// Specify how the window should be positioned if the originally intended
+// position caused the surface to be constrained, meaning at least
+// partially outside positioning boundaries set by the compositor. The
+// adjustment is set by constructing a bitmask describing the adjustment to
+// be made when the surface is constrained on that axis.
+//
+// If no bit for one axis is set, the compositor will assume that the child
+// surface should not change its position on that axis when constrained.
+//
+// If more than one bit for one axis is set, the order of how adjustments
+// are applied is specified in the corresponding adjustment descriptions.
+//
+// The default adjustment is none.
 func (o *Positioner) SetConstraintAdjustment(constraintAdjustment PositionerConstraintAdjustment) error {
 	return o.proxy.SendRequest(PositionerRequestSetConstraintAdjustment, &PositionerSetConstraintAdjustmentRequest{
 		ConstraintAdjustment: constraintAdjustment,
 	})
 }
 
+// SetOffset set surface position offset.
+//
+// Specify the surface position offset relative to the position of the
+// anchor on the anchor rectangle and the anchor on the surface. For
+// example if the anchor of the anchor rectangle is at (x, y), the surface
+// has the gravity bottom|right, and the offset is (ox, oy), the calculated
+// surface position will be (x + ox, y + oy). The offset position of the
+// surface is the one used for constraint testing. See
+// set_constraint_adjustment.
+//
+// An example use case is placing a popup menu on top of a user interface
+// element, while aligning the user interface element of the parent surface
+// with some user interface element placed somewhere in the popup surface.
 func (o *Positioner) SetOffset(x int32, y int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetOffset, &PositionerSetOffsetRequest{
 		X: x,
@@ -304,6 +574,14 @@ func (o *Positioner) SetOffset(x int32, y int32) error {
 	})
 }
 
+// SetReactive continuously reconstrain the surface.
+//
+// When set reactive, the surface is reconstrained if the conditions used
+// for constraining changed, e.g. the parent window moved.
+//
+// If the conditions changed and the popup was reconstrained, an
+// xdg_popup.configure event is sent with updated geometry, followed by an
+// xdg_surface.configure event.
 func (o *Positioner) SetReactive() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
@@ -311,6 +589,15 @@ func (o *Positioner) SetReactive() error {
 	return o.proxy.SendRequest(PositionerRequestSetReactive, &PositionerSetReactiveRequest{})
 }
 
+// SetParentSize set parent size.
+//
+// Set the parent window geometry the compositor should use when
+// positioning the popup. The compositor may use this information to
+// determine the future state the popup should be constrained using. If
+// this doesn't match the dimension of the parent the popup is eventually
+// positioned against, the behavior is undefined.
+//
+// The arguments are given in the surface-local coordinate space.
 func (o *Positioner) SetParentSize(parentWidth int32, parentHeight int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
@@ -321,6 +608,12 @@ func (o *Positioner) SetParentSize(parentWidth int32, parentHeight int32) error 
 	})
 }
 
+// SetParentConfigure set parent configure this is a response to.
+//
+// Set the serial of an xdg_surface.configure event this positioner will be
+// used in response to. The compositor may use this information together
+// with set_parent_size to determine what future state the popup should be
+// constrained using.
 func (o *Positioner) SetParentConfigure(serial uint32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch

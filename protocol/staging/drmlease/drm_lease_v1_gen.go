@@ -27,6 +27,15 @@ var drmleasev1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// DrmLeaseV1DestroyRequest destroys the lease object.
+//
+// The client should send this to indicate that it no longer wishes to use
+// this lease. The compositor should use drmModeRevokeLease on the
+// appropriate file descriptor, if necessary.
+//
+// Upon destruction, the compositor should advertise the connector for
+// leasing again by sending the connector event through the
+// wp_drm_lease_device_v1 interface.
 type DrmLeaseV1DestroyRequest struct {
 }
 
@@ -38,7 +47,20 @@ func (r *DrmLeaseV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DrmLeaseV1DestroyRequest) Since() uint32 { return 1 }
 
+// DrmLeaseV1LeaseFdEvent shares the DRM file descriptor.
+//
+// This event returns a file descriptor suitable for use with DRM-related
+// ioctls. The client should use drmModeGetLease to enumerate the DRM
+// objects which have been leased to them. The compositor guarantees it
+// will not use the leased DRM objects itself until it sends the finished
+// event. If the compositor cannot or will not grant a lease for the
+// requested connectors, it will not send this event, instead sending the
+// finished event.
+//
+// The compositor will send this event at most once during this objects
+// lifetime.
 type DrmLeaseV1LeaseFdEvent struct {
+	// LeasedFd leased DRM file descriptor.
 	LeasedFd int
 }
 
@@ -55,6 +77,18 @@ func (e *DrmLeaseV1LeaseFdEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseV1LeaseFdEvent) Since() uint32 { return 1 }
 
+// DrmLeaseV1FinishedEvent sent when the lease has been revoked.
+//
+// The compositor uses this event to either reject a lease request, or if
+// it previously sent a lease_fd, to notify the client that the lease has
+// been revoked. If the client requires a new lease, they should destroy
+// this object and submit a new lease request. The compositor will send
+// no further events for this object after sending the finish event.
+// Compositors should revoke the lease when any of the leased resources
+// become unavailable, namely when a hot-unplug occurs or when the
+// compositor loses DRM master. Compositors may advertise the connector
+// for leasing again, if the resource is available, by sending the
+// connector event through the wp_drm_lease_device_v1 interface.
 type DrmLeaseV1FinishedEvent struct {
 }
 
@@ -66,23 +100,38 @@ func (e *DrmLeaseV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DrmLeaseV1FinishedEvent) Since() uint32 { return 1 }
 
+// DrmLeaseV1LeaseFdFunc is a callback for LeaseFd events.
 type DrmLeaseV1LeaseFdFunc func(ev DrmLeaseV1LeaseFdEvent)
 
+// DrmLeaseV1FinishedFunc is a callback for Finished events.
 type DrmLeaseV1FinishedFunc func(ev DrmLeaseV1FinishedEvent)
 
+// DrmLeaseV1 a DRM lease.
+//
+// A DRM lease object is used to transfer the DRM file descriptor to the
+// client and manage the lifetime of the lease.
+//
+// Some time after the wp_drm_lease_v1 object is created, the compositor
+// will reply with the lease request's result. If the lease request is
+// granted, the compositor will send a lease_fd event. If the lease request
+// is denied, the compositor will send a finished event without a lease_fd
+// event.
 type DrmLeaseV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDrmLeaseV1 wraps p in a DrmLeaseV1 proxy.
 func NewDrmLeaseV1(p *wayland.Proxy) *DrmLeaseV1 {
 	p.SetEventFDCounts(drmleasev1EventFDCounts)
 	return &DrmLeaseV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DrmLeaseV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnLeaseFd registers fn to receive LeaseFd events.
 func (o *DrmLeaseV1) OnLeaseFd(fn DrmLeaseV1LeaseFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventLeaseFd, func(r *wire.Reader) {
 		var ev DrmLeaseV1LeaseFdEvent
@@ -96,6 +145,7 @@ func (o *DrmLeaseV1) OnLeaseFd(fn DrmLeaseV1LeaseFdFunc) {
 	})
 }
 
+// OnFinished registers fn to receive Finished events.
 func (o *DrmLeaseV1) OnFinished(fn DrmLeaseV1FinishedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventFinished, func(r *wire.Reader) {
 		var ev DrmLeaseV1FinishedEvent
@@ -109,6 +159,15 @@ func (o *DrmLeaseV1) OnFinished(fn DrmLeaseV1FinishedFunc) {
 	})
 }
 
+// Destroy destroys the lease object.
+//
+// The client should send this to indicate that it no longer wishes to use
+// this lease. The compositor should use drmModeRevokeLease on the
+// appropriate file descriptor, if necessary.
+//
+// Upon destruction, the compositor should advertise the connector for
+// leasing again by sending the connector event through the
+// wp_drm_lease_device_v1 interface.
 func (o *DrmLeaseV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

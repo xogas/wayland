@@ -29,6 +29,10 @@ var lockedpointerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// LockedPointerV1DestroyRequest destroy the locked pointer object.
+//
+// Destroy the locked pointer object. If applicable, the compositor will
+// unlock the pointer.
 type LockedPointerV1DestroyRequest struct {
 }
 
@@ -40,8 +44,22 @@ func (r *LockedPointerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *LockedPointerV1DestroyRequest) Since() uint32 { return 1 }
 
+// LockedPointerV1SetCursorPositionHintRequest set the pointer cursor position hint.
+//
+// Set the cursor position hint relative to the top left corner of the
+// surface.
+//
+// If the client is drawing its own cursor, it should update the position
+// hint to the position of its own cursor. A compositor may use this
+// information to warp the pointer upon unlock in order to avoid pointer
+// jumps.
+//
+// The cursor position hint is double-buffered state, see
+// wl_surface.commit.
 type LockedPointerV1SetCursorPositionHintRequest struct {
+	// SurfaceX surface-local x coordinate.
 	SurfaceX wire.Fixed
+	// SurfaceY surface-local y coordinate.
 	SurfaceY wire.Fixed
 }
 
@@ -61,7 +79,15 @@ func (r *LockedPointerV1SetCursorPositionHintRequest) Marshal(w *wire.Writer) er
 
 func (r *LockedPointerV1SetCursorPositionHintRequest) Since() uint32 { return 1 }
 
+// LockedPointerV1SetRegionRequest set a new lock region.
+//
+// Set a new region used to lock the pointer.
+//
+// The new lock region is double-buffered, see wl_surface.commit.
+//
+// For details about the lock region, see wp_locked_pointer.
 type LockedPointerV1SetRegionRequest struct {
+	// Region region of surface.
 	Region wire.ObjectID // nullable
 }
 
@@ -76,6 +102,9 @@ func (r *LockedPointerV1SetRegionRequest) Marshal(w *wire.Writer) error {
 
 func (r *LockedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 
+// LockedPointerV1LockedEvent lock activation event.
+//
+// Notification that the pointer lock of the seat's pointer is activated.
 type LockedPointerV1LockedEvent struct {
 }
 
@@ -87,6 +116,14 @@ func (e *LockedPointerV1LockedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *LockedPointerV1LockedEvent) Since() uint32 { return 1 }
 
+// LockedPointerV1UnlockedEvent lock deactivation event.
+//
+// Notification that the pointer lock of the seat's pointer is no longer
+// active. If this is a oneshot pointer lock (see
+// wp_pointer_constraints.lifetime) this object is now defunct and should
+// be destroyed. If this is a persistent pointer lock (see
+// wp_pointer_constraints.lifetime) this pointer lock may again
+// reactivate in the future.
 type LockedPointerV1UnlockedEvent struct {
 }
 
@@ -98,23 +135,53 @@ func (e *LockedPointerV1UnlockedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *LockedPointerV1UnlockedEvent) Since() uint32 { return 1 }
 
+// LockedPointerV1LockedFunc is a callback for Locked events.
 type LockedPointerV1LockedFunc func(ev LockedPointerV1LockedEvent)
 
+// LockedPointerV1UnlockedFunc is a callback for Unlocked events.
 type LockedPointerV1UnlockedFunc func(ev LockedPointerV1UnlockedEvent)
 
+// LockedPointerV1 receive relative pointer motion events.
+//
+// The wp_locked_pointer interface represents a locked pointer state.
+//
+// While the lock of this object is active, the wl_pointer objects of the
+// associated seat will not emit any wl_pointer.motion events.
+//
+// This object will send the event 'locked' when the lock is activated.
+// Whenever the lock is activated, it is guaranteed that the locked surface
+// will already have received pointer focus and that the pointer will be
+// within the region passed to the request creating this object.
+//
+// To unlock the pointer, send the destroy request. This will also destroy
+// the wp_locked_pointer object.
+//
+// If the compositor decides to unlock the pointer the unlocked event is
+// sent. See wp_locked_pointer.unlock for details.
+//
+// When unlocking, the compositor may warp the cursor position to the set
+// cursor position hint. If it does, it will not result in any relative
+// motion events emitted via wp_relative_pointer.
+//
+// If the surface the lock was requested on is destroyed and the lock is not
+// yet activated, the wp_locked_pointer object is now defunct and must be
+// destroyed.
 type LockedPointerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLockedPointerV1 wraps p in a LockedPointerV1 proxy.
 func NewLockedPointerV1(p *wayland.Proxy) *LockedPointerV1 {
 	p.SetEventFDCounts(lockedpointerv1EventFDCounts)
 	return &LockedPointerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LockedPointerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnLocked registers fn to receive Locked events.
 func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventLocked, func(r *wire.Reader) {
 		var ev LockedPointerV1LockedEvent
@@ -128,6 +195,7 @@ func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 	})
 }
 
+// OnUnlocked registers fn to receive Unlocked events.
 func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventUnlocked, func(r *wire.Reader) {
 		var ev LockedPointerV1UnlockedEvent
@@ -141,6 +209,10 @@ func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 	})
 }
 
+// Destroy destroy the locked pointer object.
+//
+// Destroy the locked pointer object. If applicable, the compositor will
+// unlock the pointer.
 func (o *LockedPointerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -152,6 +224,18 @@ func (o *LockedPointerV1) Destroy() error {
 	return nil
 }
 
+// SetCursorPositionHint set the pointer cursor position hint.
+//
+// Set the cursor position hint relative to the top left corner of the
+// surface.
+//
+// If the client is drawing its own cursor, it should update the position
+// hint to the position of its own cursor. A compositor may use this
+// information to warp the pointer upon unlock in order to avoid pointer
+// jumps.
+//
+// The cursor position hint is double-buffered state, see
+// wl_surface.commit.
 func (o *LockedPointerV1) SetCursorPositionHint(surfaceX wire.Fixed, surfaceY wire.Fixed) error {
 	return o.proxy.SendRequest(LockedPointerV1RequestSetCursorPositionHint, &LockedPointerV1SetCursorPositionHintRequest{
 		SurfaceX: surfaceX,
@@ -159,6 +243,13 @@ func (o *LockedPointerV1) SetCursorPositionHint(surfaceX wire.Fixed, surfaceY wi
 	})
 }
 
+// SetRegion set a new lock region.
+//
+// Set a new region used to lock the pointer.
+//
+// The new lock region is double-buffered, see wl_surface.commit.
+//
+// For details about the lock region, see wp_locked_pointer.
 func (o *LockedPointerV1) SetRegion(region wire.ObjectID) error {
 	return o.proxy.SendRequest(LockedPointerV1RequestSetRegion, &LockedPointerV1SetRegionRequest{
 		Region: region,

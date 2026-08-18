@@ -16,6 +16,10 @@ const (
 	ToplevelTagManagerV1RequestSetToplevelDescription uint16 = 2
 )
 
+// ToplevelTagManagerV1DestroyRequest destroy toplevel tag object.
+//
+// Destroy this toplevel tag manager object. This request has no other
+// effects.
 type ToplevelTagManagerV1DestroyRequest struct {
 }
 
@@ -29,9 +33,26 @@ func (r *ToplevelTagManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelTagManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelTagManagerV1SetToplevelTagRequest set tag.
+//
+// Set a tag for a toplevel. The tag may be shown to the user in UI, so
+// it's preferable for it to be human readable, but it must be suitable
+// for configuration files and should not be translated.
+// Suitable tags would for example be "main window", "settings",
+// "e-mail composer" or similar.
+//
+// The tag does not need to be unique across applications, and the client
+// may set the same tag for multiple windows, for example if the user has
+// opened the same UI twice. How the potentially resulting conflicts are
+// handled is compositor policy.
+//
+// The client should set the tag as part of the initial commit on the
+// associated toplevel, but it may set it at any time afterwards as well,
+// for example if the purpose of the toplevel changes.
 type ToplevelTagManagerV1SetToplevelTagRequest struct {
 	Toplevel wire.ObjectID
-	Tag      string
+	// Tag untranslated tag.
+	Tag string
 }
 
 func (r *ToplevelTagManagerV1SetToplevelTagRequest) Opcode() uint16 {
@@ -50,8 +71,19 @@ func (r *ToplevelTagManagerV1SetToplevelTagRequest) Marshal(w *wire.Writer) erro
 
 func (r *ToplevelTagManagerV1SetToplevelTagRequest) Since() uint32 { return 1 }
 
+// ToplevelTagManagerV1SetToplevelDescriptionRequest set description.
+//
+// Set a description for a toplevel. This description may be shown to the
+// user in UI or read by a screen reader for accessibility purposes, and
+// should be translated.
+// It is recommended to make the description the translation of the tag.
+//
+// The client should set the description as part of the initial commit on
+// the associated toplevel, but it may set it at any time afterwards as
+// well, for example if the purpose of the toplevel changes.
 type ToplevelTagManagerV1SetToplevelDescriptionRequest struct {
-	Toplevel    wire.ObjectID
+	Toplevel wire.ObjectID
+	// Description translated description.
 	Description string
 }
 
@@ -71,18 +103,37 @@ func (r *ToplevelTagManagerV1SetToplevelDescriptionRequest) Marshal(w *wire.Writ
 
 func (r *ToplevelTagManagerV1SetToplevelDescriptionRequest) Since() uint32 { return 1 }
 
+// ToplevelTagManagerV1 protocol for setting toplevel tags.
+//
+// In order to make some window properties like position, size,
+// "always on top" or user defined rules for window behavior persistent, the
+// compositor needs some way to identify windows even after the application
+// has been restarted.
+// This protocol allows clients to make this possible by setting a tag for
+// toplevels.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type ToplevelTagManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelTagManagerV1 wraps p in a ToplevelTagManagerV1 proxy.
 func NewToplevelTagManagerV1(p *wayland.Proxy) *ToplevelTagManagerV1 {
 	return &ToplevelTagManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelTagManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy toplevel tag object.
+//
+// Destroy this toplevel tag manager object. This request has no other
+// effects.
 func (o *ToplevelTagManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -94,6 +145,22 @@ func (o *ToplevelTagManagerV1) Destroy() error {
 	return nil
 }
 
+// SetToplevelTag set tag.
+//
+// Set a tag for a toplevel. The tag may be shown to the user in UI, so
+// it's preferable for it to be human readable, but it must be suitable
+// for configuration files and should not be translated.
+// Suitable tags would for example be "main window", "settings",
+// "e-mail composer" or similar.
+//
+// The tag does not need to be unique across applications, and the client
+// may set the same tag for multiple windows, for example if the user has
+// opened the same UI twice. How the potentially resulting conflicts are
+// handled is compositor policy.
+//
+// The client should set the tag as part of the initial commit on the
+// associated toplevel, but it may set it at any time afterwards as well,
+// for example if the purpose of the toplevel changes.
 func (o *ToplevelTagManagerV1) SetToplevelTag(toplevel wire.ObjectID, tag string) error {
 	return o.proxy.SendRequest(ToplevelTagManagerV1RequestSetToplevelTag, &ToplevelTagManagerV1SetToplevelTagRequest{
 		Toplevel: toplevel,
@@ -101,6 +168,16 @@ func (o *ToplevelTagManagerV1) SetToplevelTag(toplevel wire.ObjectID, tag string
 	})
 }
 
+// SetToplevelDescription set description.
+//
+// Set a description for a toplevel. This description may be shown to the
+// user in UI or read by a screen reader for accessibility purposes, and
+// should be translated.
+// It is recommended to make the description the translation of the tag.
+//
+// The client should set the description as part of the initial commit on
+// the associated toplevel, but it may set it at any time afterwards as
+// well, for example if the purpose of the toplevel changes.
 func (o *ToplevelTagManagerV1) SetToplevelDescription(toplevel wire.ObjectID, description string) error {
 	return o.proxy.SendRequest(ToplevelTagManagerV1RequestSetToplevelDescription, &ToplevelTagManagerV1SetToplevelDescriptionRequest{
 		Toplevel:    toplevel,

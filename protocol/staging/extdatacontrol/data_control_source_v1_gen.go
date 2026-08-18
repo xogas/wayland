@@ -31,10 +31,19 @@ var datacontrolsourcev1EventFDCounts = map[uint16]int{
 type DataControlSourceV1Error uint32
 
 const (
+	// DataControlSourceV1ErrorInvalidOffer offer sent after ext_data_control_device.set_selection.
 	DataControlSourceV1ErrorInvalidOffer DataControlSourceV1Error = 1
 )
 
+// DataControlSourceV1OfferRequest add an offered MIME type.
+//
+// This request adds a MIME type to the set of MIME types advertised to
+// targets. Can be called several times to offer multiple types.
+//
+// Calling this after ext_data_control_device.set_selection is a protocol
+// error.
 type DataControlSourceV1OfferRequest struct {
+	// MimeType mIME type offered by the data source.
 	MimeType string
 }
 
@@ -49,6 +58,9 @@ func (r *DataControlSourceV1OfferRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlSourceV1OfferRequest) Since() uint32 { return 1 }
 
+// DataControlSourceV1DestroyRequest destroy this source.
+//
+// Destroys the data source object.
 type DataControlSourceV1DestroyRequest struct {
 }
 
@@ -60,9 +72,15 @@ func (r *DataControlSourceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlSourceV1DestroyRequest) Since() uint32 { return 1 }
 
+// DataControlSourceV1SendEvent send the data.
+//
+// Request for data from the client. Send the data as the specified MIME
+// type over the passed file descriptor, then close it.
 type DataControlSourceV1SendEvent struct {
+	// MimeType mIME type for the data.
 	MimeType string
-	Fd       int
+	// Fd file descriptor for the data.
+	Fd int
 }
 
 func (e *DataControlSourceV1SendEvent) Opcode() uint16 { return DataControlSourceV1EventSend }
@@ -83,6 +101,12 @@ func (e *DataControlSourceV1SendEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataControlSourceV1SendEvent) Since() uint32 { return 1 }
 
+// DataControlSourceV1CancelledEvent selection was cancelled.
+//
+// This data source is no longer valid. The data source has been replaced
+// by another data source.
+//
+// The client should clean up and destroy this data source.
 type DataControlSourceV1CancelledEvent struct {
 }
 
@@ -94,23 +118,34 @@ func (e *DataControlSourceV1CancelledEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataControlSourceV1CancelledEvent) Since() uint32 { return 1 }
 
+// DataControlSourceV1SendFunc is a callback for Send events.
 type DataControlSourceV1SendFunc func(ev DataControlSourceV1SendEvent)
 
+// DataControlSourceV1CancelledFunc is a callback for Cancelled events.
 type DataControlSourceV1CancelledFunc func(ev DataControlSourceV1CancelledEvent)
 
+// DataControlSourceV1 offer to transfer data.
+//
+// The ext_data_control_source object is the source side of a
+// ext_data_control_offer. It is created by the source client in a data
+// transfer and provides a way to describe the offered data and a way to
+// respond to requests to transfer the data.
 type DataControlSourceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDataControlSourceV1 wraps p in a DataControlSourceV1 proxy.
 func NewDataControlSourceV1(p *wayland.Proxy) *DataControlSourceV1 {
 	p.SetEventFDCounts(datacontrolsourcev1EventFDCounts)
 	return &DataControlSourceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataControlSourceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSend registers fn to receive Send events.
 func (o *DataControlSourceV1) OnSend(fn DataControlSourceV1SendFunc) {
 	o.proxy.RegisterEvent(DataControlSourceV1EventSend, func(r *wire.Reader) {
 		var ev DataControlSourceV1SendEvent
@@ -124,6 +159,7 @@ func (o *DataControlSourceV1) OnSend(fn DataControlSourceV1SendFunc) {
 	})
 }
 
+// OnCancelled registers fn to receive Cancelled events.
 func (o *DataControlSourceV1) OnCancelled(fn DataControlSourceV1CancelledFunc) {
 	o.proxy.RegisterEvent(DataControlSourceV1EventCancelled, func(r *wire.Reader) {
 		var ev DataControlSourceV1CancelledEvent
@@ -137,12 +173,22 @@ func (o *DataControlSourceV1) OnCancelled(fn DataControlSourceV1CancelledFunc) {
 	})
 }
 
+// Offer add an offered MIME type.
+//
+// This request adds a MIME type to the set of MIME types advertised to
+// targets. Can be called several times to offer multiple types.
+//
+// Calling this after ext_data_control_device.set_selection is a protocol
+// error.
 func (o *DataControlSourceV1) Offer(mimeType string) error {
 	return o.proxy.SendRequest(DataControlSourceV1RequestOffer, &DataControlSourceV1OfferRequest{
 		MimeType: mimeType,
 	})
 }
 
+// Destroy destroy this source.
+//
+// Destroys the data source object.
 func (o *DataControlSourceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

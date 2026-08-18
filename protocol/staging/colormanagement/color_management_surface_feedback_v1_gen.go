@@ -29,13 +29,19 @@ var colormanagementsurfacefeedbackv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// ColorManagementSurfaceFeedbackV1Error protocol errors.
 type ColorManagementSurfaceFeedbackV1Error uint32
 
 const (
-	ColorManagementSurfaceFeedbackV1ErrorInert              ColorManagementSurfaceFeedbackV1Error = 0
+	// ColorManagementSurfaceFeedbackV1ErrorInert forbidden request on inert object.
+	ColorManagementSurfaceFeedbackV1ErrorInert ColorManagementSurfaceFeedbackV1Error = 0
+	// ColorManagementSurfaceFeedbackV1ErrorUnsupportedFeature attempted to use an unsupported feature.
 	ColorManagementSurfaceFeedbackV1ErrorUnsupportedFeature ColorManagementSurfaceFeedbackV1Error = 1
 )
 
+// ColorManagementSurfaceFeedbackV1DestroyRequest destroy the color management interface for a surface.
+//
+// Destroy the wp_color_management_surface_feedback_v1 object.
 type ColorManagementSurfaceFeedbackV1DestroyRequest struct {
 }
 
@@ -49,6 +55,41 @@ func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Marshal(w *wire.Writer)
 
 func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceFeedbackV1GetPreferredRequest get the preferred image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// The preferred image description represents the compositor's preferred
+// color encoding for this wl_surface at the current time. There might be
+// performance and power advantages, as well as improved color
+// reproduction, if the image description of a content update matches the
+// preferred image description.
+//
+// This creates a new wp_image_description_v1 object for the currently
+// preferred image description for the wl_surface. The client should
+// stop using and destroy the image descriptions created by earlier
+// invocations of this request for the associated wl_surface.
+// This request is usually sent as a reaction to the preferred_changed
+// event or when creating a wp_color_management_surface_feedback_v1 object
+// if the client is capable of adapting to image descriptions.
+//
+// The created wp_image_description_v1 object preserves the preferred image
+// description of the wl_surface from the time the object was created.
+//
+// The resulting image description object allows get_information request.
+//
+// If the image description is parametric, the client should set it on its
+// wl_surface only if the image description is an exact match with the
+// client content. Particularly if everything else matches, but the target
+// color volume is greater than what the client needs, the client should
+// create its own parameric image description with its exact parameters.
+//
+// If the interface version is inadequate for the preferred image
+// description, meaning that the client does not support all the
+// events needed to deliver the crucial information, the resulting image
+// description object shall immediately deliver the
+// wp_image_description_v1.failed event with the low_version cause,
+// otherwise the object shall immediately deliver the ready event.
 type ColorManagementSurfaceFeedbackV1GetPreferredRequest struct {
 	ImageDescription wire.NewID
 }
@@ -66,6 +107,14 @@ func (r *ColorManagementSurfaceFeedbackV1GetPreferredRequest) Marshal(w *wire.Wr
 
 func (r *ColorManagementSurfaceFeedbackV1GetPreferredRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest get the preferred image description.
+//
+// The same description as for get_preferred applies, except the returned
+// image description is guaranteed to be parametric. This is meant for
+// clients that can only deal with parametric image descriptions.
+//
+// If the compositor doesn't support parametric image descriptions, the
+// unsupported_feature error is emitted.
 type ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest struct {
 	ImageDescription wire.NewID
 }
@@ -83,8 +132,14 @@ func (r *ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest) Marshal(
 
 func (r *ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceFeedbackV1PreferredChangedEvent the preferred image description changed (32-bit).
+//
 // Deprecated: since version 2.
+//
+// Starting from interface version 2, 'preferred_changed2' is sent instead
+// of this event. See the 'preferred_changed2' event for the definition.
 type ColorManagementSurfaceFeedbackV1PreferredChangedEvent struct {
+	// Identity the 32-bit image description id number.
 	Identity uint32
 }
 
@@ -103,8 +158,28 @@ func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Unmarshal(r *wir
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChangedEvent) Since() uint32 { return 1 }
 
+// ColorManagementSurfaceFeedbackV1PreferredChanged2Event the preferred image description changed.
+//
+// The preferred image description is the one which likely has the most
+// performance and/or quality benefits for the compositor if used by the
+// client for its wl_surface contents. This event is sent whenever the
+// compositor changes the wl_surface's preferred image description.
+//
+// This event sends the identity of the new preferred state as the argument,
+// so clients who are aware of the image description already can reuse it.
+// Otherwise, if the client client wants to know what the preferred image
+// description is, it shall use the get_preferred request.
+//
+// The preferred image description is not automatically used for anything.
+// It is only a hint, and clients may set any valid image description with
+// set_image_description, but there might be performance and color accuracy
+// improvements by providing the wl_surface contents in the preferred
+// image description. Therefore clients that can, should render according
+// to the preferred image description
 type ColorManagementSurfaceFeedbackV1PreferredChanged2Event struct {
+	// IdentityHi high 32 bits of the 64-bit image description id number.
 	IdentityHi uint32
+	// IdentityLo low 32 bits of the 64-bit image description id number.
 	IdentityLo uint32
 }
 
@@ -128,23 +203,35 @@ func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Unmarshal(r *wi
 
 func (e *ColorManagementSurfaceFeedbackV1PreferredChanged2Event) Since() uint32 { return 2 }
 
+// ColorManagementSurfaceFeedbackV1PreferredChangedFunc is a callback for PreferredChanged events.
 type ColorManagementSurfaceFeedbackV1PreferredChangedFunc func(ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent)
 
+// ColorManagementSurfaceFeedbackV1PreferredChanged2Func is a callback for PreferredChanged2 events.
 type ColorManagementSurfaceFeedbackV1PreferredChanged2Func func(ev ColorManagementSurfaceFeedbackV1PreferredChanged2Event)
 
+// ColorManagementSurfaceFeedbackV1 color management extension to a surface.
+//
+// A wp_color_management_surface_feedback_v1 allows the client to get the
+// preferred image description of a surface.
+//
+// If the wl_surface associated with this object is destroyed, the
+// wp_color_management_surface_feedback_v1 object becomes inert.
 type ColorManagementSurfaceFeedbackV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorManagementSurfaceFeedbackV1 wraps p in a ColorManagementSurfaceFeedbackV1 proxy.
 func NewColorManagementSurfaceFeedbackV1(p *wayland.Proxy) *ColorManagementSurfaceFeedbackV1 {
 	p.SetEventFDCounts(colormanagementsurfacefeedbackv1EventFDCounts)
 	return &ColorManagementSurfaceFeedbackV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorManagementSurfaceFeedbackV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnPreferredChanged registers fn to receive PreferredChanged events.
 func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagementSurfaceFeedbackV1PreferredChangedFunc) {
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent
@@ -158,6 +245,7 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagement
 	})
 }
 
+// OnPreferredChanged2 registers fn to receive PreferredChanged2 events.
 func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagementSurfaceFeedbackV1PreferredChanged2Func) {
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged2, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChanged2Event
@@ -171,6 +259,9 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagemen
 	})
 }
 
+// Destroy destroy the color management interface for a surface.
+//
+// Destroy the wp_color_management_surface_feedback_v1 object.
 func (o *ColorManagementSurfaceFeedbackV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -182,6 +273,41 @@ func (o *ColorManagementSurfaceFeedbackV1) Destroy() error {
 	return nil
 }
 
+// GetPreferred get the preferred image description.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// The preferred image description represents the compositor's preferred
+// color encoding for this wl_surface at the current time. There might be
+// performance and power advantages, as well as improved color
+// reproduction, if the image description of a content update matches the
+// preferred image description.
+//
+// This creates a new wp_image_description_v1 object for the currently
+// preferred image description for the wl_surface. The client should
+// stop using and destroy the image descriptions created by earlier
+// invocations of this request for the associated wl_surface.
+// This request is usually sent as a reaction to the preferred_changed
+// event or when creating a wp_color_management_surface_feedback_v1 object
+// if the client is capable of adapting to image descriptions.
+//
+// The created wp_image_description_v1 object preserves the preferred image
+// description of the wl_surface from the time the object was created.
+//
+// The resulting image description object allows get_information request.
+//
+// If the image description is parametric, the client should set it on its
+// wl_surface only if the image description is an exact match with the
+// client content. Particularly if everything else matches, but the target
+// color volume is greater than what the client needs, the client should
+// create its own parameric image description with its exact parameters.
+//
+// If the interface version is inadequate for the preferred image
+// description, meaning that the client does not support all the
+// events needed to deliver the crucial information, the resulting image
+// description object shall immediately deliver the
+// wp_image_description_v1.failed event with the low_version cause,
+// otherwise the object shall immediately deliver the ready event.
 func (o *ColorManagementSurfaceFeedbackV1) GetPreferred() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -199,6 +325,14 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferred() (*ImageDescriptionV1, 
 	return wrapped, nil
 }
 
+// GetPreferredParametric get the preferred image description.
+//
+// The same description as for get_preferred applies, except the returned
+// image description is guaranteed to be parametric. This is meant for
+// clients that can only deal with parametric image descriptions.
+//
+// If the compositor doesn't support parametric image descriptions, the
+// unsupported_feature error is emitted.
 func (o *ColorManagementSurfaceFeedbackV1) GetPreferredParametric() (*ImageDescriptionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

@@ -39,11 +39,19 @@ var datasourceEventFDCounts = map[uint16]int{
 type DataSourceError uint32
 
 const (
+	// DataSourceErrorInvalidActionMask action mask contains invalid values.
 	DataSourceErrorInvalidActionMask DataSourceError = 0
-	DataSourceErrorInvalidSource     DataSourceError = 1
+	// DataSourceErrorInvalidSource source doesn't accept this request.
+	DataSourceErrorInvalidSource DataSourceError = 1
 )
 
+// DataSourceOfferRequest add an offered mime type.
+//
+// This request adds a mime type to the set of mime types
+// advertised to targets.  Can be called several times to offer
+// multiple types.
 type DataSourceOfferRequest struct {
+	// MimeType mime type offered by the data source.
 	MimeType string
 }
 
@@ -58,6 +66,9 @@ func (r *DataSourceOfferRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataSourceOfferRequest) Since() uint32 { return 1 }
 
+// DataSourceDestroyRequest destroy the data source.
+//
+// Destroy the data source.
 type DataSourceDestroyRequest struct {
 }
 
@@ -69,7 +80,23 @@ func (r *DataSourceDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataSourceDestroyRequest) Since() uint32 { return 1 }
 
+// DataSourceSetActionsRequest set the available drag-and-drop actions.
+//
+// Sets the actions that the source side client supports for this
+// operation. This request may trigger wl_data_source.action and
+// wl_data_offer.action events if the compositor needs to change the
+// selected action.
+//
+// The dnd_actions argument must contain only values expressed in the
+// wl_data_device_manager.dnd_actions enum, otherwise it will result
+// in a protocol error.
+//
+// This request must be made once only, and can only be made on sources
+// used in drag-and-drop, so it must be performed before
+// wl_data_device.start_drag. Attempting to use the source other than
+// for drag-and-drop will raise a protocol error.
 type DataSourceSetActionsRequest struct {
+	// DndActions actions supported by the data source.
 	DndActions DataDeviceManagerDndAction
 }
 
@@ -84,7 +111,14 @@ func (r *DataSourceSetActionsRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataSourceSetActionsRequest) Since() uint32 { return 3 }
 
+// DataSourceTargetEvent a target accepts an offered mime type.
+//
+// Sent when a target accepts pointer_focus or motion events.  If
+// a target does not accept any of the offered types, type is NULL.
+//
+// Used for feedback during drag-and-drop.
 type DataSourceTargetEvent struct {
+	// MimeType mime type accepted by the target.
 	MimeType *string // nullable
 }
 
@@ -101,9 +135,16 @@ func (e *DataSourceTargetEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceTargetEvent) Since() uint32 { return 1 }
 
+// DataSourceSendEvent send the data.
+//
+// Request for data from the client.  Send the data as the
+// specified mime type over the passed file descriptor, then
+// close it.
 type DataSourceSendEvent struct {
+	// MimeType mime type for the data.
 	MimeType string
-	Fd       int
+	// Fd file descriptor for the data.
+	Fd int
 }
 
 func (e *DataSourceSendEvent) Opcode() uint16 { return DataSourceEventSend }
@@ -124,6 +165,28 @@ func (e *DataSourceSendEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceSendEvent) Since() uint32 { return 1 }
 
+// DataSourceCancelledEvent selection was cancelled.
+//
+// This data source is no longer valid. There are several reasons why
+// this could happen:
+//
+//   - The data source has been replaced by another data source.
+//   - The drag-and-drop operation was performed, but the drop destination
+//     did not accept any of the mime types offered through
+//     wl_data_source.target.
+//   - The drag-and-drop operation was performed, but the drop destination
+//     did not select any of the actions present in the mask offered through
+//     wl_data_source.action.
+//   - The drag-and-drop operation was performed but didn't happen over a
+//     surface.
+//   - The compositor cancelled the drag-and-drop operation (e.g. compositor
+//     dependent timeouts to avoid stale drag-and-drop transfers).
+//
+// The client should clean up and destroy this data source.
+//
+// For objects of version 2 or older, wl_data_source.cancelled will
+// only be emitted if the data source was replaced by another data
+// source.
 type DataSourceCancelledEvent struct {
 }
 
@@ -135,6 +198,17 @@ func (e *DataSourceCancelledEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceCancelledEvent) Since() uint32 { return 1 }
 
+// DataSourceDndDropPerformedEvent the drag-and-drop operation physically finished.
+//
+// The user performed the drop action. This event does not indicate
+// acceptance, wl_data_source.cancelled may still be emitted afterwards
+// if the drop destination does not accept any mime type.
+//
+// However, this event might not be received if the compositor cancelled
+// the drag-and-drop operation before this event could happen.
+//
+// Note that the data_source may still be used in the future and should
+// not be destroyed here.
 type DataSourceDndDropPerformedEvent struct {
 }
 
@@ -146,6 +220,14 @@ func (e *DataSourceDndDropPerformedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceDndDropPerformedEvent) Since() uint32 { return 3 }
 
+// DataSourceDndFinishedEvent the drag-and-drop operation concluded.
+//
+// The drop destination finished interoperating with this data
+// source, so the client is now free to destroy this data source and
+// free all associated data.
+//
+// If the action used to perform the operation was "move", the
+// source can now delete the transferred data.
 type DataSourceDndFinishedEvent struct {
 }
 
@@ -157,7 +239,35 @@ func (e *DataSourceDndFinishedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceDndFinishedEvent) Since() uint32 { return 3 }
 
+// DataSourceActionEvent notify the selected action.
+//
+// This event indicates the action selected by the compositor after
+// matching the source/destination side actions. Only one action (or
+// none) will be offered here.
+//
+// This event can be emitted multiple times during the drag-and-drop
+// operation, mainly in response to destination side changes through
+// wl_data_offer.set_actions, and as the data device enters/leaves
+// surfaces.
+//
+// It is only possible to receive this event after
+// wl_data_source.dnd_drop_performed if the drag-and-drop operation
+// ended in an "ask" action, in which case the final wl_data_source.action
+// event will happen immediately before wl_data_source.dnd_finished.
+//
+// Compositors may also change the selected action on the fly, mainly
+// in response to keyboard modifier changes during the drag-and-drop
+// operation.
+//
+// The most recent action received is always the valid one. The chosen
+// action may change alongside negotiation (e.g. an "ask" action can turn
+// into a "move" operation), so the effects of the final action must
+// always be applied in wl_data_source.dnd_finished.
+//
+// Clients can trigger cursor surface changes from this point, so
+// they reflect the current action.
 type DataSourceActionEvent struct {
+	// DndAction action selected by the compositor.
 	DndAction DataDeviceManagerDndAction
 }
 
@@ -174,31 +284,46 @@ func (e *DataSourceActionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataSourceActionEvent) Since() uint32 { return 3 }
 
+// DataSourceTargetFunc is a callback for Target events.
 type DataSourceTargetFunc func(ev DataSourceTargetEvent)
 
+// DataSourceSendFunc is a callback for Send events.
 type DataSourceSendFunc func(ev DataSourceSendEvent)
 
+// DataSourceCancelledFunc is a callback for Cancelled events.
 type DataSourceCancelledFunc func(ev DataSourceCancelledEvent)
 
+// DataSourceDndDropPerformedFunc is a callback for DndDropPerformed events.
 type DataSourceDndDropPerformedFunc func(ev DataSourceDndDropPerformedEvent)
 
+// DataSourceDndFinishedFunc is a callback for DndFinished events.
 type DataSourceDndFinishedFunc func(ev DataSourceDndFinishedEvent)
 
+// DataSourceActionFunc is a callback for Action events.
 type DataSourceActionFunc func(ev DataSourceActionEvent)
 
+// DataSource offer to transfer data.
+//
+// The wl_data_source object is the source side of a wl_data_offer.
+// It is created by the source client in a data transfer and
+// provides a way to describe the offered data and a way to respond
+// to requests to transfer the data.
 type DataSource struct {
 	proxy *Proxy
 }
 
+// NewDataSource wraps p in a DataSource proxy.
 func NewDataSource(p *Proxy) *DataSource {
 	p.SetEventFDCounts(datasourceEventFDCounts)
 	return &DataSource{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataSource) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnTarget registers fn to receive Target events.
 func (o *DataSource) OnTarget(fn DataSourceTargetFunc) {
 	o.proxy.RegisterEvent(DataSourceEventTarget, func(r *wire.Reader) {
 		var ev DataSourceTargetEvent
@@ -212,6 +337,7 @@ func (o *DataSource) OnTarget(fn DataSourceTargetFunc) {
 	})
 }
 
+// OnSend registers fn to receive Send events.
 func (o *DataSource) OnSend(fn DataSourceSendFunc) {
 	o.proxy.RegisterEvent(DataSourceEventSend, func(r *wire.Reader) {
 		var ev DataSourceSendEvent
@@ -225,6 +351,7 @@ func (o *DataSource) OnSend(fn DataSourceSendFunc) {
 	})
 }
 
+// OnCancelled registers fn to receive Cancelled events.
 func (o *DataSource) OnCancelled(fn DataSourceCancelledFunc) {
 	o.proxy.RegisterEvent(DataSourceEventCancelled, func(r *wire.Reader) {
 		var ev DataSourceCancelledEvent
@@ -238,6 +365,7 @@ func (o *DataSource) OnCancelled(fn DataSourceCancelledFunc) {
 	})
 }
 
+// OnDndDropPerformed registers fn to receive DndDropPerformed events.
 func (o *DataSource) OnDndDropPerformed(fn DataSourceDndDropPerformedFunc) {
 	o.proxy.RegisterEvent(DataSourceEventDndDropPerformed, func(r *wire.Reader) {
 		var ev DataSourceDndDropPerformedEvent
@@ -251,6 +379,7 @@ func (o *DataSource) OnDndDropPerformed(fn DataSourceDndDropPerformedFunc) {
 	})
 }
 
+// OnDndFinished registers fn to receive DndFinished events.
 func (o *DataSource) OnDndFinished(fn DataSourceDndFinishedFunc) {
 	o.proxy.RegisterEvent(DataSourceEventDndFinished, func(r *wire.Reader) {
 		var ev DataSourceDndFinishedEvent
@@ -264,6 +393,7 @@ func (o *DataSource) OnDndFinished(fn DataSourceDndFinishedFunc) {
 	})
 }
 
+// OnAction registers fn to receive Action events.
 func (o *DataSource) OnAction(fn DataSourceActionFunc) {
 	o.proxy.RegisterEvent(DataSourceEventAction, func(r *wire.Reader) {
 		var ev DataSourceActionEvent
@@ -277,12 +407,20 @@ func (o *DataSource) OnAction(fn DataSourceActionFunc) {
 	})
 }
 
+// Offer add an offered mime type.
+//
+// This request adds a mime type to the set of mime types
+// advertised to targets.  Can be called several times to offer
+// multiple types.
 func (o *DataSource) Offer(mimeType string) error {
 	return o.proxy.SendRequest(DataSourceRequestOffer, &DataSourceOfferRequest{
 		MimeType: mimeType,
 	})
 }
 
+// Destroy destroy the data source.
+//
+// Destroy the data source.
 func (o *DataSource) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -294,6 +432,21 @@ func (o *DataSource) Destroy() error {
 	return nil
 }
 
+// SetActions set the available drag-and-drop actions.
+//
+// Sets the actions that the source side client supports for this
+// operation. This request may trigger wl_data_source.action and
+// wl_data_offer.action events if the compositor needs to change the
+// selected action.
+//
+// The dnd_actions argument must contain only values expressed in the
+// wl_data_device_manager.dnd_actions enum, otherwise it will result
+// in a protocol error.
+//
+// This request must be made once only, and can only be made on sources
+// used in drag-and-drop, so it must be performed before
+// wl_data_device.start_drag. Attempting to use the source other than
+// for drag-and-drop will raise a protocol error.
 func (o *DataSource) SetActions(dndActions DataDeviceManagerDndAction) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch

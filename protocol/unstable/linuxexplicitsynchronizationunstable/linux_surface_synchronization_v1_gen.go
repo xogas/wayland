@@ -19,14 +19,30 @@ const (
 type LinuxSurfaceSynchronizationV1Error uint32
 
 const (
-	LinuxSurfaceSynchronizationV1ErrorInvalidFence      LinuxSurfaceSynchronizationV1Error = 0
-	LinuxSurfaceSynchronizationV1ErrorDuplicateFence    LinuxSurfaceSynchronizationV1Error = 1
-	LinuxSurfaceSynchronizationV1ErrorDuplicateRelease  LinuxSurfaceSynchronizationV1Error = 2
-	LinuxSurfaceSynchronizationV1ErrorNoSurface         LinuxSurfaceSynchronizationV1Error = 3
+	// LinuxSurfaceSynchronizationV1ErrorInvalidFence the fence specified by the client could not be imported.
+	LinuxSurfaceSynchronizationV1ErrorInvalidFence LinuxSurfaceSynchronizationV1Error = 0
+	// LinuxSurfaceSynchronizationV1ErrorDuplicateFence multiple fences added for a single surface commit.
+	LinuxSurfaceSynchronizationV1ErrorDuplicateFence LinuxSurfaceSynchronizationV1Error = 1
+	// LinuxSurfaceSynchronizationV1ErrorDuplicateRelease multiple releases added for a single surface commit.
+	LinuxSurfaceSynchronizationV1ErrorDuplicateRelease LinuxSurfaceSynchronizationV1Error = 2
+	// LinuxSurfaceSynchronizationV1ErrorNoSurface the associated wl_surface was destroyed.
+	LinuxSurfaceSynchronizationV1ErrorNoSurface LinuxSurfaceSynchronizationV1Error = 3
+	// LinuxSurfaceSynchronizationV1ErrorUnsupportedBuffer the buffer does not support explicit synchronization.
 	LinuxSurfaceSynchronizationV1ErrorUnsupportedBuffer LinuxSurfaceSynchronizationV1Error = 4
-	LinuxSurfaceSynchronizationV1ErrorNoBuffer          LinuxSurfaceSynchronizationV1Error = 5
+	// LinuxSurfaceSynchronizationV1ErrorNoBuffer no buffer was attached.
+	LinuxSurfaceSynchronizationV1ErrorNoBuffer LinuxSurfaceSynchronizationV1Error = 5
 )
 
+// LinuxSurfaceSynchronizationV1DestroyRequest destroy synchronization object.
+//
+// Destroy this explicit synchronization object.
+//
+// Any fence set by this object with set_acquire_fence since the last
+// commit will be discarded by the server. Any fences set by this object
+// before the last commit are not affected.
+//
+// zwp_linux_buffer_release_v1 objects created by this object are not
+// affected by this request.
 type LinuxSurfaceSynchronizationV1DestroyRequest struct {
 }
 
@@ -40,7 +56,33 @@ func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Marshal(w *wire.Writer) er
 
 func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Since() uint32 { return 1 }
 
+// LinuxSurfaceSynchronizationV1SetAcquireFenceRequest set the acquire fence.
+//
+// Set the acquire fence that must be signaled before the compositor
+// may sample from the buffer attached with wl_surface.attach. The fence
+// is a dma_fence kernel object.
+//
+// The acquire fence is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If the provided fd is not a valid dma_fence fd, then an INVALID_FENCE
+// error is raised.
+//
+// If a fence has already been attached during the same commit cycle, a
+// DUPLICATE_FENCE error is raised.
+//
+// If the associated wl_surface was destroyed, a NO_SURFACE error is
+// raised.
+//
+// If at surface commit time the attached buffer does not support explicit
+// synchronization, an UNSUPPORTED_BUFFER error is raised.
+//
+// If at surface commit time there is no buffer attached, a NO_BUFFER
+// error is raised.
 type LinuxSurfaceSynchronizationV1SetAcquireFenceRequest struct {
+	// Fd acquire fence fd.
 	Fd int
 }
 
@@ -57,7 +99,27 @@ func (r *LinuxSurfaceSynchronizationV1SetAcquireFenceRequest) Marshal(w *wire.Wr
 
 func (r *LinuxSurfaceSynchronizationV1SetAcquireFenceRequest) Since() uint32 { return 1 }
 
+// LinuxSurfaceSynchronizationV1GetReleaseRequest release fence for last-attached buffer.
+//
+// Create a listener for the release of the buffer attached by the
+// client with wl_surface.attach. See zwp_linux_buffer_release_v1
+// documentation for more information.
+//
+// The release object is double-buffered state, and will be associated
+// with the buffer that is attached to the surface at wl_surface.commit
+// time.
+//
+// If a zwp_linux_buffer_release_v1 object has already been requested for
+// the surface in the same commit cycle, a DUPLICATE_RELEASE error is
+// raised.
+//
+// If the associated wl_surface was destroyed, a NO_SURFACE error
+// is raised.
+//
+// If at surface commit time there is no buffer attached, a NO_BUFFER
+// error is raised.
 type LinuxSurfaceSynchronizationV1GetReleaseRequest struct {
+	// Release new zwp_linux_buffer_release_v1 object.
 	Release wire.NewID
 }
 
@@ -74,18 +136,62 @@ func (r *LinuxSurfaceSynchronizationV1GetReleaseRequest) Marshal(w *wire.Writer)
 
 func (r *LinuxSurfaceSynchronizationV1GetReleaseRequest) Since() uint32 { return 1 }
 
+// LinuxSurfaceSynchronizationV1 per-surface explicit synchronization support.
+//
+// This object implements per-surface explicit synchronization.
+//
+// Synchronization refers to co-ordination of pipelined operations performed
+// on buffers. Most GPU clients will schedule an asynchronous operation to
+// render to the buffer, then immediately send the buffer to the compositor
+// to be attached to a surface.
+//
+// In implicit synchronization, ensuring that the rendering operation is
+// complete before the compositor displays the buffer is an implementation
+// detail handled by either the kernel or userspace graphics driver.
+//
+// By contrast, in explicit synchronization, dma_fence objects mark when the
+// asynchronous operations are complete. When submitting a buffer, the
+// client provides an acquire fence which will be waited on before the
+// compositor accesses the buffer. The Wayland server, through a
+// zwp_linux_buffer_release_v1 object, will inform the client with an event
+// which may be accompanied by a release fence, when the compositor will no
+// longer access the buffer contents due to the specific commit that
+// requested the release event.
+//
+// Each surface can be associated with only one object of this interface at
+// any time.
+//
+// In version 1 of this interface, explicit synchronization is only
+// guaranteed to be supported for buffers created with any version of the
+// wp_linux_dmabuf buffer factory. Version 2 additionally guarantees
+// explicit synchronization support for opaque EGL buffers, which is a type
+// of platform specific buffers described in the EGL_WL_bind_wayland_display
+// extension. Compositors are free to support explicit synchronization for
+// additional buffer types.
 type LinuxSurfaceSynchronizationV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxSurfaceSynchronizationV1 wraps p in a LinuxSurfaceSynchronizationV1 proxy.
 func NewLinuxSurfaceSynchronizationV1(p *wayland.Proxy) *LinuxSurfaceSynchronizationV1 {
 	return &LinuxSurfaceSynchronizationV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxSurfaceSynchronizationV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy synchronization object.
+//
+// Destroy this explicit synchronization object.
+//
+// Any fence set by this object with set_acquire_fence since the last
+// commit will be discarded by the server. Any fences set by this object
+// before the last commit are not affected.
+//
+// zwp_linux_buffer_release_v1 objects created by this object are not
+// affected by this request.
 func (o *LinuxSurfaceSynchronizationV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -97,12 +203,56 @@ func (o *LinuxSurfaceSynchronizationV1) Destroy() error {
 	return nil
 }
 
+// SetAcquireFence set the acquire fence.
+//
+// Set the acquire fence that must be signaled before the compositor
+// may sample from the buffer attached with wl_surface.attach. The fence
+// is a dma_fence kernel object.
+//
+// The acquire fence is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If the provided fd is not a valid dma_fence fd, then an INVALID_FENCE
+// error is raised.
+//
+// If a fence has already been attached during the same commit cycle, a
+// DUPLICATE_FENCE error is raised.
+//
+// If the associated wl_surface was destroyed, a NO_SURFACE error is
+// raised.
+//
+// If at surface commit time the attached buffer does not support explicit
+// synchronization, an UNSUPPORTED_BUFFER error is raised.
+//
+// If at surface commit time there is no buffer attached, a NO_BUFFER
+// error is raised.
 func (o *LinuxSurfaceSynchronizationV1) SetAcquireFence(fd int) error {
 	return o.proxy.SendRequest(LinuxSurfaceSynchronizationV1RequestSetAcquireFence, &LinuxSurfaceSynchronizationV1SetAcquireFenceRequest{
 		Fd: fd,
 	})
 }
 
+// GetRelease release fence for last-attached buffer.
+//
+// Create a listener for the release of the buffer attached by the
+// client with wl_surface.attach. See zwp_linux_buffer_release_v1
+// documentation for more information.
+//
+// The release object is double-buffered state, and will be associated
+// with the buffer that is attached to the surface at wl_surface.commit
+// time.
+//
+// If a zwp_linux_buffer_release_v1 object has already been requested for
+// the surface in the same commit cycle, a DUPLICATE_RELEASE error is
+// raised.
+//
+// If the associated wl_surface was destroyed, a NO_SURFACE error
+// is raised.
+//
+// If at surface commit time there is no buffer attached, a NO_BUFFER
+// error is raised.
 func (o *LinuxSurfaceSynchronizationV1) GetRelease() (*LinuxBufferReleaseV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

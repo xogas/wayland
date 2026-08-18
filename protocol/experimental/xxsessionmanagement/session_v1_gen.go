@@ -35,11 +35,19 @@ var sessionv1EventFDCounts = map[uint16]int{
 type SessionV1Error uint32
 
 const (
+	// SessionV1ErrorInvalidRestore restore cannot be performed after initial toplevel commit.
 	SessionV1ErrorInvalidRestore SessionV1Error = 1
-	SessionV1ErrorNameInUse      SessionV1Error = 2
-	SessionV1ErrorAlreadyMapped  SessionV1Error = 3
+	// SessionV1ErrorNameInUse toplevel name is already in used.
+	SessionV1ErrorNameInUse SessionV1Error = 2
+	// SessionV1ErrorAlreadyMapped toplevel was already mapped when restored.
+	SessionV1ErrorAlreadyMapped SessionV1Error = 3
 )
 
+// SessionV1DestroyRequest destroy the session.
+//
+// Destroy a session object, preserving the current state but not continuing
+// to make further updates if state changes occur. This makes the associated
+// xx_toplevel_session_v1 objects inert.
 type SessionV1DestroyRequest struct {
 }
 
@@ -51,6 +59,11 @@ func (r *SessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// SessionV1RemoveRequest remove the session.
+//
+// Remove the session, making it no longer available for restoration. A
+// compositor should in response to this request remove the data related to
+// this session from its storage.
 type SessionV1RemoveRequest struct {
 }
 
@@ -62,6 +75,14 @@ func (r *SessionV1RemoveRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1RemoveRequest) Since() uint32 { return 1 }
 
+// SessionV1AddToplevelRequest add a new surface to the session.
+//
+// Attempt to add a given surface to the session. The passed name is used
+// to identify what window is being restored, and may be used store window
+// specific state within the session.
+//
+// Calling this with a toplevel that is already managed by the session with
+// the same associated will raise an in_use error.
 type SessionV1AddToplevelRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
@@ -85,6 +106,21 @@ func (r *SessionV1AddToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1AddToplevelRequest) Since() uint32 { return 1 }
 
+// SessionV1RestoreToplevelRequest restore a surface state.
+//
+// Inform the compositor that the toplevel associated with the passed name
+// should have its window management state restored.
+//
+// Calling this with a toplevel that is already managed by the session with
+// the same associated will raise an in_use error.
+//
+// This request must be called prior to the first commit on the associated
+// wl_surface, otherwise an already_mapped error is raised.
+//
+// As part of the initial configure sequence, if the toplevel was
+// successfully restored, a xx_toplevel_session_v1.restored event is
+// emitted. See the xx_toplevel_session_v1.restored event for further
+// details.
 type SessionV1RestoreToplevelRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
@@ -108,6 +144,11 @@ func (r *SessionV1RestoreToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *SessionV1RestoreToplevelRequest) Since() uint32 { return 1 }
 
+// SessionV1CreatedEvent newly-created session id.
+//
+// Emitted at most once some time after getting a new session object. It
+// means that no previous state was restored, and a new session was created.
+// The passed id can be used to restore previous sessions.
 type SessionV1CreatedEvent struct {
 	ID string
 }
@@ -125,6 +166,11 @@ func (e *SessionV1CreatedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1CreatedEvent) Since() uint32 { return 1 }
 
+// SessionV1RestoredEvent the session has been restored.
+//
+// Emitted at most once some time after getting a new session object. It
+// means that previous state was at least partially restored. The same id
+// can again be used to restore previous sessions.
 type SessionV1RestoredEvent struct {
 }
 
@@ -136,6 +182,11 @@ func (e *SessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1RestoredEvent) Since() uint32 { return 1 }
 
+// SessionV1ReplacedEvent the session has been restored.
+//
+// Emitted at most once, if the session was taken over by some other
+// client. When this happens, the session and all its toplevel session
+// objects become inert, and should be destroyed.
 type SessionV1ReplacedEvent struct {
 }
 
@@ -147,25 +198,43 @@ func (e *SessionV1ReplacedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *SessionV1ReplacedEvent) Since() uint32 { return 1 }
 
+// SessionV1CreatedFunc is a callback for Created events.
 type SessionV1CreatedFunc func(ev SessionV1CreatedEvent)
 
+// SessionV1RestoredFunc is a callback for Restored events.
 type SessionV1RestoredFunc func(ev SessionV1RestoredEvent)
 
+// SessionV1ReplacedFunc is a callback for Replaced events.
 type SessionV1ReplacedFunc func(ev SessionV1ReplacedEvent)
 
+// SessionV1 a session for an application.
+//
+// A xx_session_v1 object represents a session for an application. While the
+// object exists, all surfaces which have been added to the session will
+// have states stored by the compositor which can be reapplied at a later
+// time. Two sessions cannot exist for the same identifier string.
+//
+// States for surfaces added to a session are automatically updated by the
+// compositor when they are changed.
+//
+// Surfaces which have been added to a session are automatically removed from
+// the session if xdg_toplevel.destroy is called for the surface.
 type SessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSessionV1 wraps p in a SessionV1 proxy.
 func NewSessionV1(p *wayland.Proxy) *SessionV1 {
 	p.SetEventFDCounts(sessionv1EventFDCounts)
 	return &SessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCreated registers fn to receive Created events.
 func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventCreated, func(r *wire.Reader) {
 		var ev SessionV1CreatedEvent
@@ -179,6 +248,7 @@ func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	})
 }
 
+// OnRestored registers fn to receive Restored events.
 func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(SessionV1EventRestored, func(r *wire.Reader) {
 		var ev SessionV1RestoredEvent
@@ -192,6 +262,7 @@ func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	})
 }
 
+// OnReplaced registers fn to receive Replaced events.
 func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventReplaced, func(r *wire.Reader) {
 		var ev SessionV1ReplacedEvent
@@ -205,6 +276,11 @@ func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	})
 }
 
+// Destroy destroy the session.
+//
+// Destroy a session object, preserving the current state but not continuing
+// to make further updates if state changes occur. This makes the associated
+// xx_toplevel_session_v1 objects inert.
 func (o *SessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -216,6 +292,11 @@ func (o *SessionV1) Destroy() error {
 	return nil
 }
 
+// Remove remove the session.
+//
+// Remove the session, making it no longer available for restoration. A
+// compositor should in response to this request remove the data related to
+// this session from its storage.
 func (o *SessionV1) Remove() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -227,6 +308,14 @@ func (o *SessionV1) Remove() error {
 	return nil
 }
 
+// AddToplevel add a new surface to the session.
+//
+// Attempt to add a given surface to the session. The passed name is used
+// to identify what window is being restored, and may be used store window
+// specific state within the session.
+//
+// Calling this with a toplevel that is already managed by the session with
+// the same associated will raise an in_use error.
 func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -246,6 +335,21 @@ func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelS
 	return wrapped, nil
 }
 
+// RestoreToplevel restore a surface state.
+//
+// Inform the compositor that the toplevel associated with the passed name
+// should have its window management state restored.
+//
+// Calling this with a toplevel that is already managed by the session with
+// the same associated will raise an in_use error.
+//
+// This request must be called prior to the first commit on the associated
+// wl_surface, otherwise an already_mapped error is raised.
+//
+// As part of the initial configure sequence, if the toplevel was
+// successfully restored, a xx_toplevel_session_v1.restored event is
+// emitted. See the xx_toplevel_session_v1.restored event for further
+// details.
 func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*ToplevelSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

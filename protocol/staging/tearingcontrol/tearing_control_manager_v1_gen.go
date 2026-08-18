@@ -18,9 +18,15 @@ const (
 type TearingControlManagerV1Error uint32
 
 const (
+	// TearingControlManagerV1ErrorTearingControlExists the surface already has a tearing object associated.
 	TearingControlManagerV1ErrorTearingControlExists TearingControlManagerV1Error = 0
 )
 
+// TearingControlManagerV1DestroyRequest destroy tearing control factory object.
+//
+// Destroy this tearing control factory object. Other objects, including
+// wp_tearing_control_v1 objects created by this factory, are not affected
+// by this request.
 type TearingControlManagerV1DestroyRequest struct {
 }
 
@@ -34,6 +40,13 @@ func (r *TearingControlManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TearingControlManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// TearingControlManagerV1GetTearingControlRequest extend surface interface for tearing control.
+//
+// Instantiate an interface extension for the given wl_surface to request
+// asynchronous page flips for presentation.
+//
+// If the given wl_surface already has a wp_tearing_control_v1 object
+// associated, the tearing_control_exists protocol error is raised.
 type TearingControlManagerV1GetTearingControlRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -55,18 +68,42 @@ func (r *TearingControlManagerV1GetTearingControlRequest) Marshal(w *wire.Writer
 
 func (r *TearingControlManagerV1GetTearingControlRequest) Since() uint32 { return 1 }
 
+// TearingControlManagerV1 protocol for tearing control.
+//
+// For some use cases like games or drawing tablets it can make sense to
+// reduce latency by accepting tearing with the use of asynchronous page
+// flips. This global is a factory interface, allowing clients to inform
+// which type of presentation the content of their surfaces is suitable for.
+//
+// Graphics APIs like EGL or Vulkan, that manage the buffer queue and commits
+// of a wl_surface themselves, are likely to be using this extension
+// internally. If a client is using such an API for a wl_surface, it should
+// not directly use this extension on that surface, to avoid raising a
+// tearing_control_exists protocol error.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type TearingControlManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTearingControlManagerV1 wraps p in a TearingControlManagerV1 proxy.
 func NewTearingControlManagerV1(p *wayland.Proxy) *TearingControlManagerV1 {
 	return &TearingControlManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TearingControlManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy tearing control factory object.
+//
+// Destroy this tearing control factory object. Other objects, including
+// wp_tearing_control_v1 objects created by this factory, are not affected
+// by this request.
 func (o *TearingControlManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +115,13 @@ func (o *TearingControlManagerV1) Destroy() error {
 	return nil
 }
 
+// GetTearingControl extend surface interface for tearing control.
+//
+// Instantiate an interface extension for the given wl_surface to request
+// asynchronous page flips for presentation.
+//
+// If the given wl_surface already has a wp_tearing_control_v1 object
+// associated, the tearing_control_exists protocol error is raised.
 func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*TearingControlV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

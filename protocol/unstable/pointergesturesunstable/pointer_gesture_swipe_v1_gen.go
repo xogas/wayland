@@ -29,6 +29,7 @@ var pointergestureswipev1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// PointerGestureSwipeV1DestroyRequest destroy the pointer swipe gesture object.
 type PointerGestureSwipeV1DestroyRequest struct {
 }
 
@@ -42,10 +43,16 @@ func (r *PointerGestureSwipeV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerGestureSwipeV1DestroyRequest) Since() uint32 { return 1 }
 
+// PointerGestureSwipeV1BeginEvent multi-finger swipe begin.
+//
+// This event is sent when a multi-finger swipe gesture is detected
+// on the device.
 type PointerGestureSwipeV1BeginEvent struct {
-	Serial  uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
 	Time    uint32
 	Surface wire.ObjectID
+	// Fingers number of fingers.
 	Fingers uint32
 }
 
@@ -77,10 +84,20 @@ func (e *PointerGestureSwipeV1BeginEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGestureSwipeV1BeginEvent) Since() uint32 { return 1 }
 
+// PointerGestureSwipeV1UpdateEvent multi-finger swipe motion.
+//
+// This event is sent when a multi-finger swipe gesture changes the
+// position of the logical center.
+//
+// The dx and dy coordinates are relative coordinates of the logical
+// center of the gesture compared to the previous event.
 type PointerGestureSwipeV1UpdateEvent struct {
+	// Time timestamp with millisecond granularity.
 	Time uint32
-	Dx   wire.Fixed
-	Dy   wire.Fixed
+	// Dx delta x coordinate in surface coordinate space.
+	Dx wire.Fixed
+	// Dy delta y coordinate in surface coordinate space.
+	Dy wire.Fixed
 }
 
 func (e *PointerGestureSwipeV1UpdateEvent) Opcode() uint16 { return PointerGestureSwipeV1EventUpdate }
@@ -106,9 +123,20 @@ func (e *PointerGestureSwipeV1UpdateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGestureSwipeV1UpdateEvent) Since() uint32 { return 1 }
 
+// PointerGestureSwipeV1EndEvent multi-finger swipe end.
+//
+// This event is sent when a multi-finger swipe gesture ceases to
+// be valid. This may happen when one or more fingers are lifted or
+// the gesture is cancelled.
+//
+// When a gesture is cancelled, the client should undo state changes
+// caused by this gesture. What causes a gesture to be cancelled is
+// implementation-dependent.
 type PointerGestureSwipeV1EndEvent struct {
-	Serial    uint32
-	Time      uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Cancelled 1 if the gesture was cancelled, 0 otherwise.
 	Cancelled int32
 }
 
@@ -135,25 +163,48 @@ func (e *PointerGestureSwipeV1EndEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGestureSwipeV1EndEvent) Since() uint32 { return 1 }
 
+// PointerGestureSwipeV1BeginFunc is a callback for Begin events.
 type PointerGestureSwipeV1BeginFunc func(ev PointerGestureSwipeV1BeginEvent)
 
+// PointerGestureSwipeV1UpdateFunc is a callback for Update events.
 type PointerGestureSwipeV1UpdateFunc func(ev PointerGestureSwipeV1UpdateEvent)
 
+// PointerGestureSwipeV1EndFunc is a callback for End events.
 type PointerGestureSwipeV1EndFunc func(ev PointerGestureSwipeV1EndEvent)
 
+// PointerGestureSwipeV1 a swipe gesture object.
+//
+// A swipe gesture object notifies a client about a multi-finger swipe
+// gesture detected on an indirect input device such as a touchpad.
+// The gesture is usually initiated by multiple fingers moving in the
+// same direction but once initiated the direction may change.
+// The precise conditions of when such a gesture is detected are
+// implementation-dependent.
+//
+// A gesture consists of three stages: begin, update (optional) and end.
+// There cannot be multiple simultaneous hold, pinch or swipe gestures on a
+// same pointer/seat, how compositors prevent these situations is
+// implementation-dependent.
+//
+// A gesture may be cancelled by the compositor or the hardware.
+// Clients should not consider performing permanent or irreversible
+// actions until the end of a gesture has been received.
 type PointerGestureSwipeV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPointerGestureSwipeV1 wraps p in a PointerGestureSwipeV1 proxy.
 func NewPointerGestureSwipeV1(p *wayland.Proxy) *PointerGestureSwipeV1 {
 	p.SetEventFDCounts(pointergestureswipev1EventFDCounts)
 	return &PointerGestureSwipeV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PointerGestureSwipeV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnBegin registers fn to receive Begin events.
 func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1BeginEvent
@@ -167,6 +218,7 @@ func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 	})
 }
 
+// OnUpdate registers fn to receive Update events.
 func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventUpdate, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1UpdateEvent
@@ -180,6 +232,7 @@ func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 	})
 }
 
+// OnEnd registers fn to receive End events.
 func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1EndEvent
@@ -193,6 +246,7 @@ func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 	})
 }
 
+// Destroy destroy the pointer swipe gesture object.
 func (o *PointerGestureSwipeV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

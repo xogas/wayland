@@ -17,6 +17,11 @@ const (
 	InputTimestampsManagerV1RequestGetTouchTimestamps    uint16 = 3
 )
 
+// InputTimestampsManagerV1DestroyRequest destroy the input timestamps manager object.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. Existing objects created by this object are not
+// affected.
 type InputTimestampsManagerV1DestroyRequest struct {
 }
 
@@ -30,8 +35,19 @@ func (r *InputTimestampsManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputTimestampsManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// InputTimestampsManagerV1GetKeyboardTimestampsRequest subscribe to high-resolution keyboard timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_keyboard events that
+// carry a timestamp.
+//
+// If the associated wl_keyboard object is invalidated, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 type InputTimestampsManagerV1GetKeyboardTimestampsRequest struct {
-	ID       wire.NewID
+	ID wire.NewID
+	// Keyboard the wl_keyboard object for which to get timestamp events.
 	Keyboard wire.ObjectID
 }
 
@@ -51,8 +67,19 @@ func (r *InputTimestampsManagerV1GetKeyboardTimestampsRequest) Marshal(w *wire.W
 
 func (r *InputTimestampsManagerV1GetKeyboardTimestampsRequest) Since() uint32 { return 1 }
 
+// InputTimestampsManagerV1GetPointerTimestampsRequest subscribe to high-resolution pointer timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_pointer events that
+// carry a timestamp.
+//
+// If the associated wl_pointer object is invalidated, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 type InputTimestampsManagerV1GetPointerTimestampsRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Pointer the wl_pointer object for which to get timestamp events.
 	Pointer wire.ObjectID
 }
 
@@ -72,8 +99,19 @@ func (r *InputTimestampsManagerV1GetPointerTimestampsRequest) Marshal(w *wire.Wr
 
 func (r *InputTimestampsManagerV1GetPointerTimestampsRequest) Since() uint32 { return 1 }
 
+// InputTimestampsManagerV1GetTouchTimestampsRequest subscribe to high-resolution touch timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_touch events that
+// carry a timestamp.
+//
+// If the associated wl_touch object becomes invalid, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 type InputTimestampsManagerV1GetTouchTimestampsRequest struct {
-	ID    wire.NewID
+	ID wire.NewID
+	// Touch the wl_touch object for which to get timestamp events.
 	Touch wire.ObjectID
 }
 
@@ -93,18 +131,29 @@ func (r *InputTimestampsManagerV1GetTouchTimestampsRequest) Marshal(w *wire.Writ
 
 func (r *InputTimestampsManagerV1GetTouchTimestampsRequest) Since() uint32 { return 1 }
 
+// InputTimestampsManagerV1 context object for high-resolution input timestamps.
+//
+// A global interface used for requesting high-resolution timestamps
+// for input events.
 type InputTimestampsManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputTimestampsManagerV1 wraps p in a InputTimestampsManagerV1 proxy.
 func NewInputTimestampsManagerV1(p *wayland.Proxy) *InputTimestampsManagerV1 {
 	return &InputTimestampsManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputTimestampsManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the input timestamps manager object.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. Existing objects created by this object are not
+// affected.
 func (o *InputTimestampsManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -116,6 +165,16 @@ func (o *InputTimestampsManagerV1) Destroy() error {
 	return nil
 }
 
+// GetKeyboardTimestamps subscribe to high-resolution keyboard timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_keyboard events that
+// carry a timestamp.
+//
+// If the associated wl_keyboard object is invalidated, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 func (o *InputTimestampsManagerV1) GetKeyboardTimestamps(keyboard wire.ObjectID) (*InputTimestampsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -134,6 +193,16 @@ func (o *InputTimestampsManagerV1) GetKeyboardTimestamps(keyboard wire.ObjectID)
 	return wrapped, nil
 }
 
+// GetPointerTimestamps subscribe to high-resolution pointer timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_pointer events that
+// carry a timestamp.
+//
+// If the associated wl_pointer object is invalidated, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 func (o *InputTimestampsManagerV1) GetPointerTimestamps(pointer wire.ObjectID) (*InputTimestampsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -152,6 +221,16 @@ func (o *InputTimestampsManagerV1) GetPointerTimestamps(pointer wire.ObjectID) (
 	return wrapped, nil
 }
 
+// GetTouchTimestamps subscribe to high-resolution touch timestamp events.
+//
+// Creates a new input timestamps object that represents a subscription
+// to high-resolution timestamp events for all wl_touch events that
+// carry a timestamp.
+//
+// If the associated wl_touch object becomes invalid, either through
+// client action (e.g. release) or server-side changes, the input
+// timestamps object becomes inert and the client should destroy it
+// by calling zwp_input_timestamps_v1.destroy.
 func (o *InputTimestampsManagerV1) GetTouchTimestamps(touch wire.ObjectID) (*InputTimestampsV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

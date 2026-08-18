@@ -62,47 +62,121 @@ var tablettoolv1EventFDCounts = map[uint16]int{
 	18: 0,
 }
 
+// TabletToolV1Type a physical tool type.
+//
+// Describes the physical type of a tool. The physical type of a tool
+// generally defines its base usage.
+//
+// The mouse tool represents a mouse-shaped tool that is not a relative
+// device but bound to the tablet's surface, providing absolute
+// coordinates.
+//
+// The lens tool is a mouse-shaped tool with an attached lens to
+// provide precision focus.
 type TabletToolV1Type uint32
 
 const (
-	TabletToolV1TypePen      TabletToolV1Type = 320
-	TabletToolV1TypeEraser   TabletToolV1Type = 321
-	TabletToolV1TypeBrush    TabletToolV1Type = 322
-	TabletToolV1TypePencil   TabletToolV1Type = 323
+	// TabletToolV1TypePen pen.
+	TabletToolV1TypePen TabletToolV1Type = 320
+	// TabletToolV1TypeEraser eraser.
+	TabletToolV1TypeEraser TabletToolV1Type = 321
+	// TabletToolV1TypeBrush brush.
+	TabletToolV1TypeBrush TabletToolV1Type = 322
+	// TabletToolV1TypePencil pencil.
+	TabletToolV1TypePencil TabletToolV1Type = 323
+	// TabletToolV1TypeAirbrush airbrush.
 	TabletToolV1TypeAirbrush TabletToolV1Type = 324
-	TabletToolV1TypeFinger   TabletToolV1Type = 325
-	TabletToolV1TypeMouse    TabletToolV1Type = 326
-	TabletToolV1TypeLens     TabletToolV1Type = 327
+	// TabletToolV1TypeFinger finger.
+	TabletToolV1TypeFinger TabletToolV1Type = 325
+	// TabletToolV1TypeMouse mouse.
+	TabletToolV1TypeMouse TabletToolV1Type = 326
+	// TabletToolV1TypeLens lens.
+	TabletToolV1TypeLens TabletToolV1Type = 327
 )
 
+// TabletToolV1Capability capability flags for a tool.
+//
+// Describes extra capabilities on a tablet.
+//
+// Any tool must provide x and y values, extra axes are
+// device-specific.
 type TabletToolV1Capability uint32
 
 const (
-	TabletToolV1CapabilityTilt     TabletToolV1Capability = 1
+	// TabletToolV1CapabilityTilt tilt axes.
+	TabletToolV1CapabilityTilt TabletToolV1Capability = 1
+	// TabletToolV1CapabilityPressure pressure axis.
 	TabletToolV1CapabilityPressure TabletToolV1Capability = 2
+	// TabletToolV1CapabilityDistance distance axis.
 	TabletToolV1CapabilityDistance TabletToolV1Capability = 3
+	// TabletToolV1CapabilityRotation z-rotation axis.
 	TabletToolV1CapabilityRotation TabletToolV1Capability = 4
-	TabletToolV1CapabilitySlider   TabletToolV1Capability = 5
-	TabletToolV1CapabilityWheel    TabletToolV1Capability = 6
+	// TabletToolV1CapabilitySlider slider axis.
+	TabletToolV1CapabilitySlider TabletToolV1Capability = 5
+	// TabletToolV1CapabilityWheel wheel axis.
+	TabletToolV1CapabilityWheel TabletToolV1Capability = 6
 )
 
+// TabletToolV1ButtonState physical button state.
+//
+// Describes the physical state of a button that produced the button event.
 type TabletToolV1ButtonState uint32
 
 const (
+	// TabletToolV1ButtonStateReleased button is not pressed.
 	TabletToolV1ButtonStateReleased TabletToolV1ButtonState = 0
-	TabletToolV1ButtonStatePressed  TabletToolV1ButtonState = 1
+	// TabletToolV1ButtonStatePressed button is pressed.
+	TabletToolV1ButtonStatePressed TabletToolV1ButtonState = 1
 )
 
 type TabletToolV1Error uint32
 
 const (
+	// TabletToolV1ErrorRole given wl_surface has another role.
 	TabletToolV1ErrorRole TabletToolV1Error = 0
 )
 
+// TabletToolV1SetCursorRequest set the tablet tool's surface.
+//
+// Sets the surface of the cursor used for this tool on the given
+// tablet. This request only takes effect if the tool is in proximity
+// of one of the requesting client's surfaces or the surface parameter
+// is the current pointer surface. If there was a previous surface set
+// with this request it is replaced. If surface is NULL, the cursor
+// image is hidden.
+//
+// The parameters hotspot_x and hotspot_y define the position of the
+// pointer surface relative to the pointer location. Its top-left corner
+// is always at (x, y) - (hotspot_x, hotspot_y), where (x, y) are the
+// coordinates of the pointer location, in surface-local coordinates.
+//
+// On surface.attach requests to the pointer surface, hotspot_x and
+// hotspot_y are decremented by the x and y parameters passed to the
+// request. Attach must be confirmed by wl_surface.commit as usual.
+//
+// The hotspot can also be updated by passing the currently set pointer
+// surface to this request with new values for hotspot_x and hotspot_y.
+//
+// The current and pending input regions of the wl_surface are cleared,
+// and wl_surface.set_input_region is ignored until the wl_surface is no
+// longer used as the cursor. When the use as a cursor ends, the current
+// and pending input regions become undefined, and the wl_surface is
+// unmapped.
+//
+// This request gives the surface the role of a cursor. The role
+// assigned by this request is the same as assigned by
+// wl_pointer.set_cursor meaning the same surface can be
+// used both as a wl_pointer cursor and a wp_tablet cursor. If the
+// surface already has another role, it raises a protocol error.
+// The surface may be used on multiple tablets and across multiple
+// seats.
 type TabletToolV1SetCursorRequest struct {
-	Serial   uint32
-	Surface  wire.ObjectID // nullable
+	// Serial serial of the enter event.
+	Serial  uint32
+	Surface wire.ObjectID // nullable
+	// HotspotX surface-local x coordinate.
 	HotspotX int32
+	// HotspotY surface-local y coordinate.
 	HotspotY int32
 }
 
@@ -126,6 +200,9 @@ func (r *TabletToolV1SetCursorRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletToolV1SetCursorRequest) Since() uint32 { return 1 }
 
+// TabletToolV1DestroyRequest destroy the tool object.
+//
+// This destroys the client's resource for this tool object.
 type TabletToolV1DestroyRequest struct {
 }
 
@@ -137,7 +214,15 @@ func (r *TabletToolV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletToolV1DestroyRequest) Since() uint32 { return 1 }
 
+// TabletToolV1TypeEvent tool type.
+//
+// The tool type is the high-level type of the tool and usually decides
+// the interaction expected from this tool.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_tool.done event.
 type TabletToolV1TypeEvent struct {
+	// ToolType the physical tool type.
 	ToolType TabletToolV1Type
 }
 
@@ -154,8 +239,27 @@ func (e *TabletToolV1TypeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1TypeEvent) Since() uint32 { return 1 }
 
+// TabletToolV1HardwareSerialEvent unique hardware serial number of the tool.
+//
+// If the physical tool can be identified by a unique 64-bit serial
+// number, this event notifies the client of this serial number.
+//
+// If multiple tablets are available in the same seat and the tool is
+// uniquely identifiable by the serial number, that tool may move
+// between tablets.
+//
+// Otherwise, if the tool has no serial number and this event is
+// missing, the tool is tied to the tablet it first comes into
+// proximity with. Even if the physical tool is used on multiple
+// tablets, separate wp_tablet_tool objects will be created, one per
+// tablet.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_tool.done event.
 type TabletToolV1HardwareSerialEvent struct {
+	// HardwareSerialHi the unique serial number of the tool, most significant bits.
 	HardwareSerialHi uint32
+	// HardwareSerialLo the unique serial number of the tool, least significant bits.
 	HardwareSerialLo uint32
 }
 
@@ -177,8 +281,22 @@ func (e *TabletToolV1HardwareSerialEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1HardwareSerialEvent) Since() uint32 { return 1 }
 
+// TabletToolV1HardwareIDWacomEvent hardware id notification in Wacom's format.
+//
+// This event notifies the client of a hardware id available on this tool.
+//
+// The hardware id is a device-specific 64-bit id that provides extra
+// information about the tool in use, beyond the wl_tool.type
+// enumeration. The format of the id is specific to tablets made by
+// Wacom Inc. For example, the hardware id of a Wacom Grip
+// Pen (a stylus) is 0x802.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_tool.done event.
 type TabletToolV1HardwareIDWacomEvent struct {
+	// HardwareIDHi the hardware id, most significant bits.
 	HardwareIDHi uint32
+	// HardwareIDLo the hardware id, least significant bits.
 	HardwareIDLo uint32
 }
 
@@ -200,7 +318,17 @@ func (e *TabletToolV1HardwareIDWacomEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1HardwareIDWacomEvent) Since() uint32 { return 1 }
 
+// TabletToolV1CapabilityEvent tool capability notification.
+//
+// This event notifies the client of any capabilities of this tool,
+// beyond the main set of x/y axes and tip up/down detection.
+//
+// One event is sent for each extra capability available on this tool.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_tool.done event.
 type TabletToolV1CapabilityEvent struct {
+	// Capability the capability.
 	Capability TabletToolV1Capability
 }
 
@@ -217,6 +345,11 @@ func (e *TabletToolV1CapabilityEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1CapabilityEvent) Since() uint32 { return 1 }
 
+// TabletToolV1DoneEvent tool description events sequence complete.
+//
+// This event signals the end of the initial burst of descriptive
+// events. A client may consider the static description of the tool to
+// be complete and finalize initialization of the tool.
 type TabletToolV1DoneEvent struct {
 }
 
@@ -228,6 +361,22 @@ func (e *TabletToolV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1DoneEvent) Since() uint32 { return 1 }
 
+// TabletToolV1RemovedEvent tool removed.
+//
+// This event is sent when the tool is removed from the system and will
+// send no further events. Should the physical tool come back into
+// proximity later, a new wp_tablet_tool object will be created.
+//
+// It is compositor-dependent when a tool is removed. A compositor may
+// remove a tool on proximity out, tablet removal or any other reason.
+// A compositor may also keep a tool alive until shutdown.
+//
+// If the tool is currently in proximity, a proximity_out event will be
+// sent before the removed event. See wp_tablet_tool.proximity_out for
+// the handling of any buttons logically down.
+//
+// When this event is received, the client must wp_tablet_tool.destroy
+// the object.
 type TabletToolV1RemovedEvent struct {
 }
 
@@ -239,9 +388,22 @@ func (e *TabletToolV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1RemovedEvent) Since() uint32 { return 1 }
 
+// TabletToolV1ProximityInEvent proximity in event.
+//
+// Notification that this tool is focused on a certain surface.
+//
+// This event can be received when the tool has moved from one surface to
+// another, or when the tool has come back into proximity above the
+// surface.
+//
+// If any button is logically down when the tool comes into proximity,
+// the respective button event is sent after the proximity_in event but
+// within the same frame as the proximity_in event.
 type TabletToolV1ProximityInEvent struct {
-	Serial  uint32
-	Tablet  wire.ObjectID
+	Serial uint32
+	// Tablet the tablet the tool is in proximity of.
+	Tablet wire.ObjectID
+	// Surface the current surface the tablet tool is over.
 	Surface wire.ObjectID
 }
 
@@ -268,6 +430,20 @@ func (e *TabletToolV1ProximityInEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1ProximityInEvent) Since() uint32 { return 1 }
 
+// TabletToolV1ProximityOutEvent proximity out event.
+//
+// Notification that this tool has either left proximity, or is no
+// longer focused on a certain surface.
+//
+// When the tablet tool leaves proximity of the tablet, button release
+// events are sent for each button that was held down at the time of
+// leaving proximity. These events are sent before the proximity_out
+// event but within the same wp_tablet.frame.
+//
+// If the tool stays within proximity of the tablet, but the focus
+// changes from one surface to another, a button release event may not
+// be sent until the button is actually released or the tool leaves the
+// proximity of the tablet.
 type TabletToolV1ProximityOutEvent struct {
 }
 
@@ -279,6 +455,20 @@ func (e *TabletToolV1ProximityOutEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1ProximityOutEvent) Since() uint32 { return 1 }
 
+// TabletToolV1DownEvent tablet tool is making contact.
+//
+// Sent whenever the tablet tool comes in contact with the surface of the
+// tablet.
+//
+// If the tool is already in contact with the tablet when entering the
+// input region, the client owning said region will receive a
+// wp_tablet.proximity_in event, followed by a wp_tablet.down
+// event and a wp_tablet.frame event.
+//
+// Note that this event describes logical contact, not physical
+// contact. On some devices, a compositor may not consider a tool in
+// logical contact until a minimum physical pressure threshold is
+// exceeded.
 type TabletToolV1DownEvent struct {
 	Serial uint32
 }
@@ -296,6 +486,24 @@ func (e *TabletToolV1DownEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1DownEvent) Since() uint32 { return 1 }
 
+// TabletToolV1UpEvent tablet tool is no longer making contact.
+//
+// Sent whenever the tablet tool stops making contact with the surface of
+// the tablet, or when the tablet tool moves out of the input region
+// and the compositor grab (if any) is dismissed.
+//
+// If the tablet tool moves out of the input region while in contact
+// with the surface of the tablet and the compositor does not have an
+// ongoing grab on the surface, the client owning said region will
+// receive a wp_tablet.up event, followed by a wp_tablet.proximity_out
+// event and a wp_tablet.frame event. If the compositor has an ongoing
+// grab on this device, this event sequence is sent whenever the grab
+// is dismissed in the future.
+//
+// Note that this event describes logical contact, not physical
+// contact. On some devices, a compositor may not consider a tool out
+// of logical contact until physical pressure falls below a specific
+// threshold.
 type TabletToolV1UpEvent struct {
 }
 
@@ -307,8 +515,13 @@ func (e *TabletToolV1UpEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1UpEvent) Since() uint32 { return 1 }
 
+// TabletToolV1MotionEvent motion event.
+//
+// Sent whenever a tablet tool moves.
 type TabletToolV1MotionEvent struct {
+	// X surface-local x coordinate.
 	X wire.Fixed
+	// Y surface-local y coordinate.
 	Y wire.Fixed
 }
 
@@ -330,7 +543,15 @@ func (e *TabletToolV1MotionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1MotionEvent) Since() uint32 { return 1 }
 
+// TabletToolV1PressureEvent pressure change event.
+//
+// Sent whenever the pressure axis on a tool changes. The value of this
+// event is normalized to a value between 0 and 65535.
+//
+// Note that pressure may be nonzero even when a tool is not in logical
+// contact. See the down and up events for more details.
 type TabletToolV1PressureEvent struct {
+	// Pressure the current pressure value.
 	Pressure uint32
 }
 
@@ -347,7 +568,15 @@ func (e *TabletToolV1PressureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1PressureEvent) Since() uint32 { return 1 }
 
+// TabletToolV1DistanceEvent distance change event.
+//
+// Sent whenever the distance axis on a tool changes. The value of this
+// event is normalized to a value between 0 and 65535.
+//
+// Note that distance may be nonzero even when a tool is not in logical
+// contact. See the down and up events for more details.
 type TabletToolV1DistanceEvent struct {
+	// Distance the current distance value.
 	Distance uint32
 }
 
@@ -364,8 +593,16 @@ func (e *TabletToolV1DistanceEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1DistanceEvent) Since() uint32 { return 1 }
 
+// TabletToolV1TiltEvent tilt change event.
+//
+// Sent whenever one or both of the tilt axes on a tool change. Each tilt
+// value is in 0.01 of a degree, relative to the z-axis of the tablet.
+// The angle is positive when the top of a tool tilts along the
+// positive x or y axis.
 type TabletToolV1TiltEvent struct {
+	// TiltX the current value of the X tilt axis.
 	TiltX int32
+	// TiltY the current value of the Y tilt axis.
 	TiltY int32
 }
 
@@ -387,7 +624,13 @@ func (e *TabletToolV1TiltEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1TiltEvent) Since() uint32 { return 1 }
 
+// TabletToolV1RotationEvent z-rotation change event.
+//
+// Sent whenever the z-rotation axis on the tool changes. The
+// rotation value is in 0.01 of a degree clockwise from the tool's
+// logical neutral position.
 type TabletToolV1RotationEvent struct {
+	// Degrees the current rotation of the Z axis.
 	Degrees int32
 }
 
@@ -404,7 +647,15 @@ func (e *TabletToolV1RotationEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1RotationEvent) Since() uint32 { return 1 }
 
+// TabletToolV1SliderEvent slider position change event.
+//
+// Sent whenever the slider position on the tool changes. The
+// value is normalized between -65535 and 65535, with 0 as the logical
+// neutral position of the slider.
+//
+// The slider is available on e.g. the Wacom Airbrush tool.
 type TabletToolV1SliderEvent struct {
+	// Position the current position of slider.
 	Position int32
 }
 
@@ -421,9 +672,25 @@ func (e *TabletToolV1SliderEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1SliderEvent) Since() uint32 { return 1 }
 
+// TabletToolV1WheelEvent wheel delta event.
+//
+// Sent whenever the wheel on the tool emits an event. This event
+// contains two values for the same axis change. The degrees value is
+// in 0.01 of a degree in the same orientation as the
+// wl_pointer.vertical_scroll axis. The clicks value is in discrete
+// logical clicks of the mouse wheel. This value may be zero if the
+// movement of the wheel was less than one logical click.
+//
+// Clients should choose either value and avoid mixing degrees and
+// clicks. The compositor may accumulate values smaller than a logical
+// click and emulate click events when a certain threshold is met.
+// Thus, wl_tablet_tool.wheel events with non-zero clicks values may
+// have different degrees values.
 type TabletToolV1WheelEvent struct {
+	// Degrees the wheel delta in 0.01 of a degree.
 	Degrees int32
-	Clicks  int32
+	// Clicks the wheel delta in discrete clicks.
+	Clicks int32
 }
 
 func (e *TabletToolV1WheelEvent) Opcode() uint16 { return TabletToolV1EventWheel }
@@ -444,10 +711,20 @@ func (e *TabletToolV1WheelEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1WheelEvent) Since() uint32 { return 1 }
 
+// TabletToolV1ButtonEvent button event.
+//
+// Sent whenever a button on the tool is pressed or released.
+//
+// If a button is held down when the tool moves in or out of proximity,
+// button events are generated by the compositor. See
+// wp_tablet_tool.proximity_in and wp_tablet_tool.proximity_out for
+// details.
 type TabletToolV1ButtonEvent struct {
 	Serial uint32
+	// Button the button whose state has changed.
 	Button uint32
-	State  TabletToolV1ButtonState
+	// State whether the button was pressed or released.
+	State TabletToolV1ButtonState
 }
 
 func (e *TabletToolV1ButtonEvent) Opcode() uint16 { return TabletToolV1EventButton }
@@ -473,7 +750,14 @@ func (e *TabletToolV1ButtonEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1ButtonEvent) Since() uint32 { return 1 }
 
+// TabletToolV1FrameEvent frame event.
+//
+// Marks the end of a series of axis and/or button updates from the
+// tablet. The Wayland protocol requires axis updates to be sent
+// sequentially, however all events within a frame should be considered
+// one hardware event.
 type TabletToolV1FrameEvent struct {
+	// Time the time of the event with millisecond granularity.
 	Time uint32
 }
 
@@ -490,57 +774,101 @@ func (e *TabletToolV1FrameEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletToolV1FrameEvent) Since() uint32 { return 1 }
 
+// TabletToolV1TypeFunc is a callback for Type events.
 type TabletToolV1TypeFunc func(ev TabletToolV1TypeEvent)
 
+// TabletToolV1HardwareSerialFunc is a callback for HardwareSerial events.
 type TabletToolV1HardwareSerialFunc func(ev TabletToolV1HardwareSerialEvent)
 
+// TabletToolV1HardwareIDWacomFunc is a callback for HardwareIDWacom events.
 type TabletToolV1HardwareIDWacomFunc func(ev TabletToolV1HardwareIDWacomEvent)
 
+// TabletToolV1CapabilityFunc is a callback for Capability events.
 type TabletToolV1CapabilityFunc func(ev TabletToolV1CapabilityEvent)
 
+// TabletToolV1DoneFunc is a callback for Done events.
 type TabletToolV1DoneFunc func(ev TabletToolV1DoneEvent)
 
+// TabletToolV1RemovedFunc is a callback for Removed events.
 type TabletToolV1RemovedFunc func(ev TabletToolV1RemovedEvent)
 
+// TabletToolV1ProximityInFunc is a callback for ProximityIn events.
 type TabletToolV1ProximityInFunc func(ev TabletToolV1ProximityInEvent)
 
+// TabletToolV1ProximityOutFunc is a callback for ProximityOut events.
 type TabletToolV1ProximityOutFunc func(ev TabletToolV1ProximityOutEvent)
 
+// TabletToolV1DownFunc is a callback for Down events.
 type TabletToolV1DownFunc func(ev TabletToolV1DownEvent)
 
+// TabletToolV1UpFunc is a callback for Up events.
 type TabletToolV1UpFunc func(ev TabletToolV1UpEvent)
 
+// TabletToolV1MotionFunc is a callback for Motion events.
 type TabletToolV1MotionFunc func(ev TabletToolV1MotionEvent)
 
+// TabletToolV1PressureFunc is a callback for Pressure events.
 type TabletToolV1PressureFunc func(ev TabletToolV1PressureEvent)
 
+// TabletToolV1DistanceFunc is a callback for Distance events.
 type TabletToolV1DistanceFunc func(ev TabletToolV1DistanceEvent)
 
+// TabletToolV1TiltFunc is a callback for Tilt events.
 type TabletToolV1TiltFunc func(ev TabletToolV1TiltEvent)
 
+// TabletToolV1RotationFunc is a callback for Rotation events.
 type TabletToolV1RotationFunc func(ev TabletToolV1RotationEvent)
 
+// TabletToolV1SliderFunc is a callback for Slider events.
 type TabletToolV1SliderFunc func(ev TabletToolV1SliderEvent)
 
+// TabletToolV1WheelFunc is a callback for Wheel events.
 type TabletToolV1WheelFunc func(ev TabletToolV1WheelEvent)
 
+// TabletToolV1ButtonFunc is a callback for Button events.
 type TabletToolV1ButtonFunc func(ev TabletToolV1ButtonEvent)
 
+// TabletToolV1FrameFunc is a callback for Frame events.
 type TabletToolV1FrameFunc func(ev TabletToolV1FrameEvent)
 
+// TabletToolV1 a physical tablet tool.
+//
+// An object that represents a physical tool that has been, or is
+// currently in use with a tablet in this seat. Each wp_tablet_tool
+// object stays valid until the client destroys it; the compositor
+// reuses the wp_tablet_tool object to indicate that the object's
+// respective physical tool has come into proximity of a tablet again.
+//
+// A wp_tablet_tool object's relation to a physical tool depends on the
+// tablet's ability to report serial numbers. If the tablet supports
+// this capability, then the object represents a specific physical tool
+// and can be identified even when used on multiple tablets.
+//
+// A tablet tool has a number of static characteristics, e.g. tool type,
+// hardware_serial and capabilities. These capabilities are sent in an
+// event sequence after the wp_tablet_seat.tool_added event before any
+// actual events from this tool. This initial event sequence is
+// terminated by a wp_tablet_tool.done event.
+//
+// Tablet tool events are grouped by wp_tablet_tool.frame events.
+// Any events received before a wp_tablet_tool.frame event should be
+// considered part of the same hardware state change.
 type TabletToolV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletToolV1 wraps p in a TabletToolV1 proxy.
 func NewTabletToolV1(p *wayland.Proxy) *TabletToolV1 {
 	p.SetEventFDCounts(tablettoolv1EventFDCounts)
 	return &TabletToolV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletToolV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnType registers fn to receive Type events.
 func (o *TabletToolV1) OnType(fn TabletToolV1TypeFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventType, func(r *wire.Reader) {
 		var ev TabletToolV1TypeEvent
@@ -554,6 +882,7 @@ func (o *TabletToolV1) OnType(fn TabletToolV1TypeFunc) {
 	})
 }
 
+// OnHardwareSerial registers fn to receive HardwareSerial events.
 func (o *TabletToolV1) OnHardwareSerial(fn TabletToolV1HardwareSerialFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventHardwareSerial, func(r *wire.Reader) {
 		var ev TabletToolV1HardwareSerialEvent
@@ -567,6 +896,7 @@ func (o *TabletToolV1) OnHardwareSerial(fn TabletToolV1HardwareSerialFunc) {
 	})
 }
 
+// OnHardwareIDWacom registers fn to receive HardwareIDWacom events.
 func (o *TabletToolV1) OnHardwareIDWacom(fn TabletToolV1HardwareIDWacomFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventHardwareIDWacom, func(r *wire.Reader) {
 		var ev TabletToolV1HardwareIDWacomEvent
@@ -580,6 +910,7 @@ func (o *TabletToolV1) OnHardwareIDWacom(fn TabletToolV1HardwareIDWacomFunc) {
 	})
 }
 
+// OnCapability registers fn to receive Capability events.
 func (o *TabletToolV1) OnCapability(fn TabletToolV1CapabilityFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventCapability, func(r *wire.Reader) {
 		var ev TabletToolV1CapabilityEvent
@@ -593,6 +924,7 @@ func (o *TabletToolV1) OnCapability(fn TabletToolV1CapabilityFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *TabletToolV1) OnDone(fn TabletToolV1DoneFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDone, func(r *wire.Reader) {
 		var ev TabletToolV1DoneEvent
@@ -606,6 +938,7 @@ func (o *TabletToolV1) OnDone(fn TabletToolV1DoneFunc) {
 	})
 }
 
+// OnRemoved registers fn to receive Removed events.
 func (o *TabletToolV1) OnRemoved(fn TabletToolV1RemovedFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventRemoved, func(r *wire.Reader) {
 		var ev TabletToolV1RemovedEvent
@@ -619,6 +952,7 @@ func (o *TabletToolV1) OnRemoved(fn TabletToolV1RemovedFunc) {
 	})
 }
 
+// OnProximityIn registers fn to receive ProximityIn events.
 func (o *TabletToolV1) OnProximityIn(fn TabletToolV1ProximityInFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventProximityIn, func(r *wire.Reader) {
 		var ev TabletToolV1ProximityInEvent
@@ -632,6 +966,7 @@ func (o *TabletToolV1) OnProximityIn(fn TabletToolV1ProximityInFunc) {
 	})
 }
 
+// OnProximityOut registers fn to receive ProximityOut events.
 func (o *TabletToolV1) OnProximityOut(fn TabletToolV1ProximityOutFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventProximityOut, func(r *wire.Reader) {
 		var ev TabletToolV1ProximityOutEvent
@@ -645,6 +980,7 @@ func (o *TabletToolV1) OnProximityOut(fn TabletToolV1ProximityOutFunc) {
 	})
 }
 
+// OnDown registers fn to receive Down events.
 func (o *TabletToolV1) OnDown(fn TabletToolV1DownFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDown, func(r *wire.Reader) {
 		var ev TabletToolV1DownEvent
@@ -658,6 +994,7 @@ func (o *TabletToolV1) OnDown(fn TabletToolV1DownFunc) {
 	})
 }
 
+// OnUp registers fn to receive Up events.
 func (o *TabletToolV1) OnUp(fn TabletToolV1UpFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventUp, func(r *wire.Reader) {
 		var ev TabletToolV1UpEvent
@@ -671,6 +1008,7 @@ func (o *TabletToolV1) OnUp(fn TabletToolV1UpFunc) {
 	})
 }
 
+// OnMotion registers fn to receive Motion events.
 func (o *TabletToolV1) OnMotion(fn TabletToolV1MotionFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventMotion, func(r *wire.Reader) {
 		var ev TabletToolV1MotionEvent
@@ -684,6 +1022,7 @@ func (o *TabletToolV1) OnMotion(fn TabletToolV1MotionFunc) {
 	})
 }
 
+// OnPressure registers fn to receive Pressure events.
 func (o *TabletToolV1) OnPressure(fn TabletToolV1PressureFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventPressure, func(r *wire.Reader) {
 		var ev TabletToolV1PressureEvent
@@ -697,6 +1036,7 @@ func (o *TabletToolV1) OnPressure(fn TabletToolV1PressureFunc) {
 	})
 }
 
+// OnDistance registers fn to receive Distance events.
 func (o *TabletToolV1) OnDistance(fn TabletToolV1DistanceFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDistance, func(r *wire.Reader) {
 		var ev TabletToolV1DistanceEvent
@@ -710,6 +1050,7 @@ func (o *TabletToolV1) OnDistance(fn TabletToolV1DistanceFunc) {
 	})
 }
 
+// OnTilt registers fn to receive Tilt events.
 func (o *TabletToolV1) OnTilt(fn TabletToolV1TiltFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventTilt, func(r *wire.Reader) {
 		var ev TabletToolV1TiltEvent
@@ -723,6 +1064,7 @@ func (o *TabletToolV1) OnTilt(fn TabletToolV1TiltFunc) {
 	})
 }
 
+// OnRotation registers fn to receive Rotation events.
 func (o *TabletToolV1) OnRotation(fn TabletToolV1RotationFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventRotation, func(r *wire.Reader) {
 		var ev TabletToolV1RotationEvent
@@ -736,6 +1078,7 @@ func (o *TabletToolV1) OnRotation(fn TabletToolV1RotationFunc) {
 	})
 }
 
+// OnSlider registers fn to receive Slider events.
 func (o *TabletToolV1) OnSlider(fn TabletToolV1SliderFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventSlider, func(r *wire.Reader) {
 		var ev TabletToolV1SliderEvent
@@ -749,6 +1092,7 @@ func (o *TabletToolV1) OnSlider(fn TabletToolV1SliderFunc) {
 	})
 }
 
+// OnWheel registers fn to receive Wheel events.
 func (o *TabletToolV1) OnWheel(fn TabletToolV1WheelFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventWheel, func(r *wire.Reader) {
 		var ev TabletToolV1WheelEvent
@@ -762,6 +1106,7 @@ func (o *TabletToolV1) OnWheel(fn TabletToolV1WheelFunc) {
 	})
 }
 
+// OnButton registers fn to receive Button events.
 func (o *TabletToolV1) OnButton(fn TabletToolV1ButtonFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventButton, func(r *wire.Reader) {
 		var ev TabletToolV1ButtonEvent
@@ -775,6 +1120,7 @@ func (o *TabletToolV1) OnButton(fn TabletToolV1ButtonFunc) {
 	})
 }
 
+// OnFrame registers fn to receive Frame events.
 func (o *TabletToolV1) OnFrame(fn TabletToolV1FrameFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventFrame, func(r *wire.Reader) {
 		var ev TabletToolV1FrameEvent
@@ -788,6 +1134,40 @@ func (o *TabletToolV1) OnFrame(fn TabletToolV1FrameFunc) {
 	})
 }
 
+// SetCursor set the tablet tool's surface.
+//
+// Sets the surface of the cursor used for this tool on the given
+// tablet. This request only takes effect if the tool is in proximity
+// of one of the requesting client's surfaces or the surface parameter
+// is the current pointer surface. If there was a previous surface set
+// with this request it is replaced. If surface is NULL, the cursor
+// image is hidden.
+//
+// The parameters hotspot_x and hotspot_y define the position of the
+// pointer surface relative to the pointer location. Its top-left corner
+// is always at (x, y) - (hotspot_x, hotspot_y), where (x, y) are the
+// coordinates of the pointer location, in surface-local coordinates.
+//
+// On surface.attach requests to the pointer surface, hotspot_x and
+// hotspot_y are decremented by the x and y parameters passed to the
+// request. Attach must be confirmed by wl_surface.commit as usual.
+//
+// The hotspot can also be updated by passing the currently set pointer
+// surface to this request with new values for hotspot_x and hotspot_y.
+//
+// The current and pending input regions of the wl_surface are cleared,
+// and wl_surface.set_input_region is ignored until the wl_surface is no
+// longer used as the cursor. When the use as a cursor ends, the current
+// and pending input regions become undefined, and the wl_surface is
+// unmapped.
+//
+// This request gives the surface the role of a cursor. The role
+// assigned by this request is the same as assigned by
+// wl_pointer.set_cursor meaning the same surface can be
+// used both as a wl_pointer cursor and a wp_tablet cursor. If the
+// surface already has another role, it raises a protocol error.
+// The surface may be used on multiple tablets and across multiple
+// seats.
 func (o *TabletToolV1) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32, hotspotY int32) error {
 	return o.proxy.SendRequest(TabletToolV1RequestSetCursor, &TabletToolV1SetCursorRequest{
 		Serial:   serial,
@@ -797,6 +1177,9 @@ func (o *TabletToolV1) SetCursor(serial uint32, surface wire.ObjectID, hotspotX 
 	})
 }
 
+// Destroy destroy the tool object.
+//
+// This destroys the client's resource for this tool object.
 func (o *TabletToolV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

@@ -17,55 +17,216 @@ const (
 	ColorRepresentationSurfaceV1RequestSetChromaLocation       uint16 = 3
 )
 
+// ColorRepresentationSurfaceV1Error protocol errors.
 type ColorRepresentationSurfaceV1Error uint32
 
 const (
-	ColorRepresentationSurfaceV1ErrorAlphaMode      ColorRepresentationSurfaceV1Error = 1
-	ColorRepresentationSurfaceV1ErrorCoefficients   ColorRepresentationSurfaceV1Error = 2
-	ColorRepresentationSurfaceV1ErrorPixelFormat    ColorRepresentationSurfaceV1Error = 3
-	ColorRepresentationSurfaceV1ErrorInert          ColorRepresentationSurfaceV1Error = 4
+	// ColorRepresentationSurfaceV1ErrorAlphaMode unsupported alpha mode.
+	ColorRepresentationSurfaceV1ErrorAlphaMode ColorRepresentationSurfaceV1Error = 1
+	// ColorRepresentationSurfaceV1ErrorCoefficients unsupported coefficients.
+	ColorRepresentationSurfaceV1ErrorCoefficients ColorRepresentationSurfaceV1Error = 2
+	// ColorRepresentationSurfaceV1ErrorPixelFormat the pixel format and a set value are incompatible.
+	ColorRepresentationSurfaceV1ErrorPixelFormat ColorRepresentationSurfaceV1Error = 3
+	// ColorRepresentationSurfaceV1ErrorInert forbidden request on inert object.
+	ColorRepresentationSurfaceV1ErrorInert ColorRepresentationSurfaceV1Error = 4
+	// ColorRepresentationSurfaceV1ErrorChromaLocation invalid chroma location.
 	ColorRepresentationSurfaceV1ErrorChromaLocation ColorRepresentationSurfaceV1Error = 5
 )
 
+// ColorRepresentationSurfaceV1AlphaMode alpha mode.
+//
+// Specifies how the alpha channel affects the color channels.
 type ColorRepresentationSurfaceV1AlphaMode uint32
 
 const (
+	// ColorRepresentationSurfaceV1AlphaModePremultipliedElectrical.
+	//
+	// Electrical color channel values (after transfer function encoding)
+	// are already multiplied with the alpha channel value.
 	ColorRepresentationSurfaceV1AlphaModePremultipliedElectrical ColorRepresentationSurfaceV1AlphaMode = 0
-	ColorRepresentationSurfaceV1AlphaModePremultipliedOptical    ColorRepresentationSurfaceV1AlphaMode = 1
-	ColorRepresentationSurfaceV1AlphaModeStraight                ColorRepresentationSurfaceV1AlphaMode = 2
+	// ColorRepresentationSurfaceV1AlphaModePremultipliedOptical.
+	//
+	// Optical color channel values (before transfer function encoding)
+	// are already multiplied with the alpha channel value.
+	ColorRepresentationSurfaceV1AlphaModePremultipliedOptical ColorRepresentationSurfaceV1AlphaMode = 1
+	// ColorRepresentationSurfaceV1AlphaModeStraight.
+	//
+	// Alpha channel has not been pre-multiplied into color channels.
+	ColorRepresentationSurfaceV1AlphaModeStraight ColorRepresentationSurfaceV1AlphaMode = 2
 )
 
+// ColorRepresentationSurfaceV1Coefficients named coefficients.
+//
+// Named matrix coefficients used to encode well-known sets of
+// coefficients. H.273 is the authority, when it comes to the exact values
+// of coefficients and authoritative specifications, where an equivalent
+// code point exists.
+//
+// A value of 0 is invalid and will never be present in the list of enums.
+//
+// Descriptions do list the specifications for convenience.
 type ColorRepresentationSurfaceV1Coefficients uint32
 
 const (
+	// ColorRepresentationSurfaceV1CoefficientsIdentity.
+	//
+	// Coefficients as defined by
+	// - IEC 61966-2-1 sRGB
+	// - SMPTE ST 428-1 (2019)
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 0.
+	// Compatible with pixel formats of the RGB family.
 	ColorRepresentationSurfaceV1CoefficientsIdentity ColorRepresentationSurfaceV1Coefficients = 1
-	ColorRepresentationSurfaceV1CoefficientsBt709    ColorRepresentationSurfaceV1Coefficients = 2
-	ColorRepresentationSurfaceV1CoefficientsFcc      ColorRepresentationSurfaceV1Coefficients = 3
-	ColorRepresentationSurfaceV1CoefficientsBt601    ColorRepresentationSurfaceV1Coefficients = 4
+	// ColorRepresentationSurfaceV1CoefficientsBt709.
+	//
+	// Coefficients as defined by
+	// - Rec. ITU-R BT.709-6
+	// - Rec. ITU-R BT.1361-0 conventional colour gamut system (historical)
+	// - Rec. ITU-R BT.1361-0 conventional colour gamut system and extended
+	//   colour gamut system (historical)
+	// - IEC 61966-2-4 xvYCC709
+	// - SMPTE RP 177 (1993) Annex B
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 1.
+	// Compatible with pixel formats of the YCbCr family.
+	ColorRepresentationSurfaceV1CoefficientsBt709 ColorRepresentationSurfaceV1Coefficients = 2
+	// ColorRepresentationSurfaceV1CoefficientsFcc.
+	//
+	// Coefficients as defined by
+	// - United States Federal Communications Commission (2003) Title 47
+	//   Code of Federal Regulations 73.682 (a) (20)
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 4.
+	// Compatible with pixel formats of the YCbCr family.
+	ColorRepresentationSurfaceV1CoefficientsFcc ColorRepresentationSurfaceV1Coefficients = 3
+	// ColorRepresentationSurfaceV1CoefficientsBt601.
+	//
+	// Coefficients as defined by
+	// - Rec. ITU-R BT.470-6 System B, G (historical)
+	// - Rec. ITU-R BT.601-7 625
+	// - Rec. ITU-R BT.601-7 525
+	// - Rec. ITU-R BT.1358-0 625 (historical)
+	// - Rec. ITU-R BT.1358-1 525 or 625 (historical)
+	// - Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
+	// - Rec. ITU-R BT.1700-0 NTSC
+	// - IEC 61966-2-1 sYCC
+	// - IEC 61966-2-4 xvYCC601
+	// - SMPTE ST 170 (2004)
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 5, 6.
+	// Compatible with pixel formats of the YCbCr family.
+	ColorRepresentationSurfaceV1CoefficientsBt601 ColorRepresentationSurfaceV1Coefficients = 4
+	// ColorRepresentationSurfaceV1CoefficientsSmpte240.
+	//
+	// Coefficients as defined by
+	// - SMPTE ST 240 (1999)
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 7.
+	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsSmpte240 ColorRepresentationSurfaceV1Coefficients = 5
-	ColorRepresentationSurfaceV1CoefficientsBt2020   ColorRepresentationSurfaceV1Coefficients = 6
+	// ColorRepresentationSurfaceV1CoefficientsBt2020.
+	//
+	// Coefficients as defined by
+	// - Rec. ITU-R BT.2020-2 (non-constant luminance)
+	// - Rec. ITU-R BT.2100-2 Y′CbCr
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 9.
+	// Compatible with pixel formats of the YCbCr family.
+	ColorRepresentationSurfaceV1CoefficientsBt2020 ColorRepresentationSurfaceV1Coefficients = 6
+	// ColorRepresentationSurfaceV1CoefficientsBt2020Cl.
+	//
+	// Coefficients as defined by
+	// - Rec. ITU-R BT.2020-2 (constant luminance)
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 10.
+	// Compatible with pixel formats of the YCbCr family.
 	ColorRepresentationSurfaceV1CoefficientsBt2020Cl ColorRepresentationSurfaceV1Coefficients = 7
-	ColorRepresentationSurfaceV1CoefficientsIctcp    ColorRepresentationSurfaceV1Coefficients = 8
+	// ColorRepresentationSurfaceV1CoefficientsIctcp.
+	//
+	// Coefficients as defined by
+	// - Rec. ITU-R BT.2100-2 ICTCP
+	//
+	// Equivalent to H.273 MatrixCoefficients code point 14.
+	// Compatible with pixel formats of the YCbCr family.
+	ColorRepresentationSurfaceV1CoefficientsIctcp ColorRepresentationSurfaceV1Coefficients = 8
 )
 
+// ColorRepresentationSurfaceV1Range color range values.
+//
+// Possible color range values.
+//
+// A value of 0 is invalid and will never be present in the list of enums.
 type ColorRepresentationSurfaceV1Range uint32
 
 const (
-	ColorRepresentationSurfaceV1RangeFull    ColorRepresentationSurfaceV1Range = 1
+	// ColorRepresentationSurfaceV1RangeFull full color range.
+	ColorRepresentationSurfaceV1RangeFull ColorRepresentationSurfaceV1Range = 1
+	// ColorRepresentationSurfaceV1RangeLimited limited color range.
 	ColorRepresentationSurfaceV1RangeLimited ColorRepresentationSurfaceV1Range = 2
 )
 
+// ColorRepresentationSurfaceV1ChromaLocation chroma sample location for 4:2:0 YCbCr.
+//
+// Chroma sample location as defined by H.273 Chroma420SampleLocType.
+//
+// A value of 0 is invalid and will never be present in the list of enums.
+//
+// The descriptions list the matching Vulkan VkChromaLocation combinations
+// for convenience.
 type ColorRepresentationSurfaceV1ChromaLocation uint32
 
 const (
+	// ColorRepresentationSurfaceV1ChromaLocationType0.
+	//
+	// Corresponding to VkChromaLocations:
+	// - xChromaOffset: VK_CHROMA_LOCATION_COSITED_EVEN
+	// - yChromaOffset: VK_CHROMA_LOCATION_MIDPOINT
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 0.
 	ColorRepresentationSurfaceV1ChromaLocationType0 ColorRepresentationSurfaceV1ChromaLocation = 1
+	// ColorRepresentationSurfaceV1ChromaLocationType1.
+	//
+	// Corresponding to VkChromaLocations:
+	// - xChromaOffset: VK_CHROMA_LOCATION_MIDPOINT
+	// - yChromaOffset: VK_CHROMA_LOCATION_MIDPOINT
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 1.
 	ColorRepresentationSurfaceV1ChromaLocationType1 ColorRepresentationSurfaceV1ChromaLocation = 2
+	// ColorRepresentationSurfaceV1ChromaLocationType2.
+	//
+	// Corresponding to VkChromaLocations:
+	// - xChromaOffset: VK_CHROMA_LOCATION_COSITED_EVEN
+	// - yChromaOffset: VK_CHROMA_LOCATION_COSITED_EVEN
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 2.
 	ColorRepresentationSurfaceV1ChromaLocationType2 ColorRepresentationSurfaceV1ChromaLocation = 3
+	// ColorRepresentationSurfaceV1ChromaLocationType3.
+	//
+	// Corresponding to VkChromaLocations:
+	// - xChromaOffset: VK_CHROMA_LOCATION_MIDPOINT
+	// - yChromaOffset: VK_CHROMA_LOCATION_COSITED_EVEN
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 3.
 	ColorRepresentationSurfaceV1ChromaLocationType3 ColorRepresentationSurfaceV1ChromaLocation = 4
+	// ColorRepresentationSurfaceV1ChromaLocationType4.
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 4.
 	ColorRepresentationSurfaceV1ChromaLocationType4 ColorRepresentationSurfaceV1ChromaLocation = 5
+	// ColorRepresentationSurfaceV1ChromaLocationType5.
+	//
+	// Equivalent to H.273 Chroma420SampleLocType 5.
 	ColorRepresentationSurfaceV1ChromaLocationType5 ColorRepresentationSurfaceV1ChromaLocation = 6
 )
 
+// ColorRepresentationSurfaceV1DestroyRequest destroy the color representation.
+//
+// Destroy the wp_color_representation_surface_v1 object.
+//
+// Destroying this object unsets all the color representation metadata from
+// the surface. See the wp_color_representation_surface_v1 interface
+// description for how a compositor handles a surface without color
+// representation metadata. Unsetting is double-buffered state, see
+// wl_surface.commit.
 type ColorRepresentationSurfaceV1DestroyRequest struct {
 }
 
@@ -79,7 +240,21 @@ func (r *ColorRepresentationSurfaceV1DestroyRequest) Marshal(w *wire.Writer) err
 
 func (r *ColorRepresentationSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationSurfaceV1SetAlphaModeRequest set the surface alpha mode.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Assuming an alpha channel exists, it is always linear. The alpha mode
+// determines whether and how the color channels include pre-multiplied
+// alpha. Using straight alpha might have performance benefits.
+//
+// Only alpha modes advertised by the compositor are allowed to be used as
+// argument for this request. The "alpha_mode" protocol error is raised
+// otherwise.
+//
+// Alpha mode is double buffered, see wl_surface.commit.
 type ColorRepresentationSurfaceV1SetAlphaModeRequest struct {
+	// AlphaMode alpha mode.
 	AlphaMode ColorRepresentationSurfaceV1AlphaMode
 }
 
@@ -96,9 +271,39 @@ func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Marshal(w *wire.Writer
 
 func (r *ColorRepresentationSurfaceV1SetAlphaModeRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest set the matrix coefficients and range.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the matrix coefficients and video range which defines the formula
+// and the related constants used to derive red, green and blue signals.
+// Usually coefficients correspond to MatrixCoefficients code points in
+// H.273.
+//
+// Only combinations advertised by the compositor are allowed to be used as
+// argument for this request. The "coefficients" protocol error is raised
+// otherwise.
+//
+// A call to wl_surface.commit verifies that the pixel format and the
+// coefficients-range combination in the committed surface contents are
+// compatible, if contents exist. The "pixel_format" protocol error is
+// raised otherwise.
+//
+// A pixel format is compatible with the coefficients-range combination if
+// the related equations and conventions as defined in H.273 can produce
+// the color channels (RGB or YCbCr) of the pixel format.
+//
+// For the definition of the supported combination, see the
+// wp_color_representation_surface_v1::coefficients and
+// wp_color_representation_surface_v1::range enums.
+//
+// The coefficients-range combination is double-buffered, see
+// wl_surface.commit.
 type ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest struct {
+	// Coefficients matrix coefficients.
 	Coefficients ColorRepresentationSurfaceV1Coefficients
-	Range        ColorRepresentationSurfaceV1Range
+	// Range range.
+	Range ColorRepresentationSurfaceV1Range
 }
 
 func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Opcode() uint16 {
@@ -117,7 +322,27 @@ func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Marshal(w *
 
 func (r *ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationSurfaceV1SetChromaLocationRequest set the chroma location.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the chroma location type which defines the position of downsampled
+// chroma samples, corresponding to Chroma420SampleLocType code points in
+// H.273.
+//
+// An invalid chroma location enum value raises the "chroma_location"
+// protocol error.
+//
+// A call to wl_surface.commit verifies that the pixel format and chroma
+// location type in the committed surface contents are compatible, if
+// contents exist. The "pixel_format" protocol error is raised otherwise.
+//
+// For the definition of the supported chroma location types, see the
+// wp_color_representation_surface_v1::chroma_location enum.
+//
+// The chroma location type is double-buffered, see wl_surface.commit.
 type ColorRepresentationSurfaceV1SetChromaLocationRequest struct {
+	// ChromaLocation chroma sample location.
 	ChromaLocation ColorRepresentationSurfaceV1ChromaLocation
 }
 
@@ -134,18 +359,41 @@ func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Marshal(w *wire.W
 
 func (r *ColorRepresentationSurfaceV1SetChromaLocationRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationSurfaceV1 color representation extension to a surface.
+//
+// A wp_color_representation_surface_v1 allows the client to set the color
+// representation metadata of a surface.
+//
+// By default, a surface does not have any color representation metadata set.
+// The reconstruction of R, G, B signals on such surfaces is compositor
+// implementation defined. The alpha mode is assumed to be
+// premultiplied_electrical when the alpha mode is unset.
+//
+// If the wl_surface associated with the wp_color_representation_surface_v1
+// is destroyed, the wp_color_representation_surface_v1 object becomes inert.
 type ColorRepresentationSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorRepresentationSurfaceV1 wraps p in a ColorRepresentationSurfaceV1 proxy.
 func NewColorRepresentationSurfaceV1(p *wayland.Proxy) *ColorRepresentationSurfaceV1 {
 	return &ColorRepresentationSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorRepresentationSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the color representation.
+//
+// Destroy the wp_color_representation_surface_v1 object.
+//
+// Destroying this object unsets all the color representation metadata from
+// the surface. See the wp_color_representation_surface_v1 interface
+// description for how a compositor handles a surface without color
+// representation metadata. Unsetting is double-buffered state, see
+// wl_surface.commit.
 func (o *ColorRepresentationSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -157,12 +405,53 @@ func (o *ColorRepresentationSurfaceV1) Destroy() error {
 	return nil
 }
 
+// SetAlphaMode set the surface alpha mode.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Assuming an alpha channel exists, it is always linear. The alpha mode
+// determines whether and how the color channels include pre-multiplied
+// alpha. Using straight alpha might have performance benefits.
+//
+// Only alpha modes advertised by the compositor are allowed to be used as
+// argument for this request. The "alpha_mode" protocol error is raised
+// otherwise.
+//
+// Alpha mode is double buffered, see wl_surface.commit.
 func (o *ColorRepresentationSurfaceV1) SetAlphaMode(alphaMode ColorRepresentationSurfaceV1AlphaMode) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetAlphaMode, &ColorRepresentationSurfaceV1SetAlphaModeRequest{
 		AlphaMode: alphaMode,
 	})
 }
 
+// SetCoefficientsAndRange set the matrix coefficients and range.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the matrix coefficients and video range which defines the formula
+// and the related constants used to derive red, green and blue signals.
+// Usually coefficients correspond to MatrixCoefficients code points in
+// H.273.
+//
+// Only combinations advertised by the compositor are allowed to be used as
+// argument for this request. The "coefficients" protocol error is raised
+// otherwise.
+//
+// A call to wl_surface.commit verifies that the pixel format and the
+// coefficients-range combination in the committed surface contents are
+// compatible, if contents exist. The "pixel_format" protocol error is
+// raised otherwise.
+//
+// A pixel format is compatible with the coefficients-range combination if
+// the related equations and conventions as defined in H.273 can produce
+// the color channels (RGB or YCbCr) of the pixel format.
+//
+// For the definition of the supported combination, see the
+// wp_color_representation_surface_v1::coefficients and
+// wp_color_representation_surface_v1::range enums.
+//
+// The coefficients-range combination is double-buffered, see
+// wl_surface.commit.
 func (o *ColorRepresentationSurfaceV1) SetCoefficientsAndRange(coefficients ColorRepresentationSurfaceV1Coefficients, range_ ColorRepresentationSurfaceV1Range) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetCoefficientsAndRange, &ColorRepresentationSurfaceV1SetCoefficientsAndRangeRequest{
 		Coefficients: coefficients,
@@ -170,6 +459,25 @@ func (o *ColorRepresentationSurfaceV1) SetCoefficientsAndRange(coefficients Colo
 	})
 }
 
+// SetChromaLocation set the chroma location.
+//
+// If this protocol object is inert, the protocol error inert is raised.
+//
+// Set the chroma location type which defines the position of downsampled
+// chroma samples, corresponding to Chroma420SampleLocType code points in
+// H.273.
+//
+// An invalid chroma location enum value raises the "chroma_location"
+// protocol error.
+//
+// A call to wl_surface.commit verifies that the pixel format and chroma
+// location type in the committed surface contents are compatible, if
+// contents exist. The "pixel_format" protocol error is raised otherwise.
+//
+// For the definition of the supported chroma location types, see the
+// wp_color_representation_surface_v1::chroma_location enum.
+//
+// The chroma location type is double-buffered, see wl_surface.commit.
 func (o *ColorRepresentationSurfaceV1) SetChromaLocation(chromaLocation ColorRepresentationSurfaceV1ChromaLocation) error {
 	return o.proxy.SendRequest(ColorRepresentationSurfaceV1RequestSetChromaLocation, &ColorRepresentationSurfaceV1SetChromaLocationRequest{
 		ChromaLocation: chromaLocation,

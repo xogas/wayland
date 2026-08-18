@@ -15,9 +15,14 @@ const (
 	TabletManagerV2RequestDestroy       uint16 = 1
 )
 
+// TabletManagerV2GetTabletSeatRequest get the tablet seat.
+//
+// Get the zwp_tablet_seat_v2 object for the given seat. This object
+// provides access to all graphics tablets in this seat.
 type TabletManagerV2GetTabletSeatRequest struct {
 	TabletSeat wire.NewID
-	Seat       wire.ObjectID
+	// Seat the wl_seat object to retrieve the tablets for.
+	Seat wire.ObjectID
 }
 
 func (r *TabletManagerV2GetTabletSeatRequest) Opcode() uint16 {
@@ -36,6 +41,10 @@ func (r *TabletManagerV2GetTabletSeatRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletManagerV2GetTabletSeatRequest) Since() uint32 { return 1 }
 
+// TabletManagerV2DestroyRequest release the memory for the tablet manager object.
+//
+// Destroy the zwp_tablet_manager_v2 object. Objects created from this
+// object are unaffected and should be destroyed separately.
 type TabletManagerV2DestroyRequest struct {
 }
 
@@ -47,18 +56,29 @@ func (r *TabletManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletManagerV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletManagerV2 controller object for graphic tablet devices.
+//
+// An object that provides access to the graphics tablets available on this
+// system. All tablets are associated with a seat, to get access to the
+// actual tablets, use zwp_tablet_manager_v2.get_tablet_seat.
 type TabletManagerV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletManagerV2 wraps p in a TabletManagerV2 proxy.
 func NewTabletManagerV2(p *wayland.Proxy) *TabletManagerV2 {
 	return &TabletManagerV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletManagerV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// GetTabletSeat get the tablet seat.
+//
+// Get the zwp_tablet_seat_v2 object for the given seat. This object
+// provides access to all graphics tablets in this seat.
 func (o *TabletManagerV2) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV2, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -77,6 +97,10 @@ func (o *TabletManagerV2) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV2, erro
 	return wrapped, nil
 }
 
+// Destroy release the memory for the tablet manager object.
+//
+// Destroy the zwp_tablet_manager_v2 object. Objects created from this
+// object are unaffected and should be destroyed separately.
 func (o *TabletManagerV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

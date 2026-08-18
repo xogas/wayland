@@ -23,6 +23,10 @@ var inputmethodv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// InputMethodV1ActivateEvent activate event.
+//
+// A text input was activated. Creates an input method context object
+// which allows communication with the text input.
 type InputMethodV1ActivateEvent struct {
 	ID *InputMethodContextV1
 }
@@ -31,6 +35,11 @@ func (e *InputMethodV1ActivateEvent) Opcode() uint16 { return InputMethodV1Event
 
 func (e *InputMethodV1ActivateEvent) Since() uint32 { return 1 }
 
+// InputMethodV1DeactivateEvent deactivate event.
+//
+// The text input corresponding to the context argument was deactivated.
+// The input method context should be destroyed after deactivation is
+// handled.
 type InputMethodV1DeactivateEvent struct {
 	Context wire.ObjectID
 }
@@ -48,23 +57,34 @@ func (e *InputMethodV1DeactivateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputMethodV1DeactivateEvent) Since() uint32 { return 1 }
 
+// InputMethodV1ActivateFunc is a callback for Activate events.
 type InputMethodV1ActivateFunc func(ev InputMethodV1ActivateEvent)
 
+// InputMethodV1DeactivateFunc is a callback for Deactivate events.
 type InputMethodV1DeactivateFunc func(ev InputMethodV1DeactivateEvent)
 
+// InputMethodV1 input method.
+//
+// An input method object is responsible for composing text in response to
+// input from hardware or virtual keyboards. There is one input method
+// object per seat. On activate there is a new input method context object
+// created which allows the input method to communicate with the text input.
 type InputMethodV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputMethodV1 wraps p in a InputMethodV1 proxy.
 func NewInputMethodV1(p *wayland.Proxy) *InputMethodV1 {
 	p.SetEventFDCounts(inputmethodv1EventFDCounts)
 	return &InputMethodV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputMethodV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnActivate registers fn to receive Activate events.
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
@@ -83,6 +103,7 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	})
 }
 
+// OnDeactivate registers fn to receive Deactivate events.
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent

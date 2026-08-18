@@ -18,9 +18,14 @@ const (
 type AlphaModifierV1Error uint32
 
 const (
+	// AlphaModifierV1ErrorAlreadyConstructed wl_surface already has a alpha modifier object.
 	AlphaModifierV1ErrorAlreadyConstructed AlphaModifierV1Error = 0
 )
 
+// AlphaModifierV1DestroyRequest destroy the alpha modifier manager object.
+//
+// Destroy the alpha modifier manager. This doesn't destroy objects
+// created with the manager.
 type AlphaModifierV1DestroyRequest struct {
 }
 
@@ -32,6 +37,11 @@ func (r *AlphaModifierV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *AlphaModifierV1DestroyRequest) Since() uint32 { return 1 }
 
+// AlphaModifierV1GetSurfaceRequest create a new alpha modifier surface object.
+//
+// Create a new alpha modifier surface object associated with the
+// given wl_surface. If there is already such an object associated with
+// the wl_surface, the already_constructed error will be raised.
 type AlphaModifierV1GetSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -51,18 +61,34 @@ func (r *AlphaModifierV1GetSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *AlphaModifierV1GetSurfaceRequest) Since() uint32 { return 1 }
 
+// AlphaModifierV1 surface alpha modifier manager.
+//
+// This interface allows a client to set a factor for the alpha values on a
+// surface, which can be used to offload such operations to the compositor,
+// which can in turn for example offload them to KMS.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type AlphaModifierV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewAlphaModifierV1 wraps p in a AlphaModifierV1 proxy.
 func NewAlphaModifierV1(p *wayland.Proxy) *AlphaModifierV1 {
 	return &AlphaModifierV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *AlphaModifierV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the alpha modifier manager object.
+//
+// Destroy the alpha modifier manager. This doesn't destroy objects
+// created with the manager.
 func (o *AlphaModifierV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +100,11 @@ func (o *AlphaModifierV1) Destroy() error {
 	return nil
 }
 
+// GetSurface create a new alpha modifier surface object.
+//
+// Create a new alpha modifier surface object associated with the
+// given wl_surface. If there is already such an object associated with
+// the wl_surface, the already_constructed error will be raised.
 func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

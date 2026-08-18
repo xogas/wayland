@@ -29,21 +29,39 @@ var shellEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ShellVersion latest protocol version.
+//
+// The 'current' member of this enum gives the version of the
+// protocol.  Implementations can compare this to the version
+// they implement using static_assert to ensure the protocol and
+// implementation versions match.
 type ShellVersion uint32
 
 const (
+	// ShellVersionCurrent always the latest version.
 	ShellVersionCurrent ShellVersion = 5
 )
 
 type ShellError uint32
 
 const (
-	ShellErrorRole               ShellError = 0
-	ShellErrorDefunctSurfaces    ShellError = 1
+	// ShellErrorRole given wl_surface has another role.
+	ShellErrorRole ShellError = 0
+	// ShellErrorDefunctSurfaces xdg_shell was destroyed before children.
+	ShellErrorDefunctSurfaces ShellError = 1
+	// ShellErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
 	ShellErrorNotTheTopmostPopup ShellError = 2
+	// ShellErrorInvalidPopupParent the client specified an invalid popup parent surface.
 	ShellErrorInvalidPopupParent ShellError = 3
 )
 
+// ShellDestroyRequest destroy xdg_shell.
+//
+// Destroy this xdg_shell object.
+//
+// Destroying a bound xdg_shell object while there are surfaces
+// still alive created by this xdg_shell object instance is illegal
+// and will result in a protocol error.
 type ShellDestroyRequest struct {
 }
 
@@ -55,6 +73,13 @@ func (r *ShellDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellDestroyRequest) Since() uint32 { return 1 }
 
+// ShellUseUnstableVersionRequest enable use of this unstable version.
+//
+// Negotiate the unstable version of the interface.  This
+// mechanism is in place to ensure client and server agree on the
+// unstable versions of the protocol that they speak or exit
+// cleanly if they don't agree.  This request will go away once
+// the xdg-shell protocol is stable.
 type ShellUseUnstableVersionRequest struct {
 	Version int32
 }
@@ -70,6 +95,16 @@ func (r *ShellUseUnstableVersionRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellUseUnstableVersionRequest) Since() uint32 { return 1 }
 
+// ShellGetXdgSurfaceRequest create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface and gives it the
+// xdg_surface role. A wl_surface can only be given an xdg_surface role
+// once. If get_xdg_surface is called with a wl_surface that already has
+// an active xdg_surface associated with it, or if it had any other role,
+// an error is raised.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 type ShellGetXdgSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -89,14 +124,29 @@ func (r *ShellGetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellGetXdgSurfaceRequest) Since() uint32 { return 1 }
 
+// ShellGetXdgPopupRequest create a popup for a surface.
+//
+// This creates an xdg_popup for the given surface and gives it the
+// xdg_popup role. A wl_surface can only be given an xdg_popup role
+// once. If get_xdg_popup is called with a wl_surface that already has
+// an active xdg_popup associated with it, or if it had any other role,
+// an error is raised.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event.
+//
+// See the documentation of xdg_popup for more details about what an
+// xdg_popup is and how it is used.
 type ShellGetXdgPopupRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
 	Parent  wire.ObjectID
-	Seat    wire.ObjectID
-	Serial  uint32
-	X       int32
-	Y       int32
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
+	Serial uint32
+	X      int32
+	Y      int32
 }
 
 func (r *ShellGetXdgPopupRequest) Opcode() uint16 { return ShellRequestGetXdgPopup }
@@ -128,7 +178,12 @@ func (r *ShellGetXdgPopupRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellGetXdgPopupRequest) Since() uint32 { return 1 }
 
+// ShellPongRequest respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive.
 type ShellPongRequest struct {
+	// Serial serial of the ping event.
 	Serial uint32
 }
 
@@ -143,7 +198,21 @@ func (r *ShellPongRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellPongRequest) Since() uint32 { return 1 }
 
+// ShellPingEvent check if the client is alive.
+//
+// The ping event asks the client if it's still alive. Pass the
+// serial specified in the event back to the compositor by sending
+// a "pong" request back with the specified serial.
+//
+// Compositors can use this to determine if the client is still
+// alive. It's unspecified what will happen if the client doesn't
+// respond to the ping request, or in what timeframe. Clients should
+// try to respond in a reasonable amount of time.
+//
+// A compositor is free to ping in any way it wants, but a client must
+// always respond to any xdg_shell object it created.
 type ShellPingEvent struct {
+	// Serial pass this to the pong request.
 	Serial uint32
 }
 
@@ -160,21 +229,31 @@ func (e *ShellPingEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ShellPingEvent) Since() uint32 { return 1 }
 
+// ShellPingFunc is a callback for Ping events.
 type ShellPingFunc func(ev ShellPingEvent)
 
+// Shell create desktop-style surfaces.
+//
+// xdg_shell allows clients to turn a wl_surface into a "real window"
+// which can be dragged, resized, stacked, and moved around by the
+// user. Everything about this interface is suited towards traditional
+// desktop environments.
 type Shell struct {
 	proxy *wayland.Proxy
 }
 
+// NewShell wraps p in a Shell proxy.
 func NewShell(p *wayland.Proxy) *Shell {
 	p.SetEventFDCounts(shellEventFDCounts)
 	return &Shell{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Shell) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnPing registers fn to receive Ping events.
 func (o *Shell) OnPing(fn ShellPingFunc) {
 	o.proxy.RegisterEvent(ShellEventPing, func(r *wire.Reader) {
 		var ev ShellPingEvent
@@ -188,6 +267,13 @@ func (o *Shell) OnPing(fn ShellPingFunc) {
 	})
 }
 
+// Destroy destroy xdg_shell.
+//
+// Destroy this xdg_shell object.
+//
+// Destroying a bound xdg_shell object while there are surfaces
+// still alive created by this xdg_shell object instance is illegal
+// and will result in a protocol error.
 func (o *Shell) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -199,12 +285,29 @@ func (o *Shell) Destroy() error {
 	return nil
 }
 
+// UseUnstableVersion enable use of this unstable version.
+//
+// Negotiate the unstable version of the interface.  This
+// mechanism is in place to ensure client and server agree on the
+// unstable versions of the protocol that they speak or exit
+// cleanly if they don't agree.  This request will go away once
+// the xdg-shell protocol is stable.
 func (o *Shell) UseUnstableVersion(version int32) error {
 	return o.proxy.SendRequest(ShellRequestUseUnstableVersion, &ShellUseUnstableVersionRequest{
 		Version: version,
 	})
 }
 
+// GetXdgSurface create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface and gives it the
+// xdg_surface role. A wl_surface can only be given an xdg_surface role
+// once. If get_xdg_surface is called with a wl_surface that already has
+// an active xdg_surface associated with it, or if it had any other role,
+// an error is raised.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 func (o *Shell) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -223,6 +326,19 @@ func (o *Shell) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	return wrapped, nil
 }
 
+// GetXdgPopup create a popup for a surface.
+//
+// This creates an xdg_popup for the given surface and gives it the
+// xdg_popup role. A wl_surface can only be given an xdg_popup role
+// once. If get_xdg_popup is called with a wl_surface that already has
+// an active xdg_popup associated with it, or if it had any other role,
+// an error is raised.
+//
+// This request must be used in response to some sort of user action
+// like a button press, key press, or touch down event.
+//
+// See the documentation of xdg_popup for more details about what an
+// xdg_popup is and how it is used.
 func (o *Shell) GetXdgPopup(surface wire.ObjectID, parent wire.ObjectID, seat wire.ObjectID, serial uint32, x int32, y int32) (*Popup, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -246,6 +362,10 @@ func (o *Shell) GetXdgPopup(surface wire.ObjectID, parent wire.ObjectID, seat wi
 	return wrapped, nil
 }
 
+// Pong respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive.
 func (o *Shell) Pong(serial uint32) error {
 	return o.proxy.SendRequest(ShellRequestPong, &ShellPongRequest{
 		Serial: serial,

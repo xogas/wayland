@@ -15,6 +15,10 @@ const (
 	ImporterV2RequestImportToplevel uint16 = 1
 )
 
+// ImporterV2DestroyRequest destroy the xdg_importer object.
+//
+// Notify the compositor that the xdg_importer object will no longer be
+// used.
 type ImporterV2DestroyRequest struct {
 }
 
@@ -26,8 +30,17 @@ func (r *ImporterV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImporterV2DestroyRequest) Since() uint32 { return 1 }
 
+// ImporterV2ImportToplevelRequest import a toplevel surface.
+//
+// The import_toplevel request imports a surface from any client given a handle
+// retrieved by exporting said surface using xdg_exporter.export_toplevel.
+// When called, a new xdg_imported object will be created. This new object
+// represents the imported surface, and the importing client can
+// manipulate its relationship using it. See xdg_imported for details.
 type ImporterV2ImportToplevelRequest struct {
-	ID     wire.NewID
+	// ID the new xdg_imported object.
+	ID wire.NewID
+	// Handle the exported surface handle.
 	Handle string
 }
 
@@ -45,18 +58,29 @@ func (r *ImporterV2ImportToplevelRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImporterV2ImportToplevelRequest) Since() uint32 { return 1 }
 
+// ImporterV2 interface for importing surfaces.
+//
+// A global interface used for importing surfaces exported by xdg_exporter.
+// With this interface, a client can create a reference to a surface of
+// another client.
 type ImporterV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImporterV2 wraps p in a ImporterV2 proxy.
 func NewImporterV2(p *wayland.Proxy) *ImporterV2 {
 	return &ImporterV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImporterV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_importer object.
+//
+// Notify the compositor that the xdg_importer object will no longer be
+// used.
 func (o *ImporterV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -68,6 +92,13 @@ func (o *ImporterV2) Destroy() error {
 	return nil
 }
 
+// ImportToplevel import a toplevel surface.
+//
+// The import_toplevel request imports a surface from any client given a handle
+// retrieved by exporting said surface using xdg_exporter.export_toplevel.
+// When called, a new xdg_imported object will be created. This new object
+// represents the imported surface, and the importing client can
+// manipulate its relationship using it. See xdg_imported for details.
 func (o *ImporterV2) ImportToplevel(handle string) (*ImportedV2, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

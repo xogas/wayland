@@ -30,12 +30,18 @@ var colorrepresentationmanagerv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// ColorRepresentationManagerV1Error protocol errors.
 type ColorRepresentationManagerV1Error uint32
 
 const (
+	// ColorRepresentationManagerV1ErrorSurfaceExists color representation surface exists already.
 	ColorRepresentationManagerV1ErrorSurfaceExists ColorRepresentationManagerV1Error = 1
 )
 
+// ColorRepresentationManagerV1DestroyRequest destroy the manager.
+//
+// Destroy the wp_color_representation_manager_v1 object. This does not
+// affect any other objects in any way.
 type ColorRepresentationManagerV1DestroyRequest struct {
 }
 
@@ -49,6 +55,15 @@ func (r *ColorRepresentationManagerV1DestroyRequest) Marshal(w *wire.Writer) err
 
 func (r *ColorRepresentationManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationManagerV1GetSurfaceRequest create a color representation interface for a wl_surface.
+//
+// If a wp_color_representation_surface_v1 object already exists for the
+// given wl_surface, the protocol error surface_exists is raised.
+//
+// This creates a new color wp_color_representation_surface_v1 object for
+// the given wl_surface.
+//
+// See the wp_color_representation_surface_v1 interface for more details.
 type ColorRepresentationManagerV1GetSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -70,7 +85,15 @@ func (r *ColorRepresentationManagerV1GetSurfaceRequest) Marshal(w *wire.Writer) 
 
 func (r *ColorRepresentationManagerV1GetSurfaceRequest) Since() uint32 { return 1 }
 
+// ColorRepresentationManagerV1SupportedAlphaModeEvent supported alpha modes.
+//
+// When this object is created, it shall immediately send this event once
+// for each alpha mode the compositor supports.
+//
+// For the definition of the supported values, see the
+// wp_color_representation_surface_v1::alpha_mode enum.
 type ColorRepresentationManagerV1SupportedAlphaModeEvent struct {
+	// AlphaMode supported alpha mode.
 	AlphaMode ColorRepresentationSurfaceV1AlphaMode
 }
 
@@ -89,9 +112,20 @@ func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Unmarshal(r *wire.
 
 func (e *ColorRepresentationManagerV1SupportedAlphaModeEvent) Since() uint32 { return 1 }
 
+// ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent supported matrix coefficients and ranges.
+//
+// When this object is created, it shall immediately send this event once
+// for each matrix coefficient and color range combination the compositor
+// supports.
+//
+// For the definition of the supported values, see the
+// wp_color_representation_surface_v1::coefficients and
+// wp_color_representation_surface_v1::range enums.
 type ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent struct {
+	// Coefficients supported matrix coefficients.
 	Coefficients ColorRepresentationSurfaceV1Coefficients
-	Range        ColorRepresentationSurfaceV1Range
+	// Range full range flag.
+	Range ColorRepresentationSurfaceV1Range
 }
 
 func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Opcode() uint16 {
@@ -114,6 +148,9 @@ func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Unmars
 
 func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Since() uint32 { return 1 }
 
+// ColorRepresentationManagerV1DoneEvent all features have been sent.
+//
+// This event is sent when all supported features have been sent.
 type ColorRepresentationManagerV1DoneEvent struct {
 }
 
@@ -127,25 +164,38 @@ func (e *ColorRepresentationManagerV1DoneEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *ColorRepresentationManagerV1DoneEvent) Since() uint32 { return 1 }
 
+// ColorRepresentationManagerV1SupportedAlphaModeFunc is a callback for SupportedAlphaMode events.
 type ColorRepresentationManagerV1SupportedAlphaModeFunc func(ev ColorRepresentationManagerV1SupportedAlphaModeEvent)
 
+// ColorRepresentationManagerV1SupportedCoefficientsAndRangesFunc is a callback for SupportedCoefficientsAndRanges events.
 type ColorRepresentationManagerV1SupportedCoefficientsAndRangesFunc func(ev ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent)
 
+// ColorRepresentationManagerV1DoneFunc is a callback for Done events.
 type ColorRepresentationManagerV1DoneFunc func(ev ColorRepresentationManagerV1DoneEvent)
 
+// ColorRepresentationManagerV1 color representation manager singleton.
+//
+// A singleton global interface used for getting color representation
+// extensions for wl_surface. The extension interfaces allow setting the
+// color representation of surfaces.
+//
+// Compositors should never remove this global.
 type ColorRepresentationManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewColorRepresentationManagerV1 wraps p in a ColorRepresentationManagerV1 proxy.
 func NewColorRepresentationManagerV1(p *wayland.Proxy) *ColorRepresentationManagerV1 {
 	p.SetEventFDCounts(colorrepresentationmanagerv1EventFDCounts)
 	return &ColorRepresentationManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ColorRepresentationManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSupportedAlphaMode registers fn to receive SupportedAlphaMode events.
 func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentationManagerV1SupportedAlphaModeFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedAlphaMode, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedAlphaModeEvent
@@ -159,6 +209,7 @@ func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentati
 	})
 }
 
+// OnSupportedCoefficientsAndRanges registers fn to receive SupportedCoefficientsAndRanges events.
 func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn ColorRepresentationManagerV1SupportedCoefficientsAndRangesFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedCoefficientsAndRanges, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent
@@ -172,6 +223,7 @@ func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn Color
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1DoneEvent
@@ -185,6 +237,10 @@ func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1Don
 	})
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the wp_color_representation_manager_v1 object. This does not
+// affect any other objects in any way.
 func (o *ColorRepresentationManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -196,6 +252,15 @@ func (o *ColorRepresentationManagerV1) Destroy() error {
 	return nil
 }
 
+// GetSurface create a color representation interface for a wl_surface.
+//
+// If a wp_color_representation_surface_v1 object already exists for the
+// given wl_surface, the protocol error surface_exists is raised.
+//
+// This creates a new color wp_color_representation_surface_v1 object for
+// the given wl_surface.
+//
+// See the wp_color_representation_surface_v1 interface for more details.
 func (o *ColorRepresentationManagerV1) GetSurface(surface wire.ObjectID) (*ColorRepresentationSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

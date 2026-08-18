@@ -36,9 +36,20 @@ var datacontroldevicev1EventFDCounts = map[uint16]int{
 type DataControlDeviceV1Error uint32
 
 const (
+	// DataControlDeviceV1ErrorUsedSource source given to set_selection or set_primary_selection was already used before.
 	DataControlDeviceV1ErrorUsedSource DataControlDeviceV1Error = 1
 )
 
+// DataControlDeviceV1SetSelectionRequest copy data to the selection.
+//
+// This request asks the compositor to set the selection to the data from
+// the source on behalf of the client.
+//
+// The given source may not be used in any further set_selection or
+// set_primary_selection requests. Attempting to use a previously used
+// source triggers the used_source protocol error.
+//
+// To unset the selection, set the source to NULL.
 type DataControlDeviceV1SetSelectionRequest struct {
 	Source wire.ObjectID // nullable
 }
@@ -56,6 +67,9 @@ func (r *DataControlDeviceV1SetSelectionRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlDeviceV1SetSelectionRequest) Since() uint32 { return 1 }
 
+// DataControlDeviceV1DestroyRequest destroy this data device.
+//
+// Destroys the data device object.
 type DataControlDeviceV1DestroyRequest struct {
 }
 
@@ -67,6 +81,19 @@ func (r *DataControlDeviceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlDeviceV1DestroyRequest) Since() uint32 { return 1 }
 
+// DataControlDeviceV1SetPrimarySelectionRequest copy data to the primary selection.
+//
+// This request asks the compositor to set the primary selection to the
+// data from the source on behalf of the client.
+//
+// The given source may not be used in any further set_selection or
+// set_primary_selection requests. Attempting to use a previously used
+// source triggers the used_source protocol error.
+//
+// To unset the primary selection, set the source to NULL.
+//
+// The compositor will ignore this request if it does not support primary
+// selection.
 type DataControlDeviceV1SetPrimarySelectionRequest struct {
 	Source wire.ObjectID // nullable
 }
@@ -84,6 +111,16 @@ func (r *DataControlDeviceV1SetPrimarySelectionRequest) Marshal(w *wire.Writer) 
 
 func (r *DataControlDeviceV1SetPrimarySelectionRequest) Since() uint32 { return 1 }
 
+// DataControlDeviceV1DataOfferEvent introduce a new ext_data_control_offer.
+//
+// The data_offer event introduces a new ext_data_control_offer object,
+// which will subsequently be used in either the
+// ext_data_control_device.selection event (for the regular clipboard
+// selections) or the ext_data_control_device.primary_selection event (for
+// the primary clipboard selections). Immediately following the
+// ext_data_control_device.data_offer event, the new data_offer object
+// will send out ext_data_control_offer.offer events to describe the MIME
+// types it offers.
 type DataControlDeviceV1DataOfferEvent struct {
 	ID *DataControlOfferV1
 }
@@ -92,6 +129,21 @@ func (e *DataControlDeviceV1DataOfferEvent) Opcode() uint16 { return DataControl
 
 func (e *DataControlDeviceV1DataOfferEvent) Since() uint32 { return 1 }
 
+// DataControlDeviceV1SelectionEvent advertise new selection.
+//
+// The selection event is sent out to notify the client of a new
+// ext_data_control_offer for the selection for this device. The
+// ext_data_control_device.data_offer and the ext_data_control_offer.offer
+// events are sent out immediately before this event to introduce the data
+// offer object. The selection event is sent to a client when a new
+// selection is set. The ext_data_control_offer is valid until a new
+// ext_data_control_offer or NULL is received. The client must destroy the
+// previous selection ext_data_control_offer, if any, upon receiving this
+// event. Regardless, the previous selection will be ignored once a new
+// selection ext_data_control_offer is received.
+//
+// The first selection event is sent upon binding the
+// ext_data_control_device object.
 type DataControlDeviceV1SelectionEvent struct {
 	ID wire.ObjectID // nullable
 }
@@ -109,6 +161,10 @@ func (e *DataControlDeviceV1SelectionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataControlDeviceV1SelectionEvent) Since() uint32 { return 1 }
 
+// DataControlDeviceV1FinishedEvent this data control is no longer valid.
+//
+// This data control object is no longer valid and should be destroyed by
+// the client.
 type DataControlDeviceV1FinishedEvent struct {
 }
 
@@ -120,6 +176,23 @@ func (e *DataControlDeviceV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataControlDeviceV1FinishedEvent) Since() uint32 { return 1 }
 
+// DataControlDeviceV1PrimarySelectionEvent advertise new primary selection.
+//
+// The primary_selection event is sent out to notify the client of a new
+// ext_data_control_offer for the primary selection for this device. The
+// ext_data_control_device.data_offer and the ext_data_control_offer.offer
+// events are sent out immediately before this event to introduce the data
+// offer object. The primary_selection event is sent to a client when a
+// new primary selection is set. The ext_data_control_offer is valid until
+// a new ext_data_control_offer or NULL is received. The client must
+// destroy the previous primary selection ext_data_control_offer, if any,
+// upon receiving this event. Regardless, the previous primary selection
+// will be ignored once a new primary selection ext_data_control_offer is
+// received.
+//
+// If the compositor supports primary selection, the first
+// primary_selection event is sent upon binding the
+// ext_data_control_device object.
 type DataControlDeviceV1PrimarySelectionEvent struct {
 	ID wire.ObjectID // nullable
 }
@@ -139,27 +212,39 @@ func (e *DataControlDeviceV1PrimarySelectionEvent) Unmarshal(r *wire.Reader) err
 
 func (e *DataControlDeviceV1PrimarySelectionEvent) Since() uint32 { return 1 }
 
+// DataControlDeviceV1DataOfferFunc is a callback for DataOffer events.
 type DataControlDeviceV1DataOfferFunc func(ev DataControlDeviceV1DataOfferEvent)
 
+// DataControlDeviceV1SelectionFunc is a callback for Selection events.
 type DataControlDeviceV1SelectionFunc func(ev DataControlDeviceV1SelectionEvent)
 
+// DataControlDeviceV1FinishedFunc is a callback for Finished events.
 type DataControlDeviceV1FinishedFunc func(ev DataControlDeviceV1FinishedEvent)
 
+// DataControlDeviceV1PrimarySelectionFunc is a callback for PrimarySelection events.
 type DataControlDeviceV1PrimarySelectionFunc func(ev DataControlDeviceV1PrimarySelectionEvent)
 
+// DataControlDeviceV1 manage a data device for a seat.
+//
+// This interface allows a client to manage a seat's selection.
+//
+// When the seat is destroyed, this object becomes inert.
 type DataControlDeviceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDataControlDeviceV1 wraps p in a DataControlDeviceV1 proxy.
 func NewDataControlDeviceV1(p *wayland.Proxy) *DataControlDeviceV1 {
 	p.SetEventFDCounts(datacontroldevicev1EventFDCounts)
 	return &DataControlDeviceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataControlDeviceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnDataOffer registers fn to receive DataOffer events.
 func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev DataControlDeviceV1DataOfferEvent
@@ -178,6 +263,7 @@ func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 	})
 }
 
+// OnSelection registers fn to receive Selection events.
 func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1SelectionEvent
@@ -191,6 +277,7 @@ func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 	})
 }
 
+// OnFinished registers fn to receive Finished events.
 func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventFinished, func(r *wire.Reader) {
 		var ev DataControlDeviceV1FinishedEvent
@@ -204,6 +291,7 @@ func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 	})
 }
 
+// OnPrimarySelection registers fn to receive PrimarySelection events.
 func (o *DataControlDeviceV1) OnPrimarySelection(fn DataControlDeviceV1PrimarySelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventPrimarySelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1PrimarySelectionEvent
@@ -217,12 +305,25 @@ func (o *DataControlDeviceV1) OnPrimarySelection(fn DataControlDeviceV1PrimarySe
 	})
 }
 
+// SetSelection copy data to the selection.
+//
+// This request asks the compositor to set the selection to the data from
+// the source on behalf of the client.
+//
+// The given source may not be used in any further set_selection or
+// set_primary_selection requests. Attempting to use a previously used
+// source triggers the used_source protocol error.
+//
+// To unset the selection, set the source to NULL.
 func (o *DataControlDeviceV1) SetSelection(source wire.ObjectID) error {
 	return o.proxy.SendRequest(DataControlDeviceV1RequestSetSelection, &DataControlDeviceV1SetSelectionRequest{
 		Source: source,
 	})
 }
 
+// Destroy destroy this data device.
+//
+// Destroys the data device object.
 func (o *DataControlDeviceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -234,6 +335,19 @@ func (o *DataControlDeviceV1) Destroy() error {
 	return nil
 }
 
+// SetPrimarySelection copy data to the primary selection.
+//
+// This request asks the compositor to set the primary selection to the
+// data from the source on behalf of the client.
+//
+// The given source may not be used in any further set_selection or
+// set_primary_selection requests. Attempting to use a previously used
+// source triggers the used_source protocol error.
+//
+// To unset the primary selection, set the source to NULL.
+//
+// The compositor will ignore this request if it does not support primary
+// selection.
 func (o *DataControlDeviceV1) SetPrimarySelection(source wire.ObjectID) error {
 	return o.proxy.SendRequest(DataControlDeviceV1RequestSetPrimarySelection, &DataControlDeviceV1SetPrimarySelectionRequest{
 		Source: source,

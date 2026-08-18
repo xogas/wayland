@@ -27,6 +27,10 @@ var transientseatv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// TransientSeatV1DestroyRequest destroy transient seat.
+//
+// When the transient seat object is destroyed by the client, the
+// associated seat created by the compositor is also destroyed.
 type TransientSeatV1DestroyRequest struct {
 }
 
@@ -38,6 +42,14 @@ func (r *TransientSeatV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TransientSeatV1DestroyRequest) Since() uint32 { return 1 }
 
+// TransientSeatV1ReadyEvent transient seat is ready.
+//
+// This event advertises the global name for the wl_seat to be used with
+// wl_registry_bind.
+//
+// It is sent exactly once, immediately after the transient seat is created
+// and the new "wl_seat" global is advertised, if and only if the creation
+// of the transient seat was allowed.
 type TransientSeatV1ReadyEvent struct {
 	GlobalName uint32
 }
@@ -55,6 +67,15 @@ func (e *TransientSeatV1ReadyEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TransientSeatV1ReadyEvent) Since() uint32 { return 1 }
 
+// TransientSeatV1DeniedEvent transient seat creation denied.
+//
+// The event informs the client that the compositor denied its request to
+// create a transient seat.
+//
+// It is sent exactly once, immediately after the transient seat object is
+// created, if and only if the creation of the transient seat was denied.
+//
+// After receiving this event, the client should destroy the object.
 type TransientSeatV1DeniedEvent struct {
 }
 
@@ -66,23 +87,32 @@ func (e *TransientSeatV1DeniedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TransientSeatV1DeniedEvent) Since() uint32 { return 1 }
 
+// TransientSeatV1ReadyFunc is a callback for Ready events.
 type TransientSeatV1ReadyFunc func(ev TransientSeatV1ReadyEvent)
 
+// TransientSeatV1DeniedFunc is a callback for Denied events.
 type TransientSeatV1DeniedFunc func(ev TransientSeatV1DeniedEvent)
 
+// TransientSeatV1 transient seat handle.
+//
+// When the transient seat handle is destroyed, the seat itself will also be
+// destroyed.
 type TransientSeatV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTransientSeatV1 wraps p in a TransientSeatV1 proxy.
 func NewTransientSeatV1(p *wayland.Proxy) *TransientSeatV1 {
 	p.SetEventFDCounts(transientseatv1EventFDCounts)
 	return &TransientSeatV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TransientSeatV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnReady registers fn to receive Ready events.
 func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventReady, func(r *wire.Reader) {
 		var ev TransientSeatV1ReadyEvent
@@ -96,6 +126,7 @@ func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 	})
 }
 
+// OnDenied registers fn to receive Denied events.
 func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventDenied, func(r *wire.Reader) {
 		var ev TransientSeatV1DeniedEvent
@@ -109,6 +140,10 @@ func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 	})
 }
 
+// Destroy destroy transient seat.
+//
+// When the transient seat object is destroyed by the client, the
+// associated seat created by the compositor is also destroyed.
 func (o *TransientSeatV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

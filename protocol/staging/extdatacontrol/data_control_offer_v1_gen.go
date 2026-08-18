@@ -26,9 +26,23 @@ var datacontrolofferv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// DataControlOfferV1ReceiveRequest request that the data is transferred.
+//
+// To transfer the offered data, the client issues this request and
+// indicates the MIME type it wants to receive. The transfer happens
+// through the passed file descriptor (typically created with the pipe
+// system call). The source client writes the data in the MIME type
+// representation requested and then closes the file descriptor.
+//
+// The receiving client reads from the read end of the pipe until EOF and
+// then closes its end, at which point the transfer is complete.
+//
+// This request may happen multiple times for different MIME types.
 type DataControlOfferV1ReceiveRequest struct {
+	// MimeType mIME type desired by receiver.
 	MimeType string
-	Fd       int
+	// Fd file descriptor for data transfer.
+	Fd int
 }
 
 func (r *DataControlOfferV1ReceiveRequest) Opcode() uint16 { return DataControlOfferV1RequestReceive }
@@ -45,6 +59,9 @@ func (r *DataControlOfferV1ReceiveRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlOfferV1ReceiveRequest) Since() uint32 { return 1 }
 
+// DataControlOfferV1DestroyRequest destroy this offer.
+//
+// Destroys the data offer object.
 type DataControlOfferV1DestroyRequest struct {
 }
 
@@ -56,7 +73,12 @@ func (r *DataControlOfferV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataControlOfferV1DestroyRequest) Since() uint32 { return 1 }
 
+// DataControlOfferV1OfferEvent advertise offered MIME type.
+//
+// Sent immediately after creating the ext_data_control_offer object.
+// One event per offered MIME type.
 type DataControlOfferV1OfferEvent struct {
+	// MimeType offered MIME type.
 	MimeType string
 }
 
@@ -73,21 +95,31 @@ func (e *DataControlOfferV1OfferEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *DataControlOfferV1OfferEvent) Since() uint32 { return 1 }
 
+// DataControlOfferV1OfferFunc is a callback for Offer events.
 type DataControlOfferV1OfferFunc func(ev DataControlOfferV1OfferEvent)
 
+// DataControlOfferV1 offer to transfer data.
+//
+// A ext_data_control_offer represents a piece of data offered for transfer
+// by another client (the source client). The offer describes the different
+// MIME types that the data can be converted to and provides the mechanism
+// for transferring the data directly from the source client.
 type DataControlOfferV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewDataControlOfferV1 wraps p in a DataControlOfferV1 proxy.
 func NewDataControlOfferV1(p *wayland.Proxy) *DataControlOfferV1 {
 	p.SetEventFDCounts(datacontrolofferv1EventFDCounts)
 	return &DataControlOfferV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataControlOfferV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnOffer registers fn to receive Offer events.
 func (o *DataControlOfferV1) OnOffer(fn DataControlOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(DataControlOfferV1EventOffer, func(r *wire.Reader) {
 		var ev DataControlOfferV1OfferEvent
@@ -101,6 +133,18 @@ func (o *DataControlOfferV1) OnOffer(fn DataControlOfferV1OfferFunc) {
 	})
 }
 
+// Receive request that the data is transferred.
+//
+// To transfer the offered data, the client issues this request and
+// indicates the MIME type it wants to receive. The transfer happens
+// through the passed file descriptor (typically created with the pipe
+// system call). The source client writes the data in the MIME type
+// representation requested and then closes the file descriptor.
+//
+// The receiving client reads from the read end of the pipe until EOF and
+// then closes its end, at which point the transfer is complete.
+//
+// This request may happen multiple times for different MIME types.
 func (o *DataControlOfferV1) Receive(mimeType string, fd int) error {
 	return o.proxy.SendRequest(DataControlOfferV1RequestReceive, &DataControlOfferV1ReceiveRequest{
 		MimeType: mimeType,
@@ -108,6 +152,9 @@ func (o *DataControlOfferV1) Receive(mimeType string, fd int) error {
 	})
 }
 
+// Destroy destroy this offer.
+//
+// Destroys the data offer object.
 func (o *DataControlOfferV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

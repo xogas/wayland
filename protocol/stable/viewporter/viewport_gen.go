@@ -19,12 +19,20 @@ const (
 type ViewportError uint32
 
 const (
-	ViewportErrorBadValue    ViewportError = 0
-	ViewportErrorBadSize     ViewportError = 1
+	// ViewportErrorBadValue negative or zero values in width or height.
+	ViewportErrorBadValue ViewportError = 0
+	// ViewportErrorBadSize destination size is not integer.
+	ViewportErrorBadSize ViewportError = 1
+	// ViewportErrorOutOfBuffer source rectangle extends outside of the content area.
 	ViewportErrorOutOfBuffer ViewportError = 2
-	ViewportErrorNoSurface   ViewportError = 3
+	// ViewportErrorNoSurface the wl_surface was destroyed.
+	ViewportErrorNoSurface ViewportError = 3
 )
 
+// ViewportDestroyRequest remove scaling and cropping from the surface.
+//
+// The associated wl_surface's crop and scale state is removed.
+// The change is applied on the next wl_surface.commit.
 type ViewportDestroyRequest struct {
 }
 
@@ -36,10 +44,26 @@ func (r *ViewportDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ViewportDestroyRequest) Since() uint32 { return 1 }
 
+// ViewportSetSourceRequest set the source rectangle for cropping.
+//
+// Set the source rectangle of the associated wl_surface. See
+// wp_viewport for the description, and relation to the wl_buffer
+// size.
+//
+// If all of x, y, width and height are -1.0, the source rectangle is
+// unset instead. Any other set of values where width or height are zero
+// or negative, or x or y are negative, raise the bad_value protocol
+// error.
+//
+// The crop and scale state is double-buffered, see wl_surface.commit.
 type ViewportSetSourceRequest struct {
-	X      wire.Fixed
-	Y      wire.Fixed
-	Width  wire.Fixed
+	// X source rectangle x.
+	X wire.Fixed
+	// Y source rectangle y.
+	Y wire.Fixed
+	// Width source rectangle width.
+	Width wire.Fixed
+	// Height source rectangle height.
 	Height wire.Fixed
 }
 
@@ -63,8 +87,22 @@ func (r *ViewportSetSourceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ViewportSetSourceRequest) Since() uint32 { return 1 }
 
+// ViewportSetDestinationRequest set the surface size for scaling.
+//
+// Set the destination size of the associated wl_surface. See
+// wp_viewport for the description, and relation to the wl_buffer
+// size.
+//
+// If width is -1 and height is -1, the destination size is unset
+// instead. Any other pair of values for width and height that
+// contains zero or negative values raises the bad_value protocol
+// error.
+//
+// The crop and scale state is double-buffered, see wl_surface.commit.
 type ViewportSetDestinationRequest struct {
-	Width  int32
+	// Width surface width.
+	Width int32
+	// Height surface height.
 	Height int32
 }
 
@@ -82,18 +120,81 @@ func (r *ViewportSetDestinationRequest) Marshal(w *wire.Writer) error {
 
 func (r *ViewportSetDestinationRequest) Since() uint32 { return 1 }
 
+// Viewport crop and scale interface to a wl_surface.
+//
+// An additional interface to a wl_surface object, which allows the
+// client to specify the cropping and scaling of the surface
+// contents.
+//
+// This interface works with two concepts: the source rectangle (src_x,
+// src_y, src_width, src_height), and the destination size (dst_width,
+// dst_height). The contents of the source rectangle are scaled to the
+// destination size, and content outside the source rectangle is ignored.
+// This state is double-buffered, see wl_surface.commit.
+//
+// The two parts of crop and scale state are independent: the source
+// rectangle, and the destination size. Initially both are unset, that
+// is, no scaling is applied. The whole of the current wl_buffer is
+// used as the source, and the surface size is as defined in
+// wl_surface.attach.
+//
+// If the destination size is set, it causes the surface size to become
+// dst_width, dst_height. The source (rectangle) is scaled to exactly
+// this size. This overrides whatever the attached wl_buffer size is,
+// unless the wl_buffer is NULL. If the wl_buffer is NULL, the surface
+// has no content and therefore no size. Otherwise, the size is always
+// at least 1x1 in surface local coordinates.
+//
+// If the source rectangle is set, it defines what area of the wl_buffer is
+// taken as the source. If the source rectangle is set and the destination
+// size is not set, then src_width and src_height must be integers, and the
+// surface size becomes the source rectangle size. This results in cropping
+// without scaling. If src_width or src_height are not integers and
+// destination size is not set, the bad_size protocol error is raised when
+// the surface state is applied.
+//
+// The coordinate transformations from buffer pixel coordinates up to
+// the surface-local coordinates happen in the following order:
+//  1. buffer_transform (wl_surface.set_buffer_transform)
+//  2. buffer_scale (wl_surface.set_buffer_scale)
+//  3. crop and scale (wp_viewport.set*)
+//
+// This means, that the source rectangle coordinates of crop and scale
+// are given in the coordinates after the buffer transform and scale,
+// i.e. in the coordinates that would be the surface-local coordinates
+// if the crop and scale was not applied.
+//
+// If src_x or src_y are negative, the bad_value protocol error is raised.
+// Otherwise, if the source rectangle is partially or completely outside of
+// the non-NULL wl_buffer, then the out_of_buffer protocol error is raised
+// when the surface state is applied. A NULL wl_buffer does not raise the
+// out_of_buffer error.
+//
+// If the wl_surface associated with the wp_viewport is destroyed,
+// all wp_viewport requests except 'destroy' raise the protocol error
+// no_surface.
+//
+// If the wp_viewport object is destroyed, the crop and scale
+// state is removed from the wl_surface. The change will be applied
+// on the next wl_surface.commit.
 type Viewport struct {
 	proxy *wayland.Proxy
 }
 
+// NewViewport wraps p in a Viewport proxy.
 func NewViewport(p *wayland.Proxy) *Viewport {
 	return &Viewport{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Viewport) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy remove scaling and cropping from the surface.
+//
+// The associated wl_surface's crop and scale state is removed.
+// The change is applied on the next wl_surface.commit.
 func (o *Viewport) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -105,6 +206,18 @@ func (o *Viewport) Destroy() error {
 	return nil
 }
 
+// SetSource set the source rectangle for cropping.
+//
+// Set the source rectangle of the associated wl_surface. See
+// wp_viewport for the description, and relation to the wl_buffer
+// size.
+//
+// If all of x, y, width and height are -1.0, the source rectangle is
+// unset instead. Any other set of values where width or height are zero
+// or negative, or x or y are negative, raise the bad_value protocol
+// error.
+//
+// The crop and scale state is double-buffered, see wl_surface.commit.
 func (o *Viewport) SetSource(x wire.Fixed, y wire.Fixed, width wire.Fixed, height wire.Fixed) error {
 	return o.proxy.SendRequest(ViewportRequestSetSource, &ViewportSetSourceRequest{
 		X:      x,
@@ -114,6 +227,18 @@ func (o *Viewport) SetSource(x wire.Fixed, y wire.Fixed, width wire.Fixed, heigh
 	})
 }
 
+// SetDestination set the surface size for scaling.
+//
+// Set the destination size of the associated wl_surface. See
+// wp_viewport for the description, and relation to the wl_buffer
+// size.
+//
+// If width is -1 and height is -1, the destination size is unset
+// instead. Any other pair of values for width and height that
+// contains zero or negative values raises the bad_value protocol
+// error.
+//
+// The crop and scale state is double-buffered, see wl_surface.commit.
 func (o *Viewport) SetDestination(width int32, height int32) error {
 	return o.proxy.SendRequest(ViewportRequestSetDestination, &ViewportSetDestinationRequest{
 		Width:  width,

@@ -51,77 +51,145 @@ var textinputv3EventFDCounts = map[uint16]int{
 	8: 0,
 }
 
+// TextInputV3ChangeCause text change reason.
+//
+// Reason for the change of surrounding text or cursor posision.
 type TextInputV3ChangeCause uint32
 
 const (
+	// TextInputV3ChangeCauseInputMethod input method caused the change.
 	TextInputV3ChangeCauseInputMethod TextInputV3ChangeCause = 0
-	TextInputV3ChangeCauseOther       TextInputV3ChangeCause = 1
+	// TextInputV3ChangeCauseOther something else than the input method caused the change.
+	TextInputV3ChangeCauseOther TextInputV3ChangeCause = 1
 )
 
-// TextInputV3ContentHint is a bitfield of flags.
+// TextInputV3ContentHint content hint.
+//
+// Content hint is a bitmask to allow to modify the behavior of the text
+// input.
+//
+// This is a bitfield of flags.
 type TextInputV3ContentHint uint32
 
 const (
-	TextInputV3ContentHintNone                  TextInputV3ContentHint = 0
-	TextInputV3ContentHintCompletion            TextInputV3ContentHint = 1
-	TextInputV3ContentHintSpellcheck            TextInputV3ContentHint = 2
-	TextInputV3ContentHintAutoCapitalization    TextInputV3ContentHint = 4
-	TextInputV3ContentHintLowercase             TextInputV3ContentHint = 8
-	TextInputV3ContentHintUppercase             TextInputV3ContentHint = 16
-	TextInputV3ContentHintTitlecase             TextInputV3ContentHint = 32
-	TextInputV3ContentHintHiddenText            TextInputV3ContentHint = 64
-	TextInputV3ContentHintSensitiveData         TextInputV3ContentHint = 128
-	TextInputV3ContentHintLatin                 TextInputV3ContentHint = 256
-	TextInputV3ContentHintMultiline             TextInputV3ContentHint = 512
+	// TextInputV3ContentHintNone no special behavior.
+	TextInputV3ContentHintNone TextInputV3ContentHint = 0
+	// TextInputV3ContentHintCompletion suggest word completions.
+	TextInputV3ContentHintCompletion TextInputV3ContentHint = 1
+	// TextInputV3ContentHintSpellcheck suggest word corrections.
+	TextInputV3ContentHintSpellcheck TextInputV3ContentHint = 2
+	// TextInputV3ContentHintAutoCapitalization switch to uppercase letters at the start of a sentence.
+	TextInputV3ContentHintAutoCapitalization TextInputV3ContentHint = 4
+	// TextInputV3ContentHintLowercase prefer lowercase letters.
+	TextInputV3ContentHintLowercase TextInputV3ContentHint = 8
+	// TextInputV3ContentHintUppercase prefer uppercase letters.
+	TextInputV3ContentHintUppercase TextInputV3ContentHint = 16
+	// TextInputV3ContentHintTitlecase prefer casing for titles and headings (can be language dependent).
+	TextInputV3ContentHintTitlecase TextInputV3ContentHint = 32
+	// TextInputV3ContentHintHiddenText characters should be hidden.
+	TextInputV3ContentHintHiddenText TextInputV3ContentHint = 64
+	// TextInputV3ContentHintSensitiveData typed text should not be stored.
+	TextInputV3ContentHintSensitiveData TextInputV3ContentHint = 128
+	// TextInputV3ContentHintLatin just Latin characters should be entered.
+	TextInputV3ContentHintLatin TextInputV3ContentHint = 256
+	// TextInputV3ContentHintMultiline the text input is multiline.
+	TextInputV3ContentHintMultiline TextInputV3ContentHint = 512
+	// TextInputV3ContentHintOnScreenInputProvided an on-screen way to fill in the input is already provided by the client.
 	TextInputV3ContentHintOnScreenInputProvided TextInputV3ContentHint = 1024
-	TextInputV3ContentHintNoEmoji               TextInputV3ContentHint = 2048
-	TextInputV3ContentHintPreeditShown          TextInputV3ContentHint = 4096
+	// TextInputV3ContentHintNoEmoji prefer not offering emoji support.
+	TextInputV3ContentHintNoEmoji TextInputV3ContentHint = 2048
+	// TextInputV3ContentHintPreeditShown the text input will display preedit text in place.
+	TextInputV3ContentHintPreeditShown TextInputV3ContentHint = 4096
 )
 
+// TextInputV3ContentPurpose content purpose.
+//
+// The content purpose allows to specify the primary purpose of a text
+// input.
+//
+// This allows an input method to show special purpose input panels with
+// extra characters or to disallow some characters.
 type TextInputV3ContentPurpose uint32
 
 const (
-	TextInputV3ContentPurposeNormal   TextInputV3ContentPurpose = 0
-	TextInputV3ContentPurposeAlpha    TextInputV3ContentPurpose = 1
-	TextInputV3ContentPurposeDigits   TextInputV3ContentPurpose = 2
-	TextInputV3ContentPurposeNumber   TextInputV3ContentPurpose = 3
-	TextInputV3ContentPurposePhone    TextInputV3ContentPurpose = 4
-	TextInputV3ContentPurposeUrl      TextInputV3ContentPurpose = 5
-	TextInputV3ContentPurposeEmail    TextInputV3ContentPurpose = 6
-	TextInputV3ContentPurposeName     TextInputV3ContentPurpose = 7
+	// TextInputV3ContentPurposeNormal default input, allowing all characters.
+	TextInputV3ContentPurposeNormal TextInputV3ContentPurpose = 0
+	// TextInputV3ContentPurposeAlpha allow only alphabetic characters.
+	TextInputV3ContentPurposeAlpha TextInputV3ContentPurpose = 1
+	// TextInputV3ContentPurposeDigits allow only digits.
+	TextInputV3ContentPurposeDigits TextInputV3ContentPurpose = 2
+	// TextInputV3ContentPurposeNumber input a number (including decimal separator and sign).
+	TextInputV3ContentPurposeNumber TextInputV3ContentPurpose = 3
+	// TextInputV3ContentPurposePhone input a phone number.
+	TextInputV3ContentPurposePhone TextInputV3ContentPurpose = 4
+	// TextInputV3ContentPurposeUrl input an URL.
+	TextInputV3ContentPurposeUrl TextInputV3ContentPurpose = 5
+	// TextInputV3ContentPurposeEmail input an email address.
+	TextInputV3ContentPurposeEmail TextInputV3ContentPurpose = 6
+	// TextInputV3ContentPurposeName input a name of a person.
+	TextInputV3ContentPurposeName TextInputV3ContentPurpose = 7
+	// TextInputV3ContentPurposePassword input a password (combine with sensitive_data hint).
 	TextInputV3ContentPurposePassword TextInputV3ContentPurpose = 8
-	TextInputV3ContentPurposePin      TextInputV3ContentPurpose = 9
-	TextInputV3ContentPurposeDate     TextInputV3ContentPurpose = 10
-	TextInputV3ContentPurposeTime     TextInputV3ContentPurpose = 11
+	// TextInputV3ContentPurposePin input is a numeric password (combine with sensitive_data hint).
+	TextInputV3ContentPurposePin TextInputV3ContentPurpose = 9
+	// TextInputV3ContentPurposeDate input a date.
+	TextInputV3ContentPurposeDate TextInputV3ContentPurpose = 10
+	// TextInputV3ContentPurposeTime input a time.
+	TextInputV3ContentPurposeTime TextInputV3ContentPurpose = 11
+	// TextInputV3ContentPurposeDatetime input a date and time.
 	TextInputV3ContentPurposeDatetime TextInputV3ContentPurpose = 12
+	// TextInputV3ContentPurposeTerminal input for a terminal.
 	TextInputV3ContentPurposeTerminal TextInputV3ContentPurpose = 13
 )
 
 type TextInputV3Error uint32
 
 const (
+	// TextInputV3ErrorInvalidAction an invalid or duplicate action was specified.
 	TextInputV3ErrorInvalidAction TextInputV3Error = 0
 )
 
+// TextInputV3Action action.
+//
+// A possible action to perform on a text input.
+//
+// The submit action is intended for input entries that expect some sort of
+// activation after user interaction, e.g. the URL entry in a browser.
 type TextInputV3Action uint32
 
 const (
-	TextInputV3ActionNone   TextInputV3Action = 0
+	// TextInputV3ActionNone no action.
+	TextInputV3ActionNone TextInputV3Action = 0
+	// TextInputV3ActionSubmit the action is submitted.
 	TextInputV3ActionSubmit TextInputV3Action = 1
 )
 
+// TextInputV3PreeditHint preedit style hint.
+//
+// Style hints for the preedit string.
 type TextInputV3PreeditHint uint32
 
 const (
-	TextInputV3PreeditHintWhole         TextInputV3PreeditHint = 1
-	TextInputV3PreeditHintSelection     TextInputV3PreeditHint = 2
-	TextInputV3PreeditHintPrediction    TextInputV3PreeditHint = 3
-	TextInputV3PreeditHintPrefix        TextInputV3PreeditHint = 4
-	TextInputV3PreeditHintSuffix        TextInputV3PreeditHint = 5
+	// TextInputV3PreeditHintWhole simple pre-edit text style, typically underlined.
+	TextInputV3PreeditHintWhole TextInputV3PreeditHint = 1
+	// TextInputV3PreeditHintSelection hint for a selected piece of text, e.g. per-character navigation and composition.
+	TextInputV3PreeditHintSelection TextInputV3PreeditHint = 2
+	// TextInputV3PreeditHintPrediction predicted text, not typed by the user.
+	TextInputV3PreeditHintPrediction TextInputV3PreeditHint = 3
+	// TextInputV3PreeditHintPrefix prefixed text not being currently edited, e.g. prior to a 'selection' section.
+	TextInputV3PreeditHintPrefix TextInputV3PreeditHint = 4
+	// TextInputV3PreeditHintSuffix suffixed text not being currently edited, e.g. after a 'selection' section.
+	TextInputV3PreeditHintSuffix TextInputV3PreeditHint = 5
+	// TextInputV3PreeditHintSpellingError spelling error.
 	TextInputV3PreeditHintSpellingError TextInputV3PreeditHint = 6
-	TextInputV3PreeditHintComposeError  TextInputV3PreeditHint = 7
+	// TextInputV3PreeditHintComposeError wrong composition, e.g. user input that can not be transliterated.
+	TextInputV3PreeditHintComposeError TextInputV3PreeditHint = 7
 )
 
+// TextInputV3DestroyRequest destroy the wp_text_input.
+//
+// Destroy the wp_text_input object. Also disables all surfaces enabled
+// through this wp_text_input object.
 type TextInputV3DestroyRequest struct {
 }
 
@@ -133,6 +201,36 @@ func (r *TextInputV3DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3DestroyRequest) Since() uint32 { return 1 }
 
+// TextInputV3EnableRequest request text input to be enabled.
+//
+// Requests text input on the surface previously obtained from the enter
+// event.
+//
+// This request must be issued every time the focused text input changes
+// to a new one, including within the current surface. Use
+// zwp_text_input_v3.disable when there is no longer any input focus on
+// the current surface.
+//
+// Clients must not enable more than one text input on the single seat
+// and should disable the current text input before enabling the new one.
+// Requests to enable a text input when another text input is enabled
+// on the same seat must be ignored by compositor.
+//
+// This request resets all state associated with previous enable, disable,
+// set_surrounding_text, set_text_change_cause, set_content_type, and
+// set_cursor_rectangle requests, as well as the state associated with
+// preedit_string, commit_string, and delete_surrounding_text events.
+//
+// The set_surrounding_text, set_content_type and set_cursor_rectangle
+// requests must follow if the text input supports the necessary
+// functionality.
+//
+// State set with this request is double-buffered. It will get applied on
+// the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The changes must be applied by the compositor after issuing a
+// zwp_text_input_v3.commit request.
 type TextInputV3EnableRequest struct {
 }
 
@@ -144,6 +242,13 @@ func (r *TextInputV3EnableRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3EnableRequest) Since() uint32 { return 1 }
 
+// TextInputV3DisableRequest disable text input on a surface.
+//
+// Explicitly disable text input on the current surface (typically when
+// there is no focus on any text entry inside the surface).
+//
+// State set with this request is double-buffered. It will get applied on
+// the next zwp_text_input_v3.commit request.
 type TextInputV3DisableRequest struct {
 }
 
@@ -155,6 +260,39 @@ func (r *TextInputV3DisableRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3DisableRequest) Since() uint32 { return 1 }
 
+// TextInputV3SetSurroundingTextRequest sets the surrounding text.
+//
+// Sets the surrounding plain text around the input, excluding the preedit
+// text.
+//
+// The client should notify the compositor of any changes in any of the
+// values carried with this request, including changes caused by handling
+// incoming text-input events as well as changes caused by other
+// mechanisms like keyboard typing.
+//
+// If the client is unaware of the text around the cursor, it should not
+// issue this request, to signify lack of support to the compositor.
+//
+// Text is UTF-8 encoded, and should include the cursor position, the
+// complete selection and additional characters before and after them.
+// There is a maximum length of wayland messages, so text can not be
+// longer than 4000 bytes.
+//
+// Cursor is the byte offset of the cursor within text buffer.
+//
+// Anchor is the byte offset of the selection anchor within text buffer.
+// If there is no selected text, anchor is the same as cursor.
+//
+// If any preedit text is present, it is replaced with a cursor for the
+// purpose of this event.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The initial state for affected fields is empty, meaning that the text
+// input does not support sending surrounding text. If the empty values
+// get applied, subsequent attempts to change them may have no effect.
 type TextInputV3SetSurroundingTextRequest struct {
 	Text   string
 	Cursor int32
@@ -180,6 +318,22 @@ func (r *TextInputV3SetSurroundingTextRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3SetSurroundingTextRequest) Since() uint32 { return 1 }
 
+// TextInputV3SetTextChangeCauseRequest indicates the cause of surrounding text change.
+//
+// Tells the compositor why the text surrounding the cursor changed.
+//
+// Whenever the client detects an external change in text, cursor, or
+// anchor posision, it must issue this request to the compositor. This
+// request is intended to give the input method a chance to update the
+// preedit text in an appropriate way, e.g. by removing it when the user
+// starts typing with a keyboard.
+//
+// cause describes the source of the change.
+//
+// The value set with this request is double-buffered. It must be applied
+// and reset to initial at the next zwp_text_input_v3.commit request.
+//
+// The initial value of cause is input_method.
 type TextInputV3SetTextChangeCauseRequest struct {
 	Cause TextInputV3ChangeCause
 }
@@ -197,6 +351,19 @@ func (r *TextInputV3SetTextChangeCauseRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3SetTextChangeCauseRequest) Since() uint32 { return 1 }
 
+// TextInputV3SetContentTypeRequest set content purpose and hint.
+//
+// Sets the content purpose and content hint. While the purpose is the
+// basic purpose of an input field, the hint flags allow to modify some of
+// the behavior.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request.
+// Subsequent attempts to update them may have no effect. The values
+// remain valid until the next committed enable or disable request.
+//
+// The initial value for hint is none, and the initial value for purpose
+// is normal.
 type TextInputV3SetContentTypeRequest struct {
 	Hint    TextInputV3ContentHint
 	Purpose TextInputV3ContentPurpose
@@ -216,6 +383,38 @@ func (r *TextInputV3SetContentTypeRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3SetContentTypeRequest) Since() uint32 { return 1 }
 
+// TextInputV3SetCursorRectangleRequest set cursor position.
+//
+// Marks an area around the cursor as a x, y, width, height rectangle in
+// surface local coordinates.
+//
+// Allows the compositor to put a window with word suggestions near the
+// cursor, without obstructing the text being input.
+//
+// If the client is unaware of the position of edited text, it should not
+// issue this request, to signify lack of support to the compositor.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The initial values describing a cursor rectangle are empty. That means
+// the text input does not support describing the cursor area. If the
+// empty values get applied, subsequent attempts to change them may have
+// no effect.
+//
+// As of version 2, the zwp_text_input_v3.commit request does not apply
+// values sent with this request. Instead, it stores them in a separate
+// "committed" area. The committed values, if still valid, get applied on
+// the next wl_surface.commit request on the surface with text-input focus.
+// Both committed and applied values get invalidated on:
+//
+// - the next committed enable or disable request, or
+// - a change of the focused surface of the text-input (leave or enter events).
+//
+// This double stage application allows the compositor to position
+// the input method popup in the same frame as the contents
+// of the text on the surface are updated.
 type TextInputV3SetCursorRectangleRequest struct {
 	X      int32
 	Y      int32
@@ -245,6 +444,31 @@ func (r *TextInputV3SetCursorRectangleRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3SetCursorRectangleRequest) Since() uint32 { return 1 }
 
+// TextInputV3CommitRequest commit state.
+//
+// Atomically applies state changes recently sent to the compositor.
+//
+// The commit request establishes and updates the state of the client, and
+// must be issued after any changes to apply them.
+//
+// Text input state (enabled status, content purpose, content hint,
+// surrounding text and change cause, cursor rectangle) is conceptually
+// double-buffered within the context of a text input, i.e. between a
+// committed enable request and the following committed enable or disable
+// request.
+//
+// Protocol requests modify the pending state, as opposed to the current
+// state in use by the input method. A commit request atomically applies
+// all pending state, replacing the current state. After commit, the new
+// pending state is as documented for each related request.
+//
+// Requests are applied in the order of arrival.
+//
+// Neither current nor pending state are modified unless noted otherwise.
+//
+// The compositor must count the number of commit requests coming from
+// each zwp_text_input_v3 object and use the count as the serial in done
+// events.
 type TextInputV3CommitRequest struct {
 }
 
@@ -256,7 +480,20 @@ func (r *TextInputV3CommitRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3CommitRequest) Since() uint32 { return 1 }
 
+// TextInputV3SetAvailableActionsRequest set the available actions.
+//
+// Set the actions available for this text input.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request.
+//
+// If the available_actions array contains the none action, or contains the
+// same action multiple times, the compositor must raise the invalid_action
+// protocol error.
+//
+// Initially, no actions are available.
 type TextInputV3SetAvailableActionsRequest struct {
+	// AvailableActions available actions.
 	AvailableActions []byte
 }
 
@@ -273,6 +510,13 @@ func (r *TextInputV3SetAvailableActionsRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3SetAvailableActionsRequest) Since() uint32 { return 2 }
 
+// TextInputV3ShowInputPanelRequest show input panel.
+//
+// Requests an input panel to be shown (e.g. a on-screen keyboard).
+//
+// This request only hints the desired interaction pattern from the
+// client side, and its effect may be ignored by compositors given
+// other environmental factors. Repeated calls will be ignored.
 type TextInputV3ShowInputPanelRequest struct {
 }
 
@@ -284,6 +528,13 @@ func (r *TextInputV3ShowInputPanelRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3ShowInputPanelRequest) Since() uint32 { return 2 }
 
+// TextInputV3HideInputPanelRequest hide input panel.
+//
+// Requests an input panel to be hidden.
+//
+// This request only hints the desired interaction pattern from the
+// client side, and its effect may be ignored by compositors given
+// other environmental factors. Repeated calls will be ignored.
 type TextInputV3HideInputPanelRequest struct {
 }
 
@@ -295,6 +546,16 @@ func (r *TextInputV3HideInputPanelRequest) Marshal(w *wire.Writer) error {
 
 func (r *TextInputV3HideInputPanelRequest) Since() uint32 { return 2 }
 
+// TextInputV3EnterEvent enter event.
+//
+// Notification that this seat's text-input focus is on a certain surface.
+//
+// If client has created multiple text input objects, compositor must send
+// this event to all of them.
+//
+// When the seat has the keyboard capability the text-input focus follows
+// the keyboard focus. This event sets the current surface for the
+// text-input object.
 type TextInputV3EnterEvent struct {
 	Surface wire.ObjectID
 }
@@ -312,6 +573,19 @@ func (e *TextInputV3EnterEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3EnterEvent) Since() uint32 { return 1 }
 
+// TextInputV3LeaveEvent leave event.
+//
+// Notification that this seat's text-input focus is no longer on a
+// certain surface. The client should reset any preedit string previously
+// set.
+//
+// The leave notification clears the current surface. It is sent before
+// the enter notification for the new focus. After leave event, compositor
+// must ignore requests from any text input instances until next enter
+// event.
+//
+// When the seat has the keyboard capability the text-input focus follows
+// the keyboard focus.
 type TextInputV3LeaveEvent struct {
 	Surface wire.ObjectID
 }
@@ -329,6 +603,26 @@ func (e *TextInputV3LeaveEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3LeaveEvent) Since() uint32 { return 1 }
 
+// TextInputV3PreeditStringEvent pre-edit.
+//
+// Notify when a new composing text (pre-edit) should be set at the
+// current cursor position. Any previously set composing text must be
+// removed. Any previously existing selected text must be removed.
+//
+// The argument text contains the pre-edit string buffer.
+//
+// The parameters cursor_begin and cursor_end are counted in bytes
+// relative to the beginning of the submitted text buffer. Cursor should
+// be hidden when both are equal to -1.
+//
+// They could be represented by the client as a line if both values are
+// the same, or as a text highlight otherwise.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next zwp_text_input_v3.done event.
+//
+// The initial value of text is an empty string, and cursor_begin,
+// cursor_end and cursor_hidden are all 0.
 type TextInputV3PreeditStringEvent struct {
 	Text        *string // nullable
 	CursorBegin int32
@@ -358,6 +652,16 @@ func (e *TextInputV3PreeditStringEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3PreeditStringEvent) Since() uint32 { return 1 }
 
+// TextInputV3CommitStringEvent text commit.
+//
+// Notify when text should be inserted into the editor widget. The text to
+// commit could be either just a single character after a key press or the
+// result of some composing (pre-edit).
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next zwp_text_input_v3.done event.
+//
+// The initial value of text is an empty string.
 type TextInputV3CommitStringEvent struct {
 	Text *string // nullable
 }
@@ -375,9 +679,27 @@ func (e *TextInputV3CommitStringEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3CommitStringEvent) Since() uint32 { return 1 }
 
+// TextInputV3DeleteSurroundingTextEvent delete surrounding text.
+//
+// Notify when the text around the current cursor position should be
+// deleted.
+//
+// Before_length and after_length are the number of bytes before and after
+// the current cursor index (excluding the selection) to delete.
+//
+// If a preedit text is present, in effect before_length is counted from
+// the beginning of it, and after_length from its end (see done event
+// sequence).
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next zwp_text_input_v3.done event.
+//
+// The initial values of both before_length and after_length are 0.
 type TextInputV3DeleteSurroundingTextEvent struct {
+	// BeforeLength length of text before current cursor position.
 	BeforeLength uint32
-	AfterLength  uint32
+	// AfterLength length of text after current cursor position.
+	AfterLength uint32
 }
 
 func (e *TextInputV3DeleteSurroundingTextEvent) Opcode() uint16 {
@@ -400,6 +722,38 @@ func (e *TextInputV3DeleteSurroundingTextEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *TextInputV3DeleteSurroundingTextEvent) Since() uint32 { return 1 }
 
+// TextInputV3DoneEvent apply changes.
+//
+// Instruct the application to apply changes to state requested by the
+// preedit_string, commit_string delete_surrounding_text, and action
+// events.
+//
+// The state relating to these events is double-buffered, and each one
+// modifies the pending state. This event replaces the current state with
+// the pending state.
+//
+// The application must proceed by evaluating the changes in the following
+// order:
+//
+// 1. Replace existing preedit string with the cursor.
+// 2. Delete requested surrounding text.
+// 3. Insert commit string with the cursor at its end.
+// 4. Calculate surrounding text to send.
+// 5. Insert new preedit text in cursor position.
+// 6. Place cursor inside preedit text.
+// 7. Perform the requested action.
+//
+// The serial number reflects the last state of the zwp_text_input_v3
+// object known to the compositor. The value of the serial argument must
+// be equal to the number of commit requests already issued on that object.
+//
+// When the client receives a done event with a serial different than the
+// number of past commit requests, it must proceed with evaluating and
+// applying the changes as normal, except it should not change the current
+// state of the zwp_text_input_v3 object. All pending state requests
+// (set_surrounding_text, set_content_type and set_cursor_rectangle) on
+// the zwp_text_input_v3 object should be sent and committed after
+// receiving a zwp_text_input_v3.done event with a matching serial.
 type TextInputV3DoneEvent struct {
 	Serial uint32
 }
@@ -417,8 +771,18 @@ func (e *TextInputV3DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3DoneEvent) Since() uint32 { return 1 }
 
+// TextInputV3ActionEvent action performed.
+//
+// An action was performed on this text input.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset to initial on the next zwp_text_input_v3.done event.
+//
+// The initial value of action is none.
 type TextInputV3ActionEvent struct {
+	// Action action performed.
 	Action TextInputV3Action
+	// Serial serial number of the action event.
 	Serial uint32
 }
 
@@ -440,7 +804,16 @@ func (e *TextInputV3ActionEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3ActionEvent) Since() uint32 { return 2 }
 
+// TextInputV3LanguageEvent notify of language selection.
+//
+// Notify the application of language used by the input method.
+//
+// This event will be sent on creation if known and for all subsequent changes.
+//
+// The language should be specified as an IETF BCP 47 tag.
+// Setting an empty string will reset any known language back to the default unknown state.
 type TextInputV3LanguageEvent struct {
+	// Language new language set by IME.
 	Language string
 }
 
@@ -457,10 +830,36 @@ func (e *TextInputV3LanguageEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3LanguageEvent) Since() uint32 { return 2 }
 
+// TextInputV3PreeditHintEvent pre-edit.
+//
+// Notify of contextual hints for the pre-edit string. This
+// event is always sent together with a zwp_text_input_v3.preedit_string
+// event.
+//
+// The parameters start and end are counted in bytes relative to the
+// beginning of the text buffer submitted through
+// zwp_text_input_v3.preedit_string, and represent the substring in the
+// pre-edit text affected by the hint.
+//
+// Multiple events may be submitted if the preedit string has different
+// sections. The extent of hints may overlap. The parts of the preedit
+// string that are not covered by any zwp_text_input_v3.preedit_hint event,
+// the text will be considered unhinted. This is also the case if no
+// preedit_hint event is sent.
+//
+// Clients should provide recognizable visuals to these hints. if they are
+// unable to comply with this requisition, it may be preferable for them
+// keep the preedit_shown content hint disabled.
+//
+// Values set with this event are double-buffered. They must be applied
+// and reset on the next zwp_text_input_v3.done event.
 type TextInputV3PreeditHintEvent struct {
+	// Start starting point of the affected substring.
 	Start uint32
-	End   uint32
-	Hint  TextInputV3PreeditHint
+	// End end point of the affected substring.
+	End uint32
+	// Hint hint to apply.
+	Hint TextInputV3PreeditHint
 }
 
 func (e *TextInputV3PreeditHintEvent) Opcode() uint16 { return TextInputV3EventPreeditHint }
@@ -486,37 +885,77 @@ func (e *TextInputV3PreeditHintEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TextInputV3PreeditHintEvent) Since() uint32 { return 2 }
 
+// TextInputV3EnterFunc is a callback for Enter events.
 type TextInputV3EnterFunc func(ev TextInputV3EnterEvent)
 
+// TextInputV3LeaveFunc is a callback for Leave events.
 type TextInputV3LeaveFunc func(ev TextInputV3LeaveEvent)
 
+// TextInputV3PreeditStringFunc is a callback for PreeditString events.
 type TextInputV3PreeditStringFunc func(ev TextInputV3PreeditStringEvent)
 
+// TextInputV3CommitStringFunc is a callback for CommitString events.
 type TextInputV3CommitStringFunc func(ev TextInputV3CommitStringEvent)
 
+// TextInputV3DeleteSurroundingTextFunc is a callback for DeleteSurroundingText events.
 type TextInputV3DeleteSurroundingTextFunc func(ev TextInputV3DeleteSurroundingTextEvent)
 
+// TextInputV3DoneFunc is a callback for Done events.
 type TextInputV3DoneFunc func(ev TextInputV3DoneEvent)
 
+// TextInputV3ActionFunc is a callback for Action events.
 type TextInputV3ActionFunc func(ev TextInputV3ActionEvent)
 
+// TextInputV3LanguageFunc is a callback for Language events.
 type TextInputV3LanguageFunc func(ev TextInputV3LanguageEvent)
 
+// TextInputV3PreeditHintFunc is a callback for PreeditHint events.
 type TextInputV3PreeditHintFunc func(ev TextInputV3PreeditHintEvent)
 
+// TextInputV3 text input.
+//
+// The zwp_text_input_v3 interface represents text input and input methods
+// associated with a seat. It provides enter/leave events to follow the
+// text input focus for a seat.
+//
+// Requests are used to enable/disable the text-input object and set
+// state information like surrounding and selected text or the content type.
+// The information about the entered text is sent to the text-input object
+// via the preedit_string and commit_string events.
+//
+// Text is valid UTF-8 encoded, indices and lengths are in bytes. Indices
+// must not point to middle bytes inside a code point: they must either
+// point to the first byte of a code point or to the end of the buffer.
+// Lengths must be measured between two valid indices.
+//
+// Focus moving throughout surfaces will result in the emission of
+// zwp_text_input_v3.enter and zwp_text_input_v3.leave events. The focused
+// surface must commit zwp_text_input_v3.enable and
+// zwp_text_input_v3.disable requests as the keyboard focus moves across
+// editable and non-editable elements of the UI. Those two requests are not
+// expected to be paired with each other, the compositor must be able to
+// handle consecutive series of the same request.
+//
+// State is sent by the state requests (set_surrounding_text,
+// set_content_type and set_cursor_rectangle) and a commit request. After an
+// enter event or disable request all state information is invalidated and
+// needs to be resent by the client.
 type TextInputV3 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTextInputV3 wraps p in a TextInputV3 proxy.
 func NewTextInputV3(p *wayland.Proxy) *TextInputV3 {
 	p.SetEventFDCounts(textinputv3EventFDCounts)
 	return &TextInputV3{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TextInputV3) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventEnter, func(r *wire.Reader) {
 		var ev TextInputV3EnterEvent
@@ -530,6 +969,7 @@ func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLeave, func(r *wire.Reader) {
 		var ev TextInputV3LeaveEvent
@@ -543,6 +983,7 @@ func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 	})
 }
 
+// OnPreeditString registers fn to receive PreeditString events.
 func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV3PreeditStringEvent
@@ -556,6 +997,7 @@ func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 	})
 }
 
+// OnCommitString registers fn to receive CommitString events.
 func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV3CommitStringEvent
@@ -569,6 +1011,7 @@ func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 	})
 }
 
+// OnDeleteSurroundingText registers fn to receive DeleteSurroundingText events.
 func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV3DeleteSurroundingTextEvent
@@ -582,6 +1025,7 @@ func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTex
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDone, func(r *wire.Reader) {
 		var ev TextInputV3DoneEvent
@@ -595,6 +1039,7 @@ func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 	})
 }
 
+// OnAction registers fn to receive Action events.
 func (o *TextInputV3) OnAction(fn TextInputV3ActionFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventAction, func(r *wire.Reader) {
 		var ev TextInputV3ActionEvent
@@ -608,6 +1053,7 @@ func (o *TextInputV3) OnAction(fn TextInputV3ActionFunc) {
 	})
 }
 
+// OnLanguage registers fn to receive Language events.
 func (o *TextInputV3) OnLanguage(fn TextInputV3LanguageFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLanguage, func(r *wire.Reader) {
 		var ev TextInputV3LanguageEvent
@@ -621,6 +1067,7 @@ func (o *TextInputV3) OnLanguage(fn TextInputV3LanguageFunc) {
 	})
 }
 
+// OnPreeditHint registers fn to receive PreeditHint events.
 func (o *TextInputV3) OnPreeditHint(fn TextInputV3PreeditHintFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditHint, func(r *wire.Reader) {
 		var ev TextInputV3PreeditHintEvent
@@ -634,6 +1081,10 @@ func (o *TextInputV3) OnPreeditHint(fn TextInputV3PreeditHintFunc) {
 	})
 }
 
+// Destroy destroy the wp_text_input.
+//
+// Destroy the wp_text_input object. Also disables all surfaces enabled
+// through this wp_text_input object.
 func (o *TextInputV3) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -645,14 +1096,84 @@ func (o *TextInputV3) Destroy() error {
 	return nil
 }
 
+// Enable request text input to be enabled.
+//
+// Requests text input on the surface previously obtained from the enter
+// event.
+//
+// This request must be issued every time the focused text input changes
+// to a new one, including within the current surface. Use
+// zwp_text_input_v3.disable when there is no longer any input focus on
+// the current surface.
+//
+// Clients must not enable more than one text input on the single seat
+// and should disable the current text input before enabling the new one.
+// Requests to enable a text input when another text input is enabled
+// on the same seat must be ignored by compositor.
+//
+// This request resets all state associated with previous enable, disable,
+// set_surrounding_text, set_text_change_cause, set_content_type, and
+// set_cursor_rectangle requests, as well as the state associated with
+// preedit_string, commit_string, and delete_surrounding_text events.
+//
+// The set_surrounding_text, set_content_type and set_cursor_rectangle
+// requests must follow if the text input supports the necessary
+// functionality.
+//
+// State set with this request is double-buffered. It will get applied on
+// the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The changes must be applied by the compositor after issuing a
+// zwp_text_input_v3.commit request.
 func (o *TextInputV3) Enable() error {
 	return o.proxy.SendRequest(TextInputV3RequestEnable, &TextInputV3EnableRequest{})
 }
 
+// Disable disable text input on a surface.
+//
+// Explicitly disable text input on the current surface (typically when
+// there is no focus on any text entry inside the surface).
+//
+// State set with this request is double-buffered. It will get applied on
+// the next zwp_text_input_v3.commit request.
 func (o *TextInputV3) Disable() error {
 	return o.proxy.SendRequest(TextInputV3RequestDisable, &TextInputV3DisableRequest{})
 }
 
+// SetSurroundingText sets the surrounding text.
+//
+// Sets the surrounding plain text around the input, excluding the preedit
+// text.
+//
+// The client should notify the compositor of any changes in any of the
+// values carried with this request, including changes caused by handling
+// incoming text-input events as well as changes caused by other
+// mechanisms like keyboard typing.
+//
+// If the client is unaware of the text around the cursor, it should not
+// issue this request, to signify lack of support to the compositor.
+//
+// Text is UTF-8 encoded, and should include the cursor position, the
+// complete selection and additional characters before and after them.
+// There is a maximum length of wayland messages, so text can not be
+// longer than 4000 bytes.
+//
+// Cursor is the byte offset of the cursor within text buffer.
+//
+// Anchor is the byte offset of the selection anchor within text buffer.
+// If there is no selected text, anchor is the same as cursor.
+//
+// If any preedit text is present, it is replaced with a cursor for the
+// purpose of this event.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The initial state for affected fields is empty, meaning that the text
+// input does not support sending surrounding text. If the empty values
+// get applied, subsequent attempts to change them may have no effect.
 func (o *TextInputV3) SetSurroundingText(text string, cursor int32, anchor int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetSurroundingText, &TextInputV3SetSurroundingTextRequest{
 		Text:   text,
@@ -661,12 +1182,41 @@ func (o *TextInputV3) SetSurroundingText(text string, cursor int32, anchor int32
 	})
 }
 
+// SetTextChangeCause indicates the cause of surrounding text change.
+//
+// Tells the compositor why the text surrounding the cursor changed.
+//
+// Whenever the client detects an external change in text, cursor, or
+// anchor posision, it must issue this request to the compositor. This
+// request is intended to give the input method a chance to update the
+// preedit text in an appropriate way, e.g. by removing it when the user
+// starts typing with a keyboard.
+//
+// cause describes the source of the change.
+//
+// The value set with this request is double-buffered. It must be applied
+// and reset to initial at the next zwp_text_input_v3.commit request.
+//
+// The initial value of cause is input_method.
 func (o *TextInputV3) SetTextChangeCause(cause TextInputV3ChangeCause) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetTextChangeCause, &TextInputV3SetTextChangeCauseRequest{
 		Cause: cause,
 	})
 }
 
+// SetContentType set content purpose and hint.
+//
+// Sets the content purpose and content hint. While the purpose is the
+// basic purpose of an input field, the hint flags allow to modify some of
+// the behavior.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request.
+// Subsequent attempts to update them may have no effect. The values
+// remain valid until the next committed enable or disable request.
+//
+// The initial value for hint is none, and the initial value for purpose
+// is normal.
 func (o *TextInputV3) SetContentType(hint TextInputV3ContentHint, purpose TextInputV3ContentPurpose) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetContentType, &TextInputV3SetContentTypeRequest{
 		Hint:    hint,
@@ -674,6 +1224,38 @@ func (o *TextInputV3) SetContentType(hint TextInputV3ContentHint, purpose TextIn
 	})
 }
 
+// SetCursorRectangle set cursor position.
+//
+// Marks an area around the cursor as a x, y, width, height rectangle in
+// surface local coordinates.
+//
+// Allows the compositor to put a window with word suggestions near the
+// cursor, without obstructing the text being input.
+//
+// If the client is unaware of the position of edited text, it should not
+// issue this request, to signify lack of support to the compositor.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request, and stay valid until the
+// next committed enable or disable request.
+//
+// The initial values describing a cursor rectangle are empty. That means
+// the text input does not support describing the cursor area. If the
+// empty values get applied, subsequent attempts to change them may have
+// no effect.
+//
+// As of version 2, the zwp_text_input_v3.commit request does not apply
+// values sent with this request. Instead, it stores them in a separate
+// "committed" area. The committed values, if still valid, get applied on
+// the next wl_surface.commit request on the surface with text-input focus.
+// Both committed and applied values get invalidated on:
+//
+// - the next committed enable or disable request, or
+// - a change of the focused surface of the text-input (leave or enter events).
+//
+// This double stage application allows the compositor to position
+// the input method popup in the same frame as the contents
+// of the text on the surface are updated.
 func (o *TextInputV3) SetCursorRectangle(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetCursorRectangle, &TextInputV3SetCursorRectangleRequest{
 		X:      x,
@@ -683,10 +1265,47 @@ func (o *TextInputV3) SetCursorRectangle(x int32, y int32, width int32, height i
 	})
 }
 
+// Commit commit state.
+//
+// Atomically applies state changes recently sent to the compositor.
+//
+// The commit request establishes and updates the state of the client, and
+// must be issued after any changes to apply them.
+//
+// Text input state (enabled status, content purpose, content hint,
+// surrounding text and change cause, cursor rectangle) is conceptually
+// double-buffered within the context of a text input, i.e. between a
+// committed enable request and the following committed enable or disable
+// request.
+//
+// Protocol requests modify the pending state, as opposed to the current
+// state in use by the input method. A commit request atomically applies
+// all pending state, replacing the current state. After commit, the new
+// pending state is as documented for each related request.
+//
+// Requests are applied in the order of arrival.
+//
+// Neither current nor pending state are modified unless noted otherwise.
+//
+// The compositor must count the number of commit requests coming from
+// each zwp_text_input_v3 object and use the count as the serial in done
+// events.
 func (o *TextInputV3) Commit() error {
 	return o.proxy.SendRequest(TextInputV3RequestCommit, &TextInputV3CommitRequest{})
 }
 
+// SetAvailableActions set the available actions.
+//
+// Set the actions available for this text input.
+//
+// Values set with this request are double-buffered. They will get applied
+// on the next zwp_text_input_v3.commit request.
+//
+// If the available_actions array contains the none action, or contains the
+// same action multiple times, the compositor must raise the invalid_action
+// protocol error.
+//
+// Initially, no actions are available.
 func (o *TextInputV3) SetAvailableActions(availableActions []byte) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return wayland.ErrVersionMismatch
@@ -696,6 +1315,13 @@ func (o *TextInputV3) SetAvailableActions(availableActions []byte) error {
 	})
 }
 
+// ShowInputPanel show input panel.
+//
+// Requests an input panel to be shown (e.g. a on-screen keyboard).
+//
+// This request only hints the desired interaction pattern from the
+// client side, and its effect may be ignored by compositors given
+// other environmental factors. Repeated calls will be ignored.
 func (o *TextInputV3) ShowInputPanel() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return wayland.ErrVersionMismatch
@@ -703,6 +1329,13 @@ func (o *TextInputV3) ShowInputPanel() error {
 	return o.proxy.SendRequest(TextInputV3RequestShowInputPanel, &TextInputV3ShowInputPanelRequest{})
 }
 
+// HideInputPanel hide input panel.
+//
+// Requests an input panel to be hidden.
+//
+// This request only hints the desired interaction pattern from the
+// client side, and its effect may be ignored by compositors given
+// other environmental factors. Repeated calls will be ignored.
 func (o *TextInputV3) HideInputPanel() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return wayland.ErrVersionMismatch

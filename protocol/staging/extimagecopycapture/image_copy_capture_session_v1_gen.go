@@ -39,9 +39,17 @@ var imagecopycapturesessionv1EventFDCounts = map[uint16]int{
 type ImageCopyCaptureSessionV1Error uint32
 
 const (
+	// ImageCopyCaptureSessionV1ErrorDuplicateFrame create_frame sent before destroying previous frame.
 	ImageCopyCaptureSessionV1ErrorDuplicateFrame ImageCopyCaptureSessionV1Error = 1
 )
 
+// ImageCopyCaptureSessionV1CreateFrameRequest create a frame.
+//
+// Create a capture frame for this session.
+//
+// At most one frame object can exist for a given session at any time. If
+// a client sends a create_frame request before a previous frame object
+// has been destroyed, the duplicate_frame protocol error is raised.
 type ImageCopyCaptureSessionV1CreateFrameRequest struct {
 	Frame wire.NewID
 }
@@ -59,6 +67,13 @@ func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Marshal(w *wire.Writer) er
 
 func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1DestroyRequest delete this object.
+//
+// Destroys the session. This request can be sent at any time by the
+// client.
+//
+// This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
+// this object.
 type ImageCopyCaptureSessionV1DestroyRequest struct {
 }
 
@@ -72,8 +87,15 @@ func (r *ImageCopyCaptureSessionV1DestroyRequest) Marshal(w *wire.Writer) error 
 
 func (r *ImageCopyCaptureSessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1BufferSizeEvent image capture source dimensions.
+//
+// Provides the dimensions of the source image in buffer pixel coordinates.
+//
+// The client must attach buffers that match this size.
 type ImageCopyCaptureSessionV1BufferSizeEvent struct {
-	Width  uint32
+	// Width buffer width.
+	Width uint32
+	// Height buffer height.
 	Height uint32
 }
 
@@ -97,7 +119,14 @@ func (e *ImageCopyCaptureSessionV1BufferSizeEvent) Unmarshal(r *wire.Reader) err
 
 func (e *ImageCopyCaptureSessionV1BufferSizeEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1ShmFormatEvent shm buffer format.
+//
+// Provides the format that must be used for shared-memory buffers.
+//
+// This event may be emitted multiple times, in which case the client may
+// choose any given format.
 type ImageCopyCaptureSessionV1ShmFormatEvent struct {
+	// Format shm format.
 	Format uint32
 }
 
@@ -116,7 +145,17 @@ func (e *ImageCopyCaptureSessionV1ShmFormatEvent) Unmarshal(r *wire.Reader) erro
 
 func (e *ImageCopyCaptureSessionV1ShmFormatEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1DmabufDeviceEvent dma-buf device.
+//
+// This event advertises the device buffers must be allocated on for
+// dma-buf buffers.
+//
+// In general the device is a DRM node. The DRM node type (primary vs.
+// render) is unspecified. Clients must not rely on the compositor sending
+// a particular node type. Clients cannot check two devices for equality
+// by comparing the dev_t value.
 type ImageCopyCaptureSessionV1DmabufDeviceEvent struct {
+	// Device device dev_t value.
 	Device []byte
 }
 
@@ -135,8 +174,19 @@ func (e *ImageCopyCaptureSessionV1DmabufDeviceEvent) Unmarshal(r *wire.Reader) e
 
 func (e *ImageCopyCaptureSessionV1DmabufDeviceEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1DmabufFormatEvent dma-buf format.
+//
+// Provides the format that must be used for dma-buf buffers.
+//
+// The client may choose any of the modifiers advertised in the array of
+// 64-bit unsigned integers.
+//
+// This event may be emitted multiple times, in which case the client may
+// choose any given format.
 type ImageCopyCaptureSessionV1DmabufFormatEvent struct {
-	Format    uint32
+	// Format drm format code.
+	Format uint32
+	// Modifiers drm format modifiers.
 	Modifiers []byte
 }
 
@@ -160,6 +210,14 @@ func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Unmarshal(r *wire.Reader) e
 
 func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1DoneEvent all constraints have been sent.
+//
+// This event is sent once when all buffer constraint events have been
+// sent.
+//
+// The compositor must always end a batch of buffer constraint events with
+// this event, regardless of whether it sends the initial constraints or
+// an update.
 type ImageCopyCaptureSessionV1DoneEvent struct {
 }
 
@@ -173,6 +231,14 @@ func (e *ImageCopyCaptureSessionV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageCopyCaptureSessionV1DoneEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1StoppedEvent session is no longer available.
+//
+// This event indicates that the capture session has stopped and is no
+// longer available. This can happen in a number of cases, e.g. when the
+// underlying source is destroyed, if the user decides to end the image
+// capture, or if an unrecoverable runtime error has occurred.
+//
+// The client should destroy the session after receiving this event.
 type ImageCopyCaptureSessionV1StoppedEvent struct {
 }
 
@@ -186,31 +252,58 @@ func (e *ImageCopyCaptureSessionV1StoppedEvent) Unmarshal(r *wire.Reader) error 
 
 func (e *ImageCopyCaptureSessionV1StoppedEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureSessionV1BufferSizeFunc is a callback for BufferSize events.
 type ImageCopyCaptureSessionV1BufferSizeFunc func(ev ImageCopyCaptureSessionV1BufferSizeEvent)
 
+// ImageCopyCaptureSessionV1ShmFormatFunc is a callback for ShmFormat events.
 type ImageCopyCaptureSessionV1ShmFormatFunc func(ev ImageCopyCaptureSessionV1ShmFormatEvent)
 
+// ImageCopyCaptureSessionV1DmabufDeviceFunc is a callback for DmabufDevice events.
 type ImageCopyCaptureSessionV1DmabufDeviceFunc func(ev ImageCopyCaptureSessionV1DmabufDeviceEvent)
 
+// ImageCopyCaptureSessionV1DmabufFormatFunc is a callback for DmabufFormat events.
 type ImageCopyCaptureSessionV1DmabufFormatFunc func(ev ImageCopyCaptureSessionV1DmabufFormatEvent)
 
+// ImageCopyCaptureSessionV1DoneFunc is a callback for Done events.
 type ImageCopyCaptureSessionV1DoneFunc func(ev ImageCopyCaptureSessionV1DoneEvent)
 
+// ImageCopyCaptureSessionV1StoppedFunc is a callback for Stopped events.
 type ImageCopyCaptureSessionV1StoppedFunc func(ev ImageCopyCaptureSessionV1StoppedEvent)
 
+// ImageCopyCaptureSessionV1 image copy capture session.
+//
+// This object represents an active image copy capture session.
+//
+// After a capture session is created, buffer constraint events will be
+// emitted from the compositor to tell the client which buffer types and
+// formats are supported for reading from the session. The compositor may
+// re-send buffer constraint events whenever they change.
+//
+// To advertise buffer constraints, the compositor must send in no
+// particular order: zero or more shm_format and dmabuf_format events, zero
+// or one dmabuf_device event, and exactly one buffer_size event. Then the
+// compositor must send a done event.
+//
+// When the client has received all the buffer constraints, it can create a
+// buffer accordingly, attach it to the capture session using the
+// attach_buffer request, set the buffer damage using the damage_buffer
+// request and then send the capture request.
 type ImageCopyCaptureSessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageCopyCaptureSessionV1 wraps p in a ImageCopyCaptureSessionV1 proxy.
 func NewImageCopyCaptureSessionV1(p *wayland.Proxy) *ImageCopyCaptureSessionV1 {
 	p.SetEventFDCounts(imagecopycapturesessionv1EventFDCounts)
 	return &ImageCopyCaptureSessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageCopyCaptureSessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnBufferSize registers fn to receive BufferSize events.
 func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1BufferSizeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventBufferSize, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1BufferSizeEvent
@@ -224,6 +317,7 @@ func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1Buf
 	})
 }
 
+// OnShmFormat registers fn to receive ShmFormat events.
 func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventShmFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1ShmFormatEvent
@@ -237,6 +331,7 @@ func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmF
 	})
 }
 
+// OnDmabufDevice registers fn to receive DmabufDevice events.
 func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1DmabufDeviceFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufDevice, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufDeviceEvent
@@ -250,6 +345,7 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1D
 	})
 }
 
+// OnDmabufFormat registers fn to receive DmabufFormat events.
 func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1DmabufFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufFormatEvent
@@ -263,6 +359,7 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1D
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDone, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DoneEvent
@@ -276,6 +373,7 @@ func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc)
 	})
 }
 
+// OnStopped registers fn to receive Stopped events.
 func (o *ImageCopyCaptureSessionV1) OnStopped(fn ImageCopyCaptureSessionV1StoppedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventStopped, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1StoppedEvent
@@ -289,6 +387,13 @@ func (o *ImageCopyCaptureSessionV1) OnStopped(fn ImageCopyCaptureSessionV1Stoppe
 	})
 }
 
+// CreateFrame create a frame.
+//
+// Create a capture frame for this session.
+//
+// At most one frame object can exist for a given session at any time. If
+// a client sends a create_frame request before a previous frame object
+// has been destroyed, the duplicate_frame protocol error is raised.
 func (o *ImageCopyCaptureSessionV1) CreateFrame() (*ImageCopyCaptureFrameV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -306,6 +411,13 @@ func (o *ImageCopyCaptureSessionV1) CreateFrame() (*ImageCopyCaptureFrameV1, err
 	return wrapped, nil
 }
 
+// Destroy delete this object.
+//
+// Destroys the session. This request can be sent at any time by the
+// client.
+//
+// This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
+// this object.
 func (o *ImageCopyCaptureSessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

@@ -15,17 +15,51 @@ const (
 	DataDeviceManagerRequestRelease          uint16 = 2
 )
 
-// DataDeviceManagerDndAction is a bitfield of flags.
+// DataDeviceManagerDndAction drag and drop actions.
+//
+// This is a bitmask of the available/preferred actions in a
+// drag-and-drop operation.
+//
+// In the compositor, the selected action is a result of matching the
+// actions offered by the source and destination sides.  "action" events
+// with a "none" action will be sent to both source and destination if
+// there is no match. All further checks will effectively happen on
+// (source actions ∩ destination actions).
+//
+// In addition, compositors may also pick different actions in
+// reaction to key modifiers being pressed. One common design that
+// is used in major toolkits (and the behavior recommended for
+// compositors) is:
+//
+//   - If no modifiers are pressed, the first match (in bit order)
+//     will be used.
+//   - Pressing Shift selects "move", if enabled in the mask.
+//   - Pressing Control selects "copy", if enabled in the mask.
+//
+// Behavior beyond that is considered implementation-dependent.
+// Compositors may for example bind other modifiers (like Alt/Meta)
+// or drags initiated with other buttons than BTN_LEFT to specific
+// actions (e.g. "ask").
+//
+// This is a bitfield of flags.
 type DataDeviceManagerDndAction uint32
 
 const (
+	// DataDeviceManagerDndActionNone no action.
 	DataDeviceManagerDndActionNone DataDeviceManagerDndAction = 0
+	// DataDeviceManagerDndActionCopy copy action.
 	DataDeviceManagerDndActionCopy DataDeviceManagerDndAction = 1
+	// DataDeviceManagerDndActionMove move action.
 	DataDeviceManagerDndActionMove DataDeviceManagerDndAction = 2
-	DataDeviceManagerDndActionAsk  DataDeviceManagerDndAction = 4
+	// DataDeviceManagerDndActionAsk ask action.
+	DataDeviceManagerDndActionAsk DataDeviceManagerDndAction = 4
 )
 
+// DataDeviceManagerCreateDataSourceRequest create a new data source.
+//
+// Create a new data source.
 type DataDeviceManagerCreateDataSourceRequest struct {
+	// ID data source to create.
 	ID wire.NewID
 }
 
@@ -42,8 +76,13 @@ func (r *DataDeviceManagerCreateDataSourceRequest) Marshal(w *wire.Writer) error
 
 func (r *DataDeviceManagerCreateDataSourceRequest) Since() uint32 { return 1 }
 
+// DataDeviceManagerGetDataDeviceRequest create a new data device.
+//
+// Create a new data device for a given seat.
 type DataDeviceManagerGetDataDeviceRequest struct {
-	ID   wire.NewID
+	// ID data device to create.
+	ID wire.NewID
+	// Seat seat associated with the data device.
 	Seat wire.ObjectID
 }
 
@@ -63,6 +102,10 @@ func (r *DataDeviceManagerGetDataDeviceRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataDeviceManagerGetDataDeviceRequest) Since() uint32 { return 1 }
 
+// DataDeviceManagerReleaseRequest destroy wl_data_device_manager.
+//
+// This request destroys the wl_data_device_manager. This has no effect on any other
+// objects.
 type DataDeviceManagerReleaseRequest struct {
 }
 
@@ -74,18 +117,35 @@ func (r *DataDeviceManagerReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *DataDeviceManagerReleaseRequest) Since() uint32 { return 4 }
 
+// DataDeviceManager data transfer interface.
+//
+// The wl_data_device_manager is a singleton global object that
+// provides access to inter-client data transfer mechanisms such as
+// copy-and-paste and drag-and-drop.  These mechanisms are tied to
+// a wl_seat and this interface lets a client get a wl_data_device
+// corresponding to a wl_seat.
+//
+// Depending on the version bound, the objects created from the bound
+// wl_data_device_manager object will have different requirements for
+// functioning properly. See wl_data_source.set_actions,
+// wl_data_offer.accept and wl_data_offer.finish for details.
 type DataDeviceManager struct {
 	proxy *Proxy
 }
 
+// NewDataDeviceManager wraps p in a DataDeviceManager proxy.
 func NewDataDeviceManager(p *Proxy) *DataDeviceManager {
 	return &DataDeviceManager{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *DataDeviceManager) Proxy() *Proxy {
 	return o.proxy
 }
 
+// CreateDataSource create a new data source.
+//
+// Create a new data source.
 func (o *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -103,6 +163,9 @@ func (o *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 	return wrapped, nil
 }
 
+// GetDataDevice create a new data device.
+//
+// Create a new data device for a given seat.
 func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -121,6 +184,10 @@ func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, erro
 	return wrapped, nil
 }
 
+// Release destroy wl_data_device_manager.
+//
+// This request destroys the wl_data_device_manager. This has no effect on any other
+// objects.
 func (o *DataDeviceManager) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(4) {
 		return ErrVersionMismatch

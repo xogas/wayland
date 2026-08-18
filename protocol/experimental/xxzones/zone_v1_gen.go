@@ -40,9 +40,17 @@ var zonev1EventFDCounts = map[uint16]int{
 type ZoneV1Error uint32
 
 const (
+	// ZoneV1ErrorInvalid an invalid value has been submitted.
 	ZoneV1ErrorInvalid ZoneV1Error = 0
 )
 
+// ZoneV1DestroyRequest destroy the xx_zone object.
+//
+// Using this request a client can tell the compositor that it is not
+// going to use the 'xx_zone' object anymore.
+// The zone itself must only be destroyed if no other client
+// is currently referencing it, so this request may only destroy the
+// object reference owned by the client.
 type ZoneV1DestroyRequest struct {
 }
 
@@ -54,7 +62,47 @@ func (r *ZoneV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneV1DestroyRequest) Since() uint32 { return 1 }
 
+// ZoneV1AddItemRequest associate an item with this zone.
+//
+// Make 'item' a member of this zone.
+// This state is double-buffered and is applied on the next
+// 'wl_surface.commit' of the surface represented by 'item'.
+//
+// This request associates an item with this zone.
+// If this request is called on an item that already has a zone
+// association with a different zone, the item must leave its old zone
+// (with 'item_left' being emitted on its old zone) and will instead
+// be associated with this zone.
+//
+// Upon receiving this request and if the target zone is allowed for 'item',
+// a compositor must emit 'item_entered' to confirm the zone association.
+// It must even emit this event if the item was already associated with this
+// zone before.
+//
+// The compositor must move the surface represented by 'item' into the
+// boundary of this zone upon receiving this request and accepting it
+// (either by extending the zone size, or by moving the item surface).
+//
+// If the compositor does not allow the item to switch zone associations,
+// and wants it to remain in its previous zone, it must emit
+// 'item_blocked' instead.
+// Compositors might want to prevent zone associations if they
+// perform specialized window management (e.g. autotiling) that would
+// make clients moving items between certain zones undesirable.
+//
+// Once the 'item' is added to its zone, the compositor must first send
+// a 'frame_extents' event on the item, followed by an initial 'position'
+// event with the item's current position.
+// The compositor must then send 'position' events when the position
+// of the item in its zone is changed, for as long as the item is
+// associated with a zone.
+//
+// If the zone is invalid, an 'invalid' error must be raised and the item
+// must not be associated with the invalid zone.
+// If the referenced item is inert (its underlying surface has been
+// destroyed), the request must be silently ignored.
 type ZoneV1AddItemRequest struct {
+	// Item the zone item.
 	Item wire.ObjectID
 }
 
@@ -69,7 +117,24 @@ func (r *ZoneV1AddItemRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneV1AddItemRequest) Since() uint32 { return 1 }
 
+// ZoneV1RemoveItemRequest disassociate an item from this zone.
+//
+// Remove 'item' as a member of this zone.
+// This state is double-buffered and is applied on the next
+// 'wl_surface.commit' of the surface represented by 'item'.
+//
+// This request removes the item from this zone explicitly,
+// making the client unable to retrieve coordinates again.
+//
+// Upon receiving this request, the compositor should not change the
+// item surface position on screen, and must emit 'item_left' to confirm
+// the item's removal. It must even emit this event if the
+// item was never associated with this zone.
+//
+// If the referenced item is inert (its underlying surface has been
+// destroyed), the request must be silently ignored.
 type ZoneV1RemoveItemRequest struct {
+	// Item the zone item.
 	Item wire.ObjectID
 }
 
@@ -84,8 +149,35 @@ func (r *ZoneV1RemoveItemRequest) Marshal(w *wire.Writer) error {
 
 func (r *ZoneV1RemoveItemRequest) Since() uint32 { return 1 }
 
+// ZoneV1SizeEvent size of the zone.
+//
+// The 'size' event describes the size of this zone.
+//
+// It is a rectangle with its origin in the top-left corner, using
+// the surface coordinate space (device pixels divided by the scaling
+// factor of the output this zone is attached to).
+//
+// If a width or height value is zero, the zone is infinite
+// in that direction.
+//
+// If the width and height values are negative, the zone is considered
+// "invalid" and must not be used.
+// A size event declaring the zone invalid may only be emitted immediately
+// after the zone was created.
+// A zone must not become invalid at a later time by sending a negative
+// 'size' after the zone has been established.
+//
+// The 'size' event is sent immediately after creating an 'xx_zone_v1',
+// and whenever the size of the zone changes. A zone size can change at
+// any time, for any reason, for example due to output size or scaling
+// changes, or by compositor policy.
+//
+// Upon subsequent emissions of 'size' after 'xx_zone' has already
+// been created, the 'done' event does not have to be sent again.
 type ZoneV1SizeEvent struct {
-	Width  int32
+	// Width zone width in logical pixels.
+	Width int32
+	// Height zone height in logical pixels.
 	Height int32
 }
 
@@ -107,7 +199,17 @@ func (e *ZoneV1SizeEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1SizeEvent) Since() uint32 { return 1 }
 
+// ZoneV1HandleEvent the zone handle.
+//
+// The handle event provides the unique handle of this zone.
+// The handle may be shared with any client, which then can use it to
+// join this client's zone by calling
+// 'xx_zone_manager.get_zone_from_handle'.
+//
+// This event must only be emitted once after the zone was created.
+// If this zone is invalid, the handle must be an empty string.
 type ZoneV1HandleEvent struct {
+	// Handle the exported zone handle.
 	Handle string
 }
 
@@ -124,6 +226,13 @@ func (e *ZoneV1HandleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1HandleEvent) Since() uint32 { return 1 }
 
+// ZoneV1DoneEvent all information about the zone has been sent.
+//
+// This event is sent after all other properties (size, handle) of an
+// 'xx_zone' have been sent.
+//
+// This allows changes to the xx_zone properties to be seen as
+// atomic, even if they happen via multiple events.
 type ZoneV1DoneEvent struct {
 }
 
@@ -135,7 +244,15 @@ func (e *ZoneV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1DoneEvent) Since() uint32 { return 1 }
 
+// ZoneV1ItemBlockedEvent an item could not be associated with this zone.
+//
+// This event notifies the client that an item was prevented from
+// joining this zone.
+//
+// It is emitted as a response to 'add_item' if the compositor did not
+// allow the item to join this particular zone.
 type ZoneV1ItemBlockedEvent struct {
+	// Item the item that was prevented from joining this zone.
 	Item wire.ObjectID
 }
 
@@ -152,7 +269,14 @@ func (e *ZoneV1ItemBlockedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1ItemBlockedEvent) Since() uint32 { return 1 }
 
+// ZoneV1ItemEnteredEvent notify about an item having joined this zone.
+//
+// This event notifies the client of an item joining this zone.
+//
+// It is emitted as a response to 'add_item' or if the compositor
+// automatically had the item surface (re)join an existing zone.
 type ZoneV1ItemEnteredEvent struct {
+	// Item the item that has joined the zone.
 	Item wire.ObjectID
 }
 
@@ -169,7 +293,20 @@ func (e *ZoneV1ItemEnteredEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1ItemEnteredEvent) Since() uint32 { return 1 }
 
+// ZoneV1ItemLeftEvent notify about an item having left this zone.
+//
+// This event notifies the client of an item leaving this zone, and
+// therefore the client will no longer receive updated coordinates
+// or frame extents for this item.
+// If the client still wishes to adjust the item surface coordinates, it
+// may associate the item with a zone again by calling 'add_item'.
+//
+// This event is emitted for example if the user moved an item surface out
+// of a smaller zone's boundaries, or onto a different screen where the
+// previous zone can not expand to. It is also emitted in response to
+// explicitly removing an item via 'remove_item'.
 type ZoneV1ItemLeftEvent struct {
+	// Item the item that has left the zone.
 	Item wire.ObjectID
 }
 
@@ -186,31 +323,83 @@ func (e *ZoneV1ItemLeftEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ZoneV1ItemLeftEvent) Since() uint32 { return 1 }
 
+// ZoneV1SizeFunc is a callback for Size events.
 type ZoneV1SizeFunc func(ev ZoneV1SizeEvent)
 
+// ZoneV1HandleFunc is a callback for Handle events.
 type ZoneV1HandleFunc func(ev ZoneV1HandleEvent)
 
+// ZoneV1DoneFunc is a callback for Done events.
 type ZoneV1DoneFunc func(ev ZoneV1DoneEvent)
 
+// ZoneV1ItemBlockedFunc is a callback for ItemBlocked events.
 type ZoneV1ItemBlockedFunc func(ev ZoneV1ItemBlockedEvent)
 
+// ZoneV1ItemEnteredFunc is a callback for ItemEntered events.
 type ZoneV1ItemEnteredFunc func(ev ZoneV1ItemEnteredEvent)
 
+// ZoneV1ItemLeftFunc is a callback for ItemLeft events.
 type ZoneV1ItemLeftFunc func(ev ZoneV1ItemLeftEvent)
 
+// ZoneV1 area for a client in which it can set window positioning preferences.
+//
+// An 'xx_zone' describes a display area provided by the compositor in
+// which a client can place windows and move them around.
+//
+// A zone's area could, for example, correspond to the space usable for
+// placing windows on a specific output (space without panels or other
+// restricted elements) or it could be an area of the output the compositor
+// has specifically chosen for a client to place its surfaces in.
+//
+// Clients should make no assumptions about how a zone is presented to the
+// user (e.g. compositors may visually distinguish what makes up a zone).
+//
+// Items are added to a zone as 'xx_zone_item' objects.
+//
+// All item surface position coordinates (x, y) are relative to the selected
+// zone.
+// They are using the 'size' of the respective zone as coordinate system,
+// with (0, 0) being in the top left corner.
+//
+// If a zone item is moved out of the top/left boundaries of the zone by
+// user interaction, its coordinates must become negative, relative to the
+// zone's top-left coordinate origin. A client may position an item at negative
+// coordinates.
+//
+// The compositor must ensure that any item positioned by the client is
+// visible and accessible to the user, and is not moved into invisible space
+// outside of a zone.
+// Positioning requests may be rejected or altered by the compositor, depending
+// on its policy.
+//
+// The absolute position of the zone within the compositor's coordinate space
+// is opaque to the client and the compositor may move the entire zone without
+// the client noticing it. A zone may also be arbitrarily resized, in which
+// case the respective 'size' event must be emitted again to notify the client.
+//
+// A zone is always tied to an output and does not extend beyond it.
+//
+// A zone may be "invalid". An invalid zone is created with a negative
+// 'size' and must not be used for item arrangement.
+//
+// Upon creation the compositor must emit 'size' and 'handle' events for the
+// newly created 'xx_zone', followed by 'done'.
 type ZoneV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewZoneV1 wraps p in a ZoneV1 proxy.
 func NewZoneV1(p *wayland.Proxy) *ZoneV1 {
 	p.SetEventFDCounts(zonev1EventFDCounts)
 	return &ZoneV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ZoneV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSize registers fn to receive Size events.
 func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventSize, func(r *wire.Reader) {
 		var ev ZoneV1SizeEvent
@@ -224,6 +413,7 @@ func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 	})
 }
 
+// OnHandle registers fn to receive Handle events.
 func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventHandle, func(r *wire.Reader) {
 		var ev ZoneV1HandleEvent
@@ -237,6 +427,7 @@ func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventDone, func(r *wire.Reader) {
 		var ev ZoneV1DoneEvent
@@ -250,6 +441,7 @@ func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 	})
 }
 
+// OnItemBlocked registers fn to receive ItemBlocked events.
 func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemBlocked, func(r *wire.Reader) {
 		var ev ZoneV1ItemBlockedEvent
@@ -263,6 +455,7 @@ func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 	})
 }
 
+// OnItemEntered registers fn to receive ItemEntered events.
 func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemEntered, func(r *wire.Reader) {
 		var ev ZoneV1ItemEnteredEvent
@@ -276,6 +469,7 @@ func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 	})
 }
 
+// OnItemLeft registers fn to receive ItemLeft events.
 func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemLeft, func(r *wire.Reader) {
 		var ev ZoneV1ItemLeftEvent
@@ -289,6 +483,13 @@ func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 	})
 }
 
+// Destroy destroy the xx_zone object.
+//
+// Using this request a client can tell the compositor that it is not
+// going to use the 'xx_zone' object anymore.
+// The zone itself must only be destroyed if no other client
+// is currently referencing it, so this request may only destroy the
+// object reference owned by the client.
 func (o *ZoneV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -300,12 +501,67 @@ func (o *ZoneV1) Destroy() error {
 	return nil
 }
 
+// AddItem associate an item with this zone.
+//
+// Make 'item' a member of this zone.
+// This state is double-buffered and is applied on the next
+// 'wl_surface.commit' of the surface represented by 'item'.
+//
+// This request associates an item with this zone.
+// If this request is called on an item that already has a zone
+// association with a different zone, the item must leave its old zone
+// (with 'item_left' being emitted on its old zone) and will instead
+// be associated with this zone.
+//
+// Upon receiving this request and if the target zone is allowed for 'item',
+// a compositor must emit 'item_entered' to confirm the zone association.
+// It must even emit this event if the item was already associated with this
+// zone before.
+//
+// The compositor must move the surface represented by 'item' into the
+// boundary of this zone upon receiving this request and accepting it
+// (either by extending the zone size, or by moving the item surface).
+//
+// If the compositor does not allow the item to switch zone associations,
+// and wants it to remain in its previous zone, it must emit
+// 'item_blocked' instead.
+// Compositors might want to prevent zone associations if they
+// perform specialized window management (e.g. autotiling) that would
+// make clients moving items between certain zones undesirable.
+//
+// Once the 'item' is added to its zone, the compositor must first send
+// a 'frame_extents' event on the item, followed by an initial 'position'
+// event with the item's current position.
+// The compositor must then send 'position' events when the position
+// of the item in its zone is changed, for as long as the item is
+// associated with a zone.
+//
+// If the zone is invalid, an 'invalid' error must be raised and the item
+// must not be associated with the invalid zone.
+// If the referenced item is inert (its underlying surface has been
+// destroyed), the request must be silently ignored.
 func (o *ZoneV1) AddItem(item wire.ObjectID) error {
 	return o.proxy.SendRequest(ZoneV1RequestAddItem, &ZoneV1AddItemRequest{
 		Item: item,
 	})
 }
 
+// RemoveItem disassociate an item from this zone.
+//
+// Remove 'item' as a member of this zone.
+// This state is double-buffered and is applied on the next
+// 'wl_surface.commit' of the surface represented by 'item'.
+//
+// This request removes the item from this zone explicitly,
+// making the client unable to retrieve coordinates again.
+//
+// Upon receiving this request, the compositor should not change the
+// item surface position on screen, and must emit 'item_left' to confirm
+// the item's removal. It must even emit this event if the
+// item was never associated with this zone.
+//
+// If the referenced item is inert (its underlying surface has been
+// destroyed), the request must be silently ignored.
 func (o *ZoneV1) RemoveItem(item wire.ObjectID) error {
 	return o.proxy.SendRequest(ZoneV1RequestRemoveItem, &ZoneV1RemoveItemRequest{
 		Item: item,

@@ -18,9 +18,15 @@ const (
 type ToplevelDragManagerV1Error uint32
 
 const (
+	// ToplevelDragManagerV1ErrorInvalidSource data_source already used for toplevel drag.
 	ToplevelDragManagerV1ErrorInvalidSource ToplevelDragManagerV1Error = 0
 )
 
+// ToplevelDragManagerV1DestroyRequest destroy the xdg_toplevel_drag_manager_v1 object.
+//
+// Destroy this xdg_toplevel_drag_manager_v1 object. Other objects,
+// including xdg_toplevel_drag_v1 objects created by this factory, are not
+// affected by this request.
 type ToplevelDragManagerV1DestroyRequest struct {
 }
 
@@ -34,6 +40,18 @@ func (r *ToplevelDragManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelDragManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelDragManagerV1GetXdgToplevelDragRequest get an xdg_toplevel_drag for a wl_data_source.
+//
+// Create an xdg_toplevel_drag for a drag and drop operation that is going
+// to be started with data_source.
+//
+// This request can only be made on sources used in drag-and-drop, so it
+// must be performed before wl_data_device.start_drag. Attempting to use
+// the source other than for drag-and-drop such as in
+// wl_data_device.set_selection will raise an invalid_source error.
+//
+// Destroying data_source while a toplevel is attached to the
+// xdg_toplevel_drag is undefined.
 type ToplevelDragManagerV1GetXdgToplevelDragRequest struct {
 	ID         wire.NewID
 	DataSource wire.ObjectID
@@ -55,18 +73,60 @@ func (r *ToplevelDragManagerV1GetXdgToplevelDragRequest) Marshal(w *wire.Writer)
 
 func (r *ToplevelDragManagerV1GetXdgToplevelDragRequest) Since() uint32 { return 1 }
 
+// ToplevelDragManagerV1 move a window during a drag.
+//
+// This protocol enhances normal drag and drop with the ability to move a
+// window at the same time. This allows having detachable parts of a window
+// that when dragged out of it become a new window and can be dragged over
+// an existing window to be reattached.
+//
+// A typical workflow would be when the user starts dragging on top of a
+// detachable part of a window, the client would create a wl_data_source and
+// a xdg_toplevel_drag_v1 object and start the drag as normal via
+// wl_data_device.start_drag. Once the client determines that the detachable
+// window contents should be detached from the originating window, it creates
+// a new xdg_toplevel with these contents and issues a
+// xdg_toplevel_drag_v1.attach request before mapping it. From now on the new
+// window is moved by the compositor during the drag as if the client called
+// xdg_toplevel.move.
+//
+// Dragging an existing window is similar. The client creates a
+// xdg_toplevel_drag_v1 object and attaches the existing toplevel before
+// starting the drag.
+//
+// Clients use the existing drag and drop mechanism to detect when a window
+// can be docked or undocked. If the client wants to snap a window into a
+// parent window it should delete or unmap the dragged top-level. If the
+// contents should be detached again it attaches a new toplevel as described
+// above. If a drag operation is cancelled without being dropped, clients
+// should revert to the previous state, deleting any newly created windows
+// as appropriate. When a drag operation ends as indicated by
+// wl_data_source.dnd_drop_performed the dragged toplevel window's final
+// position is determined as if a xdg_toplevel_move operation ended.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type ToplevelDragManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelDragManagerV1 wraps p in a ToplevelDragManagerV1 proxy.
 func NewToplevelDragManagerV1(p *wayland.Proxy) *ToplevelDragManagerV1 {
 	return &ToplevelDragManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelDragManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_toplevel_drag_manager_v1 object.
+//
+// Destroy this xdg_toplevel_drag_manager_v1 object. Other objects,
+// including xdg_toplevel_drag_v1 objects created by this factory, are not
+// affected by this request.
 func (o *ToplevelDragManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -78,6 +138,18 @@ func (o *ToplevelDragManagerV1) Destroy() error {
 	return nil
 }
 
+// GetXdgToplevelDrag get an xdg_toplevel_drag for a wl_data_source.
+//
+// Create an xdg_toplevel_drag for a drag and drop operation that is going
+// to be started with data_source.
+//
+// This request can only be made on sources used in drag-and-drop, so it
+// must be performed before wl_data_device.start_drag. Attempting to use
+// the source other than for drag-and-drop such as in
+// wl_data_device.set_selection will raise an invalid_source error.
+//
+// Destroying data_source while a toplevel is attached to the
+// xdg_toplevel_drag is undefined.
 func (o *ToplevelDragManagerV1) GetXdgToplevelDrag(dataSource wire.ObjectID) (*ToplevelDragV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

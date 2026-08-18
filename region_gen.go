@@ -15,6 +15,9 @@ const (
 	RegionRequestSubtract uint16 = 2
 )
 
+// RegionDestroyRequest destroy region.
+//
+// Destroy the region.  This will invalidate the object ID.
 type RegionDestroyRequest struct {
 }
 
@@ -26,10 +29,17 @@ func (r *RegionDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *RegionDestroyRequest) Since() uint32 { return 1 }
 
+// RegionAddRequest add rectangle to region.
+//
+// Add the specified rectangle to the region.
 type RegionAddRequest struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X region-local x coordinate.
+	X int32
+	// Y region-local y coordinate.
+	Y int32
+	// Width rectangle width.
+	Width int32
+	// Height rectangle height.
 	Height int32
 }
 
@@ -53,10 +63,17 @@ func (r *RegionAddRequest) Marshal(w *wire.Writer) error {
 
 func (r *RegionAddRequest) Since() uint32 { return 1 }
 
+// RegionSubtractRequest subtract rectangle from region.
+//
+// Subtract the specified rectangle from the region.
 type RegionSubtractRequest struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X region-local x coordinate.
+	X int32
+	// Y region-local y coordinate.
+	Y int32
+	// Width rectangle width.
+	Width int32
+	// Height rectangle height.
 	Height int32
 }
 
@@ -80,18 +97,29 @@ func (r *RegionSubtractRequest) Marshal(w *wire.Writer) error {
 
 func (r *RegionSubtractRequest) Since() uint32 { return 1 }
 
+// Region region interface.
+//
+// A region object describes an area.
+//
+// Region objects are used to describe the opaque and input
+// regions of a surface.
 type Region struct {
 	proxy *Proxy
 }
 
+// NewRegion wraps p in a Region proxy.
 func NewRegion(p *Proxy) *Region {
 	return &Region{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Region) Proxy() *Proxy {
 	return o.proxy
 }
 
+// Destroy destroy region.
+//
+// Destroy the region.  This will invalidate the object ID.
 func (o *Region) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -103,6 +131,9 @@ func (o *Region) Destroy() error {
 	return nil
 }
 
+// Add add rectangle to region.
+//
+// Add the specified rectangle to the region.
 func (o *Region) Add(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(RegionRequestAdd, &RegionAddRequest{
 		X:      x,
@@ -112,6 +143,9 @@ func (o *Region) Add(x int32, y int32, width int32, height int32) error {
 	})
 }
 
+// Subtract subtract rectangle from region.
+//
+// Subtract the specified rectangle from the region.
 func (o *Region) Subtract(x int32, y int32, width int32, height int32) error {
 	return o.proxy.SendRequest(RegionRequestSubtract, &RegionSubtractRequest{
 		X:      x,

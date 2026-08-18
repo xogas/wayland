@@ -21,11 +21,17 @@ const (
 type SecurityContextV1Error uint32
 
 const (
-	SecurityContextV1ErrorAlreadyUsed     SecurityContextV1Error = 1
-	SecurityContextV1ErrorAlreadySet      SecurityContextV1Error = 2
+	// SecurityContextV1ErrorAlreadyUsed security context has already been committed.
+	SecurityContextV1ErrorAlreadyUsed SecurityContextV1Error = 1
+	// SecurityContextV1ErrorAlreadySet metadata has already been set.
+	SecurityContextV1ErrorAlreadySet SecurityContextV1Error = 2
+	// SecurityContextV1ErrorInvalidMetadata metadata is invalid.
 	SecurityContextV1ErrorInvalidMetadata SecurityContextV1Error = 3
 )
 
+// SecurityContextV1DestroyRequest destroy the security context object.
+//
+// Destroy the security context object.
 type SecurityContextV1DestroyRequest struct {
 }
 
@@ -37,7 +43,18 @@ func (r *SecurityContextV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *SecurityContextV1DestroyRequest) Since() uint32 { return 1 }
 
+// SecurityContextV1SetSandboxEngineRequest set the sandbox engine.
+//
+// Attach a unique sandbox engine name to the security context. The name
+// should follow the reverse-DNS style (e.g. "org.flatpak").
+//
+// A list of well-known engines is maintained at:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 type SecurityContextV1SetSandboxEngineRequest struct {
+	// Name the sandbox engine name.
 	Name string
 }
 
@@ -54,7 +71,23 @@ func (r *SecurityContextV1SetSandboxEngineRequest) Marshal(w *wire.Writer) error
 
 func (r *SecurityContextV1SetSandboxEngineRequest) Since() uint32 { return 1 }
 
+// SecurityContextV1SetAppIDRequest set the application ID.
+//
+// Attach an application ID to the security context.
+//
+// The application ID is an opaque, sandbox-specific identifier for an
+// application. See the well-known engines document for more details:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// The compositor may use the application ID to group clients belonging to
+// the same security context application.
+//
+// Whether this request is optional or not depends on the sandbox engine used.
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 type SecurityContextV1SetAppIDRequest struct {
+	// AppID the application ID.
 	AppID string
 }
 
@@ -69,7 +102,21 @@ func (r *SecurityContextV1SetAppIDRequest) Marshal(w *wire.Writer) error {
 
 func (r *SecurityContextV1SetAppIDRequest) Since() uint32 { return 1 }
 
+// SecurityContextV1SetInstanceIDRequest set the instance ID.
+//
+// Attach an instance ID to the security context.
+//
+// The instance ID is an opaque, sandbox-specific identifier for a running
+// instance of an application. See the well-known engines document for
+// more details:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// Whether this request is optional or not depends on the sandbox engine used.
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 type SecurityContextV1SetInstanceIDRequest struct {
+	// InstanceID the instance ID.
 	InstanceID string
 }
 
@@ -86,6 +133,18 @@ func (r *SecurityContextV1SetInstanceIDRequest) Marshal(w *wire.Writer) error {
 
 func (r *SecurityContextV1SetInstanceIDRequest) Since() uint32 { return 1 }
 
+// SecurityContextV1CommitRequest register the security context.
+//
+// Atomically register the new client and attach the security context
+// metadata.
+//
+// If the provided metadata is inconsistent or does not match with out of
+// band metadata (see
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md),
+// the invalid_metadata error may be sent eventually.
+//
+// It's a protocol error to send any request other than "destroy" after
+// this request. In this case, the already_used error is sent.
 type SecurityContextV1CommitRequest struct {
 }
 
@@ -97,18 +156,35 @@ func (r *SecurityContextV1CommitRequest) Marshal(w *wire.Writer) error {
 
 func (r *SecurityContextV1CommitRequest) Since() uint32 { return 1 }
 
+// SecurityContextV1 client security context.
+//
+// The security context allows a client to register a new client and attach
+// security context metadata to the connections.
+//
+// When both are set, the combination of the application ID and the sandbox
+// engine must uniquely identify an application. The same application ID
+// will be used across instances (e.g. if the application is restarted, or
+// if the application is started multiple times).
+//
+// When both are set, the combination of the instance ID and the sandbox
+// engine must uniquely identify a running instance of an application.
 type SecurityContextV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSecurityContextV1 wraps p in a SecurityContextV1 proxy.
 func NewSecurityContextV1(p *wayland.Proxy) *SecurityContextV1 {
 	return &SecurityContextV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SecurityContextV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the security context object.
+//
+// Destroy the security context object.
 func (o *SecurityContextV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -120,24 +196,74 @@ func (o *SecurityContextV1) Destroy() error {
 	return nil
 }
 
+// SetSandboxEngine set the sandbox engine.
+//
+// Attach a unique sandbox engine name to the security context. The name
+// should follow the reverse-DNS style (e.g. "org.flatpak").
+//
+// A list of well-known engines is maintained at:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 func (o *SecurityContextV1) SetSandboxEngine(name string) error {
 	return o.proxy.SendRequest(SecurityContextV1RequestSetSandboxEngine, &SecurityContextV1SetSandboxEngineRequest{
 		Name: name,
 	})
 }
 
+// SetAppID set the application ID.
+//
+// Attach an application ID to the security context.
+//
+// The application ID is an opaque, sandbox-specific identifier for an
+// application. See the well-known engines document for more details:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// The compositor may use the application ID to group clients belonging to
+// the same security context application.
+//
+// Whether this request is optional or not depends on the sandbox engine used.
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 func (o *SecurityContextV1) SetAppID(appID string) error {
 	return o.proxy.SendRequest(SecurityContextV1RequestSetAppID, &SecurityContextV1SetAppIDRequest{
 		AppID: appID,
 	})
 }
 
+// SetInstanceID set the instance ID.
+//
+// Attach an instance ID to the security context.
+//
+// The instance ID is an opaque, sandbox-specific identifier for a running
+// instance of an application. See the well-known engines document for
+// more details:
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md
+//
+// Whether this request is optional or not depends on the sandbox engine used.
+//
+// It is a protocol error to call this request twice. The already_set
+// error is sent in this case.
 func (o *SecurityContextV1) SetInstanceID(instanceID string) error {
 	return o.proxy.SendRequest(SecurityContextV1RequestSetInstanceID, &SecurityContextV1SetInstanceIDRequest{
 		InstanceID: instanceID,
 	})
 }
 
+// Commit register the security context.
+//
+// Atomically register the new client and attach the security context
+// metadata.
+//
+// If the provided metadata is inconsistent or does not match with out of
+// band metadata (see
+// https://gitlab.freedesktop.org/wayland/wayland-protocols/-/blob/main/staging/security-context/engines.md),
+// the invalid_metadata error may be sent eventually.
+//
+// It's a protocol error to send any request other than "destroy" after
+// this request. In this case, the already_used error is sent.
 func (o *SecurityContextV1) Commit() error {
 	return o.proxy.SendRequest(SecurityContextV1RequestCommit, &SecurityContextV1CommitRequest{})
 }

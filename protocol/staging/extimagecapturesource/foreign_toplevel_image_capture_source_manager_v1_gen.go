@@ -15,6 +15,10 @@ const (
 	ForeignToplevelImageCaptureSourceManagerV1RequestDestroy      uint16 = 1
 )
 
+// ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest create source object for foreign toplevel.
+//
+// Creates a source object for a foreign toplevel handle. Images captured
+// from this source will show the same content as the toplevel.
 type ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest struct {
 	Source         wire.NewID
 	ToplevelHandle wire.ObjectID
@@ -36,6 +40,11 @@ func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Marshal(
 
 func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
+// ForeignToplevelImageCaptureSourceManagerV1DestroyRequest delete this object.
+//
+// Destroys the manager. This request may be sent at any time by the client
+// and objects created by the manager will remain valid after its
+// destruction.
 type ForeignToplevelImageCaptureSourceManagerV1DestroyRequest struct {
 }
 
@@ -49,18 +58,28 @@ func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Marshal(w *wi
 
 func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ForeignToplevelImageCaptureSourceManagerV1 image capture source manager for foreign toplevels.
+//
+// A manager for creating image capture source objects for
+// ext_foreign_toplevel_handle_v1 objects.
 type ForeignToplevelImageCaptureSourceManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewForeignToplevelImageCaptureSourceManagerV1 wraps p in a ForeignToplevelImageCaptureSourceManagerV1 proxy.
 func NewForeignToplevelImageCaptureSourceManagerV1(p *wayland.Proxy) *ForeignToplevelImageCaptureSourceManagerV1 {
 	return &ForeignToplevelImageCaptureSourceManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ForeignToplevelImageCaptureSourceManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateSource create source object for foreign toplevel.
+//
+// Creates a source object for a foreign toplevel handle. Images captured
+// from this source will show the same content as the toplevel.
 func (o *ForeignToplevelImageCaptureSourceManagerV1) CreateSource(toplevelHandle wire.ObjectID) (*ImageCaptureSourceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -79,6 +98,11 @@ func (o *ForeignToplevelImageCaptureSourceManagerV1) CreateSource(toplevelHandle
 	return wrapped, nil
 }
 
+// Destroy delete this object.
+//
+// Destroys the manager. This request may be sent at any time by the client
+// and objects created by the manager will remain valid after its
+// destruction.
 func (o *ForeignToplevelImageCaptureSourceManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

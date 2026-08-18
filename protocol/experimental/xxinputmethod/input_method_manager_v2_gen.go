@@ -16,6 +16,10 @@ const (
 	InputMethodManagerV2RequestDestroy        uint16 = 2
 )
 
+// InputMethodManagerV2GetInputMethodRequest request an input method object.
+//
+// Request a new input xx_input_method_v1 object associated with a given
+// seat.
 type InputMethodManagerV2GetInputMethodRequest struct {
 	Seat        wire.ObjectID
 	InputMethod wire.NewID
@@ -37,6 +41,11 @@ func (r *InputMethodManagerV2GetInputMethodRequest) Marshal(w *wire.Writer) erro
 
 func (r *InputMethodManagerV2GetInputMethodRequest) Since() uint32 { return 1 }
 
+// InputMethodManagerV2GetPositionerRequest create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 type InputMethodManagerV2GetPositionerRequest struct {
 	ID wire.NewID
 }
@@ -54,6 +63,11 @@ func (r *InputMethodManagerV2GetPositionerRequest) Marshal(w *wire.Writer) error
 
 func (r *InputMethodManagerV2GetPositionerRequest) Since() uint32 { return 1 }
 
+// InputMethodManagerV2DestroyRequest destroy the input method manager.
+//
+// Destroys the xx_input_method_manager_v2 object.
+//
+// The xx_input_method_v1 objects originating from it remain valid.
 type InputMethodManagerV2DestroyRequest struct {
 }
 
@@ -67,18 +81,31 @@ func (r *InputMethodManagerV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputMethodManagerV2DestroyRequest) Since() uint32 { return 1 }
 
+// InputMethodManagerV2 input method manager.
+//
+// The input method manager allows the client to become the input method on
+// a chosen seat.
+//
+// No more than one input method must be associated with any seat at any
+// given time.
 type InputMethodManagerV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputMethodManagerV2 wraps p in a InputMethodManagerV2 proxy.
 func NewInputMethodManagerV2(p *wayland.Proxy) *InputMethodManagerV2 {
 	return &InputMethodManagerV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputMethodManagerV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// GetInputMethod request an input method object.
+//
+// Request a new input xx_input_method_v1 object associated with a given
+// seat.
 func (o *InputMethodManagerV2) GetInputMethod(seat wire.ObjectID) (*InputMethodV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -97,6 +124,11 @@ func (o *InputMethodManagerV2) GetInputMethod(seat wire.ObjectID) (*InputMethodV
 	return wrapped, nil
 }
 
+// GetPositioner create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 func (o *InputMethodManagerV2) GetPositioner() (*InputPopupPositionerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -114,6 +146,11 @@ func (o *InputMethodManagerV2) GetPositioner() (*InputPopupPositionerV1, error) 
 	return wrapped, nil
 }
 
+// Destroy destroy the input method manager.
+//
+// Destroys the xx_input_method_manager_v2 object.
+//
+// The xx_input_method_v1 objects originating from it remain valid.
 func (o *InputMethodManagerV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

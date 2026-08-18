@@ -18,10 +18,59 @@ const (
 type KeyboardFilterManagerV1Error uint32
 
 const (
+	// KeyboardFilterManagerV1ErrorAlreadyBound an argument is already bound.
 	KeyboardFilterManagerV1ErrorAlreadyBound KeyboardFilterManagerV1Error = 1
-	KeyboardFilterManagerV1ErrorWrongSeat    KeyboardFilterManagerV1Error = 2
+	// KeyboardFilterManagerV1ErrorWrongSeat the keyboard i attached to the wrong seat for this operation.
+	KeyboardFilterManagerV1ErrorWrongSeat KeyboardFilterManagerV1Error = 2
 )
 
+// KeyboardFilterManagerV1BindToInputMethodRequest bind a keyboard to an input method.
+//
+// Bind a keyboard to an input method for the purpose of capturing key presses before they reach the text input client.
+//
+// When a wl_keyboard is bound, the compositor must redirect to it the input events intended for the focused surface with text input enabled. The wl_keyboard instance receives no other events from then on.
+// See keyboard_filter.filter.
+//
+// For the bound wl_keyboard instance to intercept events, the following conditions must be fulfilled:
+// - there's a focused surface,
+// - the surface has an enabled text input object,
+// - the bound input method is active (for the meaning of "active", see input_method.activate, input_method.deactivate).
+//
+// When those conditions are fulfilled, the compositor must start redirecting input events intended for the text input surface to the wl_keyboard bound with this request. Otherwise, the text input surface receives events without intercepting them.
+//
+// Be aware that the text input client might use a wl_keyboard object(s) of different version(s) than the one used by the input method. The compositor should issue events as it would normally do for the versions in question. This protocol assumes that events to multiple keyboards of different protocol versions are equivalent.
+//
+// Background:
+//
+// Whenever the input method is activated, the compositor must start sending it keyboard events intended for the text-input client, so that the input method can be controlled using a keyboard.
+// Traditionally, from the user perspective, input methods receive keys as if they were an overlay: keys which are interesting to the input method gain a special input method meaning, all others work as usual.
+// The binding and the keyboard_filter.filter request together make this possible by letting the input method indicate which events it is interested in.
+//
+// Conceptually, when a wl_keyboard is bound to an input_method, the compositor prevents all keyboard events directed to the text input client from reaching it. They are delayed until the input method decides how to filter them using the keyboard_filter.filter request.
+//
+// Arguments:
+//
+// The wl_keyboard must not be already bound to another interface.
+// The wl_keyboard must only receive events between committed .activate and .deactivate.
+//
+// The surface argument represents an arbitrary wl_surface. When issuing wl_keyboard.enter and wl_keyboard.leave on the bound wl_keyboard, the compositor must replace the original surface argument with the one provided by the input method in this request.
+//
+// Because the wl_keyboard.enter and wl_keyboard.leave events require a surface as the target, one must be provided even if the input method doesn't display one. A dummy one is sufficient. The provided wl_surface will not be used for any other purpose than explained above.
+//
+// The surface must outlive the input method.
+//
+// NOTE: This feature works much better with compositor-side key repeat introduced in wl_seat version 10. This protocol doesn't provide controls for filtering repeat key events generated client-side.
+// A compositor implementing this protocol should implement compositor-side key repeat.
+//
+// This request takes effect immediately.
+//
+// Attempting to bind a keyboard to an input method which is already bound must cause the already_bound error.
+// Attempting to bind a keyboard object which was already bound must cause the already_bound error.
+// Attempting to bind a keyboard object to an input method acting on a different seat must cause the wrong_seat error.
+//
+// Once any of the bound objects are destroyed, the xx_keyboard_filter_v1 instance becomes disabled and it must ignore all following requests.
+//
+// When the input method gets destroyed, the compositor must stop issuing events to the keyboard and ignore any further requests to keyboard_filter, except keyboard_filter.destroy.
 type KeyboardFilterManagerV1BindToInputMethodRequest struct {
 	Keyboard    wire.ObjectID
 	InputMethod wire.ObjectID
@@ -51,6 +100,11 @@ func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Marshal(w *wire.Writer
 
 func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Since() uint32 { return 1 }
 
+// KeyboardFilterManagerV1DestroyRequest destroy the input method manager.
+//
+// Destroys the xx_keyboard_filter_manager_v1 object.
+//
+// The xx_keyboard_filter_v1 objects originating from it remain unaffected.
 type KeyboardFilterManagerV1DestroyRequest struct {
 }
 
@@ -68,14 +122,63 @@ type KeyboardFilterManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewKeyboardFilterManagerV1 wraps p in a KeyboardFilterManagerV1 proxy.
 func NewKeyboardFilterManagerV1(p *wayland.Proxy) *KeyboardFilterManagerV1 {
 	return &KeyboardFilterManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *KeyboardFilterManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// BindToInputMethod bind a keyboard to an input method.
+//
+// Bind a keyboard to an input method for the purpose of capturing key presses before they reach the text input client.
+//
+// When a wl_keyboard is bound, the compositor must redirect to it the input events intended for the focused surface with text input enabled. The wl_keyboard instance receives no other events from then on.
+// See keyboard_filter.filter.
+//
+// For the bound wl_keyboard instance to intercept events, the following conditions must be fulfilled:
+// - there's a focused surface,
+// - the surface has an enabled text input object,
+// - the bound input method is active (for the meaning of "active", see input_method.activate, input_method.deactivate).
+//
+// When those conditions are fulfilled, the compositor must start redirecting input events intended for the text input surface to the wl_keyboard bound with this request. Otherwise, the text input surface receives events without intercepting them.
+//
+// Be aware that the text input client might use a wl_keyboard object(s) of different version(s) than the one used by the input method. The compositor should issue events as it would normally do for the versions in question. This protocol assumes that events to multiple keyboards of different protocol versions are equivalent.
+//
+// Background:
+//
+// Whenever the input method is activated, the compositor must start sending it keyboard events intended for the text-input client, so that the input method can be controlled using a keyboard.
+// Traditionally, from the user perspective, input methods receive keys as if they were an overlay: keys which are interesting to the input method gain a special input method meaning, all others work as usual.
+// The binding and the keyboard_filter.filter request together make this possible by letting the input method indicate which events it is interested in.
+//
+// Conceptually, when a wl_keyboard is bound to an input_method, the compositor prevents all keyboard events directed to the text input client from reaching it. They are delayed until the input method decides how to filter them using the keyboard_filter.filter request.
+//
+// Arguments:
+//
+// The wl_keyboard must not be already bound to another interface.
+// The wl_keyboard must only receive events between committed .activate and .deactivate.
+//
+// The surface argument represents an arbitrary wl_surface. When issuing wl_keyboard.enter and wl_keyboard.leave on the bound wl_keyboard, the compositor must replace the original surface argument with the one provided by the input method in this request.
+//
+// Because the wl_keyboard.enter and wl_keyboard.leave events require a surface as the target, one must be provided even if the input method doesn't display one. A dummy one is sufficient. The provided wl_surface will not be used for any other purpose than explained above.
+//
+// The surface must outlive the input method.
+//
+// NOTE: This feature works much better with compositor-side key repeat introduced in wl_seat version 10. This protocol doesn't provide controls for filtering repeat key events generated client-side.
+// A compositor implementing this protocol should implement compositor-side key repeat.
+//
+// This request takes effect immediately.
+//
+// Attempting to bind a keyboard to an input method which is already bound must cause the already_bound error.
+// Attempting to bind a keyboard object which was already bound must cause the already_bound error.
+// Attempting to bind a keyboard object to an input method acting on a different seat must cause the wrong_seat error.
+//
+// Once any of the bound objects are destroyed, the xx_keyboard_filter_v1 instance becomes disabled and it must ignore all following requests.
+//
+// When the input method gets destroyed, the compositor must stop issuing events to the keyboard and ignore any further requests to keyboard_filter, except keyboard_filter.destroy.
 func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard wire.ObjectID, inputMethod wire.ObjectID, surface wire.ObjectID) (*KeyboardFilterV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -96,6 +199,11 @@ func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard wire.ObjectID, inpu
 	return wrapped, nil
 }
 
+// Destroy destroy the input method manager.
+//
+// Destroys the xx_keyboard_filter_manager_v1 object.
+//
+// The xx_keyboard_filter_v1 objects originating from it remain unaffected.
 func (o *KeyboardFilterManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

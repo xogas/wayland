@@ -25,17 +25,62 @@ var presentationfeedbackEventFDCounts = map[uint16]int{
 	2: 0,
 }
 
-// PresentationFeedbackKind is a bitfield of flags.
+// PresentationFeedbackKind bitmask of flags in presented event.
+//
+// These flags provide information about how the presentation of
+// the related content update was done. The intent is to help
+// clients assess the reliability of the feedback and the visual
+// quality with respect to possible tearing and timings.
+//
+// This is a bitfield of flags.
 type PresentationFeedbackKind uint32
 
 const (
-	PresentationFeedbackKindVsync        PresentationFeedbackKind = 1
-	PresentationFeedbackKindHwClock      PresentationFeedbackKind = 2
+	// PresentationFeedbackKindVsync.
+	//
+	// The presentation was synchronized to the "vertical retrace" by
+	// the display hardware such that tearing does not happen.
+	// Relying on software scheduling is not acceptable for this
+	// flag. If presentation is done by a copy to the active
+	// frontbuffer, then it must guarantee that tearing cannot
+	// happen.
+	PresentationFeedbackKindVsync PresentationFeedbackKind = 1
+	// PresentationFeedbackKindHwClock.
+	//
+	// The display hardware provided measurements that the hardware
+	// driver converted into a presentation timestamp. Sampling a
+	// clock in software is not acceptable for this flag.
+	PresentationFeedbackKindHwClock PresentationFeedbackKind = 2
+	// PresentationFeedbackKindHwCompletion.
+	//
+	// The display hardware signalled that it started using the new
+	// image content. The opposite of this is e.g. a timer being used
+	// to guess when the display hardware has switched to the new
+	// image content.
 	PresentationFeedbackKindHwCompletion PresentationFeedbackKind = 4
-	PresentationFeedbackKindZeroCopy     PresentationFeedbackKind = 8
+	// PresentationFeedbackKindZeroCopy.
+	//
+	// The presentation of this update was done zero-copy. This means
+	// the buffer from the client was given to display hardware as
+	// is, without copying it. Compositing with OpenGL counts as
+	// copying, even if textured directly from the client buffer.
+	// Possible zero-copy cases include direct scanout of a
+	// fullscreen surface and a surface on a hardware overlay.
+	PresentationFeedbackKindZeroCopy PresentationFeedbackKind = 8
 )
 
+// PresentationFeedbackSyncOutputEvent presentation synchronized to this output.
+//
+// As presentation can be synchronized to only one output at a
+// time, this event tells which output it was. This event is only
+// sent prior to the presented event.
+//
+// As clients may bind to the same global wl_output multiple
+// times, this event is sent for each bound instance that matches
+// the synchronized output. If a client has not bound to the
+// right wl_output global at all, this event is not sent.
 type PresentationFeedbackSyncOutputEvent struct {
+	// Output presentation output.
 	Output wire.ObjectID
 }
 
@@ -54,14 +99,67 @@ func (e *PresentationFeedbackSyncOutputEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PresentationFeedbackSyncOutputEvent) Since() uint32 { return 1 }
 
+// PresentationFeedbackPresentedEvent the content update was displayed.
+//
+// The associated content update was displayed to the user at the
+// indicated time (tv_sec_hi/lo, tv_nsec). For the interpretation of
+// the timestamp, see presentation.clock_id event.
+//
+// The timestamp corresponds to the time when the content update
+// turned into light the first time on the surface's main output.
+// Compositors may approximate this from the framebuffer flip
+// completion events from the system, and the latency of the
+// physical display path if known.
+//
+// This event is preceded by all related sync_output events
+// telling which output's refresh cycle the feedback corresponds
+// to, i.e. the main output for the surface. Compositors are
+// recommended to choose the output containing the largest part
+// of the wl_surface, or keeping the output they previously
+// chose. Having a stable presentation output association helps
+// clients predict future output refreshes (vblank).
+//
+// The 'refresh' argument gives the compositor's prediction of how
+// many nanoseconds after tv_sec, tv_nsec the very next output
+// refresh may occur. This is to further aid clients in
+// predicting future refreshes, i.e., estimating the timestamps
+// targeting the next few vblanks. If such prediction cannot
+// usefully be done, the argument is zero.
+//
+// For version 2 and later, if the output does not have a constant
+// refresh rate, explicit video mode switches excluded, then the
+// refresh argument must be either an appropriate rate picked by the
+// compositor (e.g. fastest rate), or 0 if no such rate exists.
+// For version 1, if the output does not have a constant refresh rate,
+// the refresh argument must be zero.
+//
+// The 64-bit value combined from seq_hi and seq_lo is the value
+// of the output's vertical retrace counter when the content
+// update was first scanned out to the display. This value must
+// be compatible with the definition of MSC in
+// GLX_OML_sync_control specification. Note, that if the display
+// path has a non-zero latency, the time instant specified by
+// this counter may differ from the timestamp's.
+//
+// If the output does not have a concept of vertical retrace or a
+// refresh cycle, or the output device is self-refreshing without
+// a way to query the refresh count, then the arguments seq_hi
+// and seq_lo must be zero.
 type PresentationFeedbackPresentedEvent struct {
+	// TvSecHi high 32 bits of the seconds part of the presentation timestamp.
 	TvSecHi uint32
+	// TvSecLo low 32 bits of the seconds part of the presentation timestamp.
 	TvSecLo uint32
-	TvNsec  uint32
+	// TvNsec nanoseconds part of the presentation timestamp.
+	TvNsec uint32
+	// Refresh nanoseconds till next refresh.
 	Refresh uint32
-	SeqHi   uint32
-	SeqLo   uint32
-	Flags   PresentationFeedbackKind
+	// SeqHi high 32 bits of refresh counter.
+	SeqHi uint32
+	// SeqLo low 32 bits of refresh counter.
+	SeqLo uint32
+	// Flags combination of 'kind' values.
+	Flags PresentationFeedbackKind
 }
 
 func (e *PresentationFeedbackPresentedEvent) Opcode() uint16 {
@@ -109,6 +207,9 @@ func (e *PresentationFeedbackPresentedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PresentationFeedbackPresentedEvent) Since() uint32 { return 1 }
 
+// PresentationFeedbackDiscardedEvent the content update was not displayed.
+//
+// The content update was never displayed to the user.
 type PresentationFeedbackDiscardedEvent struct {
 }
 
@@ -122,25 +223,44 @@ func (e *PresentationFeedbackDiscardedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PresentationFeedbackDiscardedEvent) Since() uint32 { return 1 }
 
+// PresentationFeedbackSyncOutputFunc is a callback for SyncOutput events.
 type PresentationFeedbackSyncOutputFunc func(ev PresentationFeedbackSyncOutputEvent)
 
+// PresentationFeedbackPresentedFunc is a callback for Presented events.
 type PresentationFeedbackPresentedFunc func(ev PresentationFeedbackPresentedEvent)
 
+// PresentationFeedbackDiscardedFunc is a callback for Discarded events.
 type PresentationFeedbackDiscardedFunc func(ev PresentationFeedbackDiscardedEvent)
 
+// PresentationFeedback presentation time feedback event.
+//
+// A presentation_feedback object returns an indication that a
+// wl_surface content update has become visible to the user.
+// One object corresponds to one content update submission
+// (wl_surface.commit). There are two possible outcomes: the
+// content update is presented to the user, and a presentation
+// timestamp delivered; or, the user did not see the content
+// update because it was superseded or its surface destroyed,
+// and the content update is discarded.
+//
+// Once a presentation_feedback object has delivered a 'presented'
+// or 'discarded' event it is automatically destroyed.
 type PresentationFeedback struct {
 	proxy *wayland.Proxy
 }
 
+// NewPresentationFeedback wraps p in a PresentationFeedback proxy.
 func NewPresentationFeedback(p *wayland.Proxy) *PresentationFeedback {
 	p.SetEventFDCounts(presentationfeedbackEventFDCounts)
 	return &PresentationFeedback{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PresentationFeedback) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnSyncOutput registers fn to receive SyncOutput events.
 func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventSyncOutput, func(r *wire.Reader) {
 		var ev PresentationFeedbackSyncOutputEvent
@@ -154,6 +274,7 @@ func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFun
 	})
 }
 
+// OnPresented registers fn to receive Presented events.
 func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventPresented, func(r *wire.Reader) {
 		var ev PresentationFeedbackPresentedEvent
@@ -167,6 +288,7 @@ func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc)
 	})
 }
 
+// OnDiscarded registers fn to receive Discarded events.
 func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventDiscarded, func(r *wire.Reader) {
 		var ev PresentationFeedbackDiscardedEvent

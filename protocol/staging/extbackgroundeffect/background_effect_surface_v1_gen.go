@@ -18,9 +18,14 @@ const (
 type BackgroundEffectSurfaceV1Error uint32
 
 const (
+	// BackgroundEffectSurfaceV1ErrorSurfaceDestroyed the associated surface has been destroyed.
 	BackgroundEffectSurfaceV1ErrorSurfaceDestroyed BackgroundEffectSurfaceV1Error = 0
 )
 
+// BackgroundEffectSurfaceV1DestroyRequest release the blur object.
+//
+// Informs the server that the client will no longer be using this protocol
+// object. The effect regions will be removed on the next commit.
 type BackgroundEffectSurfaceV1DestroyRequest struct {
 }
 
@@ -34,7 +39,27 @@ func (r *BackgroundEffectSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error 
 
 func (r *BackgroundEffectSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// BackgroundEffectSurfaceV1SetBlurRegionRequest set blur region.
+//
+// This request sets the region of the surface that will have its
+// background blurred.
+//
+// The blur region is specified in the surface-local coordinates, and
+// clipped by the compositor to the surface size.
+//
+// The initial value for the blur region is empty. Setting the pending
+// blur region has copy semantics, and the wl_region object can be
+// destroyed immediately. A NULL wl_region removes the effect.
+//
+// The blur region is double-buffered state, and will be applied on
+// the next wl_surface.commit.
+//
+// The blur algorithm is subject to compositor policies.
+//
+// If the associated surface has been destroyed, the surface_destroyed
+// error will be raised.
 type BackgroundEffectSurfaceV1SetBlurRegionRequest struct {
+	// Region blur region of the surface.
 	Region wire.ObjectID // nullable
 }
 
@@ -51,18 +76,31 @@ func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Marshal(w *wire.Writer) 
 
 func (r *BackgroundEffectSurfaceV1SetBlurRegionRequest) Since() uint32 { return 1 }
 
+// BackgroundEffectSurfaceV1 background effects for a surface.
+//
+// The background effect object provides a way to specify a region behind
+// a surface that should have background effects like blur applied.
+//
+// If the wl_surface associated with the ext_background_effect_surface_v1
+// object has been destroyed, this object becomes inert.
 type BackgroundEffectSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewBackgroundEffectSurfaceV1 wraps p in a BackgroundEffectSurfaceV1 proxy.
 func NewBackgroundEffectSurfaceV1(p *wayland.Proxy) *BackgroundEffectSurfaceV1 {
 	return &BackgroundEffectSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *BackgroundEffectSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy release the blur object.
+//
+// Informs the server that the client will no longer be using this protocol
+// object. The effect regions will be removed on the next commit.
 func (o *BackgroundEffectSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +112,25 @@ func (o *BackgroundEffectSurfaceV1) Destroy() error {
 	return nil
 }
 
+// SetBlurRegion set blur region.
+//
+// This request sets the region of the surface that will have its
+// background blurred.
+//
+// The blur region is specified in the surface-local coordinates, and
+// clipped by the compositor to the surface size.
+//
+// The initial value for the blur region is empty. Setting the pending
+// blur region has copy semantics, and the wl_region object can be
+// destroyed immediately. A NULL wl_region removes the effect.
+//
+// The blur region is double-buffered state, and will be applied on
+// the next wl_surface.commit.
+//
+// The blur algorithm is subject to compositor policies.
+//
+// If the associated surface has been destroyed, the surface_destroyed
+// error will be raised.
 func (o *BackgroundEffectSurfaceV1) SetBlurRegion(region wire.ObjectID) error {
 	return o.proxy.SendRequest(BackgroundEffectSurfaceV1RequestSetBlurRegion, &BackgroundEffectSurfaceV1SetBlurRegionRequest{
 		Region: region,

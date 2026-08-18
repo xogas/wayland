@@ -31,9 +31,17 @@ var popupv6EventFDCounts = map[uint16]int{
 type PopupV6Error uint32
 
 const (
+	// PopupV6ErrorInvalidGrab tried to grab after being mapped.
 	PopupV6ErrorInvalidGrab PopupV6Error = 0
 )
 
+// PopupV6DestroyRequest remove xdg_popup interface.
+//
+// This destroys the popup. Explicitly destroying the xdg_popup
+// object will also dismiss the popup, and unmap the surface.
+//
+// If this xdg_popup is not the "topmost" popup, a protocol error
+// will be sent.
 type PopupV6DestroyRequest struct {
 }
 
@@ -45,8 +53,53 @@ func (r *PopupV6DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PopupV6DestroyRequest) Since() uint32 { return 1 }
 
+// PopupV6GrabRequest make the popup take an explicit grab.
+//
+// This request makes the created popup take an explicit grab. An explicit
+// grab will be dismissed when the user dismisses the popup, or when the
+// client destroys the xdg_popup. This can be done by the user clicking
+// outside the surface, using the keyboard, or even locking the screen
+// through closing the lid or a timeout.
+//
+// If the compositor denies the grab, the popup will be immediately
+// dismissed.
+//
+// This request must be used in response to some sort of user action like a
+// button press, key press, or touch down event. The serial number of the
+// event should be passed as 'serial'.
+//
+// The parent of a grabbing popup must either be an xdg_toplevel surface or
+// another xdg_popup with an explicit grab. If the parent is another
+// xdg_popup it means that the popups are nested, with this popup now being
+// the topmost popup.
+//
+// Nested popups must be destroyed in the reverse order they were created
+// in, e.g. the only popup you are allowed to destroy at all times is the
+// topmost one.
+//
+// When compositors choose to dismiss a popup, they may dismiss every
+// nested grabbing popup as well. When a compositor dismisses popups, it
+// will follow the same dismissing order as required from the client.
+//
+// The parent of a grabbing popup must either be another xdg_popup with an
+// active explicit grab, or an xdg_popup or xdg_toplevel, if there are no
+// explicit grabs already taken.
+//
+// If the topmost grabbing popup is destroyed, the grab will be returned to
+// the parent of the popup, if that parent previously had an explicit grab.
+//
+// If the parent is a grabbing popup which has already been dismissed, this
+// popup will be immediately dismissed. If the parent is a popup that did
+// not take an explicit grab, an error will be raised.
+//
+// During a popup grab, the client owning the grab will receive pointer
+// and touch events for all their surfaces as normal (similar to an
+// "owner-events" grab in X11 parlance), while the top most grabbing popup
+// will always have keyboard focus.
 type PopupV6GrabRequest struct {
-	Seat   wire.ObjectID
+	// Seat the wl_seat of the user event.
+	Seat wire.ObjectID
+	// Serial the serial of the user event.
 	Serial uint32
 }
 
@@ -64,10 +117,23 @@ func (r *PopupV6GrabRequest) Marshal(w *wire.Writer) error {
 
 func (r *PopupV6GrabRequest) Since() uint32 { return 1 }
 
+// PopupV6ConfigureEvent configure the popup surface.
+//
+// This event asks the popup surface to configure itself given the
+// configuration. The configured state should not be applied immediately.
+// See xdg_surface.configure for details.
+//
+// The x and y arguments represent the position the popup was placed at
+// given the xdg_positioner rule, relative to the upper left corner of the
+// window geometry of the parent surface.
 type PopupV6ConfigureEvent struct {
-	X      int32
-	Y      int32
-	Width  int32
+	// X x position relative to parent surface window geometry.
+	X int32
+	// Y y position relative to parent surface window geometry.
+	Y int32
+	// Width window geometry width.
+	Width int32
+	// Height window geometry height.
 	Height int32
 }
 
@@ -99,6 +165,11 @@ func (e *PopupV6ConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PopupV6ConfigureEvent) Since() uint32 { return 1 }
 
+// PopupV6PopupDoneEvent popup interaction is done.
+//
+// The popup_done event is sent out when a popup is dismissed by the
+// compositor. The client should destroy the xdg_popup object at this
+// point.
 type PopupV6PopupDoneEvent struct {
 }
 
@@ -110,23 +181,63 @@ func (e *PopupV6PopupDoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PopupV6PopupDoneEvent) Since() uint32 { return 1 }
 
+// PopupV6ConfigureFunc is a callback for Configure events.
 type PopupV6ConfigureFunc func(ev PopupV6ConfigureEvent)
 
+// PopupV6PopupDoneFunc is a callback for PopupDone events.
 type PopupV6PopupDoneFunc func(ev PopupV6PopupDoneEvent)
 
+// PopupV6 short-lived, popup surfaces for menus.
+//
+// A popup surface is a short-lived, temporary surface. It can be used to
+// implement for example menus, popovers, tooltips and other similar user
+// interface concepts.
+//
+// A popup can be made to take an explicit grab. See xdg_popup.grab for
+// details.
+//
+// When the popup is dismissed, a popup_done event will be sent out, and at
+// the same time the surface will be unmapped. See the xdg_popup.popup_done
+// event for details.
+//
+// Explicitly destroying the xdg_popup object will also dismiss the popup and
+// unmap the surface. Clients that want to dismiss the popup when another
+// surface of their own is clicked should dismiss the popup using the destroy
+// request.
+//
+// The parent surface must have either the xdg_toplevel or xdg_popup surface
+// role.
+//
+// A newly created xdg_popup will be stacked on top of all previously created
+// xdg_popup surfaces associated with the same xdg_toplevel.
+//
+// The parent of an xdg_popup must be mapped (see the xdg_surface
+// description) before the xdg_popup itself.
+//
+// The x and y arguments passed when creating the popup object specify
+// where the top left of the popup should be placed, relative to the
+// local surface coordinates of the parent surface. See
+// xdg_surface.get_popup. An xdg_popup must intersect with or be at least
+// partially adjacent to its parent surface.
+//
+// The client must call wl_surface.commit on the corresponding wl_surface
+// for the xdg_popup state to take effect.
 type PopupV6 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPopupV6 wraps p in a PopupV6 proxy.
 func NewPopupV6(p *wayland.Proxy) *PopupV6 {
 	p.SetEventFDCounts(popupv6EventFDCounts)
 	return &PopupV6{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PopupV6) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *PopupV6) OnConfigure(fn PopupV6ConfigureFunc) {
 	o.proxy.RegisterEvent(PopupV6EventConfigure, func(r *wire.Reader) {
 		var ev PopupV6ConfigureEvent
@@ -140,6 +251,7 @@ func (o *PopupV6) OnConfigure(fn PopupV6ConfigureFunc) {
 	})
 }
 
+// OnPopupDone registers fn to receive PopupDone events.
 func (o *PopupV6) OnPopupDone(fn PopupV6PopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupV6EventPopupDone, func(r *wire.Reader) {
 		var ev PopupV6PopupDoneEvent
@@ -153,6 +265,13 @@ func (o *PopupV6) OnPopupDone(fn PopupV6PopupDoneFunc) {
 	})
 }
 
+// Destroy remove xdg_popup interface.
+//
+// This destroys the popup. Explicitly destroying the xdg_popup
+// object will also dismiss the popup, and unmap the surface.
+//
+// If this xdg_popup is not the "topmost" popup, a protocol error
+// will be sent.
 func (o *PopupV6) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -164,6 +283,49 @@ func (o *PopupV6) Destroy() error {
 	return nil
 }
 
+// Grab make the popup take an explicit grab.
+//
+// This request makes the created popup take an explicit grab. An explicit
+// grab will be dismissed when the user dismisses the popup, or when the
+// client destroys the xdg_popup. This can be done by the user clicking
+// outside the surface, using the keyboard, or even locking the screen
+// through closing the lid or a timeout.
+//
+// If the compositor denies the grab, the popup will be immediately
+// dismissed.
+//
+// This request must be used in response to some sort of user action like a
+// button press, key press, or touch down event. The serial number of the
+// event should be passed as 'serial'.
+//
+// The parent of a grabbing popup must either be an xdg_toplevel surface or
+// another xdg_popup with an explicit grab. If the parent is another
+// xdg_popup it means that the popups are nested, with this popup now being
+// the topmost popup.
+//
+// Nested popups must be destroyed in the reverse order they were created
+// in, e.g. the only popup you are allowed to destroy at all times is the
+// topmost one.
+//
+// When compositors choose to dismiss a popup, they may dismiss every
+// nested grabbing popup as well. When a compositor dismisses popups, it
+// will follow the same dismissing order as required from the client.
+//
+// The parent of a grabbing popup must either be another xdg_popup with an
+// active explicit grab, or an xdg_popup or xdg_toplevel, if there are no
+// explicit grabs already taken.
+//
+// If the topmost grabbing popup is destroyed, the grab will be returned to
+// the parent of the popup, if that parent previously had an explicit grab.
+//
+// If the parent is a grabbing popup which has already been dismissed, this
+// popup will be immediately dismissed. If the parent is a popup that did
+// not take an explicit grab, an error will be raised.
+//
+// During a popup grab, the client owning the grab will receive pointer
+// and touch events for all their surfaces as normal (similar to an
+// "owner-events" grab in X11 parlance), while the top most grabbing popup
+// will always have keyboard focus.
 func (o *PopupV6) Grab(seat wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(PopupV6RequestGrab, &PopupV6GrabRequest{
 		Seat:   seat,

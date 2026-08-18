@@ -36,13 +36,21 @@ var workspacegrouphandlev1EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
-// WorkspaceGroupHandleV1GroupCapabilities is a bitfield of flags.
+// This is a bitfield of flags.
 type WorkspaceGroupHandleV1GroupCapabilities uint32
 
 const (
+	// WorkspaceGroupHandleV1GroupCapabilitiesCreateWorkspace create_workspace request is available.
 	WorkspaceGroupHandleV1GroupCapabilitiesCreateWorkspace WorkspaceGroupHandleV1GroupCapabilities = 1
 )
 
+// WorkspaceGroupHandleV1CreateWorkspaceRequest create a new workspace.
+//
+// Request that the compositor create a new workspace with the given name
+// and assign it to this group.
+//
+// There is no guarantee that the compositor will create a new workspace,
+// or that the created workspace will have the provided name.
 type WorkspaceGroupHandleV1CreateWorkspaceRequest struct {
 	Workspace string
 }
@@ -60,6 +68,13 @@ func (r *WorkspaceGroupHandleV1CreateWorkspaceRequest) Marshal(w *wire.Writer) e
 
 func (r *WorkspaceGroupHandleV1CreateWorkspaceRequest) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1DestroyRequest destroy the ext_workspace_group_handle_v1 object.
+//
+// Destroys the ext_workspace_group_handle_v1 object.
+//
+// This request should be send either when the client does not want to
+// use the workspace group object any more or after the removed event to finalize
+// the destruction of the object.
 type WorkspaceGroupHandleV1DestroyRequest struct {
 }
 
@@ -73,7 +88,23 @@ func (r *WorkspaceGroupHandleV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *WorkspaceGroupHandleV1DestroyRequest) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1CapabilitiesEvent compositor capabilities.
+//
+// This event advertises the capabilities supported by the compositor. If
+// a capability isn't supported, clients should hide or disable the UI
+// elements that expose this functionality. For instance, if the
+// compositor doesn't advertise support for creating workspaces, a button
+// triggering the create_workspace request should not be displayed.
+//
+// The compositor will ignore requests it doesn't support. For instance,
+// a compositor which doesn't advertise support for creating workspaces will ignore
+// create_workspace requests.
+//
+// Compositors must send this event once after creation of an
+// ext_workspace_group_handle_v1. When the capabilities change, compositors
+// must send this event again.
 type WorkspaceGroupHandleV1CapabilitiesEvent struct {
+	// Capabilities capabilities.
 	Capabilities WorkspaceGroupHandleV1GroupCapabilities
 }
 
@@ -92,6 +123,11 @@ func (e *WorkspaceGroupHandleV1CapabilitiesEvent) Unmarshal(r *wire.Reader) erro
 
 func (e *WorkspaceGroupHandleV1CapabilitiesEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1OutputEnterEvent output assigned to workspace group.
+//
+// This event is emitted whenever an output is assigned to the workspace
+// group or a new `wl_output` object is bound by the client, which was already
+// assigned to this workspace_group.
 type WorkspaceGroupHandleV1OutputEnterEvent struct {
 	Output wire.ObjectID
 }
@@ -111,6 +147,10 @@ func (e *WorkspaceGroupHandleV1OutputEnterEvent) Unmarshal(r *wire.Reader) error
 
 func (e *WorkspaceGroupHandleV1OutputEnterEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1OutputLeaveEvent output removed from workspace group.
+//
+// This event is emitted whenever an output is removed from the workspace
+// group.
 type WorkspaceGroupHandleV1OutputLeaveEvent struct {
 	Output wire.ObjectID
 }
@@ -130,6 +170,11 @@ func (e *WorkspaceGroupHandleV1OutputLeaveEvent) Unmarshal(r *wire.Reader) error
 
 func (e *WorkspaceGroupHandleV1OutputLeaveEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1WorkspaceEnterEvent workspace added to workspace group.
+//
+// This event is emitted whenever a workspace is assigned to this group.
+// A workspace may only ever be assigned to a single group at a single point
+// in time, but can be re-assigned during its lifetime.
 type WorkspaceGroupHandleV1WorkspaceEnterEvent struct {
 	Workspace wire.ObjectID
 }
@@ -149,6 +194,9 @@ func (e *WorkspaceGroupHandleV1WorkspaceEnterEvent) Unmarshal(r *wire.Reader) er
 
 func (e *WorkspaceGroupHandleV1WorkspaceEnterEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1WorkspaceLeaveEvent workspace removed from workspace group.
+//
+// This event is emitted whenever a workspace is removed from this group.
 type WorkspaceGroupHandleV1WorkspaceLeaveEvent struct {
 	Workspace wire.ObjectID
 }
@@ -168,6 +216,16 @@ func (e *WorkspaceGroupHandleV1WorkspaceLeaveEvent) Unmarshal(r *wire.Reader) er
 
 func (e *WorkspaceGroupHandleV1WorkspaceLeaveEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1RemovedEvent this workspace group has been removed.
+//
+// This event is send when the group associated with the ext_workspace_group_handle_v1
+// has been removed. After sending this request the compositor will immediately consider
+// the object inert. Any requests will be ignored except the destroy request.
+// It is guaranteed there won't be any more events referencing this
+// ext_workspace_group_handle_v1.
+//
+// The compositor must remove all workspaces belonging to a workspace group
+// via a workspace_leave event before removing the workspace group.
 type WorkspaceGroupHandleV1RemovedEvent struct {
 }
 
@@ -181,31 +239,53 @@ func (e *WorkspaceGroupHandleV1RemovedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WorkspaceGroupHandleV1RemovedEvent) Since() uint32 { return 1 }
 
+// WorkspaceGroupHandleV1CapabilitiesFunc is a callback for Capabilities events.
 type WorkspaceGroupHandleV1CapabilitiesFunc func(ev WorkspaceGroupHandleV1CapabilitiesEvent)
 
+// WorkspaceGroupHandleV1OutputEnterFunc is a callback for OutputEnter events.
 type WorkspaceGroupHandleV1OutputEnterFunc func(ev WorkspaceGroupHandleV1OutputEnterEvent)
 
+// WorkspaceGroupHandleV1OutputLeaveFunc is a callback for OutputLeave events.
 type WorkspaceGroupHandleV1OutputLeaveFunc func(ev WorkspaceGroupHandleV1OutputLeaveEvent)
 
+// WorkspaceGroupHandleV1WorkspaceEnterFunc is a callback for WorkspaceEnter events.
 type WorkspaceGroupHandleV1WorkspaceEnterFunc func(ev WorkspaceGroupHandleV1WorkspaceEnterEvent)
 
+// WorkspaceGroupHandleV1WorkspaceLeaveFunc is a callback for WorkspaceLeave events.
 type WorkspaceGroupHandleV1WorkspaceLeaveFunc func(ev WorkspaceGroupHandleV1WorkspaceLeaveEvent)
 
+// WorkspaceGroupHandleV1RemovedFunc is a callback for Removed events.
 type WorkspaceGroupHandleV1RemovedFunc func(ev WorkspaceGroupHandleV1RemovedEvent)
 
+// WorkspaceGroupHandleV1 a workspace group assigned to a set of outputs.
+//
+// A ext_workspace_group_handle_v1 object represents a workspace group
+// that is assigned a set of outputs and contains a number of workspaces.
+//
+// The set of outputs assigned to the workspace group is conveyed to the client via
+// output_enter and output_leave events, and its workspaces are conveyed with
+// workspace events.
+//
+// For example, a compositor which has a set of workspaces for each output may
+// advertise a workspace group (and its workspaces) per output, whereas a compositor
+// where a workspace spans all outputs may advertise a single workspace group for all
+// outputs.
 type WorkspaceGroupHandleV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewWorkspaceGroupHandleV1 wraps p in a WorkspaceGroupHandleV1 proxy.
 func NewWorkspaceGroupHandleV1(p *wayland.Proxy) *WorkspaceGroupHandleV1 {
 	p.SetEventFDCounts(workspacegrouphandlev1EventFDCounts)
 	return &WorkspaceGroupHandleV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *WorkspaceGroupHandleV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCapabilities registers fn to receive Capabilities events.
 func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1CapabilitiesEvent
@@ -219,6 +299,7 @@ func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1Capabil
 	})
 }
 
+// OnOutputEnter registers fn to receive OutputEnter events.
 func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputEnterEvent
@@ -232,6 +313,7 @@ func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEn
 	})
 }
 
+// OnOutputLeave registers fn to receive OutputLeave events.
 func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputLeaveEvent
@@ -245,6 +327,7 @@ func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLe
 	})
 }
 
+// OnWorkspaceEnter registers fn to receive WorkspaceEnter events.
 func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1WorkspaceEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceEnterEvent
@@ -258,6 +341,7 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1Works
 	})
 }
 
+// OnWorkspaceLeave registers fn to receive WorkspaceLeave events.
 func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1WorkspaceLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceLeaveEvent
@@ -271,6 +355,7 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1Works
 	})
 }
 
+// OnRemoved registers fn to receive Removed events.
 func (o *WorkspaceGroupHandleV1) OnRemoved(fn WorkspaceGroupHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1RemovedEvent
@@ -284,12 +369,26 @@ func (o *WorkspaceGroupHandleV1) OnRemoved(fn WorkspaceGroupHandleV1RemovedFunc)
 	})
 }
 
+// CreateWorkspace create a new workspace.
+//
+// Request that the compositor create a new workspace with the given name
+// and assign it to this group.
+//
+// There is no guarantee that the compositor will create a new workspace,
+// or that the created workspace will have the provided name.
 func (o *WorkspaceGroupHandleV1) CreateWorkspace(workspace string) error {
 	return o.proxy.SendRequest(WorkspaceGroupHandleV1RequestCreateWorkspace, &WorkspaceGroupHandleV1CreateWorkspaceRequest{
 		Workspace: workspace,
 	})
 }
 
+// Destroy destroy the ext_workspace_group_handle_v1 object.
+//
+// Destroys the ext_workspace_group_handle_v1 object.
+//
+// This request should be send either when the client does not want to
+// use the workspace group object any more or after the removed event to finalize
+// the destruction of the object.
 func (o *WorkspaceGroupHandleV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

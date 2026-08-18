@@ -33,6 +33,21 @@ var foreigntoplevelhandlev1EventFDCounts = map[uint16]int{
 	4: 0,
 }
 
+// ForeignToplevelHandleV1DestroyRequest destroy the ext_foreign_toplevel_handle_v1 object.
+//
+// This request should be used when the client will no longer use the handle
+// or after the closed event has been received to allow destruction of the
+// object.
+//
+// When a handle is destroyed, a new handle may not be created by the server
+// until the toplevel is unmapped and then remapped. Destroying a toplevel handle
+// is not recommended unless the client is cleaning up child objects
+// before destroying the ext_foreign_toplevel_list_v1 object, the toplevel
+// was closed or the toplevel handle will not be used in the future.
+//
+// Other protocols which extend the ext_foreign_toplevel_handle_v1
+// interface should require destructors for extension interfaces be
+// called before allowing the toplevel handle to be destroyed.
 type ForeignToplevelHandleV1DestroyRequest struct {
 }
 
@@ -46,6 +61,14 @@ func (r *ForeignToplevelHandleV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ForeignToplevelHandleV1DestroyRequest) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1ClosedEvent the toplevel has been closed.
+//
+// The server will emit no further events on the ext_foreign_toplevel_handle_v1
+// after this event. Any requests received aside from the destroy request must
+// be ignored. Upon receiving this event, the client should destroy the handle.
+//
+// Other protocols which extend the ext_foreign_toplevel_handle_v1
+// interface must also ignore requests other than destructors.
 type ForeignToplevelHandleV1ClosedEvent struct {
 }
 
@@ -59,6 +82,18 @@ func (e *ForeignToplevelHandleV1ClosedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ForeignToplevelHandleV1ClosedEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1DoneEvent all information about the toplevel has been sent.
+//
+// This event is sent after all changes in the toplevel state have
+// been sent.
+//
+// This allows changes to the ext_foreign_toplevel_handle_v1 properties
+// to be atomically applied. Other protocols which extend the
+// ext_foreign_toplevel_handle_v1 interface may use this event to also
+// atomically apply any pending state.
+//
+// This event must not be sent after the ext_foreign_toplevel_handle_v1.closed
+// event.
 type ForeignToplevelHandleV1DoneEvent struct {
 }
 
@@ -70,6 +105,12 @@ func (e *ForeignToplevelHandleV1DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ForeignToplevelHandleV1DoneEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1TitleEvent title change.
+//
+// The title of the toplevel has changed.
+//
+// The configured state must not be applied immediately. See
+// ext_foreign_toplevel_handle_v1.done for details.
 type ForeignToplevelHandleV1TitleEvent struct {
 	Title string
 }
@@ -87,6 +128,12 @@ func (e *ForeignToplevelHandleV1TitleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ForeignToplevelHandleV1TitleEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1AppIDEvent app_id change.
+//
+// The app id of the toplevel has changed.
+//
+// The configured state must not be applied immediately. See
+// ext_foreign_toplevel_handle_v1.done for details.
 type ForeignToplevelHandleV1AppIDEvent struct {
 	AppID string
 }
@@ -104,6 +151,28 @@ func (e *ForeignToplevelHandleV1AppIDEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ForeignToplevelHandleV1AppIDEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1IdentifierEvent a stable identifier for a toplevel.
+//
+// This identifier is used to check if two or more toplevel handles belong
+// to the same toplevel.
+//
+// The identifier is useful for command line tools or privileged clients
+// which may need to reference an exact toplevel across processes or
+// instances of the ext_foreign_toplevel_list_v1 global.
+//
+// The compositor must only send this event when the handle is created.
+//
+// The identifier must be unique per toplevel and its handles. Two different
+// toplevels must not have the same identifier. The identifier is only valid
+// as long as the toplevel is mapped. If the toplevel is unmapped the identifier
+// must not be reused. An identifier must not be reused by the compositor to
+// ensure there are no races when sharing identifiers between processes.
+//
+// An identifier is a string that contains up to 32 printable ASCII bytes.
+// An identifier must not be an empty string. It is recommended that a
+// compositor includes an opaque generation value in identifiers. How the
+// generation value is used when generating the identifier is implementation
+// dependent.
 type ForeignToplevelHandleV1IdentifierEvent struct {
 	Identifier string
 }
@@ -123,29 +192,41 @@ func (e *ForeignToplevelHandleV1IdentifierEvent) Unmarshal(r *wire.Reader) error
 
 func (e *ForeignToplevelHandleV1IdentifierEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelHandleV1ClosedFunc is a callback for Closed events.
 type ForeignToplevelHandleV1ClosedFunc func(ev ForeignToplevelHandleV1ClosedEvent)
 
+// ForeignToplevelHandleV1DoneFunc is a callback for Done events.
 type ForeignToplevelHandleV1DoneFunc func(ev ForeignToplevelHandleV1DoneEvent)
 
+// ForeignToplevelHandleV1TitleFunc is a callback for Title events.
 type ForeignToplevelHandleV1TitleFunc func(ev ForeignToplevelHandleV1TitleEvent)
 
+// ForeignToplevelHandleV1AppIDFunc is a callback for AppID events.
 type ForeignToplevelHandleV1AppIDFunc func(ev ForeignToplevelHandleV1AppIDEvent)
 
+// ForeignToplevelHandleV1IdentifierFunc is a callback for Identifier events.
 type ForeignToplevelHandleV1IdentifierFunc func(ev ForeignToplevelHandleV1IdentifierEvent)
 
+// ForeignToplevelHandleV1 a mapped toplevel.
+//
+// A ext_foreign_toplevel_handle_v1 object represents a mapped toplevel
+// window. A single app may have multiple mapped toplevels.
 type ForeignToplevelHandleV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewForeignToplevelHandleV1 wraps p in a ForeignToplevelHandleV1 proxy.
 func NewForeignToplevelHandleV1(p *wayland.Proxy) *ForeignToplevelHandleV1 {
 	p.SetEventFDCounts(foreigntoplevelhandlev1EventFDCounts)
 	return &ForeignToplevelHandleV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ForeignToplevelHandleV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnClosed registers fn to receive Closed events.
 func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventClosed, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1ClosedEvent
@@ -159,6 +240,7 @@ func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc)
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventDone, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1DoneEvent
@@ -172,6 +254,7 @@ func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 	})
 }
 
+// OnTitle registers fn to receive Title events.
 func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventTitle, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1TitleEvent
@@ -185,6 +268,7 @@ func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 	})
 }
 
+// OnAppID registers fn to receive AppID events.
 func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventAppID, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1AppIDEvent
@@ -198,6 +282,7 @@ func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 	})
 }
 
+// OnIdentifier registers fn to receive Identifier events.
 func (o *ForeignToplevelHandleV1) OnIdentifier(fn ForeignToplevelHandleV1IdentifierFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventIdentifier, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1IdentifierEvent
@@ -211,6 +296,21 @@ func (o *ForeignToplevelHandleV1) OnIdentifier(fn ForeignToplevelHandleV1Identif
 	})
 }
 
+// Destroy destroy the ext_foreign_toplevel_handle_v1 object.
+//
+// This request should be used when the client will no longer use the handle
+// or after the closed event has been received to allow destruction of the
+// object.
+//
+// When a handle is destroyed, a new handle may not be created by the server
+// until the toplevel is unmapped and then remapped. Destroying a toplevel handle
+// is not recommended unless the client is cleaning up child objects
+// before destroying the ext_foreign_toplevel_list_v1 object, the toplevel
+// was closed or the toplevel handle will not be used in the future.
+//
+// Other protocols which extend the ext_foreign_toplevel_handle_v1
+// interface should require destructors for extension interfaces be
+// called before allowing the toplevel handle to be destroyed.
 func (o *ForeignToplevelHandleV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

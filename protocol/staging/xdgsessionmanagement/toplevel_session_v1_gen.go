@@ -26,6 +26,10 @@ var toplevelsessionv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ToplevelSessionV1DestroyRequest destroy the object.
+//
+// Destroy the object. This has no effect over window management of the
+// associated toplevel.
 type ToplevelSessionV1DestroyRequest struct {
 }
 
@@ -37,7 +41,16 @@ func (r *ToplevelSessionV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelSessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RenameRequest change the name of toplevel session.
+//
+// Renames the toplevel session. The new name can be used in subsequent requests
+// to identify this session object. The state associated with this toplevel
+// session will be preserved.
+//
+// If the xdg_session_v1 already contains a toplevel with the specified name,
+// the 'name_in_use' protocol error will be raised.
 type ToplevelSessionV1RenameRequest struct {
+	// Name new name to identify the toplevel.
 	Name string
 }
 
@@ -52,6 +65,13 @@ func (r *ToplevelSessionV1RenameRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelSessionV1RenameRequest) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RestoredEvent a toplevel's session has been restored.
+//
+// The "restored" event is emitted prior to the first
+// xdg_toplevel.configure for the toplevel. It will only be emitted after
+// xdg_session_v1.restore_toplevel, and the initial empty surface state has
+// been applied, and it indicates that the surface's session is being
+// restored with this configure event.
 type ToplevelSessionV1RestoredEvent struct {
 }
 
@@ -63,21 +83,30 @@ func (e *ToplevelSessionV1RestoredEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ToplevelSessionV1RestoredEvent) Since() uint32 { return 1 }
 
+// ToplevelSessionV1RestoredFunc is a callback for Restored events.
 type ToplevelSessionV1RestoredFunc func(ev ToplevelSessionV1RestoredEvent)
 
+// ToplevelSessionV1 a session for an application.
+//
+// A xdg_toplevel_session_v1 resource acts as a handle for the given
+// toplevel in the session. It allows for receiving events after a
+// toplevel state was restored, and has the requests to manage them.
 type ToplevelSessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelSessionV1 wraps p in a ToplevelSessionV1 proxy.
 func NewToplevelSessionV1(p *wayland.Proxy) *ToplevelSessionV1 {
 	p.SetEventFDCounts(toplevelsessionv1EventFDCounts)
 	return &ToplevelSessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelSessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnRestored registers fn to receive Restored events.
 func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(ToplevelSessionV1EventRestored, func(r *wire.Reader) {
 		var ev ToplevelSessionV1RestoredEvent
@@ -91,6 +120,10 @@ func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	})
 }
 
+// Destroy destroy the object.
+//
+// Destroy the object. This has no effect over window management of the
+// associated toplevel.
 func (o *ToplevelSessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -102,6 +135,14 @@ func (o *ToplevelSessionV1) Destroy() error {
 	return nil
 }
 
+// Rename change the name of toplevel session.
+//
+// Renames the toplevel session. The new name can be used in subsequent requests
+// to identify this session object. The state associated with this toplevel
+// session will be preserved.
+//
+// If the xdg_session_v1 already contains a toplevel with the specified name,
+// the 'name_in_use' protocol error will be raised.
 func (o *ToplevelSessionV1) Rename(name string) error {
 	return o.proxy.SendRequest(ToplevelSessionV1RequestRename, &ToplevelSessionV1RenameRequest{
 		Name: name,

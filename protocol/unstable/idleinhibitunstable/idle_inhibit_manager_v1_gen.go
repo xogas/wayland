@@ -15,6 +15,9 @@ const (
 	IdleInhibitManagerV1RequestCreateInhibitor uint16 = 1
 )
 
+// IdleInhibitManagerV1DestroyRequest destroy the idle inhibitor object.
+//
+// Destroy the inhibit manager.
 type IdleInhibitManagerV1DestroyRequest struct {
 }
 
@@ -28,8 +31,12 @@ func (r *IdleInhibitManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *IdleInhibitManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// IdleInhibitManagerV1CreateInhibitorRequest create a new inhibitor object.
+//
+// Create a new inhibitor object associated with the given surface.
 type IdleInhibitManagerV1CreateInhibitorRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Surface the surface that inhibits the idle behavior.
 	Surface wire.ObjectID
 }
 
@@ -49,18 +56,37 @@ func (r *IdleInhibitManagerV1CreateInhibitorRequest) Marshal(w *wire.Writer) err
 
 func (r *IdleInhibitManagerV1CreateInhibitorRequest) Since() uint32 { return 1 }
 
+// IdleInhibitManagerV1 control behavior when display idles.
+//
+// This interface permits inhibiting the idle behavior such as screen
+// blanking, locking, and screensaving.  The client binds the idle manager
+// globally, then creates idle-inhibitor objects for each surface.
+//
+// Warning! The protocol described in this file is experimental and
+// backward incompatible changes may be made. Backward compatible changes
+// may be added together with the corresponding interface version bump.
+// Backward incompatible changes are done by bumping the version number in
+// the protocol and interface names and resetting the interface version.
+// Once the protocol is to be declared stable, the 'z' prefix and the
+// version number in the protocol and interface names are removed and the
+// interface version number is reset.
 type IdleInhibitManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewIdleInhibitManagerV1 wraps p in a IdleInhibitManagerV1 proxy.
 func NewIdleInhibitManagerV1(p *wayland.Proxy) *IdleInhibitManagerV1 {
 	return &IdleInhibitManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *IdleInhibitManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the idle inhibitor object.
+//
+// Destroy the inhibit manager.
 func (o *IdleInhibitManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -72,6 +98,9 @@ func (o *IdleInhibitManagerV1) Destroy() error {
 	return nil
 }
 
+// CreateInhibitor create a new inhibitor object.
+//
+// Create a new inhibitor object associated with the given surface.
 func (o *IdleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IdleInhibitorV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

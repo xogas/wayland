@@ -30,14 +30,34 @@ var cutoutsv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// CutoutsV1Type cutout type.
+//
+// These values indicate the type of cutout. The information is
+// meant to help clients to decide whether they can possibly
+// ignore the element.
 type CutoutsV1Type uint32
 
 const (
-	CutoutsV1TypeCutout    CutoutsV1Type = 0
-	CutoutsV1TypeNotch     CutoutsV1Type = 1
+	// CutoutsV1TypeCutout.
+	//
+	// This element type can be used by the compositor if it
+	// doesn't want to provide a more specific type.
+	CutoutsV1TypeCutout CutoutsV1Type = 0
+	// CutoutsV1TypeNotch.
+	//
+	// A functional, irregular shape on one of the device's
+	// edges. It often contains a camera.
+	CutoutsV1TypeNotch CutoutsV1Type = 1
+	// CutoutsV1TypeWaterfall.
+	//
+	// A curved display edge intended to make the device appear
+	// like not having any bezel.
 	CutoutsV1TypeWaterfall CutoutsV1Type = 2
 )
 
+// CutoutsV1CornerPosition corner position.
+//
+// The position of a corner on a surface
 type CutoutsV1CornerPosition uint32
 
 const (
@@ -50,9 +70,14 @@ const (
 type CutoutsV1Error uint32
 
 const (
+	// CutoutsV1ErrorInvalidElementID invalid element id in a set_unhandled request.
 	CutoutsV1ErrorInvalidElementID CutoutsV1Error = 0
 )
 
+// CutoutsV1DestroyRequest destroy the xx_cutouts object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xx_cutouts object anymore.
 type CutoutsV1DestroyRequest struct {
 }
 
@@ -64,7 +89,20 @@ func (r *CutoutsV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *CutoutsV1DestroyRequest) Since() uint32 { return 1 }
 
+// CutoutsV1SetUnhandledRequest notify about unhandled cutouts.
+//
+// If a client doesn't handle one or more cutouts in the to be
+// acked sequence, it can add their element's id to the
+// unhandled array. The compositor might then try to reposition
+// the surface in a way that avoids these elements in a future
+// configure sequence.
+//
+// The request (if used) must be sent before acking the configure
+// sequence. State set with this request is double-buffered. It
+// will get applied on the next ack_configure and stay valid
+// until the next configure event.
 type CutoutsV1SetUnhandledRequest struct {
+	// Unhandled array of unhandled element ids.
 	Unhandled []byte
 }
 
@@ -79,13 +117,23 @@ func (r *CutoutsV1SetUnhandledRequest) Marshal(w *wire.Writer) error {
 
 func (r *CutoutsV1SetUnhandledRequest) Since() uint32 { return 1 }
 
+// CutoutsV1CutoutBoxEvent a rectangular cutout region.
+//
+// The cutout_box event describes a rectangular cutout area in
+// surface-local coordinates.
+//
+// This can be an approximation of e.g. a circular camera notch.
 type CutoutsV1CutoutBoxEvent struct {
-	X      int32
+	// X x coordinate of the box's top left corner.
+	X int32
+	// Y y coordinate of the box's top left corner.
 	Y      int32
 	Width  int32
 	Height int32
-	Type   CutoutsV1Type
-	ID     uint32
+	// Type the type of cutout.
+	Type CutoutsV1Type
+	// ID an identifier identifying the physical element.
+	ID uint32
 }
 
 func (e *CutoutsV1CutoutBoxEvent) Opcode() uint16 { return CutoutsV1EventCutoutBox }
@@ -126,10 +174,18 @@ func (e *CutoutsV1CutoutBoxEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *CutoutsV1CutoutBoxEvent) Since() uint32 { return 1 }
 
+// CutoutsV1CutoutCornerEvent a cutout corner.
+//
+// The cutout_corner event describes a rounded corner in
+// surface-local coordinates. The area towards the screen edge is
+// the cutout corner part.
 type CutoutsV1CutoutCornerEvent struct {
+	// Position the position of the described corner.
 	Position CutoutsV1CornerPosition
-	Radius   uint32
-	ID       uint32
+	// Radius the corner's radius.
+	Radius uint32
+	// ID an identifier identifying the physical element.
+	ID uint32
 }
 
 func (e *CutoutsV1CutoutCornerEvent) Opcode() uint16 { return CutoutsV1EventCutoutCorner }
@@ -155,6 +211,26 @@ func (e *CutoutsV1CutoutCornerEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *CutoutsV1CutoutCornerEvent) Since() uint32 { return 1 }
 
+// CutoutsV1ConfigureEvent notify cutout changes.
+//
+// The configure event marks the end of a configure sequence. A
+// configure sequence is a set of zero or more cutout events and
+// the final xx_cutout.configure event.
+//
+// In the case of a xdg_toplevel clients should arrange their
+// surface for the new cutouts, and then send an
+// xdg_surface.ack_configure request at some point before
+// committing the new surface. See xdg_surface.configure and
+// xdg_surface.ack_configure in the xdg_shell protocol for
+// details.
+//
+// If the cutout sequence consists of only a configure event and
+// contains no cutout or corner events this indicates that the
+// surface isn't overlapping with any cutouts or corners.
+//
+// If the client receives multiple configure events before it can
+// respond to one, it is free to discard all but the last event
+// it received.
 type CutoutsV1ConfigureEvent struct {
 }
 
@@ -166,25 +242,53 @@ func (e *CutoutsV1ConfigureEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *CutoutsV1ConfigureEvent) Since() uint32 { return 1 }
 
+// CutoutsV1CutoutBoxFunc is a callback for CutoutBox events.
 type CutoutsV1CutoutBoxFunc func(ev CutoutsV1CutoutBoxEvent)
 
+// CutoutsV1CutoutCornerFunc is a callback for CutoutCorner events.
 type CutoutsV1CutoutCornerFunc func(ev CutoutsV1CutoutCornerEvent)
 
+// CutoutsV1ConfigureFunc is a callback for Configure events.
 type CutoutsV1ConfigureFunc func(ev CutoutsV1ConfigureEvent)
 
+// CutoutsV1 cutout regions information.
+//
+// An xx_cutouts describes the areas currently "cut out" of a
+// toplevel.
+//
+// Each cutout event carries an id that identifies the
+// physical element. If the compositor describes an element by
+// multiple cutout events these should use the same element
+// id. A typical example is a curved notch that is approximated
+// by several cutout_box elements. Using the same element
+// id allows the client to identify that these belong to the
+// same physical object. Ids are only valid during one configure
+// sequence. No guarantee is given that the same id identifies
+// the same element in different configure sequences.
+//
+// Typically compositors would only send cutout information when
+// the toplevel enters fullscreen or maxmized state (as specified
+// in the xdg_shell protocol).
+//
+// The xx_cutouts_v1 object must be destroyed before its
+// underlying xdg_toplevel and wl_surface. Otherwise the
+// defunct_cutouts_object protocol error will be send.
 type CutoutsV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewCutoutsV1 wraps p in a CutoutsV1 proxy.
 func NewCutoutsV1(p *wayland.Proxy) *CutoutsV1 {
 	p.SetEventFDCounts(cutoutsv1EventFDCounts)
 	return &CutoutsV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *CutoutsV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnCutoutBox registers fn to receive CutoutBox events.
 func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutBox, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutBoxEvent
@@ -198,6 +302,7 @@ func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 	})
 }
 
+// OnCutoutCorner registers fn to receive CutoutCorner events.
 func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutCorner, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutCornerEvent
@@ -211,6 +316,7 @@ func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 	})
 }
 
+// OnConfigure registers fn to receive Configure events.
 func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventConfigure, func(r *wire.Reader) {
 		var ev CutoutsV1ConfigureEvent
@@ -224,6 +330,10 @@ func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 	})
 }
 
+// Destroy destroy the xx_cutouts object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xx_cutouts object anymore.
 func (o *CutoutsV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -235,6 +345,18 @@ func (o *CutoutsV1) Destroy() error {
 	return nil
 }
 
+// SetUnhandled notify about unhandled cutouts.
+//
+// If a client doesn't handle one or more cutouts in the to be
+// acked sequence, it can add their element's id to the
+// unhandled array. The compositor might then try to reposition
+// the surface in a way that avoids these elements in a future
+// configure sequence.
+//
+// The request (if used) must be sent before acking the configure
+// sequence. State set with this request is double-buffered. It
+// will get applied on the next ack_configure and stay valid
+// until the next configure event.
 func (o *CutoutsV1) SetUnhandled(unhandled []byte) error {
 	return o.proxy.SendRequest(CutoutsV1RequestSetUnhandled, &CutoutsV1SetUnhandledRequest{
 		Unhandled: unhandled,

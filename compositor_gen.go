@@ -15,7 +15,11 @@ const (
 	CompositorRequestRelease       uint16 = 2
 )
 
+// CompositorCreateSurfaceRequest create new surface.
+//
+// Ask the compositor to create a new surface.
 type CompositorCreateSurfaceRequest struct {
+	// ID the new surface.
 	ID wire.NewID
 }
 
@@ -30,7 +34,11 @@ func (r *CompositorCreateSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *CompositorCreateSurfaceRequest) Since() uint32 { return 1 }
 
+// CompositorCreateRegionRequest create new region.
+//
+// Ask the compositor to create a new region.
 type CompositorCreateRegionRequest struct {
+	// ID the new region.
 	ID wire.NewID
 }
 
@@ -45,6 +53,9 @@ func (r *CompositorCreateRegionRequest) Marshal(w *wire.Writer) error {
 
 func (r *CompositorCreateRegionRequest) Since() uint32 { return 1 }
 
+// CompositorReleaseRequest destroy wl_compositor.
+//
+// This request destroys the wl_compositor. This has no effect on any other objects.
 type CompositorReleaseRequest struct {
 }
 
@@ -56,18 +67,28 @@ func (r *CompositorReleaseRequest) Marshal(w *wire.Writer) error {
 
 func (r *CompositorReleaseRequest) Since() uint32 { return 7 }
 
+// Compositor the compositor singleton.
+//
+// A compositor.  This object is a singleton global.  The
+// compositor is in charge of combining the contents of multiple
+// surfaces into one displayable output.
 type Compositor struct {
 	proxy *Proxy
 }
 
+// NewCompositor wraps p in a Compositor proxy.
 func NewCompositor(p *Proxy) *Compositor {
 	return &Compositor{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Compositor) Proxy() *Proxy {
 	return o.proxy
 }
 
+// CreateSurface create new surface.
+//
+// Ask the compositor to create a new surface.
 func (o *Compositor) CreateSurface() (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -85,6 +106,9 @@ func (o *Compositor) CreateSurface() (*Surface, error) {
 	return wrapped, nil
 }
 
+// CreateRegion create new region.
+//
+// Ask the compositor to create a new region.
 func (o *Compositor) CreateRegion() (*Region, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
@@ -102,6 +126,9 @@ func (o *Compositor) CreateRegion() (*Region, error) {
 	return wrapped, nil
 }
 
+// Release destroy wl_compositor.
+//
+// This request destroys the wl_compositor. This has no effect on any other objects.
 func (o *Compositor) Release() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(7) {
 		return ErrVersionMismatch

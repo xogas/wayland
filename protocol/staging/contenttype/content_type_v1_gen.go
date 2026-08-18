@@ -15,15 +15,41 @@ const (
 	ContentTypeV1RequestSetContentType uint16 = 1
 )
 
+// ContentTypeV1Type possible content types.
+//
+// These values describe the available content types for a surface.
 type ContentTypeV1Type uint32
 
 const (
-	ContentTypeV1TypeNone  ContentTypeV1Type = 0
+	// ContentTypeV1TypeNone.
+	//
+	// The content type none means that either the application has no data
+	// about the content type, or that the content doesn't fit into one of
+	// the other categories.
+	ContentTypeV1TypeNone ContentTypeV1Type = 0
+	// ContentTypeV1TypePhoto.
+	//
+	// The content type photo describes content derived from digital still
+	// pictures and may be presented with minimal processing.
 	ContentTypeV1TypePhoto ContentTypeV1Type = 1
+	// ContentTypeV1TypeVideo.
+	//
+	// The content type video describes a video or animation and may be
+	// presented with more accurate timing to avoid stutter. Where scaling
+	// is needed, scaling methods more appropriate for video may be used.
 	ContentTypeV1TypeVideo ContentTypeV1Type = 2
-	ContentTypeV1TypeGame  ContentTypeV1Type = 3
+	// ContentTypeV1TypeGame.
+	//
+	// The content type game describes a running game. Its content may be
+	// presented with reduced latency.
+	ContentTypeV1TypeGame ContentTypeV1Type = 3
 )
 
+// ContentTypeV1DestroyRequest destroy the content type object.
+//
+// Switch back to not specifying the content type of this surface. This is
+// equivalent to setting the content type to none, including double
+// buffering semantics. See set_content_type for details.
 type ContentTypeV1DestroyRequest struct {
 }
 
@@ -35,7 +61,18 @@ func (r *ContentTypeV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ContentTypeV1DestroyRequest) Since() uint32 { return 1 }
 
+// ContentTypeV1SetContentTypeRequest specify the content type.
+//
+// Set the surface content type. This informs the compositor that the
+// client believes it is displaying buffers matching this content type.
+//
+// This is purely a hint for the compositor, which can be used to adjust
+// its behavior or hardware settings to fit the presented content best.
+//
+// The content type is double-buffered state, see wl_surface.commit for
+// details.
 type ContentTypeV1SetContentTypeRequest struct {
+	// ContentType the content type.
 	ContentType ContentTypeV1Type
 }
 
@@ -52,18 +89,34 @@ func (r *ContentTypeV1SetContentTypeRequest) Marshal(w *wire.Writer) error {
 
 func (r *ContentTypeV1SetContentTypeRequest) Since() uint32 { return 1 }
 
+// ContentTypeV1 content type object for a surface.
+//
+// The content type object allows the compositor to optimize for the kind
+// of content shown on the surface. A compositor may for example use it to
+// set relevant drm properties like "content type".
+//
+// The client may request to switch to another content type at any time.
+// When the associated surface gets destroyed, this object becomes inert and
+// the client should destroy it.
 type ContentTypeV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewContentTypeV1 wraps p in a ContentTypeV1 proxy.
 func NewContentTypeV1(p *wayland.Proxy) *ContentTypeV1 {
 	return &ContentTypeV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ContentTypeV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the content type object.
+//
+// Switch back to not specifying the content type of this surface. This is
+// equivalent to setting the content type to none, including double
+// buffering semantics. See set_content_type for details.
 func (o *ContentTypeV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -75,6 +128,16 @@ func (o *ContentTypeV1) Destroy() error {
 	return nil
 }
 
+// SetContentType specify the content type.
+//
+// Set the surface content type. This informs the compositor that the
+// client believes it is displaying buffers matching this content type.
+//
+// This is purely a hint for the compositor, which can be used to adjust
+// its behavior or hardware settings to fit the presented content best.
+//
+// The content type is double-buffered state, see wl_surface.commit for
+// details.
 func (o *ContentTypeV1) SetContentType(contentType ContentTypeV1Type) error {
 	return o.proxy.SendRequest(ContentTypeV1RequestSetContentType, &ContentTypeV1SetContentTypeRequest{
 		ContentType: contentType,

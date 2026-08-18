@@ -32,10 +32,34 @@ var inputpopupsurfacev2EventFDCounts = map[uint16]int{
 type InputPopupSurfaceV2Error uint32
 
 const (
+	// InputPopupSurfaceV2ErrorInvalidSerial received acknowledgement for a serial which has already been acknowledged or has never been issued.
 	InputPopupSurfaceV2ErrorInvalidSerial InputPopupSurfaceV2Error = 0
 )
 
+// InputPopupSurfaceV2AckConfigureRequest acknowledge a configure sequence.
+//
+// This request notifies the compositor that the client updated its surface in response to a configure sequence.
+//
+// The purpose of this request is to synchronize the updates of the surface geometry with the surface contents.
+// For example, when the compositor assigns a size larger than previously, the client must fill the additional space before the popup gets displayed to the user with the new size. When the compositor receives .ack_configure, it can proceed to draw the new size.
+//
+// .ack_configure should be sent after every submitted configure sequence, passing along the serial received in it.
+//
+// An .ack_configure request is conceptually double-buffered.
+// Every request overrides the previous one. The request takes effect once the .commit request is sent on the corresponding surface.
+//
+// If the client receives multiple configure sequences before it
+// can respond to one, it may acknowledge only the last configure sequence by using its serial in the .ack_configure request.
+//
+// Committing an .ack_configure request consumes the serial number sent with
+// the request, as well as serial numbers sent by all configure sequences
+// submitted on this input_popup_surface prior to the configure sequence referenced by
+// the committed serial.
+//
+// Committing this request with a serial that, for this surface, never appeared in a submitted configure sequence, or one that was already committed before, raises an invalid_serial
+// error.
 type InputPopupSurfaceV2AckConfigureRequest struct {
+	// Serial the serial from the configure sequence.
 	Serial uint32
 }
 
@@ -52,9 +76,31 @@ func (r *InputPopupSurfaceV2AckConfigureRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupSurfaceV2AckConfigureRequest) Since() uint32 { return 1 }
 
+// InputPopupSurfaceV2RepositionRequest recalculate the popup's location.
+//
+// Reposition an already-mapped popup. The popup will be placed given the
+// details in the passed input_popup_positioner object.
+//
+// The request is processed immediately, without the need to issue wl_surface.commit, but the actual repositioning takes place later, after .ack_configure.
+//
+// The compositor should reply with a configure sequence including:
+// - input_popup_surface.start_configure,
+// - input_popup_surface.repositioned, including the token passed in this request.
+//
+// This will discard any parameters set by the previous positioner.
+//
+// If multiple .reposition requests are sent before the .repositioned event is submitted as part of a configure sequence, the compositor may ignore all
+// but the last one.
+//
+// The new popup position will not take
+// effect until the corresponding configure sequence is acknowledged by the
+// client. See input_popup_surface.repositioned for details.
+//
+// The token itself is opaque, and has no other special meaning.
 type InputPopupSurfaceV2RepositionRequest struct {
 	Positioner wire.ObjectID
-	Token      uint32
+	// Token reposition request token.
+	Token uint32
 }
 
 func (r *InputPopupSurfaceV2RepositionRequest) Opcode() uint16 {
@@ -73,6 +119,10 @@ func (r *InputPopupSurfaceV2RepositionRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupSurfaceV2RepositionRequest) Since() uint32 { return 1 }
 
+// InputPopupSurfaceV2DestroyRequest remove the popup.
+//
+// This destroys the popup. Explicitly destroying the input_popup_surface
+// object will also dismiss the popup, and unmap the surface.
 type InputPopupSurfaceV2DestroyRequest struct {
 }
 
@@ -84,14 +134,44 @@ func (r *InputPopupSurfaceV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputPopupSurfaceV2DestroyRequest) Since() uint32 { return 1 }
 
+// InputPopupSurfaceV2StartConfigureEvent configure the popup surface.
+//
+// The start_configure event updates the popup geometry and marks the start of a configure sequence.
+//
+// The anchor_* arguments represent the geometry of the anchor to which the popup was attached, relative to the upper left corner of the
+// popup's surface. Note that this makes anchor_x, anchor_y the reverse of the what they represent in xdg_popup.
+//
+// A configure sequence is a set of one or more events configuring the state of the
+// input_popup_surface, starting with this event and ending with input_method.done. After the input_method.done event, the configure sequence is considered submitted.
+//
+// State set by event in a configure sequence is conceptually double-buffered.
+// Every argument overwrites its previous value. The state change should get applied atomically with the input_method.done ending the sequence, and the value of serial should return to the undefined value.
+//
+// Events on the input_popup_surface object received outside a configure sequence (while serial is undefined) must be ignored by the client.
+//
+// A configure sequence shall be sent every time the compositor (re)positions the popup, or the shape of the anchor changes, for example after popup creation, or in response to text being typed and the text cursor moving.
+//
+// The client may update the surface in response to input_method.done. Unless the popup is destroyed by the input_method.done, the client must reply with
+// an .ack_configure request with the serial sent in the start_configure event at
+// some point after the sequence ends and before committing the new surface.
+//
+// If the client receives multiple configure sequences before it can respond
+// to one, it is free to discard all but the last event it received.
 type InputPopupSurfaceV2StartConfigureEvent struct {
-	Width        uint32
-	Height       uint32
-	AnchorX      int32
-	AnchorY      int32
-	AnchorWidth  uint32
+	// Width popup width.
+	Width uint32
+	// Height popup height.
+	Height uint32
+	// AnchorX x position relative to anchor geometry.
+	AnchorX int32
+	// AnchorY y position relative to anchor geometry.
+	AnchorY int32
+	// AnchorWidth width of the anchor area.
+	AnchorWidth uint32
+	// AnchorHeight height of the anchor area.
 	AnchorHeight uint32
-	Serial       uint32
+	// Serial serial of the configure sequence.
+	Serial uint32
 }
 
 func (e *InputPopupSurfaceV2StartConfigureEvent) Opcode() uint16 {
@@ -139,7 +219,25 @@ func (e *InputPopupSurfaceV2StartConfigureEvent) Unmarshal(r *wire.Reader) error
 
 func (e *InputPopupSurfaceV2StartConfigureEvent) Since() uint32 { return 1 }
 
+// InputPopupSurfaceV2RepositionedEvent signal the completion of a reposition request.
+//
+// The compositor sends the .repositioned event in response to the .reposition request to notify about its completion.
+//
+// The new geometry of the popup can be communicated using additional events within a configure sequence including:
+// - input_popup_surface.start_configure, and
+// - the .anchor_position event to update the relative position to the anchor.
+//
+// When responding to a .reposition request, the token argument is the token passed in the that request.
+//
+// This event is sent as part of a configure sequence.
+// State set by this event is conceptually double-buffered.
+// Every argument overwrites its previous value. The state change should get applied atomically with the next input_method.done event.
+//
+// The client should optionally update the content of the popup, but must
+// acknowledge the new popup configuration for the new position to take
+// effect. See input_popup_surface.ack_configure for details.
 type InputPopupSurfaceV2RepositionedEvent struct {
+	// Token reposition request token.
 	Token uint32
 }
 
@@ -158,23 +256,79 @@ func (e *InputPopupSurfaceV2RepositionedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputPopupSurfaceV2RepositionedEvent) Since() uint32 { return 1 }
 
+// InputPopupSurfaceV2StartConfigureFunc is a callback for StartConfigure events.
 type InputPopupSurfaceV2StartConfigureFunc func(ev InputPopupSurfaceV2StartConfigureEvent)
 
+// InputPopupSurfaceV2RepositionedFunc is a callback for Repositioned events.
 type InputPopupSurfaceV2RepositionedFunc func(ev InputPopupSurfaceV2RepositionedEvent)
 
+// InputPopupSurfaceV2 popup surface.
+//
+// An input method popup surface is a short-lived, temporary surface.
+// It is meant as an area to show suggestions, candidates, or for other input-related uses.
+//
+// The compositor should anchor it at the active text input cursor area.
+//
+// The client must call wl_surface.commit on the corresponding wl_surface
+// for input_popup_surface state updates to take effect, unless otherwise noted.
+//
+// After the initial wl_surface.commit, the compositor must reply with a configure sequence (see .start_configure) initializing all the compositor-provided state of the popup. That means providing values for:
+//
+// - width
+// - height
+// - anchor_x
+// - anchor_y
+// - anchor_width
+// - anchor_height
+// - serial
+//
+// using the appropriate events.
+//
+// The popup will only be presented to the user after the client receives the configure sequence and replies with .ack_configure.
+//
+// An example init sequence could look like this:
+//
+// 1. client (Cl): popup = input_method.get_popup(wl_surface, positioner)
+// 2. Cl: wl_surface.commit()
+// 3. compositor (Co): popup.start_configure(150, 150, 10, -2, 5, 30)
+// 5. Co: input_method.done()
+// 6. Cl: ack_configure()
+// 7. Cl: wl_surface.commit()
+//
+// A newly created input_popup_surface will be stacked on top of all previously created
+// input_popup_surfaces associated with the same text input.
+//
+// A typical sequence resulting from the user selecting a new text field and typing some text:
+//
+// 1. compositor (Co): input_method.activate()
+// 2. Co: input_method.done()
+// 3. [init sequence]
+// 4. Co: input_method.set_surrounding_text("new text")
+// 5. Co: popup.start_configure(150, 150, -60, -2, 55, 30)
+// 6. Co: input_method.done()
+// 7. client (Cl): ack_configure()
+// 8. Cl: wl_surface.commit()
+//
+// When the corresponding input_method receives a committed .deactivate event, the popup gets destroyed and becomes invalid and its surface gets unmapped.
+//
+// The client must not destroy the underlying wl_surface while the
+// xx_input_popup_surface_v2 object exists.
 type InputPopupSurfaceV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputPopupSurfaceV2 wraps p in a InputPopupSurfaceV2 proxy.
 func NewInputPopupSurfaceV2(p *wayland.Proxy) *InputPopupSurfaceV2 {
 	p.SetEventFDCounts(inputpopupsurfacev2EventFDCounts)
 	return &InputPopupSurfaceV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputPopupSurfaceV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnStartConfigure registers fn to receive StartConfigure events.
 func (o *InputPopupSurfaceV2) OnStartConfigure(fn InputPopupSurfaceV2StartConfigureFunc) {
 	o.proxy.RegisterEvent(InputPopupSurfaceV2EventStartConfigure, func(r *wire.Reader) {
 		var ev InputPopupSurfaceV2StartConfigureEvent
@@ -188,6 +342,7 @@ func (o *InputPopupSurfaceV2) OnStartConfigure(fn InputPopupSurfaceV2StartConfig
 	})
 }
 
+// OnRepositioned registers fn to receive Repositioned events.
 func (o *InputPopupSurfaceV2) OnRepositioned(fn InputPopupSurfaceV2RepositionedFunc) {
 	o.proxy.RegisterEvent(InputPopupSurfaceV2EventRepositioned, func(r *wire.Reader) {
 		var ev InputPopupSurfaceV2RepositionedEvent
@@ -201,12 +356,55 @@ func (o *InputPopupSurfaceV2) OnRepositioned(fn InputPopupSurfaceV2RepositionedF
 	})
 }
 
+// AckConfigure acknowledge a configure sequence.
+//
+// This request notifies the compositor that the client updated its surface in response to a configure sequence.
+//
+// The purpose of this request is to synchronize the updates of the surface geometry with the surface contents.
+// For example, when the compositor assigns a size larger than previously, the client must fill the additional space before the popup gets displayed to the user with the new size. When the compositor receives .ack_configure, it can proceed to draw the new size.
+//
+// .ack_configure should be sent after every submitted configure sequence, passing along the serial received in it.
+//
+// An .ack_configure request is conceptually double-buffered.
+// Every request overrides the previous one. The request takes effect once the .commit request is sent on the corresponding surface.
+//
+// If the client receives multiple configure sequences before it
+// can respond to one, it may acknowledge only the last configure sequence by using its serial in the .ack_configure request.
+//
+// Committing an .ack_configure request consumes the serial number sent with
+// the request, as well as serial numbers sent by all configure sequences
+// submitted on this input_popup_surface prior to the configure sequence referenced by
+// the committed serial.
+//
+// Committing this request with a serial that, for this surface, never appeared in a submitted configure sequence, or one that was already committed before, raises an invalid_serial
+// error.
 func (o *InputPopupSurfaceV2) AckConfigure(serial uint32) error {
 	return o.proxy.SendRequest(InputPopupSurfaceV2RequestAckConfigure, &InputPopupSurfaceV2AckConfigureRequest{
 		Serial: serial,
 	})
 }
 
+// Reposition recalculate the popup's location.
+//
+// Reposition an already-mapped popup. The popup will be placed given the
+// details in the passed input_popup_positioner object.
+//
+// The request is processed immediately, without the need to issue wl_surface.commit, but the actual repositioning takes place later, after .ack_configure.
+//
+// The compositor should reply with a configure sequence including:
+// - input_popup_surface.start_configure,
+// - input_popup_surface.repositioned, including the token passed in this request.
+//
+// This will discard any parameters set by the previous positioner.
+//
+// If multiple .reposition requests are sent before the .repositioned event is submitted as part of a configure sequence, the compositor may ignore all
+// but the last one.
+//
+// The new popup position will not take
+// effect until the corresponding configure sequence is acknowledged by the
+// client. See input_popup_surface.repositioned for details.
+//
+// The token itself is opaque, and has no other special meaning.
 func (o *InputPopupSurfaceV2) Reposition(positioner wire.ObjectID, token uint32) error {
 	return o.proxy.SendRequest(InputPopupSurfaceV2RequestReposition, &InputPopupSurfaceV2RepositionRequest{
 		Positioner: positioner,
@@ -214,6 +412,10 @@ func (o *InputPopupSurfaceV2) Reposition(positioner wire.ObjectID, token uint32)
 	})
 }
 
+// Destroy remove the popup.
+//
+// This destroys the popup. Explicitly destroying the input_popup_surface
+// object will also dismiss the popup, and unmap the surface.
 func (o *InputPopupSurfaceV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

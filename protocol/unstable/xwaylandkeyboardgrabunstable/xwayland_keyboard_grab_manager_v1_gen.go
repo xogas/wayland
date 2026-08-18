@@ -15,6 +15,9 @@ const (
 	XwaylandKeyboardGrabManagerV1RequestGrabKeyboard uint16 = 1
 )
 
+// XwaylandKeyboardGrabManagerV1DestroyRequest destroy the keyboard grab manager.
+//
+// Destroy the keyboard grab manager.
 type XwaylandKeyboardGrabManagerV1DestroyRequest struct {
 }
 
@@ -28,10 +31,33 @@ func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Marshal(w *wire.Writer) er
 
 func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// XwaylandKeyboardGrabManagerV1GrabKeyboardRequest grab the keyboard to a surface.
+//
+// The grab_keyboard request asks for a grab of the keyboard, forcing
+// the keyboard focus for the given seat upon the given surface.
+//
+// The protocol provides no guarantee that the grab is ever satisfied,
+// and does not require the compositor to send an error if the grab
+// cannot ever be satisfied. It is thus possible to request a keyboard
+// grab that will never be effective.
+//
+// The protocol:
+//
+//   - does not guarantee that the grab itself is applied for a surface,
+//     the grab request may be silently ignored by the compositor,
+//   - does not guarantee that any events are sent to this client even
+//     if the grab is applied to a surface,
+//   - does not guarantee that events sent to this client are exhaustive,
+//     a compositor may filter some events for its own consumption,
+//   - does not guarantee that events sent to this client are continuous,
+//     a compositor may change and reroute keyboard events while the grab
+//     is nominally active.
 type XwaylandKeyboardGrabManagerV1GrabKeyboardRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Surface surface to report keyboard events to.
 	Surface wire.ObjectID
-	Seat    wire.ObjectID
+	// Seat the seat for which the keyboard should be grabbed.
+	Seat wire.ObjectID
 }
 
 func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Opcode() uint16 {
@@ -53,18 +79,26 @@ func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Marshal(w *wire.Write
 
 func (r *XwaylandKeyboardGrabManagerV1GrabKeyboardRequest) Since() uint32 { return 1 }
 
+// XwaylandKeyboardGrabManagerV1 context object for keyboard grab manager.
+//
+// A global interface used for grabbing the keyboard.
 type XwaylandKeyboardGrabManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewXwaylandKeyboardGrabManagerV1 wraps p in a XwaylandKeyboardGrabManagerV1 proxy.
 func NewXwaylandKeyboardGrabManagerV1(p *wayland.Proxy) *XwaylandKeyboardGrabManagerV1 {
 	return &XwaylandKeyboardGrabManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *XwaylandKeyboardGrabManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the keyboard grab manager.
+//
+// Destroy the keyboard grab manager.
 func (o *XwaylandKeyboardGrabManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -76,6 +110,27 @@ func (o *XwaylandKeyboardGrabManagerV1) Destroy() error {
 	return nil
 }
 
+// GrabKeyboard grab the keyboard to a surface.
+//
+// The grab_keyboard request asks for a grab of the keyboard, forcing
+// the keyboard focus for the given seat upon the given surface.
+//
+// The protocol provides no guarantee that the grab is ever satisfied,
+// and does not require the compositor to send an error if the grab
+// cannot ever be satisfied. It is thus possible to request a keyboard
+// grab that will never be effective.
+//
+// The protocol:
+//
+//   - does not guarantee that the grab itself is applied for a surface,
+//     the grab request may be silently ignored by the compositor,
+//   - does not guarantee that any events are sent to this client even
+//     if the grab is applied to a surface,
+//   - does not guarantee that events sent to this client are exhaustive,
+//     a compositor may filter some events for its own consumption,
+//   - does not guarantee that events sent to this client are continuous,
+//     a compositor may change and reroute keyboard events while the grab
+//     is nominally active.
 func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface wire.ObjectID, seat wire.ObjectID) (*XwaylandKeyboardGrabV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

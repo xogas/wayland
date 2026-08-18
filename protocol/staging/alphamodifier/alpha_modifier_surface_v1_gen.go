@@ -18,9 +18,15 @@ const (
 type AlphaModifierSurfaceV1Error uint32
 
 const (
+	// AlphaModifierSurfaceV1ErrorNoSurface wl_surface was destroyed.
 	AlphaModifierSurfaceV1ErrorNoSurface AlphaModifierSurfaceV1Error = 0
 )
 
+// AlphaModifierSurfaceV1DestroyRequest destroy the alpha modifier object.
+//
+// This destroys the object, and is equivalent to set_multiplier with
+// a value of UINT32_MAX, with the same double-buffered semantics as
+// set_multiplier.
 type AlphaModifierSurfaceV1DestroyRequest struct {
 }
 
@@ -34,6 +40,21 @@ func (r *AlphaModifierSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *AlphaModifierSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// AlphaModifierSurfaceV1SetMultiplierRequest specify the alpha multiplier.
+//
+// Sets the alpha multiplier for the surface. The alpha multiplier is
+// double-buffered state, see wl_surface.commit for details.
+//
+// This factor is applied in the compositor's blending space, as an
+// additional step after the processing of per-pixel alpha values for the
+// wl_surface. The exact meaning of the factor is thus undefined, unless
+// the blending space is specified in a different extension.
+//
+// This multiplier is applied even if the buffer attached to the
+// wl_surface doesn't have an alpha channel; in that case an alpha value
+// of one is used instead.
+//
+// Zero means completely transparent, UINT32_MAX means completely opaque.
 type AlphaModifierSurfaceV1SetMultiplierRequest struct {
 	Factor uint32
 }
@@ -51,18 +72,34 @@ func (r *AlphaModifierSurfaceV1SetMultiplierRequest) Marshal(w *wire.Writer) err
 
 func (r *AlphaModifierSurfaceV1SetMultiplierRequest) Since() uint32 { return 1 }
 
+// AlphaModifierSurfaceV1 alpha modifier object for a surface.
+//
+// This interface allows the client to set a factor for the alpha values on
+// a surface, which can be used to offload such operations to the compositor.
+// The default factor is UINT32_MAX.
+//
+// This object has to be destroyed before the associated wl_surface. Once the
+// wl_surface is destroyed, all request on this object will raise the
+// no_surface error.
 type AlphaModifierSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewAlphaModifierSurfaceV1 wraps p in a AlphaModifierSurfaceV1 proxy.
 func NewAlphaModifierSurfaceV1(p *wayland.Proxy) *AlphaModifierSurfaceV1 {
 	return &AlphaModifierSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *AlphaModifierSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the alpha modifier object.
+//
+// This destroys the object, and is equivalent to set_multiplier with
+// a value of UINT32_MAX, with the same double-buffered semantics as
+// set_multiplier.
 func (o *AlphaModifierSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +111,21 @@ func (o *AlphaModifierSurfaceV1) Destroy() error {
 	return nil
 }
 
+// SetMultiplier specify the alpha multiplier.
+//
+// Sets the alpha multiplier for the surface. The alpha multiplier is
+// double-buffered state, see wl_surface.commit for details.
+//
+// This factor is applied in the compositor's blending space, as an
+// additional step after the processing of per-pixel alpha values for the
+// wl_surface. The exact meaning of the factor is thus undefined, unless
+// the blending space is specified in a different extension.
+//
+// This multiplier is applied even if the buffer attached to the
+// wl_surface doesn't have an alpha channel; in that case an alpha value
+// of one is used instead.
+//
+// Zero means completely transparent, UINT32_MAX means completely opaque.
 func (o *AlphaModifierSurfaceV1) SetMultiplier(factor uint32) error {
 	return o.proxy.SendRequest(AlphaModifierSurfaceV1RequestSetMultiplier, &AlphaModifierSurfaceV1SetMultiplierRequest{
 		Factor: factor,

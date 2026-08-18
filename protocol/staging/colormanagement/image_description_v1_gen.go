@@ -30,22 +30,37 @@ var imagedescriptionv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// ImageDescriptionV1Error protocol errors.
 type ImageDescriptionV1Error uint32
 
 const (
-	ImageDescriptionV1ErrorNotReady      ImageDescriptionV1Error = 0
+	// ImageDescriptionV1ErrorNotReady attempted to use an object which is not ready.
+	ImageDescriptionV1ErrorNotReady ImageDescriptionV1Error = 0
+	// ImageDescriptionV1ErrorNoInformation get_information not allowed.
 	ImageDescriptionV1ErrorNoInformation ImageDescriptionV1Error = 1
 )
 
+// ImageDescriptionV1Cause generic reason for failure.
 type ImageDescriptionV1Cause uint32
 
 const (
-	ImageDescriptionV1CauseLowVersion      ImageDescriptionV1Cause = 0
-	ImageDescriptionV1CauseUnsupported     ImageDescriptionV1Cause = 1
+	// ImageDescriptionV1CauseLowVersion interface version too low.
+	ImageDescriptionV1CauseLowVersion ImageDescriptionV1Cause = 0
+	// ImageDescriptionV1CauseUnsupported unsupported image description data.
+	ImageDescriptionV1CauseUnsupported ImageDescriptionV1Cause = 1
+	// ImageDescriptionV1CauseOperatingSystem error independent of the client.
 	ImageDescriptionV1CauseOperatingSystem ImageDescriptionV1Cause = 2
-	ImageDescriptionV1CauseNoOutput        ImageDescriptionV1Cause = 3
+	// ImageDescriptionV1CauseNoOutput the relevant output no longer exists.
+	ImageDescriptionV1CauseNoOutput ImageDescriptionV1Cause = 3
 )
 
+// ImageDescriptionV1DestroyRequest destroy the image description.
+//
+// Destroy this object. It is safe to destroy an object which is not ready.
+//
+// Destroying a wp_image_description_v1 object has no side-effects, not
+// even if a wp_color_management_surface_v1.set_image_description has not
+// yet been followed by a wl_surface.commit.
 type ImageDescriptionV1DestroyRequest struct {
 }
 
@@ -57,6 +72,15 @@ func (r *ImageDescriptionV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImageDescriptionV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionV1GetInformationRequest get information about the image description.
+//
+// Creates a wp_image_description_info_v1 object which delivers the
+// information that makes up the image description.
+//
+// Not all image description protocol objects allow get_information
+// request. Whether it is allowed or not is defined by the request that
+// created the object. If get_information is not allowed, the protocol
+// error no_information is raised.
 type ImageDescriptionV1GetInformationRequest struct {
 	Information wire.NewID
 }
@@ -74,9 +98,23 @@ func (r *ImageDescriptionV1GetInformationRequest) Marshal(w *wire.Writer) error 
 
 func (r *ImageDescriptionV1GetInformationRequest) Since() uint32 { return 1 }
 
+// ImageDescriptionV1FailedEvent graceful error on creating the image description.
+//
+// If creating a wp_image_description_v1 object fails for a reason that is
+// not defined as a protocol error, this event is sent.
+//
+// The requests that create image description objects define whether and
+// when this can occur. Only such creation requests can trigger this event.
+// This event cannot be triggered after the image description was
+// successfully formed.
+//
+// Once this event has been sent, the wp_image_description_v1 object will
+// never become ready and it can only be destroyed.
 type ImageDescriptionV1FailedEvent struct {
+	// Cause generic reason.
 	Cause ImageDescriptionV1Cause
-	Msg   string
+	// Msg ad hoc human-readable explanation.
+	Msg string
 }
 
 func (e *ImageDescriptionV1FailedEvent) Opcode() uint16 { return ImageDescriptionV1EventFailed }
@@ -97,8 +135,22 @@ func (e *ImageDescriptionV1FailedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionV1FailedEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionV1ReadyEvent the object is ready to be used (32-bit).
+//
 // Deprecated: since version 2.
+//
+// Starting from interface version 2, the 'ready2' event is sent instead
+// of this event.
+//
+// For the definition of this event, see the 'ready2' event. The
+// difference to this event is as follows.
+//
+// The id number is valid only as long as the protocol object is alive. If
+// all protocol objects referring to the same image description record are
+// destroyed, the id number may be recycled for a different image
+// description record.
 type ImageDescriptionV1ReadyEvent struct {
+	// Identity the 32-bit image description id number.
 	Identity uint32
 }
 
@@ -115,8 +167,36 @@ func (e *ImageDescriptionV1ReadyEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionV1ReadyEvent) Since() uint32 { return 1 }
 
+// ImageDescriptionV1Ready2Event the object is ready to be used.
+//
+// Once this event has been sent, the wp_image_description_v1 object is
+// deemed "ready". Ready objects can be used to send requests and can be
+// used through other interfaces.
+//
+// Every ready wp_image_description_v1 protocol object refers to an
+// underlying image description record in the compositor. Multiple protocol
+// objects may end up referring to the same record. Clients may identify
+// these "copies" by comparing their id numbers: if the numbers from two
+// protocol objects are identical, the protocol objects refer to the same
+// image description record. Two different image description records
+// cannot have the same id number simultaneously. The id number does not
+// change during the lifetime of the image description record.
+//
+// Image description id number is not a protocol object id. Zero is
+// reserved as an invalid id number. It shall not be possible for a client
+// to refer to an image description by its id number in protocol. The id
+// numbers might not be portable between Wayland connections. A compositor
+// shall not send an invalid id number.
+//
+// Compositors must not recycle image description id numbers.
+//
+// This identity allows clients to de-duplicate image description records
+// and avoid get_information request if they already have the image
+// description information.
 type ImageDescriptionV1Ready2Event struct {
+	// IdentityHi high 32 bits of the 64-bit image description id number.
 	IdentityHi uint32
+	// IdentityLo low 32 bits of the 64-bit image description id number.
 	IdentityLo uint32
 }
 
@@ -138,25 +218,54 @@ func (e *ImageDescriptionV1Ready2Event) Unmarshal(r *wire.Reader) error {
 
 func (e *ImageDescriptionV1Ready2Event) Since() uint32 { return 2 }
 
+// ImageDescriptionV1FailedFunc is a callback for Failed events.
 type ImageDescriptionV1FailedFunc func(ev ImageDescriptionV1FailedEvent)
 
+// ImageDescriptionV1ReadyFunc is a callback for Ready events.
 type ImageDescriptionV1ReadyFunc func(ev ImageDescriptionV1ReadyEvent)
 
+// ImageDescriptionV1Ready2Func is a callback for Ready2 events.
 type ImageDescriptionV1Ready2Func func(ev ImageDescriptionV1Ready2Event)
 
+// ImageDescriptionV1 colorimetric image description.
+//
+// An image description carries information about the pixel color encoding
+// and its intended display and viewing environment. The image description is
+// attached to a wl_surface via
+// wp_color_management_surface_v1.set_image_description. A compositor can use
+// this information to decode pixel values into colorimetrically meaningful
+// quantities, which allows the compositor to transform the surface contents
+// to become suitable for various displays and viewing environments.
+//
+// Note, that the wp_image_description_v1 object is not ready to be used
+// immediately after creation. The object eventually delivers either the
+// 'ready' or the 'failed' event, specified in all requests creating it. The
+// object is deemed "ready" after receiving the 'ready' event.
+//
+// An object which is not ready is illegal to use, it can only be destroyed.
+// Any other request in this interface shall result in the 'not_ready'
+// protocol error. Attempts to use an object which is not ready through other
+// interfaces shall raise protocol errors defined there.
+//
+// Once created and regardless of how it was created, a
+// wp_image_description_v1 object always refers to one fixed image
+// description. It cannot change after creation.
 type ImageDescriptionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageDescriptionV1 wraps p in a ImageDescriptionV1 proxy.
 func NewImageDescriptionV1(p *wayland.Proxy) *ImageDescriptionV1 {
 	p.SetEventFDCounts(imagedescriptionv1EventFDCounts)
 	return &ImageDescriptionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageDescriptionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnFailed registers fn to receive Failed events.
 func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventFailed, func(r *wire.Reader) {
 		var ev ImageDescriptionV1FailedEvent
@@ -170,6 +279,7 @@ func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 	})
 }
 
+// OnReady registers fn to receive Ready events.
 func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady, func(r *wire.Reader) {
 		var ev ImageDescriptionV1ReadyEvent
@@ -183,6 +293,7 @@ func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 	})
 }
 
+// OnReady2 registers fn to receive Ready2 events.
 func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady2, func(r *wire.Reader) {
 		var ev ImageDescriptionV1Ready2Event
@@ -196,6 +307,13 @@ func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 	})
 }
 
+// Destroy destroy the image description.
+//
+// Destroy this object. It is safe to destroy an object which is not ready.
+//
+// Destroying a wp_image_description_v1 object has no side-effects, not
+// even if a wp_color_management_surface_v1.set_image_description has not
+// yet been followed by a wl_surface.commit.
 func (o *ImageDescriptionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -207,6 +325,15 @@ func (o *ImageDescriptionV1) Destroy() error {
 	return nil
 }
 
+// GetInformation get information about the image description.
+//
+// Creates a wp_image_description_info_v1 object which delivers the
+// information that makes up the image description.
+//
+// Not all image description protocol objects allow get_information
+// request. Whether it is allowed or not is defined by the request that
+// created the object. If get_information is not allowed, the protocol
+// error no_information is raised.
 func (o *ImageDescriptionV1) GetInformation() (*ImageDescriptionInfoV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

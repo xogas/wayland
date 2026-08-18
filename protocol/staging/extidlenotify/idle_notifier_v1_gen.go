@@ -16,6 +16,10 @@ const (
 	IdleNotifierV1RequestGetInputIdleNotification uint16 = 2
 )
 
+// IdleNotifierV1DestroyRequest destroy the manager.
+//
+// Destroy the manager object. All objects created via this interface
+// remain valid.
 type IdleNotifierV1DestroyRequest struct {
 }
 
@@ -27,8 +31,19 @@ func (r *IdleNotifierV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *IdleNotifierV1DestroyRequest) Since() uint32 { return 1 }
 
+// IdleNotifierV1GetIdleNotificationRequest create a notification object.
+//
+// Create a new idle notification object.
+//
+// The notification object has a minimum timeout duration and is tied to a
+// seat. The client will be notified if the seat is inactive for at least
+// the provided timeout. See ext_idle_notification_v1 for more details.
+//
+// A zero timeout is valid and means the client wants to be notified as
+// soon as possible when the seat is inactive.
 type IdleNotifierV1GetIdleNotificationRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Timeout minimum idle timeout in msec.
 	Timeout uint32
 	Seat    wire.ObjectID
 }
@@ -52,8 +67,21 @@ func (r *IdleNotifierV1GetIdleNotificationRequest) Marshal(w *wire.Writer) error
 
 func (r *IdleNotifierV1GetIdleNotificationRequest) Since() uint32 { return 1 }
 
+// IdleNotifierV1GetInputIdleNotificationRequest create a notification object.
+//
+// Create a new idle notification object to track input from the
+// user, such as keyboard and mouse movement. Because this object is
+// meant to track user input alone, it ignores idle inhibitors.
+//
+// The notification object has a minimum timeout duration and is tied to a
+// seat. The client will be notified if the seat is inactive for at least
+// the provided timeout. See ext_idle_notification_v1 for more details.
+//
+// A zero timeout is valid and means the client wants to be notified as
+// soon as possible when the seat is inactive.
 type IdleNotifierV1GetInputIdleNotificationRequest struct {
-	ID      wire.NewID
+	ID wire.NewID
+	// Timeout minimum idle timeout in msec.
 	Timeout uint32
 	Seat    wire.ObjectID
 }
@@ -77,18 +105,30 @@ func (r *IdleNotifierV1GetInputIdleNotificationRequest) Marshal(w *wire.Writer) 
 
 func (r *IdleNotifierV1GetInputIdleNotificationRequest) Since() uint32 { return 2 }
 
+// IdleNotifierV1 idle notification manager.
+//
+// This interface allows clients to monitor user idle status.
+//
+// After binding to this global, clients can create ext_idle_notification_v1
+// objects to get notified when the user is idle for a given amount of time.
 type IdleNotifierV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewIdleNotifierV1 wraps p in a IdleNotifierV1 proxy.
 func NewIdleNotifierV1(p *wayland.Proxy) *IdleNotifierV1 {
 	return &IdleNotifierV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *IdleNotifierV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the manager object. All objects created via this interface
+// remain valid.
 func (o *IdleNotifierV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -100,6 +140,16 @@ func (o *IdleNotifierV1) Destroy() error {
 	return nil
 }
 
+// GetIdleNotification create a notification object.
+//
+// Create a new idle notification object.
+//
+// The notification object has a minimum timeout duration and is tied to a
+// seat. The client will be notified if the seat is inactive for at least
+// the provided timeout. See ext_idle_notification_v1 for more details.
+//
+// A zero timeout is valid and means the client wants to be notified as
+// soon as possible when the seat is inactive.
 func (o *IdleNotifierV1) GetIdleNotification(timeout uint32, seat wire.ObjectID) (*IdleNotificationV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -119,6 +169,18 @@ func (o *IdleNotifierV1) GetIdleNotification(timeout uint32, seat wire.ObjectID)
 	return wrapped, nil
 }
 
+// GetInputIdleNotification create a notification object.
+//
+// Create a new idle notification object to track input from the
+// user, such as keyboard and mouse movement. Because this object is
+// meant to track user input alone, it ignores idle inhibitors.
+//
+// The notification object has a minimum timeout duration and is tied to a
+// seat. The client will be notified if the seat is inactive for at least
+// the provided timeout. See ext_idle_notification_v1 for more details.
+//
+// A zero timeout is valid and means the client wants to be notified as
+// soon as possible when the seat is inactive.
 func (o *IdleNotifierV1) GetInputIdleNotification(timeout uint32, seat wire.ObjectID) (*IdleNotificationV1, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch

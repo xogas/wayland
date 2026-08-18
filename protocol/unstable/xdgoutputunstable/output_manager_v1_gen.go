@@ -15,6 +15,12 @@ const (
 	OutputManagerV1RequestGetXdgOutput uint16 = 1
 )
 
+// OutputManagerV1DestroyRequest destroy the xdg_output_manager object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xdg_output_manager object anymore.
+//
+// Any objects already created through this instance are not affected.
 type OutputManagerV1DestroyRequest struct {
 }
 
@@ -26,6 +32,9 @@ func (r *OutputManagerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *OutputManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// OutputManagerV1GetXdgOutputRequest create an xdg output from a wl_output.
+//
+// This creates a new xdg_output object for the given wl_output.
 type OutputManagerV1GetXdgOutputRequest struct {
 	ID     wire.NewID
 	Output wire.ObjectID
@@ -47,18 +56,29 @@ func (r *OutputManagerV1GetXdgOutputRequest) Marshal(w *wire.Writer) error {
 
 func (r *OutputManagerV1GetXdgOutputRequest) Since() uint32 { return 1 }
 
+// OutputManagerV1 manage xdg_output objects.
+//
+// A global factory interface for xdg_output objects.
 type OutputManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewOutputManagerV1 wraps p in a OutputManagerV1 proxy.
 func NewOutputManagerV1(p *wayland.Proxy) *OutputManagerV1 {
 	return &OutputManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *OutputManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the xdg_output_manager object.
+//
+// Using this request a client can tell the server that it is not
+// going to use the xdg_output_manager object anymore.
+//
+// Any objects already created through this instance are not affected.
 func (o *OutputManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -70,6 +90,9 @@ func (o *OutputManagerV1) Destroy() error {
 	return nil
 }
 
+// GetXdgOutput create an xdg output from a wl_output.
+//
+// This creates a new xdg_output object for the given wl_output.
 func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

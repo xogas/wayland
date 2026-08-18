@@ -29,10 +29,26 @@ var fractionalscalev2EventFDCounts = map[uint16]int{
 type FractionalScaleV2Error uint32
 
 const (
+	// FractionalScaleV2ErrorInvalidScale scale value is not valid.
 	FractionalScaleV2ErrorInvalidScale FractionalScaleV2Error = 0
 )
 
+// FractionalScaleV2SetScaleFactorRequest set the client coordinate space scale factor.
+//
+// This request sets a scale factor for the associated wl_surface that
+// describes the coordinate system the client uses for requests following
+// xx_fractional_scale_v2.set_scale_factor.
+//
+// The scale factor is encoded in a 8.24 fixed point format.
+//
+// If this scale factor does not match the scale factor provided by the
+// compositor with xx_fractional_scale_v2.scale_factor, the compositor may
+// apply transformations to the wl_surface that can result in blurriness
+// or other artifacts.
+//
+// If scale_8_24 is zero, the error invalid_scale will be raised.
 type FractionalScaleV2SetScaleFactorRequest struct {
+	// Scale824 surface scale factor.
 	Scale824 uint32
 }
 
@@ -49,6 +65,10 @@ func (r *FractionalScaleV2SetScaleFactorRequest) Marshal(w *wire.Writer) error {
 
 func (r *FractionalScaleV2SetScaleFactorRequest) Since() uint32 { return 1 }
 
+// FractionalScaleV2DestroyRequest remove the scale interface from the surface.
+//
+// The wl_surface's xx_fractional_scale_v2 object is destroyed, and the
+// associated scale is reset to 1.
 type FractionalScaleV2DestroyRequest struct {
 }
 
@@ -60,7 +80,21 @@ func (r *FractionalScaleV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *FractionalScaleV2DestroyRequest) Since() uint32 { return 1 }
 
+// FractionalScaleV2ScaleFactorEvent set the compositor coordinate space scale factor.
+//
+// This event sets a scale factor for the associated wl_surface that
+// describes the coordinate system the compositor will use for events
+// following xx_fractional_scale_v2.scale_factor.
+//
+// The scale factor is encoded in a 8.24 fixed point format.
+//
+// The compositor must not send a scale of zero.
+//
+// The client should re-render and commit a new buffer with the new scale
+// as soon as possible, in order to avoid artifacts caused by the mismatch
+// in compositor and client scales.
 type FractionalScaleV2ScaleFactorEvent struct {
+	// Scale824 surface scale factor.
 	Scale824 uint32
 }
 
@@ -77,21 +111,43 @@ func (e *FractionalScaleV2ScaleFactorEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *FractionalScaleV2ScaleFactorEvent) Since() uint32 { return 1 }
 
+// FractionalScaleV2ScaleFactorFunc is a callback for ScaleFactor events.
 type FractionalScaleV2ScaleFactorFunc func(ev FractionalScaleV2ScaleFactorEvent)
 
+// FractionalScaleV2 interface for fractional scaling.
+//
+// An additional interface for a wl_surface object that allows compositor and
+// client to communicate in a different coordinate space, in order to enable
+// them to accurately describe coordinates and sizes in pixels.
+// The two coordinate spaces in consideration are logical and pixels, where
+// logical coordinates describe the size content should have and pixels
+// describe the size of buffers.
+//
+// A scale of one equals a lack of scaling, where the communicated values
+// define both logical coordinates and pixels.
+// A scale greater than one describes that for every logical coordinate,
+// more than one pixel is used, and a scale less than one describes that
+// multiple logical coordinates make up one pixel.
+// In mathematical terms, logical coordinates can be obtained by dividing
+// the provided values by the currently active scale.
+//
+// The initial compositor and client coordinate scale factors are 1.
 type FractionalScaleV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewFractionalScaleV2 wraps p in a FractionalScaleV2 proxy.
 func NewFractionalScaleV2(p *wayland.Proxy) *FractionalScaleV2 {
 	p.SetEventFDCounts(fractionalscalev2EventFDCounts)
 	return &FractionalScaleV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *FractionalScaleV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnScaleFactor registers fn to receive ScaleFactor events.
 func (o *FractionalScaleV2) OnScaleFactor(fn FractionalScaleV2ScaleFactorFunc) {
 	o.proxy.RegisterEvent(FractionalScaleV2EventScaleFactor, func(r *wire.Reader) {
 		var ev FractionalScaleV2ScaleFactorEvent
@@ -105,12 +161,30 @@ func (o *FractionalScaleV2) OnScaleFactor(fn FractionalScaleV2ScaleFactorFunc) {
 	})
 }
 
+// SetScaleFactor set the client coordinate space scale factor.
+//
+// This request sets a scale factor for the associated wl_surface that
+// describes the coordinate system the client uses for requests following
+// xx_fractional_scale_v2.set_scale_factor.
+//
+// The scale factor is encoded in a 8.24 fixed point format.
+//
+// If this scale factor does not match the scale factor provided by the
+// compositor with xx_fractional_scale_v2.scale_factor, the compositor may
+// apply transformations to the wl_surface that can result in blurriness
+// or other artifacts.
+//
+// If scale_8_24 is zero, the error invalid_scale will be raised.
 func (o *FractionalScaleV2) SetScaleFactor(scale824 uint32) error {
 	return o.proxy.SendRequest(FractionalScaleV2RequestSetScaleFactor, &FractionalScaleV2SetScaleFactorRequest{
 		Scale824: scale824,
 	})
 }
 
+// Destroy remove the scale interface from the surface.
+//
+// The wl_surface's xx_fractional_scale_v2 object is destroyed, and the
+// associated scale is reset to 1.
 func (o *FractionalScaleV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

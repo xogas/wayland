@@ -19,14 +19,28 @@ const (
 type LinuxDrmSyncobjSurfaceV1Error uint32
 
 const (
-	LinuxDrmSyncobjSurfaceV1ErrorNoSurface         LinuxDrmSyncobjSurfaceV1Error = 1
+	// LinuxDrmSyncobjSurfaceV1ErrorNoSurface the associated wl_surface was destroyed.
+	LinuxDrmSyncobjSurfaceV1ErrorNoSurface LinuxDrmSyncobjSurfaceV1Error = 1
+	// LinuxDrmSyncobjSurfaceV1ErrorUnsupportedBuffer the buffer does not support explicit synchronization.
 	LinuxDrmSyncobjSurfaceV1ErrorUnsupportedBuffer LinuxDrmSyncobjSurfaceV1Error = 2
-	LinuxDrmSyncobjSurfaceV1ErrorNoBuffer          LinuxDrmSyncobjSurfaceV1Error = 3
-	LinuxDrmSyncobjSurfaceV1ErrorNoAcquirePoint    LinuxDrmSyncobjSurfaceV1Error = 4
-	LinuxDrmSyncobjSurfaceV1ErrorNoReleasePoint    LinuxDrmSyncobjSurfaceV1Error = 5
+	// LinuxDrmSyncobjSurfaceV1ErrorNoBuffer no buffer was attached.
+	LinuxDrmSyncobjSurfaceV1ErrorNoBuffer LinuxDrmSyncobjSurfaceV1Error = 3
+	// LinuxDrmSyncobjSurfaceV1ErrorNoAcquirePoint no acquire timeline point was set.
+	LinuxDrmSyncobjSurfaceV1ErrorNoAcquirePoint LinuxDrmSyncobjSurfaceV1Error = 4
+	// LinuxDrmSyncobjSurfaceV1ErrorNoReleasePoint no release timeline point was set.
+	LinuxDrmSyncobjSurfaceV1ErrorNoReleasePoint LinuxDrmSyncobjSurfaceV1Error = 5
+	// LinuxDrmSyncobjSurfaceV1ErrorConflictingPoints acquire and release timeline points are in conflict.
 	LinuxDrmSyncobjSurfaceV1ErrorConflictingPoints LinuxDrmSyncobjSurfaceV1Error = 6
 )
 
+// LinuxDrmSyncobjSurfaceV1DestroyRequest destroy the surface synchronization object.
+//
+// Destroy this surface synchronization object.
+//
+// Any timeline point set by this object with set_acquire_point or
+// set_release_point since the last commit may be discarded by the
+// compositor. Any timeline point set by this object before the last
+// commit will not be affected.
 type LinuxDrmSyncobjSurfaceV1DestroyRequest struct {
 }
 
@@ -40,10 +54,36 @@ func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest set the acquire timeline point.
+//
+// Set the timeline point that must be signalled before the compositor may
+// sample from the buffer attached with wl_surface.attach.
+//
+// The 64-bit unsigned value combined from point_hi and point_lo is the
+// point value.
+//
+// The acquire point is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If an acquire point has already been attached during the same commit
+// cycle, the new point replaces the old one.
+//
+// If the associated wl_surface was destroyed, a no_surface error is
+// raised.
+//
+// If at surface commit time there is a pending acquire timeline point set
+// but no pending buffer attached, a no_buffer error is raised. If at
+// surface commit time there is a pending buffer attached but no pending
+// acquire timeline point set, the no_acquire_point protocol error is
+// raised.
 type LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest struct {
 	Timeline wire.ObjectID
-	PointHi  uint32
-	PointLo  uint32
+	// PointHi high 32 bits of the point value.
+	PointHi uint32
+	// PointLo low 32 bits of the point value.
+	PointLo uint32
 }
 
 func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Opcode() uint16 {
@@ -65,10 +105,57 @@ func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Marshal(w *wire.Writer)
 
 func (r *LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjSurfaceV1SetReleasePointRequest set the release timeline point.
+//
+// Set the timeline point that must be signalled by the compositor when it
+// has finished its usage of the buffer attached with wl_surface.attach
+// for the relevant commit.
+//
+// Once the timeline point is signaled, and assuming the associated buffer
+// is not pending release from other wl_surface.commit requests, no
+// additional explicit or implicit synchronization with the compositor is
+// required to safely re-use the buffer.
+//
+// Note that clients cannot rely on the release point being always
+// signaled after the acquire point: compositors may release buffers
+// without ever reading from them. In addition, the compositor may use
+// different presentation paths for different commits, which may have
+// different release behavior. As a result, the compositor may signal the
+// release points in a different order than the client committed them.
+//
+// Because signaling a timeline point also signals every previous point,
+// it is generally not safe to use the same timeline object for the
+// release points of multiple buffers. The out-of-order signaling
+// described above may lead to a release point being signaled before the
+// compositor has finished reading. To avoid this, it is strongly
+// recommended that each buffer should use a separate timeline for its
+// release points.
+//
+// The 64-bit unsigned value combined from point_hi and point_lo is the
+// point value.
+//
+// The release point is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If a release point has already been attached during the same commit
+// cycle, the new point replaces the old one.
+//
+// If the associated wl_surface was destroyed, a no_surface error is
+// raised.
+//
+// If at surface commit time there is a pending release timeline point set
+// but no pending buffer attached, a no_buffer error is raised. If at
+// surface commit time there is a pending buffer attached but no pending
+// release timeline point set, the no_release_point protocol error is
+// raised.
 type LinuxDrmSyncobjSurfaceV1SetReleasePointRequest struct {
 	Timeline wire.ObjectID
-	PointHi  uint32
-	PointLo  uint32
+	// PointHi high 32 bits of the point value.
+	PointHi uint32
+	// PointLo low 32 bits of the point value.
+	PointLo uint32
 }
 
 func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Opcode() uint16 {
@@ -90,18 +177,55 @@ func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Marshal(w *wire.Writer)
 
 func (r *LinuxDrmSyncobjSurfaceV1SetReleasePointRequest) Since() uint32 { return 1 }
 
+// LinuxDrmSyncobjSurfaceV1 per-surface explicit synchronization.
+//
+// This object is an add-on interface for wl_surface to enable explicit
+// synchronization.
+//
+// Each surface can be associated with only one object of this interface at
+// any time.
+//
+// Explicit synchronization is guaranteed to be supported for buffers
+// created with any version of the linux-dmabuf protocol. Compositors are
+// free to support explicit synchronization for additional buffer types.
+// If at surface commit time the attached buffer does not support explicit
+// synchronization, an unsupported_buffer error is raised.
+//
+// As long as the wp_linux_drm_syncobj_surface_v1 object is alive, the
+// compositor may ignore implicit synchronization for buffers attached and
+// committed to the wl_surface. The delivery of wl_buffer.release events
+// for buffers attached to the surface becomes undefined.
+//
+// Clients must set both acquire and release points if and only if a
+// non-null buffer is attached in the same surface commit. See the
+// no_buffer, no_acquire_point and no_release_point protocol errors.
+//
+// If at surface commit time the acquire and release DRM syncobj timelines
+// are identical, the acquire point value must be strictly less than the
+// release point value, or else the conflicting_points protocol error is
+// raised.
 type LinuxDrmSyncobjSurfaceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewLinuxDrmSyncobjSurfaceV1 wraps p in a LinuxDrmSyncobjSurfaceV1 proxy.
 func NewLinuxDrmSyncobjSurfaceV1(p *wayland.Proxy) *LinuxDrmSyncobjSurfaceV1 {
 	return &LinuxDrmSyncobjSurfaceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *LinuxDrmSyncobjSurfaceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the surface synchronization object.
+//
+// Destroy this surface synchronization object.
+//
+// Any timeline point set by this object with set_acquire_point or
+// set_release_point since the last commit may be discarded by the
+// compositor. Any timeline point set by this object before the last
+// commit will not be affected.
 func (o *LinuxDrmSyncobjSurfaceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -113,6 +237,30 @@ func (o *LinuxDrmSyncobjSurfaceV1) Destroy() error {
 	return nil
 }
 
+// SetAcquirePoint set the acquire timeline point.
+//
+// Set the timeline point that must be signalled before the compositor may
+// sample from the buffer attached with wl_surface.attach.
+//
+// The 64-bit unsigned value combined from point_hi and point_lo is the
+// point value.
+//
+// The acquire point is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If an acquire point has already been attached during the same commit
+// cycle, the new point replaces the old one.
+//
+// If the associated wl_surface was destroyed, a no_surface error is
+// raised.
+//
+// If at surface commit time there is a pending acquire timeline point set
+// but no pending buffer attached, a no_buffer error is raised. If at
+// surface commit time there is a pending buffer attached but no pending
+// acquire timeline point set, the no_acquire_point protocol error is
+// raised.
 func (o *LinuxDrmSyncobjSurfaceV1) SetAcquirePoint(timeline wire.ObjectID, pointHi uint32, pointLo uint32) error {
 	return o.proxy.SendRequest(LinuxDrmSyncobjSurfaceV1RequestSetAcquirePoint, &LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest{
 		Timeline: timeline,
@@ -121,6 +269,51 @@ func (o *LinuxDrmSyncobjSurfaceV1) SetAcquirePoint(timeline wire.ObjectID, point
 	})
 }
 
+// SetReleasePoint set the release timeline point.
+//
+// Set the timeline point that must be signalled by the compositor when it
+// has finished its usage of the buffer attached with wl_surface.attach
+// for the relevant commit.
+//
+// Once the timeline point is signaled, and assuming the associated buffer
+// is not pending release from other wl_surface.commit requests, no
+// additional explicit or implicit synchronization with the compositor is
+// required to safely re-use the buffer.
+//
+// Note that clients cannot rely on the release point being always
+// signaled after the acquire point: compositors may release buffers
+// without ever reading from them. In addition, the compositor may use
+// different presentation paths for different commits, which may have
+// different release behavior. As a result, the compositor may signal the
+// release points in a different order than the client committed them.
+//
+// Because signaling a timeline point also signals every previous point,
+// it is generally not safe to use the same timeline object for the
+// release points of multiple buffers. The out-of-order signaling
+// described above may lead to a release point being signaled before the
+// compositor has finished reading. To avoid this, it is strongly
+// recommended that each buffer should use a separate timeline for its
+// release points.
+//
+// The 64-bit unsigned value combined from point_hi and point_lo is the
+// point value.
+//
+// The release point is double-buffered state, and will be applied on the
+// next wl_surface.commit request for the associated surface. Thus, it
+// applies only to the buffer that is attached to the surface at commit
+// time.
+//
+// If a release point has already been attached during the same commit
+// cycle, the new point replaces the old one.
+//
+// If the associated wl_surface was destroyed, a no_surface error is
+// raised.
+//
+// If at surface commit time there is a pending release timeline point set
+// but no pending buffer attached, a no_buffer error is raised. If at
+// surface commit time there is a pending buffer attached but no pending
+// release timeline point set, the no_release_point protocol error is
+// raised.
 func (o *LinuxDrmSyncobjSurfaceV1) SetReleasePoint(timeline wire.ObjectID, pointHi uint32, pointLo uint32) error {
 	return o.proxy.SendRequest(LinuxDrmSyncobjSurfaceV1RequestSetReleasePoint, &LinuxDrmSyncobjSurfaceV1SetReleasePointRequest{
 		Timeline: timeline,

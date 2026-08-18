@@ -15,6 +15,12 @@ const (
 	OutputImageCaptureSourceManagerV1RequestDestroy      uint16 = 1
 )
 
+// OutputImageCaptureSourceManagerV1CreateSourceRequest create source object for output.
+//
+// Creates a source object for an output. Images captured from this source
+// will show the same content as the output. Some elements may be omitted,
+// such as cursors and overlays that have been marked as transparent to
+// capturing.
 type OutputImageCaptureSourceManagerV1CreateSourceRequest struct {
 	Source wire.NewID
 	Output wire.ObjectID
@@ -36,6 +42,11 @@ func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Marshal(w *wire.W
 
 func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
+// OutputImageCaptureSourceManagerV1DestroyRequest delete this object.
+//
+// Destroys the manager. This request may be sent at any time by the client
+// and objects created by the manager will remain valid after its
+// destruction.
 type OutputImageCaptureSourceManagerV1DestroyRequest struct {
 }
 
@@ -49,18 +60,29 @@ func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Marshal(w *wire.Writer
 
 func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// OutputImageCaptureSourceManagerV1 image capture source manager for outputs.
+//
+// A manager for creating image capture source objects for wl_output objects.
 type OutputImageCaptureSourceManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewOutputImageCaptureSourceManagerV1 wraps p in a OutputImageCaptureSourceManagerV1 proxy.
 func NewOutputImageCaptureSourceManagerV1(p *wayland.Proxy) *OutputImageCaptureSourceManagerV1 {
 	return &OutputImageCaptureSourceManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *OutputImageCaptureSourceManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateSource create source object for output.
+//
+// Creates a source object for an output. Images captured from this source
+// will show the same content as the output. Some elements may be omitted,
+// such as cursors and overlays that have been marked as transparent to
+// capturing.
 func (o *OutputImageCaptureSourceManagerV1) CreateSource(output wire.ObjectID) (*ImageCaptureSourceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -79,6 +101,11 @@ func (o *OutputImageCaptureSourceManagerV1) CreateSource(output wire.ObjectID) (
 	return wrapped, nil
 }
 
+// Destroy delete this object.
+//
+// Destroys the manager. This request may be sent at any time by the client
+// and objects created by the manager will remain valid after its
+// destruction.
 func (o *OutputImageCaptureSourceManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

@@ -28,6 +28,15 @@ var foreigntoplevellistv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// ForeignToplevelListV1StopRequest stop sending events.
+//
+// This request indicates that the client no longer wishes to receive
+// events for new toplevels.
+//
+// The Wayland protocol is asynchronous, meaning the compositor may send
+// further toplevel events until the stop request is processed.
+// The client should wait for a ext_foreign_toplevel_list_v1.finished
+// event before destroying this object.
 type ForeignToplevelListV1StopRequest struct {
 }
 
@@ -39,6 +48,15 @@ func (r *ForeignToplevelListV1StopRequest) Marshal(w *wire.Writer) error {
 
 func (r *ForeignToplevelListV1StopRequest) Since() uint32 { return 1 }
 
+// ForeignToplevelListV1DestroyRequest destroy the ext_foreign_toplevel_list_v1 object.
+//
+// This request should be called either when the client will no longer
+// use the ext_foreign_toplevel_list_v1 or after the finished event
+// has been received to allow destruction of the object.
+//
+// If a client wishes to destroy this object it should send a
+// ext_foreign_toplevel_list_v1.stop request and wait for a ext_foreign_toplevel_list_v1.finished
+// event, then destroy the handles and then this object.
 type ForeignToplevelListV1DestroyRequest struct {
 }
 
@@ -52,6 +70,16 @@ func (r *ForeignToplevelListV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ForeignToplevelListV1DestroyRequest) Since() uint32 { return 1 }
 
+// ForeignToplevelListV1ToplevelEvent a toplevel has been created.
+//
+// This event is emitted whenever a new toplevel window is created. It is
+// emitted for all toplevels, regardless of the app that has created them.
+//
+// All initial properties of the toplevel (identifier, title, app_id) will be sent
+// immediately after this event using the corresponding events for
+// ext_foreign_toplevel_handle_v1. The compositor will use the
+// ext_foreign_toplevel_handle_v1.done event to indicate when all data has
+// been sent.
 type ForeignToplevelListV1ToplevelEvent struct {
 	Toplevel *ForeignToplevelHandleV1
 }
@@ -62,6 +90,13 @@ func (e *ForeignToplevelListV1ToplevelEvent) Opcode() uint16 {
 
 func (e *ForeignToplevelListV1ToplevelEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelListV1FinishedEvent the compositor has finished with the toplevel manager.
+//
+// This event indicates that the compositor is done sending events
+// to this object. The client should destroy the object.
+// See ext_foreign_toplevel_list_v1.destroy for more information.
+//
+// The compositor must not send any more toplevel events after this event.
 type ForeignToplevelListV1FinishedEvent struct {
 }
 
@@ -75,23 +110,46 @@ func (e *ForeignToplevelListV1FinishedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ForeignToplevelListV1FinishedEvent) Since() uint32 { return 1 }
 
+// ForeignToplevelListV1ToplevelFunc is a callback for Toplevel events.
 type ForeignToplevelListV1ToplevelFunc func(ev ForeignToplevelListV1ToplevelEvent)
 
+// ForeignToplevelListV1FinishedFunc is a callback for Finished events.
 type ForeignToplevelListV1FinishedFunc func(ev ForeignToplevelListV1FinishedEvent)
 
+// ForeignToplevelListV1 list toplevels.
+//
+// A toplevel is defined as a surface with a role similar to xdg_toplevel.
+// XWayland surfaces may be treated like toplevels in this protocol.
+//
+// After a client binds the ext_foreign_toplevel_list_v1, each mapped
+// toplevel window will be sent using the ext_foreign_toplevel_list_v1.toplevel
+// event.
+//
+// Clients which only care about the current state can perform a roundtrip after
+// binding this global.
+//
+// For each instance of ext_foreign_toplevel_list_v1, the compositor must
+// create a new ext_foreign_toplevel_handle_v1 object for each mapped toplevel.
+//
+// If a compositor implementation sends the ext_foreign_toplevel_list_v1.finished
+// event after the global is bound, the compositor must not send any
+// ext_foreign_toplevel_list_v1.toplevel events.
 type ForeignToplevelListV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewForeignToplevelListV1 wraps p in a ForeignToplevelListV1 proxy.
 func NewForeignToplevelListV1(p *wayland.Proxy) *ForeignToplevelListV1 {
 	p.SetEventFDCounts(foreigntoplevellistv1EventFDCounts)
 	return &ForeignToplevelListV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ForeignToplevelListV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnToplevel registers fn to receive Toplevel events.
 func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventToplevel, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1ToplevelEvent
@@ -110,6 +168,7 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 	})
 }
 
+// OnFinished registers fn to receive Finished events.
 func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventFinished, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1FinishedEvent
@@ -123,10 +182,28 @@ func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc)
 	})
 }
 
+// Stop stop sending events.
+//
+// This request indicates that the client no longer wishes to receive
+// events for new toplevels.
+//
+// The Wayland protocol is asynchronous, meaning the compositor may send
+// further toplevel events until the stop request is processed.
+// The client should wait for a ext_foreign_toplevel_list_v1.finished
+// event before destroying this object.
 func (o *ForeignToplevelListV1) Stop() error {
 	return o.proxy.SendRequest(ForeignToplevelListV1RequestStop, &ForeignToplevelListV1StopRequest{})
 }
 
+// Destroy destroy the ext_foreign_toplevel_list_v1 object.
+//
+// This request should be called either when the client will no longer
+// use the ext_foreign_toplevel_list_v1 or after the finished event
+// has been received to allow destruction of the object.
+//
+// If a client wishes to destroy this object it should send a
+// ext_foreign_toplevel_list_v1.stop request and wait for a ext_foreign_toplevel_list_v1.finished
+// event, then destroy the handles and then this object.
 func (o *ForeignToplevelListV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

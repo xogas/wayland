@@ -14,6 +14,10 @@ const (
 	ImageCaptureSourceV1RequestDestroy uint16 = 0
 )
 
+// ImageCaptureSourceV1DestroyRequest delete this object.
+//
+// Destroys the image capture source. This request may be sent at any time
+// by the client.
 type ImageCaptureSourceV1DestroyRequest struct {
 }
 
@@ -27,18 +31,33 @@ func (r *ImageCaptureSourceV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ImageCaptureSourceV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageCaptureSourceV1 opaque image capture source object.
+//
+// The image capture source object is an opaque descriptor for a capturable
+// resource.  This resource may be any sort of entity from which an image
+// may be derived.
+//
+// Note, because ext_image_capture_source_v1 objects are created from multiple
+// independent factory interfaces, the ext_image_capture_source_v1 interface is
+// frozen at version 1.
 type ImageCaptureSourceV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageCaptureSourceV1 wraps p in a ImageCaptureSourceV1 proxy.
 func NewImageCaptureSourceV1(p *wayland.Proxy) *ImageCaptureSourceV1 {
 	return &ImageCaptureSourceV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageCaptureSourceV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy delete this object.
+//
+// Destroys the image capture source. This request may be sent at any time
+// by the client.
 func (o *ImageCaptureSourceV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

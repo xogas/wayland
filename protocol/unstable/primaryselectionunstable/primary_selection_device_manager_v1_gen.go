@@ -16,6 +16,9 @@ const (
 	PrimarySelectionDeviceManagerV1RequestDestroy      uint16 = 2
 )
 
+// PrimarySelectionDeviceManagerV1CreateSourceRequest create a new primary selection source.
+//
+// Create a new primary selection source.
 type PrimarySelectionDeviceManagerV1CreateSourceRequest struct {
 	ID wire.NewID
 }
@@ -33,6 +36,9 @@ func (r *PrimarySelectionDeviceManagerV1CreateSourceRequest) Marshal(w *wire.Wri
 
 func (r *PrimarySelectionDeviceManagerV1CreateSourceRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceManagerV1GetDeviceRequest create a new primary selection device.
+//
+// Create a new data device for a given seat.
 type PrimarySelectionDeviceManagerV1GetDeviceRequest struct {
 	ID   wire.NewID
 	Seat wire.ObjectID
@@ -54,6 +60,9 @@ func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Marshal(w *wire.Writer
 
 func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceManagerV1DestroyRequest destroy the primary selection device manager.
+//
+// Destroy the primary selection device manager.
 type PrimarySelectionDeviceManagerV1DestroyRequest struct {
 }
 
@@ -67,18 +76,29 @@ func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Marshal(w *wire.Writer) 
 
 func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// PrimarySelectionDeviceManagerV1 x primary selection emulation.
+//
+// The primary selection device manager is a singleton global object that
+// provides access to the primary selection. It allows to create
+// wp_primary_selection_source objects, as well as retrieving the per-seat
+// wp_primary_selection_device objects.
 type PrimarySelectionDeviceManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPrimarySelectionDeviceManagerV1 wraps p in a PrimarySelectionDeviceManagerV1 proxy.
 func NewPrimarySelectionDeviceManagerV1(p *wayland.Proxy) *PrimarySelectionDeviceManagerV1 {
 	return &PrimarySelectionDeviceManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PrimarySelectionDeviceManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// CreateSource create a new primary selection source.
+//
+// Create a new primary selection source.
 func (o *PrimarySelectionDeviceManagerV1) CreateSource() (*PrimarySelectionSourceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -96,6 +116,9 @@ func (o *PrimarySelectionDeviceManagerV1) CreateSource() (*PrimarySelectionSourc
 	return wrapped, nil
 }
 
+// GetDevice create a new primary selection device.
+//
+// Create a new data device for a given seat.
 func (o *PrimarySelectionDeviceManagerV1) GetDevice(seat wire.ObjectID) (*PrimarySelectionDeviceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -114,6 +137,9 @@ func (o *PrimarySelectionDeviceManagerV1) GetDevice(seat wire.ObjectID) (*Primar
 	return wrapped, nil
 }
 
+// Destroy destroy the primary selection device manager.
+//
+// Destroy the primary selection device manager.
 func (o *PrimarySelectionDeviceManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

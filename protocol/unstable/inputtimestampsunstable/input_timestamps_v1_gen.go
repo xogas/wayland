@@ -25,6 +25,11 @@ var inputtimestampsv1EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// InputTimestampsV1DestroyRequest destroy the input timestamps object.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. After the server processes the request, no more
+// timestamp events will be emitted.
 type InputTimestampsV1DestroyRequest struct {
 }
 
@@ -36,10 +41,29 @@ func (r *InputTimestampsV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *InputTimestampsV1DestroyRequest) Since() uint32 { return 1 }
 
+// InputTimestampsV1TimestampEvent high-resolution timestamp event.
+//
+// The timestamp event is associated with the first subsequent input event
+// carrying a timestamp which belongs to the set of input events this
+// object is subscribed to.
+//
+// The timestamp provided by this event is a high-resolution version of
+// the timestamp argument of the associated input event. The provided
+// timestamp is in the same clock domain and is at least as accurate as
+// the associated input event timestamp.
+//
+// The timestamp is expressed as tv_sec_hi, tv_sec_lo, tv_nsec triples,
+// each component being an unsigned 32-bit value. Whole seconds are in
+// tv_sec which is a 64-bit value combined from tv_sec_hi and tv_sec_lo,
+// and the additional fractional part in tv_nsec as nanoseconds. Hence,
+// for valid timestamps tv_nsec must be in [0, 999999999].
 type InputTimestampsV1TimestampEvent struct {
+	// TvSecHi high 32 bits of the seconds part of the timestamp.
 	TvSecHi uint32
+	// TvSecLo low 32 bits of the seconds part of the timestamp.
 	TvSecLo uint32
-	TvNsec  uint32
+	// TvNsec nanoseconds part of the timestamp.
+	TvNsec uint32
 }
 
 func (e *InputTimestampsV1TimestampEvent) Opcode() uint16 { return InputTimestampsV1EventTimestamp }
@@ -65,21 +89,30 @@ func (e *InputTimestampsV1TimestampEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *InputTimestampsV1TimestampEvent) Since() uint32 { return 1 }
 
+// InputTimestampsV1TimestampFunc is a callback for Timestamp events.
 type InputTimestampsV1TimestampFunc func(ev InputTimestampsV1TimestampEvent)
 
+// InputTimestampsV1 context object for input timestamps.
+//
+// Provides high-resolution timestamp events for a set of subscribed input
+// events. The set of subscribed input events is determined by the
+// zwp_input_timestamps_manager_v1 request used to create this object.
 type InputTimestampsV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewInputTimestampsV1 wraps p in a InputTimestampsV1 proxy.
 func NewInputTimestampsV1(p *wayland.Proxy) *InputTimestampsV1 {
 	p.SetEventFDCounts(inputtimestampsv1EventFDCounts)
 	return &InputTimestampsV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *InputTimestampsV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnTimestamp registers fn to receive Timestamp events.
 func (o *InputTimestampsV1) OnTimestamp(fn InputTimestampsV1TimestampFunc) {
 	o.proxy.RegisterEvent(InputTimestampsV1EventTimestamp, func(r *wire.Reader) {
 		var ev InputTimestampsV1TimestampEvent
@@ -93,6 +126,11 @@ func (o *InputTimestampsV1) OnTimestamp(fn InputTimestampsV1TimestampFunc) {
 	})
 }
 
+// Destroy destroy the input timestamps object.
+//
+// Informs the server that the client will no longer be using this
+// protocol object. After the server processes the request, no more
+// timestamp events will be emitted.
 func (o *InputTimestampsV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

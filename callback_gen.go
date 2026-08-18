@@ -20,7 +20,11 @@ var callbackEventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// CallbackDoneEvent done event.
+//
+// Notify the client when the related request is done.
 type CallbackDoneEvent struct {
+	// CallbackData request-specific data for the callback.
 	CallbackData uint32
 }
 
@@ -37,21 +41,32 @@ func (e *CallbackDoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *CallbackDoneEvent) Since() uint32 { return 1 }
 
+// CallbackDoneFunc is a callback for Done events.
 type CallbackDoneFunc func(ev CallbackDoneEvent)
 
+// Callback callback object.
+//
+// Clients can handle the 'done' event to get notified when
+// the related request is done.
+//
+// Note, because wl_callback objects are created from multiple independent
+// factory interfaces, the wl_callback interface is frozen at version 1.
 type Callback struct {
 	proxy *Proxy
 }
 
+// NewCallback wraps p in a Callback proxy.
 func NewCallback(p *Proxy) *Callback {
 	p.SetEventFDCounts(callbackEventFDCounts)
 	return &Callback{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Callback) Proxy() *Proxy {
 	return o.proxy
 }
 
+// OnDone registers fn to receive Done events.
 func (o *Callback) OnDone(fn CallbackDoneFunc) {
 	o.proxy.RegisterEvent(CallbackEventDone, func(r *wire.Reader) {
 		var ev CallbackDoneEvent

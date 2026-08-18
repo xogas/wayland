@@ -63,16 +63,17 @@ var {{lower .TypeName}}EventFDCounts = map[uint16]int{
 
 // wrapperTmpl: enum types, message structs, high-level wrapper API.
 var wrapperTmpl = mustTmpl("wrapper", `{{range $e := .Enums}}
-{{if $e.IsBitField}}// {{$e.Type}} is a bitfield of flags.
+{{$e.Doc}}{{if $e.IsBitField}}{{if $e.Doc}}//
+{{end}}// This is a bitfield of flags.
 {{end}}type {{$e.Type}} uint32
 
 const (
-{{range $e.Entries}}	{{.Const}} {{$e.Type}} = {{.Val}}
+{{range $e.Entries}}{{.Doc}}	{{.Const}} {{$e.Type}} = {{.Val}}
 {{end}})
 {{end}}
 {{range .Requests}}
-type {{.StructName}} struct {
-{{range .Args}}	{{.GoName}} {{if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
+{{.StructDoc}}type {{.StructName}} struct {
+{{range .Args}}{{.Doc}}	{{.GoName}} {{if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
 {{end}}}
 
 func (r *{{.StructName}}) Opcode() uint16 { return {{.OpName}} }
@@ -87,10 +88,8 @@ func (r *{{.StructName}}) Marshal(w *wire.Writer) error {
 func (r *{{.StructName}}) Since() uint32 { return {{.Since}} }
 {{end}}
 {{range $ev := .Events}}
-{{if gt $ev.DeprecatedSince 0}}
-// Deprecated: since version {{$ev.DeprecatedSince}}.
-{{end}}type {{$ev.StructName}} struct {
-{{range $ev.Args}}	{{.GoName}} {{if .NewIDType}}*{{.NewIDType}}{{else if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
+{{$ev.StructDoc}}type {{$ev.StructName}} struct {
+{{range $ev.Args}}{{.Doc}}	{{.GoName}} {{if .NewIDType}}*{{.NewIDType}}{{else if .EnumType}}{{.EnumType}}{{else}}{{.GoType}}{{end}}{{if .AllowNull}} // nullable{{end}}
 {{end}}}
 
 func (e *{{$ev.StructName}}) Opcode() uint16 { return {{$ev.OpName}} }
@@ -107,21 +106,25 @@ func (e *{{$ev.StructName}}) Unmarshal(r *wire.Reader) error {
 func (e *{{$ev.StructName}}) Since() uint32 { return {{$ev.Since}} }
 {{end}}
 {{range $ev := .Events}}
+// {{$ev.FuncName}} is a callback for {{$ev.Name}} events.
 type {{$ev.FuncName}} func(ev {{$ev.StructName}})
 {{end}}
-type {{.TypeName}} struct {
+{{.Doc}}type {{.TypeName}} struct {
 	proxy *{{.WaylandPkg}}Proxy
 }
 
+// New{{.TypeName}} wraps p in a {{.TypeName}} proxy.
 func New{{.TypeName}}(p *{{.WaylandPkg}}Proxy) *{{.TypeName}} {
 {{if .HasEvents}}	p.SetEventFDCounts({{lower .TypeName}}EventFDCounts)
 {{end}}	return &{{.TypeName}}{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *{{.TypeName}}) Proxy() *{{.WaylandPkg}}Proxy {
 	return o.proxy
 }
 {{range $ev := .Events}}
+// On{{$ev.Name}} registers fn to receive {{$ev.Name}} events.
 func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 	o.proxy.RegisterEvent({{$ev.OpName}}, func(r *wire.Reader) {
 		var ev {{$ev.StructName}}
@@ -156,9 +159,7 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 {{end}}
 {{range .Requests}}
 {{if or .HasNewID .HasCrossNewID}}
-{{if gt .DeprecatedSince 0}}
-// Deprecated: since version {{.DeprecatedSince}}.
-{{end}}func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDType}}{{else}}*{{$.WaylandPkg}}Proxy{{end}}, error) {
+{{.MethodDoc}}func (o *{{$.TypeName}}) {{.Name}}({{.MethodArgs}}) ({{if .HasNewID}}*{{.NewIDType}}{{else}}*{{$.WaylandPkg}}Proxy{{end}}, error) {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
         return nil, {{$.WaylandPkg}}ErrVersionMismatch
     }
@@ -180,9 +181,7 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
     return {{if .HasNewID}}wrapped{{else}}p{{end}}, nil
 }
 {{else if .IsDestructor}}
-{{if gt .DeprecatedSince 0}}
-// Deprecated: since version {{.DeprecatedSince}}.
-{{end}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
+{{.MethodDoc}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
 		return {{$.WaylandPkg}}ErrVersionMismatch
 	}
@@ -198,9 +197,7 @@ func (o *{{$.TypeName}}) On{{$ev.Name}}(fn {{$ev.FuncName}}) {
 	return nil
 }
 {{else}}
-{{if gt .DeprecatedSince 0}}
-// Deprecated: since version {{.DeprecatedSince}}.
-{{end}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
+{{.MethodDoc}}func (o *{{$.TypeName}}) {{.Name}}({{joinArgs .Args ", "}}) error {
 {{if gt .Since 1}}	if v := o.proxy.Version(); v > 0 && v < uint32({{.Since}}) {
 		return {{$.WaylandPkg}}ErrVersionMismatch
 	}

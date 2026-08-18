@@ -35,9 +35,17 @@ var imagecopycapturecursorsessionv1EventFDCounts = map[uint16]int{
 type ImageCopyCaptureCursorSessionV1Error uint32
 
 const (
+	// ImageCopyCaptureCursorSessionV1ErrorDuplicateSession get_capture_session sent twice.
 	ImageCopyCaptureCursorSessionV1ErrorDuplicateSession ImageCopyCaptureCursorSessionV1Error = 1
 )
 
+// ImageCopyCaptureCursorSessionV1DestroyRequest delete this object.
+//
+// Destroys the session. This request can be sent at any time by the
+// client.
+//
+// This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
+// this object.
 type ImageCopyCaptureCursorSessionV1DestroyRequest struct {
 }
 
@@ -51,6 +59,15 @@ func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Marshal(w *wire.Writer) 
 
 func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest get image copy capturer session.
+//
+// Gets the image copy capture session for this cursor session.
+//
+// The session will produce frames of the cursor image. The compositor may
+// pause the session when the cursor leaves the captured area.
+//
+// This request must not be sent more than once, or else the
+// duplicate_session protocol error is raised.
 type ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest struct {
 	Session wire.NewID
 }
@@ -68,6 +85,15 @@ func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Marshal(w *wir
 
 func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1EnterEvent cursor entered captured area.
+//
+// Sent when a cursor enters the captured area. It shall be generated
+// before the "position" and "hotspot" events when and only when a cursor
+// enters the area.
+//
+// The cursor enters the captured area when the cursor image intersects
+// with the captured area. Note, this is different from e.g.
+// wl_pointer.enter.
 type ImageCopyCaptureCursorSessionV1EnterEvent struct {
 }
 
@@ -81,6 +107,11 @@ func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Unmarshal(r *wire.Reader) er
 
 func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1LeaveEvent cursor left captured area.
+//
+// Sent when a cursor leaves the captured area. No "position" or "hotspot"
+// event is generated for the cursor until the cursor enters the captured
+// area again.
 type ImageCopyCaptureCursorSessionV1LeaveEvent struct {
 }
 
@@ -94,8 +125,19 @@ func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Unmarshal(r *wire.Reader) er
 
 func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1PositionEvent position changed.
+//
+// Cursors outside the image capture source do not get captured and no
+// event will be generated for them.
+//
+// The given position is the position of the cursor's hotspot and it is
+// relative to the main buffer's top left corner in transformed buffer
+// pixel coordinates. The coordinates may be negative or greater than the
+// main buffer size.
 type ImageCopyCaptureCursorSessionV1PositionEvent struct {
+	// X position x coordinates.
 	X int32
+	// Y position y coordinates.
 	Y int32
 }
 
@@ -119,8 +161,22 @@ func (e *ImageCopyCaptureCursorSessionV1PositionEvent) Unmarshal(r *wire.Reader)
 
 func (e *ImageCopyCaptureCursorSessionV1PositionEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1HotspotEvent hotspot changed.
+//
+// The hotspot describes the offset between the cursor image and the
+// position of the input device.
+//
+// The given coordinates are the hotspot's offset from the origin in
+// buffer coordinates.
+//
+// Clients should not apply the hotspot immediately: the hotspot becomes
+// effective when the next ext_image_copy_capture_frame_v1.ready event is received.
+//
+// Compositors may delay this event until the client captures a new frame.
 type ImageCopyCaptureCursorSessionV1HotspotEvent struct {
+	// X hotspot x coordinates.
 	X int32
+	// Y hotspot y coordinates.
 	Y int32
 }
 
@@ -144,27 +200,38 @@ func (e *ImageCopyCaptureCursorSessionV1HotspotEvent) Unmarshal(r *wire.Reader) 
 
 func (e *ImageCopyCaptureCursorSessionV1HotspotEvent) Since() uint32 { return 1 }
 
+// ImageCopyCaptureCursorSessionV1EnterFunc is a callback for Enter events.
 type ImageCopyCaptureCursorSessionV1EnterFunc func(ev ImageCopyCaptureCursorSessionV1EnterEvent)
 
+// ImageCopyCaptureCursorSessionV1LeaveFunc is a callback for Leave events.
 type ImageCopyCaptureCursorSessionV1LeaveFunc func(ev ImageCopyCaptureCursorSessionV1LeaveEvent)
 
+// ImageCopyCaptureCursorSessionV1PositionFunc is a callback for Position events.
 type ImageCopyCaptureCursorSessionV1PositionFunc func(ev ImageCopyCaptureCursorSessionV1PositionEvent)
 
+// ImageCopyCaptureCursorSessionV1HotspotFunc is a callback for Hotspot events.
 type ImageCopyCaptureCursorSessionV1HotspotFunc func(ev ImageCopyCaptureCursorSessionV1HotspotEvent)
 
+// ImageCopyCaptureCursorSessionV1 cursor capture session.
+//
+// This object represents a cursor capture session. It extends the base
+// capture session with cursor-specific metadata.
 type ImageCopyCaptureCursorSessionV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewImageCopyCaptureCursorSessionV1 wraps p in a ImageCopyCaptureCursorSessionV1 proxy.
 func NewImageCopyCaptureCursorSessionV1(p *wayland.Proxy) *ImageCopyCaptureCursorSessionV1 {
 	p.SetEventFDCounts(imagecopycapturecursorsessionv1EventFDCounts)
 	return &ImageCopyCaptureCursorSessionV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ImageCopyCaptureCursorSessionV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnEnter registers fn to receive Enter events.
 func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessionV1EnterFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventEnter, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1EnterEvent
@@ -178,6 +245,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessi
 	})
 }
 
+// OnLeave registers fn to receive Leave events.
 func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessionV1LeaveFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventLeave, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1LeaveEvent
@@ -191,6 +259,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessi
 	})
 }
 
+// OnPosition registers fn to receive Position events.
 func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSessionV1PositionFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventPosition, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1PositionEvent
@@ -204,6 +273,7 @@ func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSe
 	})
 }
 
+// OnHotspot registers fn to receive Hotspot events.
 func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSessionV1HotspotFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventHotspot, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1HotspotEvent
@@ -217,6 +287,13 @@ func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSes
 	})
 }
 
+// Destroy delete this object.
+//
+// Destroys the session. This request can be sent at any time by the
+// client.
+//
+// This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
+// this object.
 func (o *ImageCopyCaptureCursorSessionV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -228,6 +305,15 @@ func (o *ImageCopyCaptureCursorSessionV1) Destroy() error {
 	return nil
 }
 
+// GetCaptureSession get image copy capturer session.
+//
+// Gets the image copy capture session for this cursor session.
+//
+// The session will produce frames of the cursor image. The compositor may
+// pause the session when the cursor leaves the captured area.
+//
+// This request must not be sent more than once, or else the
+// duplicate_session protocol error is raised.
 func (o *ImageCopyCaptureCursorSessionV1) GetCaptureSession() (*ImageCopyCaptureSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

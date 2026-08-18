@@ -15,6 +15,11 @@ const (
 	SinglePixelBufferManagerV1RequestCreateU32RgbaBuffer uint16 = 1
 )
 
+// SinglePixelBufferManagerV1DestroyRequest destroy the manager.
+//
+// Destroy the wp_single_pixel_buffer_manager_v1 object.
+//
+// The child objects created via this interface are unaffected.
 type SinglePixelBufferManagerV1DestroyRequest struct {
 }
 
@@ -28,12 +33,31 @@ func (r *SinglePixelBufferManagerV1DestroyRequest) Marshal(w *wire.Writer) error
 
 func (r *SinglePixelBufferManagerV1DestroyRequest) Since() uint32 { return 1 }
 
+// SinglePixelBufferManagerV1CreateU32RgbaBufferRequest create a 1×1 buffer from 32-bit RGBA values.
+//
+// Create a single-pixel buffer from four 32-bit RGBA values.
+//
+// Unless specified in another protocol extension, the RGBA values use
+// pre-multiplied alpha.
+//
+// The width and height of the buffer are 1.
+//
+// The r, g, b and a arguments valid range is from UINT32_MIN (0)
+// to UINT32_MAX (0xffffffff).
+//
+// These arguments should be interpreted as a percentage, i.e.
+// - UINT32_MIN = 0% of the given color component
+// - UINT32_MAX = 100% of the given color component
 type SinglePixelBufferManagerV1CreateU32RgbaBufferRequest struct {
 	ID wire.NewID
-	R  uint32
-	G  uint32
-	B  uint32
-	A  uint32
+	// R value of the buffer's red channel.
+	R uint32
+	// G value of the buffer's green channel.
+	G uint32
+	// B value of the buffer's blue channel.
+	B uint32
+	// A value of the buffer's alpha channel.
+	A uint32
 }
 
 func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Opcode() uint16 {
@@ -61,18 +85,29 @@ func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Marshal(w *wire.W
 
 func (r *SinglePixelBufferManagerV1CreateU32RgbaBufferRequest) Since() uint32 { return 1 }
 
+// SinglePixelBufferManagerV1 global factory for single-pixel buffers.
+//
+// The wp_single_pixel_buffer_manager_v1 interface is a factory for
+// single-pixel buffers.
 type SinglePixelBufferManagerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewSinglePixelBufferManagerV1 wraps p in a SinglePixelBufferManagerV1 proxy.
 func NewSinglePixelBufferManagerV1(p *wayland.Proxy) *SinglePixelBufferManagerV1 {
 	return &SinglePixelBufferManagerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *SinglePixelBufferManagerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the manager.
+//
+// Destroy the wp_single_pixel_buffer_manager_v1 object.
+//
+// The child objects created via this interface are unaffected.
 func (o *SinglePixelBufferManagerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -84,6 +119,21 @@ func (o *SinglePixelBufferManagerV1) Destroy() error {
 	return nil
 }
 
+// CreateU32RgbaBuffer create a 1×1 buffer from 32-bit RGBA values.
+//
+// Create a single-pixel buffer from four 32-bit RGBA values.
+//
+// Unless specified in another protocol extension, the RGBA values use
+// pre-multiplied alpha.
+//
+// The width and height of the buffer are 1.
+//
+// The r, g, b and a arguments valid range is from UINT32_MIN (0)
+// to UINT32_MAX (0xffffffff).
+//
+// These arguments should be interpreted as a percentage, i.e.
+// - UINT32_MIN = 0% of the given color component
+// - UINT32_MAX = 100% of the given color component
 func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b uint32, a uint32) (*wayland.Proxy, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

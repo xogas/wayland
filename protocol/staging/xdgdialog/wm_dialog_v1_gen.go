@@ -18,9 +18,14 @@ const (
 type WmDialogV1Error uint32
 
 const (
+	// WmDialogV1ErrorAlreadyUsed the xdg_toplevel object has already been used to create a xdg_dialog_v1.
 	WmDialogV1ErrorAlreadyUsed WmDialogV1Error = 0
 )
 
+// WmDialogV1DestroyRequest destroy the dialog manager object.
+//
+// Destroys the xdg_wm_dialog_v1 object. This does not affect
+// the xdg_dialog_v1 objects generated through it.
 type WmDialogV1DestroyRequest struct {
 }
 
@@ -32,6 +37,13 @@ func (r *WmDialogV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmDialogV1DestroyRequest) Since() uint32 { return 1 }
 
+// WmDialogV1GetXdgDialogRequest create a dialog object.
+//
+//	Creates a xdg_dialog_v1 object for the given toplevel. See the interface
+//	description for more details.
+//
+// Compositors must raise an already_used error if clients attempt to
+// create multiple xdg_dialog_v1 objects for the same xdg_toplevel.
 type WmDialogV1GetXdgDialogRequest struct {
 	ID       wire.NewID
 	Toplevel wire.ObjectID
@@ -51,18 +63,37 @@ func (r *WmDialogV1GetXdgDialogRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmDialogV1GetXdgDialogRequest) Since() uint32 { return 1 }
 
+// WmDialogV1 create dialogs related to other toplevels.
+//
+// The xdg_wm_dialog_v1 interface is exposed as a global object allowing
+// to register surfaces with a xdg_toplevel role as "dialogs" relative to
+// another toplevel.
+//
+// The compositor may let this relation influence how the surface is
+// placed, displayed or interacted with.
+//
+// Warning! The protocol described in this file is currently in the testing
+// phase. Backward compatible changes may be added together with the
+// corresponding interface version bump. Backward incompatible changes can
+// only be done by creating a new major version of the extension.
 type WmDialogV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewWmDialogV1 wraps p in a WmDialogV1 proxy.
 func NewWmDialogV1(p *wayland.Proxy) *WmDialogV1 {
 	return &WmDialogV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *WmDialogV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the dialog manager object.
+//
+// Destroys the xdg_wm_dialog_v1 object. This does not affect
+// the xdg_dialog_v1 objects generated through it.
 func (o *WmDialogV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -74,6 +105,13 @@ func (o *WmDialogV1) Destroy() error {
 	return nil
 }
 
+// GetXdgDialog create a dialog object.
+//
+//	Creates a xdg_dialog_v1 object for the given toplevel. See the interface
+//	description for more details.
+//
+// Compositors must raise an already_used error if clients attempt to
+// create multiple xdg_dialog_v1 objects for the same xdg_toplevel.
 func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)

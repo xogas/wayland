@@ -35,6 +35,10 @@ var tabletpadgroupv2EventFDCounts = map[uint16]int{
 	5: 0,
 }
 
+// TabletPadGroupV2DestroyRequest destroy the pad object.
+//
+// Destroy the wp_tablet_pad_group object. Objects created from this object
+// are unaffected and should be destroyed separately.
 type TabletPadGroupV2DestroyRequest struct {
 }
 
@@ -46,7 +50,22 @@ func (r *TabletPadGroupV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *TabletPadGroupV2DestroyRequest) Since() uint32 { return 1 }
 
+// TabletPadGroupV2ButtonsEvent buttons announced.
+//
+// Sent on wp_tablet_pad_group initialization to announce the available
+// buttons in the group. Button indices start at 0, a button may only be
+// in one group at a time.
+//
+// This event is first sent in the initial burst of events before the
+// wp_tablet_pad_group.done event.
+//
+// Some buttons are reserved by the compositor. These buttons may not be
+// assigned to any wp_tablet_pad_group. Compositors may broadcast this
+// event in the case of changes to the mapping of these reserved buttons.
+// If the compositor happens to reserve all buttons in a group, this event
+// will be sent with an empty array.
 type TabletPadGroupV2ButtonsEvent struct {
+	// Buttons buttons in this group.
 	Buttons []byte
 }
 
@@ -63,6 +82,13 @@ func (e *TabletPadGroupV2ButtonsEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadGroupV2ButtonsEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2RingEvent ring announced.
+//
+// Sent on wp_tablet_pad_group initialization to announce available rings.
+// One event is sent for each ring available on this pad group.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_pad_group.done event.
 type TabletPadGroupV2RingEvent struct {
 	Ring *TabletPadRingV2
 }
@@ -71,6 +97,13 @@ func (e *TabletPadGroupV2RingEvent) Opcode() uint16 { return TabletPadGroupV2Eve
 
 func (e *TabletPadGroupV2RingEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2StripEvent strip announced.
+//
+// Sent on wp_tablet_pad initialization to announce available strips.
+// One event is sent for each strip available on this pad group.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_pad_group.done event.
 type TabletPadGroupV2StripEvent struct {
 	Strip *TabletPadStripV2
 }
@@ -79,7 +112,22 @@ func (e *TabletPadGroupV2StripEvent) Opcode() uint16 { return TabletPadGroupV2Ev
 
 func (e *TabletPadGroupV2StripEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2ModesEvent mode-switch ability announced.
+//
+// Sent on wp_tablet_pad_group initialization to announce that the pad
+// group may switch between modes. A client may use a mode to store a
+// specific configuration for buttons, rings and strips and use the
+// wl_tablet_pad_group.mode_switch event to toggle between these
+// configurations. Mode indices start at 0.
+//
+// Switching modes is compositor-dependent. See the
+// wp_tablet_pad_group.mode_switch event for more details.
+//
+// This event is sent in the initial burst of events before the
+// wp_tablet_pad_group.done event. This event is only sent when more than
+// more than one mode is available.
 type TabletPadGroupV2ModesEvent struct {
+	// Modes the number of modes.
 	Modes uint32
 }
 
@@ -96,6 +144,12 @@ func (e *TabletPadGroupV2ModesEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadGroupV2ModesEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2DoneEvent tablet group description events sequence complete.
+//
+// This event is sent immediately to signal the end of the initial
+// burst of descriptive events. A client may consider the static
+// description of the tablet to be complete and finalize initialization
+// of the tablet group.
 type TabletPadGroupV2DoneEvent struct {
 }
 
@@ -107,10 +161,41 @@ func (e *TabletPadGroupV2DoneEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadGroupV2DoneEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2ModeSwitchEvent mode switch event.
+//
+// Notification that the mode was switched.
+//
+// A mode applies to all buttons, rings and strips in a group
+// simultaneously, but a client is not required to assign different actions
+// for each mode. For example, a client may have mode-specific button
+// mappings but map the ring to vertical scrolling in all modes. Mode
+// indices start at 0.
+//
+// Switching modes is compositor-dependent. The compositor may provide
+// visual cues to the client about the mode, e.g. by toggling LEDs on
+// the tablet device. Mode-switching may be software-controlled or
+// controlled by one or more physical buttons. For example, on a Wacom
+// Intuos Pro, the button inside the ring may be assigned to switch
+// between modes.
+//
+// The compositor will also send this event after wp_tablet_pad.enter on
+// each group in order to notify of the current mode. Groups that only
+// feature one mode will use mode=0 when emitting this event.
+//
+// If a button action in the new mode differs from the action in the
+// previous mode, the client should immediately issue a
+// wp_tablet_pad.set_feedback request for each changed button.
+//
+// If a ring or strip action in the new mode differs from the action
+// in the previous mode, the client should immediately issue a
+// wp_tablet_ring.set_feedback or wp_tablet_strip.set_feedback request
+// for each changed ring or strip.
 type TabletPadGroupV2ModeSwitchEvent struct {
+	// Time the time of the event with millisecond granularity.
 	Time   uint32
 	Serial uint32
-	Mode   uint32
+	// Mode the new mode of the pad.
+	Mode uint32
 }
 
 func (e *TabletPadGroupV2ModeSwitchEvent) Opcode() uint16 { return TabletPadGroupV2EventModeSwitch }
@@ -136,31 +221,63 @@ func (e *TabletPadGroupV2ModeSwitchEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *TabletPadGroupV2ModeSwitchEvent) Since() uint32 { return 1 }
 
+// TabletPadGroupV2ButtonsFunc is a callback for Buttons events.
 type TabletPadGroupV2ButtonsFunc func(ev TabletPadGroupV2ButtonsEvent)
 
+// TabletPadGroupV2RingFunc is a callback for Ring events.
 type TabletPadGroupV2RingFunc func(ev TabletPadGroupV2RingEvent)
 
+// TabletPadGroupV2StripFunc is a callback for Strip events.
 type TabletPadGroupV2StripFunc func(ev TabletPadGroupV2StripEvent)
 
+// TabletPadGroupV2ModesFunc is a callback for Modes events.
 type TabletPadGroupV2ModesFunc func(ev TabletPadGroupV2ModesEvent)
 
+// TabletPadGroupV2DoneFunc is a callback for Done events.
 type TabletPadGroupV2DoneFunc func(ev TabletPadGroupV2DoneEvent)
 
+// TabletPadGroupV2ModeSwitchFunc is a callback for ModeSwitch events.
 type TabletPadGroupV2ModeSwitchFunc func(ev TabletPadGroupV2ModeSwitchEvent)
 
+// TabletPadGroupV2 a set of buttons, rings and strips.
+//
+// A pad group describes a distinct (sub)set of buttons, rings and strips
+// present in the tablet. The criteria of this grouping is usually positional,
+// eg. if a tablet has buttons on the left and right side, 2 groups will be
+// presented. The physical arrangement of groups is undisclosed and may
+// change on the fly.
+//
+// Pad groups will announce their features during pad initialization. Between
+// the corresponding wp_tablet_pad.group event and wp_tablet_pad_group.done, the
+// pad group will announce the buttons, rings and strips contained in it,
+// plus the number of supported modes.
+//
+// Modes are a mechanism to allow multiple groups of actions for every element
+// in the pad group. The number of groups and available modes in each is
+// persistent across device plugs. The current mode is user-switchable, it
+// will be announced through the wp_tablet_pad_group.mode_switch event both
+// whenever it is switched, and after wp_tablet_pad.enter.
+//
+// The current mode logically applies to all elements in the pad group,
+// although it is at clients' discretion whether to actually perform different
+// actions, and/or issue the respective .set_feedback requests to notify the
+// compositor. See the wp_tablet_pad_group.mode_switch event for more details.
 type TabletPadGroupV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewTabletPadGroupV2 wraps p in a TabletPadGroupV2 proxy.
 func NewTabletPadGroupV2(p *wayland.Proxy) *TabletPadGroupV2 {
 	p.SetEventFDCounts(tabletpadgroupv2EventFDCounts)
 	return &TabletPadGroupV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *TabletPadGroupV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnButtons registers fn to receive Buttons events.
 func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ButtonsEvent
@@ -174,6 +291,7 @@ func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 	})
 }
 
+// OnRing registers fn to receive Ring events.
 func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventRing, func(r *wire.Reader) {
 		var ev TabletPadGroupV2RingEvent
@@ -192,6 +310,7 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 	})
 }
 
+// OnStrip registers fn to receive Strip events.
 func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventStrip, func(r *wire.Reader) {
 		var ev TabletPadGroupV2StripEvent
@@ -210,6 +329,7 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 	})
 }
 
+// OnModes registers fn to receive Modes events.
 func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModes, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModesEvent
@@ -223,6 +343,7 @@ func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 	})
 }
 
+// OnDone registers fn to receive Done events.
 func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadGroupV2DoneEvent
@@ -236,6 +357,7 @@ func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 	})
 }
 
+// OnModeSwitch registers fn to receive ModeSwitch events.
 func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModeSwitch, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModeSwitchEvent
@@ -249,6 +371,10 @@ func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 	})
 }
 
+// Destroy destroy the pad object.
+//
+// Destroy the wp_tablet_pad_group object. Objects created from this object
+// are unaffected and should be destroyed separately.
 func (o *TabletPadGroupV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

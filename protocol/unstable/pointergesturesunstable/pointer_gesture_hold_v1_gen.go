@@ -27,6 +27,7 @@ var pointergestureholdv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// PointerGestureHoldV1DestroyRequest destroy the hold gesture object.
 type PointerGestureHoldV1DestroyRequest struct {
 }
 
@@ -40,10 +41,15 @@ func (r *PointerGestureHoldV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerGestureHoldV1DestroyRequest) Since() uint32 { return 3 }
 
+// PointerGestureHoldV1BeginEvent multi-finger hold begin.
+//
+// This event is sent when a hold gesture is detected on the device.
 type PointerGestureHoldV1BeginEvent struct {
-	Serial  uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
 	Time    uint32
 	Surface wire.ObjectID
+	// Fingers number of fingers.
 	Fingers uint32
 }
 
@@ -75,9 +81,22 @@ func (e *PointerGestureHoldV1BeginEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGestureHoldV1BeginEvent) Since() uint32 { return 3 }
 
+// PointerGestureHoldV1EndEvent multi-finger hold end.
+//
+// This event is sent when a hold gesture ceases to
+// be valid. This may happen when the holding fingers are lifted or
+// the gesture is cancelled, for example if the fingers move past an
+// implementation-defined threshold, the finger count changes or the hold
+// gesture changes into a different type of gesture.
+//
+// When a gesture is cancelled, the client may need to undo state changes
+// caused by this gesture. What causes a gesture to be cancelled is
+// implementation-dependent.
 type PointerGestureHoldV1EndEvent struct {
-	Serial    uint32
-	Time      uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Cancelled 1 if the gesture was cancelled, 0 otherwise.
 	Cancelled int32
 }
 
@@ -104,23 +123,47 @@ func (e *PointerGestureHoldV1EndEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGestureHoldV1EndEvent) Since() uint32 { return 3 }
 
+// PointerGestureHoldV1BeginFunc is a callback for Begin events.
 type PointerGestureHoldV1BeginFunc func(ev PointerGestureHoldV1BeginEvent)
 
+// PointerGestureHoldV1EndFunc is a callback for End events.
 type PointerGestureHoldV1EndFunc func(ev PointerGestureHoldV1EndEvent)
 
+// PointerGestureHoldV1 a hold gesture object.
+//
+// A hold gesture object notifies a client about a single- or
+// multi-finger hold gesture detected on an indirect input device such as
+// a touchpad. The gesture is usually initiated by one or more fingers
+// being held down without significant movement. The precise conditions
+// of when such a gesture is detected are implementation-dependent.
+//
+// In particular, this gesture may be used to cancel kinetic scrolling.
+//
+// A hold gesture consists of two stages: begin and end. Unlike pinch and
+// swipe there is no update stage.
+// There cannot be multiple simultaneous hold, pinch or swipe gestures on a
+// same pointer/seat, how compositors prevent these situations is
+// implementation-dependent.
+//
+// A gesture may be cancelled by the compositor or the hardware.
+// Clients should not consider performing permanent or irreversible
+// actions until the end of a gesture has been received.
 type PointerGestureHoldV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPointerGestureHoldV1 wraps p in a PointerGestureHoldV1 proxy.
 func NewPointerGestureHoldV1(p *wayland.Proxy) *PointerGestureHoldV1 {
 	p.SetEventFDCounts(pointergestureholdv1EventFDCounts)
 	return &PointerGestureHoldV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PointerGestureHoldV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnBegin registers fn to receive Begin events.
 func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1BeginEvent
@@ -134,6 +177,7 @@ func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 	})
 }
 
+// OnEnd registers fn to receive End events.
 func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1EndEvent
@@ -147,6 +191,7 @@ func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 	})
 }
 
+// Destroy destroy the hold gesture object.
 func (o *PointerGestureHoldV1) Destroy() error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch

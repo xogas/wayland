@@ -25,6 +25,11 @@ var exportedv2EventFDCounts = map[uint16]int{
 	0: 0,
 }
 
+// ExportedV2DestroyRequest unexport the exported surface.
+//
+// Revoke the previously exported surface. This invalidates any
+// relationship the importer may have set up using the xdg_imported created
+// given the handle sent via xdg_exported.handle.
 type ExportedV2DestroyRequest struct {
 }
 
@@ -36,7 +41,14 @@ func (r *ExportedV2DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ExportedV2DestroyRequest) Since() uint32 { return 1 }
 
+// ExportedV2HandleEvent the exported surface handle.
+//
+// The handle event contains the unique handle of this exported surface
+// reference. It may be shared with any client, which then can use it to
+// import the surface by calling xdg_importer.import_toplevel. A handle
+// may be used to import the surface multiple times.
 type ExportedV2HandleEvent struct {
+	// Handle the exported surface handle.
 	Handle string
 }
 
@@ -53,21 +65,31 @@ func (e *ExportedV2HandleEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ExportedV2HandleEvent) Since() uint32 { return 1 }
 
+// ExportedV2HandleFunc is a callback for Handle events.
 type ExportedV2HandleFunc func(ev ExportedV2HandleEvent)
 
+// ExportedV2 an exported surface handle.
+//
+// An xdg_exported object represents an exported reference to a surface. The
+// exported surface may be referenced as long as the xdg_exported object not
+// destroyed. Destroying the xdg_exported invalidates any relationship the
+// importer may have established using xdg_imported.
 type ExportedV2 struct {
 	proxy *wayland.Proxy
 }
 
+// NewExportedV2 wraps p in a ExportedV2 proxy.
 func NewExportedV2(p *wayland.Proxy) *ExportedV2 {
 	p.SetEventFDCounts(exportedv2EventFDCounts)
 	return &ExportedV2{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ExportedV2) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnHandle registers fn to receive Handle events.
 func (o *ExportedV2) OnHandle(fn ExportedV2HandleFunc) {
 	o.proxy.RegisterEvent(ExportedV2EventHandle, func(r *wire.Reader) {
 		var ev ExportedV2HandleEvent
@@ -81,6 +103,11 @@ func (o *ExportedV2) OnHandle(fn ExportedV2HandleFunc) {
 	})
 }
 
+// Destroy unexport the exported surface.
+//
+// Revoke the previously exported surface. This invalidates any
+// relationship the importer may have set up using the xdg_imported created
+// given the handle sent via xdg_exported.handle.
 func (o *ExportedV2) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

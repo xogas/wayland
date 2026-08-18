@@ -29,6 +29,7 @@ var pointergesturepinchv1EventFDCounts = map[uint16]int{
 	2: 0,
 }
 
+// PointerGesturePinchV1DestroyRequest destroy the pinch gesture object.
 type PointerGesturePinchV1DestroyRequest struct {
 }
 
@@ -42,10 +43,16 @@ func (r *PointerGesturePinchV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *PointerGesturePinchV1DestroyRequest) Since() uint32 { return 1 }
 
+// PointerGesturePinchV1BeginEvent multi-finger pinch begin.
+//
+// This event is sent when a multi-finger pinch gesture is detected
+// on the device.
 type PointerGesturePinchV1BeginEvent struct {
-	Serial  uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
 	Time    uint32
 	Surface wire.ObjectID
+	// Fingers number of fingers.
 	Fingers uint32
 }
 
@@ -77,11 +84,30 @@ func (e *PointerGesturePinchV1BeginEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGesturePinchV1BeginEvent) Since() uint32 { return 1 }
 
+// PointerGesturePinchV1UpdateEvent multi-finger pinch motion.
+//
+// This event is sent when a multi-finger pinch gesture changes the
+// position of the logical center, the rotation or the relative scale.
+//
+// The dx and dy coordinates are relative coordinates in the
+// surface coordinate space of the logical center of the gesture.
+//
+// The scale factor is an absolute scale compared to the
+// pointer_gesture_pinch.begin event, e.g. a scale of 2 means the fingers
+// are now twice as far apart as on pointer_gesture_pinch.begin.
+//
+// The rotation is the relative angle in degrees clockwise compared to the previous
+// pointer_gesture_pinch.begin or pointer_gesture_pinch.update event.
 type PointerGesturePinchV1UpdateEvent struct {
-	Time     uint32
-	Dx       wire.Fixed
-	Dy       wire.Fixed
-	Scale    wire.Fixed
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Dx delta x coordinate in surface coordinate space.
+	Dx wire.Fixed
+	// Dy delta y coordinate in surface coordinate space.
+	Dy wire.Fixed
+	// Scale scale relative to the initial finger position.
+	Scale wire.Fixed
+	// Rotation angle in degrees cw relative to the previous event.
 	Rotation wire.Fixed
 }
 
@@ -118,9 +144,20 @@ func (e *PointerGesturePinchV1UpdateEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGesturePinchV1UpdateEvent) Since() uint32 { return 1 }
 
+// PointerGesturePinchV1EndEvent multi-finger pinch end.
+//
+// This event is sent when a multi-finger pinch gesture ceases to
+// be valid. This may happen when one or more fingers are lifted or
+// the gesture is cancelled.
+//
+// When a gesture is cancelled, the client should undo state changes
+// caused by this gesture. What causes a gesture to be cancelled is
+// implementation-dependent.
 type PointerGesturePinchV1EndEvent struct {
-	Serial    uint32
-	Time      uint32
+	Serial uint32
+	// Time timestamp with millisecond granularity.
+	Time uint32
+	// Cancelled 1 if the gesture was cancelled, 0 otherwise.
 	Cancelled int32
 }
 
@@ -147,25 +184,48 @@ func (e *PointerGesturePinchV1EndEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *PointerGesturePinchV1EndEvent) Since() uint32 { return 1 }
 
+// PointerGesturePinchV1BeginFunc is a callback for Begin events.
 type PointerGesturePinchV1BeginFunc func(ev PointerGesturePinchV1BeginEvent)
 
+// PointerGesturePinchV1UpdateFunc is a callback for Update events.
 type PointerGesturePinchV1UpdateFunc func(ev PointerGesturePinchV1UpdateEvent)
 
+// PointerGesturePinchV1EndFunc is a callback for End events.
 type PointerGesturePinchV1EndFunc func(ev PointerGesturePinchV1EndEvent)
 
+// PointerGesturePinchV1 a pinch gesture object.
+//
+// A pinch gesture object notifies a client about a multi-finger pinch
+// gesture detected on an indirect input device such as a touchpad.
+// The gesture is usually initiated by multiple fingers moving towards
+// each other or away from each other, or by two or more fingers rotating
+// around a logical center of gravity. The precise conditions of when
+// such a gesture is detected are implementation-dependent.
+//
+// A gesture consists of three stages: begin, update (optional) and end.
+// There cannot be multiple simultaneous hold, pinch or swipe gestures on a
+// same pointer/seat, how compositors prevent these situations is
+// implementation-dependent.
+//
+// A gesture may be cancelled by the compositor or the hardware.
+// Clients should not consider performing permanent or irreversible
+// actions until the end of a gesture has been received.
 type PointerGesturePinchV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewPointerGesturePinchV1 wraps p in a PointerGesturePinchV1 proxy.
 func NewPointerGesturePinchV1(p *wayland.Proxy) *PointerGesturePinchV1 {
 	p.SetEventFDCounts(pointergesturepinchv1EventFDCounts)
 	return &PointerGesturePinchV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *PointerGesturePinchV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnBegin registers fn to receive Begin events.
 func (o *PointerGesturePinchV1) OnBegin(fn PointerGesturePinchV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1BeginEvent
@@ -179,6 +239,7 @@ func (o *PointerGesturePinchV1) OnBegin(fn PointerGesturePinchV1BeginFunc) {
 	})
 }
 
+// OnUpdate registers fn to receive Update events.
 func (o *PointerGesturePinchV1) OnUpdate(fn PointerGesturePinchV1UpdateFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventUpdate, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1UpdateEvent
@@ -192,6 +253,7 @@ func (o *PointerGesturePinchV1) OnUpdate(fn PointerGesturePinchV1UpdateFunc) {
 	})
 }
 
+// OnEnd registers fn to receive End events.
 func (o *PointerGesturePinchV1) OnEnd(fn PointerGesturePinchV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1EndEvent
@@ -205,6 +267,7 @@ func (o *PointerGesturePinchV1) OnEnd(fn PointerGesturePinchV1EndFunc) {
 	})
 }
 
+// Destroy destroy the pinch gesture object.
 func (o *PointerGesturePinchV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil

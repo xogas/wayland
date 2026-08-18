@@ -19,11 +19,19 @@ const (
 type ToplevelIconV1Error uint32
 
 const (
+	// ToplevelIconV1ErrorInvalidBuffer the provided buffer does not satisfy requirements.
 	ToplevelIconV1ErrorInvalidBuffer ToplevelIconV1Error = 1
-	ToplevelIconV1ErrorImmutable     ToplevelIconV1Error = 2
-	ToplevelIconV1ErrorNoBuffer      ToplevelIconV1Error = 3
+	// ToplevelIconV1ErrorImmutable the icon has already been assigned to a toplevel and must not be changed.
+	ToplevelIconV1ErrorImmutable ToplevelIconV1Error = 2
+	// ToplevelIconV1ErrorNoBuffer the provided buffer has been destroyed before the toplevel icon.
+	ToplevelIconV1ErrorNoBuffer ToplevelIconV1Error = 3
 )
 
+// ToplevelIconV1DestroyRequest destroy the icon object.
+//
+// Destroys the 'xdg_toplevel_icon_v1' object.
+// The icon must still remain set on every toplevel it was assigned to,
+// until the toplevel icon is reset explicitly.
 type ToplevelIconV1DestroyRequest struct {
 }
 
@@ -35,6 +43,23 @@ func (r *ToplevelIconV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconV1DestroyRequest) Since() uint32 { return 1 }
 
+// ToplevelIconV1SetNameRequest set an icon name.
+//
+// This request assigns an icon name to this icon.
+// Any previously set name is overridden.
+//
+// The compositor must resolve 'icon_name' according to the lookup rules
+// described in the XDG icon theme specification[1] using the
+// environment's current icon theme.
+//
+// If the compositor does not support icon names or cannot resolve
+// 'icon_name' according to the XDG icon theme specification it must
+// fall back to using pixel buffer data instead.
+//
+// If this request is made after the icon has been assigned to a toplevel
+// via 'set_icon', an 'immutable' error must be raised.
+//
+// [1]: https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
 type ToplevelIconV1SetNameRequest struct {
 	IconName string
 }
@@ -50,9 +75,36 @@ func (r *ToplevelIconV1SetNameRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconV1SetNameRequest) Since() uint32 { return 1 }
 
+// ToplevelIconV1AddBufferRequest add icon data from a pixel buffer.
+//
+// This request adds pixel data supplied as wl_buffer to the icon.
+//
+// The client should add pixel data for all icon sizes and scales that
+// it can provide, or which are explicitly requested by the compositor
+// via 'icon_size' events on xdg_toplevel_icon_manager_v1.
+//
+// The wl_buffer supplying pixel data as 'buffer' must be backed by wl_shm
+// and must be a square (width and height being equal).
+// If any of these buffer requirements are not fulfilled, a 'invalid_buffer'
+// error must be raised.
+//
+// If this icon instance already has a buffer of the same size and scale
+// from a previous 'add_buffer' request, data from the last request
+// overrides the preexisting pixel data.
+//
+// The wl_buffer must be kept alive for as long as the xdg_toplevel_icon
+// it is associated with is not destroyed, otherwise a 'no_buffer' error
+// is raised. The buffer contents must not be modified after it was
+// assigned to the icon. As a result, the region of the wl_shm_pool's
+// backing storage used for the wl_buffer must not be modified after this
+// request is sent. The wl_buffer.release event is unused.
+//
+// If this request is made after the icon has been assigned to a toplevel
+// via 'set_icon', an 'immutable' error must be raised.
 type ToplevelIconV1AddBufferRequest struct {
 	Buffer wire.ObjectID
-	Scale  int32
+	// Scale the scaling factor of the icon, e.g. 1.
+	Scale int32
 }
 
 func (r *ToplevelIconV1AddBufferRequest) Opcode() uint16 { return ToplevelIconV1RequestAddBuffer }
@@ -69,18 +121,35 @@ func (r *ToplevelIconV1AddBufferRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelIconV1AddBufferRequest) Since() uint32 { return 1 }
 
+// ToplevelIconV1 a toplevel window icon.
+//
+// This interface defines a toplevel icon.
+// An icon can have a name, and multiple buffers.
+// In order to be applied, the icon must have either a name, or at least
+// one buffer assigned. Applying an empty icon (with no buffer or name) to
+// a toplevel should reset its icon to the default icon.
+//
+// It is up to compositor policy whether to prefer using a buffer or loading
+// an icon via its name. See 'set_name' and 'add_buffer' for details.
 type ToplevelIconV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewToplevelIconV1 wraps p in a ToplevelIconV1 proxy.
 func NewToplevelIconV1(p *wayland.Proxy) *ToplevelIconV1 {
 	return &ToplevelIconV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ToplevelIconV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// Destroy destroy the icon object.
+//
+// Destroys the 'xdg_toplevel_icon_v1' object.
+// The icon must still remain set on every toplevel it was assigned to,
+// until the toplevel icon is reset explicitly.
 func (o *ToplevelIconV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -92,12 +161,55 @@ func (o *ToplevelIconV1) Destroy() error {
 	return nil
 }
 
+// SetName set an icon name.
+//
+// This request assigns an icon name to this icon.
+// Any previously set name is overridden.
+//
+// The compositor must resolve 'icon_name' according to the lookup rules
+// described in the XDG icon theme specification[1] using the
+// environment's current icon theme.
+//
+// If the compositor does not support icon names or cannot resolve
+// 'icon_name' according to the XDG icon theme specification it must
+// fall back to using pixel buffer data instead.
+//
+// If this request is made after the icon has been assigned to a toplevel
+// via 'set_icon', an 'immutable' error must be raised.
+//
+// [1]: https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
 func (o *ToplevelIconV1) SetName(iconName string) error {
 	return o.proxy.SendRequest(ToplevelIconV1RequestSetName, &ToplevelIconV1SetNameRequest{
 		IconName: iconName,
 	})
 }
 
+// AddBuffer add icon data from a pixel buffer.
+//
+// This request adds pixel data supplied as wl_buffer to the icon.
+//
+// The client should add pixel data for all icon sizes and scales that
+// it can provide, or which are explicitly requested by the compositor
+// via 'icon_size' events on xdg_toplevel_icon_manager_v1.
+//
+// The wl_buffer supplying pixel data as 'buffer' must be backed by wl_shm
+// and must be a square (width and height being equal).
+// If any of these buffer requirements are not fulfilled, a 'invalid_buffer'
+// error must be raised.
+//
+// If this icon instance already has a buffer of the same size and scale
+// from a previous 'add_buffer' request, data from the last request
+// overrides the preexisting pixel data.
+//
+// The wl_buffer must be kept alive for as long as the xdg_toplevel_icon
+// it is associated with is not destroyed, otherwise a 'no_buffer' error
+// is raised. The buffer contents must not be modified after it was
+// assigned to the icon. As a result, the region of the wl_shm_pool's
+// backing storage used for the wl_buffer must not be modified after this
+// request is sent. The wl_buffer.release event is unused.
+//
+// If this request is made after the icon has been assigned to a toplevel
+// via 'set_icon', an 'immutable' error must be raised.
 func (o *ToplevelIconV1) AddBuffer(buffer wire.ObjectID, scale int32) error {
 	return o.proxy.SendRequest(ToplevelIconV1RequestAddBuffer, &ToplevelIconV1AddBufferRequest{
 		Buffer: buffer,

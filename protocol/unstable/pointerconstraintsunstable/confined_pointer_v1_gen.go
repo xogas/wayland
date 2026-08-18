@@ -28,6 +28,10 @@ var confinedpointerv1EventFDCounts = map[uint16]int{
 	1: 0,
 }
 
+// ConfinedPointerV1DestroyRequest destroy the confined pointer object.
+//
+// Destroy the confined pointer object. If applicable, the compositor will
+// unconfine the pointer.
 type ConfinedPointerV1DestroyRequest struct {
 }
 
@@ -39,7 +43,24 @@ func (r *ConfinedPointerV1DestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *ConfinedPointerV1DestroyRequest) Since() uint32 { return 1 }
 
+// ConfinedPointerV1SetRegionRequest set a new confine region.
+//
+// Set a new region used to confine the pointer.
+//
+// The new confine region is double-buffered, see wl_surface.commit.
+//
+// If the confinement is active when the new confinement region is applied
+// and the pointer ends up outside of newly applied region, the pointer may
+// warped to a position within the new confinement region. If warped, a
+// wl_pointer.motion event will be emitted, but no
+// wp_relative_pointer.relative_motion event.
+//
+// The compositor may also, instead of using the new region, unconfine the
+// pointer.
+//
+// For details about the confine region, see wp_confined_pointer.
 type ConfinedPointerV1SetRegionRequest struct {
+	// Region region of surface.
 	Region wire.ObjectID // nullable
 }
 
@@ -54,6 +75,10 @@ func (r *ConfinedPointerV1SetRegionRequest) Marshal(w *wire.Writer) error {
 
 func (r *ConfinedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 
+// ConfinedPointerV1ConfinedEvent pointer confined.
+//
+// Notification that the pointer confinement of the seat's pointer is
+// activated.
 type ConfinedPointerV1ConfinedEvent struct {
 }
 
@@ -65,6 +90,14 @@ func (e *ConfinedPointerV1ConfinedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ConfinedPointerV1ConfinedEvent) Since() uint32 { return 1 }
 
+// ConfinedPointerV1UnconfinedEvent pointer unconfined.
+//
+// Notification that the pointer confinement of the seat's pointer is no
+// longer active. If this is a oneshot pointer confinement (see
+// wp_pointer_constraints.lifetime) this object is now defunct and should
+// be destroyed. If this is a persistent pointer confinement (see
+// wp_pointer_constraints.lifetime) this pointer confinement may again
+// reactivate in the future.
 type ConfinedPointerV1UnconfinedEvent struct {
 }
 
@@ -76,23 +109,46 @@ func (e *ConfinedPointerV1UnconfinedEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *ConfinedPointerV1UnconfinedEvent) Since() uint32 { return 1 }
 
+// ConfinedPointerV1ConfinedFunc is a callback for Confined events.
 type ConfinedPointerV1ConfinedFunc func(ev ConfinedPointerV1ConfinedEvent)
 
+// ConfinedPointerV1UnconfinedFunc is a callback for Unconfined events.
 type ConfinedPointerV1UnconfinedFunc func(ev ConfinedPointerV1UnconfinedEvent)
 
+// ConfinedPointerV1 confined pointer object.
+//
+// The wp_confined_pointer interface represents a confined pointer state.
+//
+// This object will send the event 'confined' when the confinement is
+// activated. Whenever the confinement is activated, it is guaranteed that
+// the surface the pointer is confined to will already have received pointer
+// focus and that the pointer will be within the region passed to the request
+// creating this object. It is up to the compositor to decide whether this
+// requires some user interaction and if the pointer will warp to within the
+// passed region if outside.
+//
+// To unconfine the pointer, send the destroy request. This will also destroy
+// the wp_confined_pointer object.
+//
+// If the compositor decides to unconfine the pointer the unconfined event is
+// sent. The wp_confined_pointer object is at this point defunct and should
+// be destroyed.
 type ConfinedPointerV1 struct {
 	proxy *wayland.Proxy
 }
 
+// NewConfinedPointerV1 wraps p in a ConfinedPointerV1 proxy.
 func NewConfinedPointerV1(p *wayland.Proxy) *ConfinedPointerV1 {
 	p.SetEventFDCounts(confinedpointerv1EventFDCounts)
 	return &ConfinedPointerV1{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *ConfinedPointerV1) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnConfined registers fn to receive Confined events.
 func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventConfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1ConfinedEvent
@@ -106,6 +162,7 @@ func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 	})
 }
 
+// OnUnconfined registers fn to receive Unconfined events.
 func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventUnconfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1UnconfinedEvent
@@ -119,6 +176,10 @@ func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 	})
 }
 
+// Destroy destroy the confined pointer object.
+//
+// Destroy the confined pointer object. If applicable, the compositor will
+// unconfine the pointer.
 func (o *ConfinedPointerV1) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -130,6 +191,22 @@ func (o *ConfinedPointerV1) Destroy() error {
 	return nil
 }
 
+// SetRegion set a new confine region.
+//
+// Set a new region used to confine the pointer.
+//
+// The new confine region is double-buffered, see wl_surface.commit.
+//
+// If the confinement is active when the new confinement region is applied
+// and the pointer ends up outside of newly applied region, the pointer may
+// warped to a position within the new confinement region. If warped, a
+// wl_pointer.motion event will be emitted, but no
+// wp_relative_pointer.relative_motion event.
+//
+// The compositor may also, instead of using the new region, unconfine the
+// pointer.
+//
+// For details about the confine region, see wp_confined_pointer.
 func (o *ConfinedPointerV1) SetRegion(region wire.ObjectID) error {
 	return o.proxy.SendRequest(ConfinedPointerV1RequestSetRegion, &ConfinedPointerV1SetRegionRequest{
 		Region: region,

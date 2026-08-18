@@ -31,15 +31,29 @@ var wmbaseEventFDCounts = map[uint16]int{
 type WmBaseError uint32
 
 const (
-	WmBaseErrorRole                WmBaseError = 0
-	WmBaseErrorDefunctSurfaces     WmBaseError = 1
-	WmBaseErrorNotTheTopmostPopup  WmBaseError = 2
-	WmBaseErrorInvalidPopupParent  WmBaseError = 3
+	// WmBaseErrorRole given wl_surface has another role.
+	WmBaseErrorRole WmBaseError = 0
+	// WmBaseErrorDefunctSurfaces xdg_wm_base was destroyed before children.
+	WmBaseErrorDefunctSurfaces WmBaseError = 1
+	// WmBaseErrorNotTheTopmostPopup the client tried to map or destroy a non-topmost popup.
+	WmBaseErrorNotTheTopmostPopup WmBaseError = 2
+	// WmBaseErrorInvalidPopupParent the client specified an invalid popup parent surface.
+	WmBaseErrorInvalidPopupParent WmBaseError = 3
+	// WmBaseErrorInvalidSurfaceState the client provided an invalid surface state.
 	WmBaseErrorInvalidSurfaceState WmBaseError = 4
-	WmBaseErrorInvalidPositioner   WmBaseError = 5
-	WmBaseErrorUnresponsive        WmBaseError = 6
+	// WmBaseErrorInvalidPositioner the client provided an invalid positioner.
+	WmBaseErrorInvalidPositioner WmBaseError = 5
+	// WmBaseErrorUnresponsive the client didn’t respond to a ping event in time.
+	WmBaseErrorUnresponsive WmBaseError = 6
 )
 
+// WmBaseDestroyRequest destroy xdg_wm_base.
+//
+// Destroy this xdg_wm_base object.
+//
+// Destroying a bound xdg_wm_base object while there are surfaces
+// still alive created by this xdg_wm_base object instance is illegal
+// and will result in a defunct_surfaces error.
 type WmBaseDestroyRequest struct {
 }
 
@@ -51,6 +65,11 @@ func (r *WmBaseDestroyRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmBaseDestroyRequest) Since() uint32 { return 1 }
 
+// WmBaseCreatePositionerRequest create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 type WmBaseCreatePositionerRequest struct {
 	ID wire.NewID
 }
@@ -66,6 +85,20 @@ func (r *WmBaseCreatePositionerRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmBaseCreatePositionerRequest) Since() uint32 { return 1 }
 
+// WmBaseGetXdgSurfaceRequest create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface. An xdg_surface is
+// used as basis to define a role to a given surface, such as xdg_toplevel
+// or xdg_popup. It also manages functionality shared between xdg_surface
+// based surface roles.
+//
+// While xdg_surface itself is not a role, the corresponding surface may
+// only be assigned a role extending xdg_surface, such as xdg_toplevel or
+// xdg_popup. It is illegal to create an xdg_surface for a wl_surface which
+// already has anassigned role and this will result in a role error.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 type WmBaseGetXdgSurfaceRequest struct {
 	ID      wire.NewID
 	Surface wire.ObjectID
@@ -85,7 +118,13 @@ func (r *WmBaseGetXdgSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmBaseGetXdgSurfaceRequest) Since() uint32 { return 1 }
 
+// WmBasePongRequest respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive. See xdg_wm_base.ping
+// and xdg_wm_base.error.unresponsive.
 type WmBasePongRequest struct {
+	// Serial serial of the ping event.
 	Serial uint32
 }
 
@@ -100,7 +139,23 @@ func (r *WmBasePongRequest) Marshal(w *wire.Writer) error {
 
 func (r *WmBasePongRequest) Since() uint32 { return 1 }
 
+// WmBasePingEvent check if the client is alive.
+//
+// The ping event asks the client if it's still alive. Pass the
+// serial specified in the event back to the compositor by sending
+// a "pong" request back with the specified serial. See xdg_wm_base.pong.
+//
+// Compositors can use this to determine if the client is still
+// alive. It's unspecified what will happen if the client doesn't
+// respond to the ping request, or in what timeframe. Clients should
+// try to respond in a reasonable amount of time. The “unresponsive”
+// error is provided for compositors that wish to disconnect unresponsive
+// clients.
+//
+// A compositor is free to ping in any way it wants, but a client must
+// always respond to any xdg_wm_base object it created.
 type WmBasePingEvent struct {
+	// Serial pass this to the pong request.
 	Serial uint32
 }
 
@@ -117,21 +172,32 @@ func (e *WmBasePingEvent) Unmarshal(r *wire.Reader) error {
 
 func (e *WmBasePingEvent) Since() uint32 { return 1 }
 
+// WmBasePingFunc is a callback for Ping events.
 type WmBasePingFunc func(ev WmBasePingEvent)
 
+// WmBase create desktop-style surfaces.
+//
+// The xdg_wm_base interface is exposed as a global object enabling clients
+// to turn their wl_surfaces into windows in a desktop environment. It
+// defines the basic functionality needed for clients and the compositor to
+// create windows that can be dragged, resized, maximized, etc, as well as
+// creating transient windows such as popup menus.
 type WmBase struct {
 	proxy *wayland.Proxy
 }
 
+// NewWmBase wraps p in a WmBase proxy.
 func NewWmBase(p *wayland.Proxy) *WmBase {
 	p.SetEventFDCounts(wmbaseEventFDCounts)
 	return &WmBase{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *WmBase) Proxy() *wayland.Proxy {
 	return o.proxy
 }
 
+// OnPing registers fn to receive Ping events.
 func (o *WmBase) OnPing(fn WmBasePingFunc) {
 	o.proxy.RegisterEvent(WmBaseEventPing, func(r *wire.Reader) {
 		var ev WmBasePingEvent
@@ -145,6 +211,13 @@ func (o *WmBase) OnPing(fn WmBasePingFunc) {
 	})
 }
 
+// Destroy destroy xdg_wm_base.
+//
+// Destroy this xdg_wm_base object.
+//
+// Destroying a bound xdg_wm_base object while there are surfaces
+// still alive created by this xdg_wm_base object instance is illegal
+// and will result in a defunct_surfaces error.
 func (o *WmBase) Destroy() error {
 	if o.proxy.Deleted() {
 		return nil
@@ -156,6 +229,11 @@ func (o *WmBase) Destroy() error {
 	return nil
 }
 
+// CreatePositioner create a positioner object.
+//
+// Create a positioner object. A positioner object is used to position
+// surfaces relative to some parent surface. See the interface description
+// and xdg_surface.get_popup for details.
 func (o *WmBase) CreatePositioner() (*Positioner, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -173,6 +251,20 @@ func (o *WmBase) CreatePositioner() (*Positioner, error) {
 	return wrapped, nil
 }
 
+// GetXdgSurface create a shell surface from a surface.
+//
+// This creates an xdg_surface for the given surface. An xdg_surface is
+// used as basis to define a role to a given surface, such as xdg_toplevel
+// or xdg_popup. It also manages functionality shared between xdg_surface
+// based surface roles.
+//
+// While xdg_surface itself is not a role, the corresponding surface may
+// only be assigned a role extending xdg_surface, such as xdg_toplevel or
+// xdg_popup. It is illegal to create an xdg_surface for a wl_surface which
+// already has anassigned role and this will result in a role error.
+//
+// See the documentation of xdg_surface for more details about what an
+// xdg_surface is and how it is used.
 func (o *WmBase) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
@@ -191,6 +283,11 @@ func (o *WmBase) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 	return wrapped, nil
 }
 
+// Pong respond to a ping event.
+//
+// A client must respond to a ping event with a pong request or
+// the client may be deemed unresponsive. See xdg_wm_base.ping
+// and xdg_wm_base.error.unresponsive.
 func (o *WmBase) Pong(serial uint32) error {
 	return o.proxy.SendRequest(WmBaseRequestPong, &WmBasePongRequest{
 		Serial: serial,

@@ -16,11 +16,21 @@ const (
 type ShellError uint32
 
 const (
+	// ShellErrorRole given wl_surface has another role.
 	ShellErrorRole ShellError = 0
 )
 
+// ShellGetShellSurfaceRequest create a shell surface from a surface.
+//
+// Create a shell surface for an existing surface. This gives
+// the wl_surface the role of a shell surface. If the wl_surface
+// already has another role, it raises a protocol error.
+//
+// Only one shell surface can be associated with a given surface.
 type ShellGetShellSurfaceRequest struct {
-	ID      wire.NewID
+	// ID shell surface to create.
+	ID wire.NewID
+	// Surface surface to be given the shell surface role.
 	Surface wire.ObjectID
 }
 
@@ -38,18 +48,38 @@ func (r *ShellGetShellSurfaceRequest) Marshal(w *wire.Writer) error {
 
 func (r *ShellGetShellSurfaceRequest) Since() uint32 { return 1 }
 
+// Shell create desktop-style surfaces.
+//
+// This interface is implemented by servers that provide
+// desktop-style user interfaces.
+//
+// It allows clients to associate a wl_shell_surface with
+// a basic surface.
+//
+// Note! This protocol is deprecated and not intended for production use.
+// For desktop-style user interfaces, use xdg_shell. Compositors and clients
+// should not implement this interface.
 type Shell struct {
 	proxy *Proxy
 }
 
+// NewShell wraps p in a Shell proxy.
 func NewShell(p *Proxy) *Shell {
 	return &Shell{proxy: p}
 }
 
+// Proxy returns the underlying Wayland proxy.
 func (o *Shell) Proxy() *Proxy {
 	return o.proxy
 }
 
+// GetShellSurface create a shell surface from a surface.
+//
+// Create a shell surface for an existing surface. This gives
+// the wl_surface the role of a shell surface. If the wl_surface
+// already has another role, it raises a protocol error.
+//
+// Only one shell surface can be associated with a given surface.
 func (o *Shell) GetShellSurface(surface wire.ObjectID) (*ShellSurface, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
