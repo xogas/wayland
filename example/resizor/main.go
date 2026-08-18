@@ -443,7 +443,7 @@ func main() {
 							if edge == xdgshell.ToplevelResizeEdgeNone {
 								_ = toplevel.Move(seatID, ev.Serial)
 							} else {
-								_ = toplevel.Resize(seatID, ev.Serial, xdgshell.ToplevelResizeEdge(edge))
+								_ = toplevel.Resize(seatID, ev.Serial, edge)
 							}
 						})
 					}

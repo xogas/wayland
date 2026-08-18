@@ -90,7 +90,7 @@ func wireDisplayEvents(dpy *Display, conn *Conn) {
 		// further sends fail fast. SetOnError remains available as an
 		// optional notification hook.
 		conn.setProtoErr(pe)
-		conn.Close()
+		_ = conn.Close()
 		conn.connMu.Lock()
 		fn := conn.onError
 		conn.connMu.Unlock()

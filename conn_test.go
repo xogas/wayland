@@ -239,7 +239,7 @@ func TestGlobalEventDispatch(t *testing.T) {
 	}
 	regID := reg.Proxy().ID()
 
-	_, _, _, _ = swc.ReceiveMessage()
+	swc.ReceiveMessage() //nolint: errcheck
 
 	var (
 		gotName    uint32
@@ -676,7 +676,7 @@ func TestRoundtrip(t *testing.T) {
 
 		w2 := &wire.Writer{}
 		_ = w2.Uint32(uint32(callbackID))
-		_ = swc.SendMessage(wire.ObjectID(obj), DisplayEventDeleteID, w2)
+		_ = swc.SendMessage(obj, DisplayEventDeleteID, w2)
 	}()
 
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
@@ -703,7 +703,7 @@ func TestRoundtripCancel(t *testing.T) {
 	wireDisplayEvents(dpy, conn)
 
 	go func() {
-		_, _, _, _ = swc.ReceiveMessage()
+		swc.ReceiveMessage() //nolint: errcheck
 	}()
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -736,7 +736,7 @@ func TestDispatchPending(t *testing.T) {
 	}
 	regID := reg.Proxy().ID()
 
-	_, _, _, _ = swc.ReceiveMessage()
+	swc.ReceiveMessage() //nolint: errcheck
 
 	globalDone := make(chan struct{})
 	reg.OnGlobal(func(ev RegistryGlobalEvent) {

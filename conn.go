@@ -156,7 +156,7 @@ func (c *Conn) setProtoErr(err error) {
 func (c *Conn) FailEvent(event string, err error) {
 	c.loggerOf().Error("event unmarshal error", "event", event, "error", err)
 	c.setProtoErr(fmt.Errorf("wayland: decode event %s: %w", event, err))
-	c.Close()
+	_ = c.Close()
 }
 
 // failStream records a stream-level protocol violation (an event for an
@@ -168,7 +168,7 @@ func (c *Conn) FailEvent(event string, err error) {
 func (c *Conn) failStream(reason string, objID uint32, opcode uint16) {
 	c.loggerOf().Error(reason, "id", objID, "opcode", opcode)
 	c.setProtoErr(fmt.Errorf("wayland: %s (object %d, opcode %d)", reason, objID, opcode))
-	c.Close()
+	_ = c.Close()
 }
 
 // loggerOf returns the current logger.

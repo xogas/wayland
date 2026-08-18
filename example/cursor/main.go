@@ -61,7 +61,7 @@ func (a *app) applyCursor() {
 	if a.mode == modeCustom {
 		_ = a.pointer.SetCursor(a.lastSerial, wire.ObjectID(a.cursorSurface.Proxy().ID()), hotspot, hotspot)
 	} else if a.mode == modeShape && a.csDevice != nil {
-		_ = a.csDevice.SetShape(a.lastSerial, cursorshape.CursorShapeDeviceV1Shape(shapeCycle[a.shapeIdx]))
+		_ = a.csDevice.SetShape(a.lastSerial, shapeCycle[a.shapeIdx])
 	}
 }
 

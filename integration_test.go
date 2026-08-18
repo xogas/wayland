@@ -1,10 +1,7 @@
-//go:build integration
-
 // Integration tests against a live Wayland compositor. In CI these run
 // against a headless weston; locally they run against any running compositor
-// (WAYLAND_DISPLAY). Run with:
-//
-//	go test -tags=integration -run TestIntegration ./...
+// (WAYLAND_DISPLAY). The test skips itself when WAYLAND_DISPLAY is not set or
+// when run with -short.
 package wayland_test
 
 import (
@@ -50,6 +47,9 @@ func requireDisplay(t *testing.T) *wayland.Display {
 // descriptors are retained. This exercises the full create -> configure ->
 // destroy -> delete_id lifecycle end to end.
 func TestIntegrationCreateDestroyCycles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live-compositor integration test in short mode")
+	}
 	dpy := requireDisplay(t)
 	ctx := context.Background()
 
