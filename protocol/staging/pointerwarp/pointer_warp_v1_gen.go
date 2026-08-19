@@ -18,8 +18,7 @@ const (
 // PointerWarpV1DestroyRequest destroy the warp manager.
 //
 // Destroy the pointer warp manager.
-type PointerWarpV1DestroyRequest struct {
-}
+type PointerWarpV1DestroyRequest struct{}
 
 func (r *PointerWarpV1DestroyRequest) Opcode() uint16 { return PointerWarpV1RequestDestroy }
 
@@ -129,7 +128,7 @@ func (o *PointerWarpV1) Destroy() error {
 //
 // Note that the enter serial is valid for any surface of the client,
 // and does not have to be from the surface the pointer is warped to.
-func (o *PointerWarpV1) WarpPointer(surface wire.ObjectID, pointer wire.ObjectID, x wire.Fixed, y wire.Fixed, serial uint32) error {
+func (o *PointerWarpV1) WarpPointer(surface, pointer wire.ObjectID, x, y wire.Fixed, serial uint32) error {
 	return o.proxy.SendRequest(PointerWarpV1RequestWarpPointer, &PointerWarpV1WarpPointerRequest{
 		Surface: surface,
 		Pointer: pointer,
@@ -145,7 +144,7 @@ func (o *PointerWarpV1) WarpPointer(surface wire.ObjectID, pointer wire.ObjectID
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerWarpV1(reg, name, min(g.Version,
 // VersionPointerWarpV1)), to bind at the highest mutually supported version.
-func BindPointerWarpV1(b wayland.Binder, name uint32, version uint32) (*PointerWarpV1, error) {
+func BindPointerWarpV1(b wayland.Binder, name, version uint32) (*PointerWarpV1, error) {
 	if version < 1 || version > VersionPointerWarpV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

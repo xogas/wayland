@@ -74,12 +74,10 @@ func (o *Callback) Proxy() *Proxy {
 func (o *Callback) OnDone(fn CallbackDoneFunc) {
 	o.proxy.RegisterEvent(CallbackEventDone, func(r *wire.Reader) {
 		var ev CallbackDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -90,7 +88,7 @@ func (o *Callback) OnDone(fn CallbackDoneFunc) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCallback(reg, name, min(g.Version,
 // VersionCallback)), to bind at the highest mutually supported version.
-func BindCallback(b Binder, name uint32, version uint32) (*Callback, error) {
+func BindCallback(b Binder, name, version uint32) (*Callback, error) {
 	if version < 1 || version > VersionCallback {
 		return nil, ErrVersionMismatch
 	}

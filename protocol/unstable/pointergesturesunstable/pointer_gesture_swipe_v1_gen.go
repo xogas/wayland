@@ -34,8 +34,7 @@ func init() {
 }
 
 // PointerGestureSwipeV1DestroyRequest destroy the pointer swipe gesture object.
-type PointerGestureSwipeV1DestroyRequest struct {
-}
+type PointerGestureSwipeV1DestroyRequest struct{}
 
 func (r *PointerGestureSwipeV1DestroyRequest) Opcode() uint16 {
 	return PointerGestureSwipeV1RequestDestroy
@@ -212,12 +211,10 @@ func (o *PointerGestureSwipeV1) Proxy() *wayland.Proxy {
 func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1BeginEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -226,12 +223,10 @@ func (o *PointerGestureSwipeV1) OnBegin(fn PointerGestureSwipeV1BeginFunc) {
 func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventUpdate, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1UpdateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Update", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -240,12 +235,10 @@ func (o *PointerGestureSwipeV1) OnUpdate(fn PointerGestureSwipeV1UpdateFunc) {
 func (o *PointerGestureSwipeV1) OnEnd(fn PointerGestureSwipeV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureSwipeV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureSwipeV1EndEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -268,7 +261,7 @@ func (o *PointerGestureSwipeV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerGestureSwipeV1(reg, name, min(g.Version,
 // VersionPointerGestureSwipeV1)), to bind at the highest mutually supported version.
-func BindPointerGestureSwipeV1(b wayland.Binder, name uint32, version uint32) (*PointerGestureSwipeV1, error) {
+func BindPointerGestureSwipeV1(b wayland.Binder, name, version uint32) (*PointerGestureSwipeV1, error) {
 	if version < 1 || version > VersionPointerGestureSwipeV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

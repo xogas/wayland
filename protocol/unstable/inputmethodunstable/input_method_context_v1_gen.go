@@ -52,8 +52,7 @@ func init() {
 	wayland.RegisterInterfaceFDCounts(InterfaceInputMethodContextV1, inputmethodcontextv1EventFDCounts)
 }
 
-type InputMethodContextV1DestroyRequest struct {
-}
+type InputMethodContextV1DestroyRequest struct{}
 
 func (r *InputMethodContextV1DestroyRequest) Opcode() uint16 {
 	return InputMethodContextV1RequestDestroy
@@ -494,8 +493,7 @@ func (e *InputMethodContextV1SurroundingTextEvent) Unmarshal(r *wire.Reader) err
 
 func (e *InputMethodContextV1SurroundingTextEvent) Since() uint32 { return 1 }
 
-type InputMethodContextV1ResetEvent struct {
-}
+type InputMethodContextV1ResetEvent struct{}
 
 func (e *InputMethodContextV1ResetEvent) Opcode() uint16 { return InputMethodContextV1EventReset }
 
@@ -656,12 +654,10 @@ func (o *InputMethodContextV1) Proxy() *wayland.Proxy {
 func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1SurroundingTextFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodContextV1SurroundingTextEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SurroundingText", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -670,12 +666,10 @@ func (o *InputMethodContextV1) OnSurroundingText(fn InputMethodContextV1Surround
 func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventReset, func(r *wire.Reader) {
 		var ev InputMethodContextV1ResetEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Reset", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -684,12 +678,10 @@ func (o *InputMethodContextV1) OnReset(fn InputMethodContextV1ResetFunc) {
 func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodContextV1ContentTypeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ContentType", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -698,12 +690,10 @@ func (o *InputMethodContextV1) OnContentType(fn InputMethodContextV1ContentTypeF
 func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActionFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventInvokeAction, func(r *wire.Reader) {
 		var ev InputMethodContextV1InvokeActionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("InvokeAction", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -712,12 +702,10 @@ func (o *InputMethodContextV1) OnInvokeAction(fn InputMethodContextV1InvokeActio
 func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventCommitState, func(r *wire.Reader) {
 		var ev InputMethodContextV1CommitStateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CommitState", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -726,12 +714,10 @@ func (o *InputMethodContextV1) OnCommitState(fn InputMethodContextV1CommitStateF
 func (o *InputMethodContextV1) OnPreferredLanguage(fn InputMethodContextV1PreferredLanguageFunc) {
 	o.proxy.RegisterEvent(InputMethodContextV1EventPreferredLanguage, func(r *wire.Reader) {
 		var ev InputMethodContextV1PreferredLanguageEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredLanguage", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -774,7 +760,7 @@ func (o *InputMethodContextV1) CommitString(serial uint32, text string) error {
 //
 // Previously sent preedit_style and preedit_cursor requests are also
 // processed by the text_input.
-func (o *InputMethodContextV1) PreeditString(serial uint32, text string, commit string) error {
+func (o *InputMethodContextV1) PreeditString(serial uint32, text, commit string) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestPreeditString, &InputMethodContextV1PreeditStringRequest{
 		Serial: serial,
 		Text:   text,
@@ -790,7 +776,7 @@ func (o *InputMethodContextV1) PreeditString(serial uint32, text string, commit 
 // be applied to a composing text.
 //
 // This request should be sent before sending a preedit_string request.
-func (o *InputMethodContextV1) PreeditStyling(index uint32, length uint32, style uint32) error {
+func (o *InputMethodContextV1) PreeditStyling(index, length, style uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestPreeditStyling, &InputMethodContextV1PreeditStylingRequest{
 		Index:  index,
 		Length: length,
@@ -837,7 +823,7 @@ func (o *InputMethodContextV1) DeleteSurroundingText(index int32, length uint32)
 //
 // This request will be handled on the text_input side directly following
 // a commit_string request.
-func (o *InputMethodContextV1) CursorPosition(index int32, anchor int32) error {
+func (o *InputMethodContextV1) CursorPosition(index, anchor int32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestCursorPosition, &InputMethodContextV1CursorPositionRequest{
 		Index:  index,
 		Anchor: anchor,
@@ -856,7 +842,7 @@ func (o *InputMethodContextV1) ModifiersMap(map_ []byte) error {
 // normal text input operations, which should be done with commit_string,
 // delete_surrounding_text, etc. The key event follows the wl_keyboard key
 // event convention. Sym is an XKB keysym, state is a wl_keyboard key_state.
-func (o *InputMethodContextV1) Keysym(serial uint32, time uint32, sym uint32, state uint32, modifiers uint32) error {
+func (o *InputMethodContextV1) Keysym(serial, time, sym, state, modifiers uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestKeysym, &InputMethodContextV1KeysymRequest{
 		Serial:    serial,
 		Time:      time,
@@ -878,10 +864,9 @@ func (o *InputMethodContextV1) GrabKeyboard() (*wayland.Proxy, error) {
 	p.SetVersion(o.proxy.Version())
 
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), InputMethodContextV1RequestGrabKeyboard, &InputMethodContextV1GrabKeyboardRequest{
+	if err := conn.SendRequest(o.proxy.ID(), InputMethodContextV1RequestGrabKeyboard, &InputMethodContextV1GrabKeyboardRequest{
 		Keyboard: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -896,7 +881,7 @@ func (o *InputMethodContextV1) GrabKeyboard() (*wayland.Proxy, error) {
 // wl_keyboard::key event.
 //
 // For generating custom key events use the keysym request instead.
-func (o *InputMethodContextV1) Key(serial uint32, time uint32, key uint32, state uint32) error {
+func (o *InputMethodContextV1) Key(serial, time, key, state uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestKey, &InputMethodContextV1KeyRequest{
 		Serial: serial,
 		Time:   time,
@@ -911,7 +896,7 @@ func (o *InputMethodContextV1) Key(serial uint32, time uint32, key uint32, state
 // processed by the input method itself.  Should be used when filtering
 // key events with grab_keyboard. The arguments should be the ones
 // from the wl_keyboard::modifiers event.
-func (o *InputMethodContextV1) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) error {
+func (o *InputMethodContextV1) Modifiers(serial, modsDepressed, modsLatched, modsLocked, group uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestModifiers, &InputMethodContextV1ModifiersRequest{
 		Serial:        serial,
 		ModsDepressed: modsDepressed,
@@ -928,7 +913,7 @@ func (o *InputMethodContextV1) Language(serial uint32, language string) error {
 	})
 }
 
-func (o *InputMethodContextV1) TextDirection(serial uint32, direction uint32) error {
+func (o *InputMethodContextV1) TextDirection(serial, direction uint32) error {
 	return o.proxy.SendRequest(InputMethodContextV1RequestTextDirection, &InputMethodContextV1TextDirectionRequest{
 		Serial:    serial,
 		Direction: direction,
@@ -941,7 +926,7 @@ func (o *InputMethodContextV1) TextDirection(serial uint32, direction uint32) er
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputMethodContextV1(reg, name, min(g.Version,
 // VersionInputMethodContextV1)), to bind at the highest mutually supported version.
-func BindInputMethodContextV1(b wayland.Binder, name uint32, version uint32) (*InputMethodContextV1, error) {
+func BindInputMethodContextV1(b wayland.Binder, name, version uint32) (*InputMethodContextV1, error) {
 	if version < 1 || version > VersionInputMethodContextV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

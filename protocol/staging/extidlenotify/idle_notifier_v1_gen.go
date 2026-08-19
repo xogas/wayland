@@ -20,8 +20,7 @@ const (
 //
 // Destroy the manager object. All objects created via this interface
 // remain valid.
-type IdleNotifierV1DestroyRequest struct {
-}
+type IdleNotifierV1DestroyRequest struct{}
 
 func (r *IdleNotifierV1DestroyRequest) Opcode() uint16 { return IdleNotifierV1RequestDestroy }
 
@@ -157,12 +156,11 @@ func (o *IdleNotifierV1) GetIdleNotification(timeout uint32, seat wire.ObjectID)
 
 	wrapped := NewIdleNotificationV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetIdleNotification, &IdleNotifierV1GetIdleNotificationRequest{
+	if err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetIdleNotification, &IdleNotifierV1GetIdleNotificationRequest{
 		ID:      wire.NewID(p.ID()),
 		Timeout: timeout,
 		Seat:    seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -191,12 +189,11 @@ func (o *IdleNotifierV1) GetInputIdleNotification(timeout uint32, seat wire.Obje
 
 	wrapped := NewIdleNotificationV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetInputIdleNotification, &IdleNotifierV1GetInputIdleNotificationRequest{
+	if err := conn.SendRequest(o.proxy.ID(), IdleNotifierV1RequestGetInputIdleNotification, &IdleNotifierV1GetInputIdleNotificationRequest{
 		ID:      wire.NewID(p.ID()),
 		Timeout: timeout,
 		Seat:    seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -209,7 +206,7 @@ func (o *IdleNotifierV1) GetInputIdleNotification(timeout uint32, seat wire.Obje
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindIdleNotifierV1(reg, name, min(g.Version,
 // VersionIdleNotifierV1)), to bind at the highest mutually supported version.
-func BindIdleNotifierV1(b wayland.Binder, name uint32, version uint32) (*IdleNotifierV1, error) {
+func BindIdleNotifierV1(b wayland.Binder, name, version uint32) (*IdleNotifierV1, error) {
 	if version < 1 || version > VersionIdleNotifierV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

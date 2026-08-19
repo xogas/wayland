@@ -21,8 +21,7 @@ const (
 // Destroys the xdg_dialog_v1 object. If this object is destroyed
 // before the related xdg_toplevel, the compositor should unapply its
 // effects.
-type DialogV1DestroyRequest struct {
-}
+type DialogV1DestroyRequest struct{}
 
 func (r *DialogV1DestroyRequest) Opcode() uint16 { return DialogV1RequestDestroy }
 
@@ -45,8 +44,7 @@ func (r *DialogV1DestroyRequest) Since() uint32 { return 1 }
 // Compositors may choose any policy in event delivery to the parent
 // toplevel, from delivering all events unfiltered to using them for
 // internal consumption.
-type DialogV1SetModalRequest struct {
-}
+type DialogV1SetModalRequest struct{}
 
 func (r *DialogV1SetModalRequest) Opcode() uint16 { return DialogV1RequestSetModal }
 
@@ -60,8 +58,7 @@ func (r *DialogV1SetModalRequest) Since() uint32 { return 1 }
 //
 // Drops the hint that this dialog has "modal" behavior. See
 // xdg_dialog_v1.set_modal for more details.
-type DialogV1UnsetModalRequest struct {
-}
+type DialogV1UnsetModalRequest struct{}
 
 func (r *DialogV1UnsetModalRequest) Opcode() uint16 { return DialogV1RequestUnsetModal }
 
@@ -143,7 +140,7 @@ func (o *DialogV1) UnsetModal() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDialogV1(reg, name, min(g.Version,
 // VersionDialogV1)), to bind at the highest mutually supported version.
-func BindDialogV1(b wayland.Binder, name uint32, version uint32) (*DialogV1, error) {
+func BindDialogV1(b wayland.Binder, name, version uint32) (*DialogV1, error) {
 	if version < 1 || version > VersionDialogV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

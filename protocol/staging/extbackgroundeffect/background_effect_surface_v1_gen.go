@@ -26,8 +26,7 @@ const (
 //
 // Informs the server that the client will no longer be using this protocol
 // object. The effect regions will be removed on the next commit.
-type BackgroundEffectSurfaceV1DestroyRequest struct {
-}
+type BackgroundEffectSurfaceV1DestroyRequest struct{}
 
 func (r *BackgroundEffectSurfaceV1DestroyRequest) Opcode() uint16 {
 	return BackgroundEffectSurfaceV1RequestDestroy
@@ -143,7 +142,7 @@ func (o *BackgroundEffectSurfaceV1) SetBlurRegion(region wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindBackgroundEffectSurfaceV1(reg, name, min(g.Version,
 // VersionBackgroundEffectSurfaceV1)), to bind at the highest mutually supported version.
-func BindBackgroundEffectSurfaceV1(b wayland.Binder, name uint32, version uint32) (*BackgroundEffectSurfaceV1, error) {
+func BindBackgroundEffectSurfaceV1(b wayland.Binder, name, version uint32) (*BackgroundEffectSurfaceV1, error) {
 	if version < 1 || version > VersionBackgroundEffectSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -228,8 +228,7 @@ const (
 //
 // This request destroys the role surface and unmaps the surface;
 // see "Unmapping" behavior in interface section for details.
-type ToplevelDestroyRequest struct {
-}
+type ToplevelDestroyRequest struct{}
 
 func (r *ToplevelDestroyRequest) Opcode() uint16 { return ToplevelRequestDestroy }
 
@@ -619,8 +618,7 @@ func (r *ToplevelSetMinSizeRequest) Since() uint32 { return 1 }
 // If the surface is in a fullscreen state, this request has no direct
 // effect. It may alter the state the surface is returned to when
 // unmaximized unless overridden by the compositor.
-type ToplevelSetMaximizedRequest struct {
-}
+type ToplevelSetMaximizedRequest struct{}
 
 func (r *ToplevelSetMaximizedRequest) Opcode() uint16 { return ToplevelRequestSetMaximized }
 
@@ -653,8 +651,7 @@ func (r *ToplevelSetMaximizedRequest) Since() uint32 { return 1 }
 // If the surface is in a fullscreen state, this request has no direct
 // effect. It may alter the state the surface is returned to when
 // unmaximized unless overridden by the compositor.
-type ToplevelUnsetMaximizedRequest struct {
-}
+type ToplevelUnsetMaximizedRequest struct{}
 
 func (r *ToplevelUnsetMaximizedRequest) Opcode() uint16 { return ToplevelRequestUnsetMaximized }
 
@@ -724,8 +721,7 @@ func (r *ToplevelSetFullscreenRequest) Since() uint32 { return 1 }
 //
 // The client must also acknowledge the configure when committing the new
 // content (see ack_configure).
-type ToplevelUnsetFullscreenRequest struct {
-}
+type ToplevelUnsetFullscreenRequest struct{}
 
 func (r *ToplevelUnsetFullscreenRequest) Opcode() uint16 { return ToplevelRequestUnsetFullscreen }
 
@@ -745,8 +741,7 @@ func (r *ToplevelUnsetFullscreenRequest) Since() uint32 { return 1 }
 // instead use the wl_surface.frame event for this, as this will
 // also work with live previews on windows in Alt-Tab, Expose or
 // similar compositor features.
-type ToplevelSetMinimizedRequest struct {
-}
+type ToplevelSetMinimizedRequest struct{}
 
 func (r *ToplevelSetMinimizedRequest) Opcode() uint16 { return ToplevelRequestSetMinimized }
 
@@ -822,8 +817,7 @@ func (e *ToplevelConfigureEvent) Since() uint32 { return 1 }
 // This is only a request that the user intends to close the
 // window. The client may choose to ignore this request, or show
 // a dialog to ask the user to save their data, etc.
-type ToplevelCloseEvent struct {
-}
+type ToplevelCloseEvent struct{}
 
 func (e *ToplevelCloseEvent) Opcode() uint16 { return ToplevelEventClose }
 
@@ -969,12 +963,10 @@ func (o *Toplevel) Proxy() *wayland.Proxy {
 func (o *Toplevel) OnConfigure(fn ToplevelConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelEventConfigure, func(r *wire.Reader) {
 		var ev ToplevelConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -983,12 +975,10 @@ func (o *Toplevel) OnConfigure(fn ToplevelConfigureFunc) {
 func (o *Toplevel) OnClose(fn ToplevelCloseFunc) {
 	o.proxy.RegisterEvent(ToplevelEventClose, func(r *wire.Reader) {
 		var ev ToplevelCloseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Close", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -997,12 +987,10 @@ func (o *Toplevel) OnClose(fn ToplevelCloseFunc) {
 func (o *Toplevel) OnConfigureBounds(fn ToplevelConfigureBoundsFunc) {
 	o.proxy.RegisterEvent(ToplevelEventConfigureBounds, func(r *wire.Reader) {
 		var ev ToplevelConfigureBoundsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ConfigureBounds", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1011,12 +999,10 @@ func (o *Toplevel) OnConfigureBounds(fn ToplevelConfigureBoundsFunc) {
 func (o *Toplevel) OnWmCapabilities(fn ToplevelWmCapabilitiesFunc) {
 	o.proxy.RegisterEvent(ToplevelEventWmCapabilities, func(r *wire.Reader) {
 		var ev ToplevelWmCapabilitiesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("WmCapabilities", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1124,7 +1110,7 @@ func (o *Toplevel) SetAppID(appID string) error {
 //
 // This request must be used in response to some sort of user action
 // like a button press, key press, or touch down event.
-func (o *Toplevel) ShowWindowMenu(seat wire.ObjectID, serial uint32, x int32, y int32) error {
+func (o *Toplevel) ShowWindowMenu(seat wire.ObjectID, serial uint32, x, y int32) error {
 	return o.proxy.SendRequest(ToplevelRequestShowWindowMenu, &ToplevelShowWindowMenuRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -1234,7 +1220,7 @@ func (o *Toplevel) Resize(seat wire.ObjectID, serial uint32, edges ToplevelResiz
 // The width and height must be greater than or equal to zero. Using
 // strictly negative values for width or height will result in an
 // invalid_size error.
-func (o *Toplevel) SetMaxSize(width int32, height int32) error {
+func (o *Toplevel) SetMaxSize(width, height int32) error {
 	return o.proxy.SendRequest(ToplevelRequestSetMaxSize, &ToplevelSetMaxSizeRequest{
 		Width:  width,
 		Height: height,
@@ -1276,7 +1262,7 @@ func (o *Toplevel) SetMaxSize(width int32, height int32) error {
 // The width and height must be greater than or equal to zero. Using
 // strictly negative values for width and height will result in an
 // invalid_size error.
-func (o *Toplevel) SetMinSize(width int32, height int32) error {
+func (o *Toplevel) SetMinSize(width, height int32) error {
 	return o.proxy.SendRequest(ToplevelRequestSetMinSize, &ToplevelSetMinSizeRequest{
 		Width:  width,
 		Height: height,
@@ -1409,7 +1395,7 @@ func (o *Toplevel) SetMinimized() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevel(reg, name, min(g.Version,
 // VersionToplevel)), to bind at the highest mutually supported version.
-func BindToplevel(b wayland.Binder, name uint32, version uint32) (*Toplevel, error) {
+func BindToplevel(b wayland.Binder, name, version uint32) (*Toplevel, error) {
 	if version < 1 || version > VersionToplevel {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -63,8 +63,7 @@ const (
 //
 // It is a protocol error to make this request if the locked event was
 // sent, the unlock_and_destroy request must be used instead.
-type SessionLockV1DestroyRequest struct {
-}
+type SessionLockV1DestroyRequest struct{}
 
 func (r *SessionLockV1DestroyRequest) Opcode() uint16 { return SessionLockV1RequestDestroy }
 
@@ -137,8 +136,7 @@ func (r *SessionLockV1GetLockSurfaceRequest) Since() uint32 { return 1 }
 // to the asynchronous nature of the Wayland protocol. For example,
 // the server might terminate the client with a protocol error before
 // it processes the unlock_and_destroy request.
-type SessionLockV1UnlockAndDestroyRequest struct {
-}
+type SessionLockV1UnlockAndDestroyRequest struct{}
 
 func (r *SessionLockV1UnlockAndDestroyRequest) Opcode() uint16 {
 	return SessionLockV1RequestUnlockAndDestroy
@@ -161,8 +159,7 @@ func (r *SessionLockV1UnlockAndDestroyRequest) Since() uint32 { return 1 }
 //
 // If this event is sent, making the destroy request is a protocol error,
 // the lock object must be destroyed using the unlock_and_destroy request.
-type SessionLockV1LockedEvent struct {
-}
+type SessionLockV1LockedEvent struct{}
 
 func (e *SessionLockV1LockedEvent) Opcode() uint16 { return SessionLockV1EventLocked }
 
@@ -196,8 +193,7 @@ func (e *SessionLockV1LockedEvent) Since() uint32 { return 1 }
 // Upon receiving this event, the client should make either the destroy
 // request or the unlock_and_destroy request, depending on whether or
 // not the locked event was received on this object.
-type SessionLockV1FinishedEvent struct {
-}
+type SessionLockV1FinishedEvent struct{}
 
 func (e *SessionLockV1FinishedEvent) Opcode() uint16 { return SessionLockV1EventFinished }
 
@@ -282,12 +278,10 @@ func (o *SessionLockV1) Proxy() *wayland.Proxy {
 func (o *SessionLockV1) OnLocked(fn SessionLockV1LockedFunc) {
 	o.proxy.RegisterEvent(SessionLockV1EventLocked, func(r *wire.Reader) {
 		var ev SessionLockV1LockedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Locked", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -296,12 +290,10 @@ func (o *SessionLockV1) OnLocked(fn SessionLockV1LockedFunc) {
 func (o *SessionLockV1) OnFinished(fn SessionLockV1FinishedFunc) {
 	o.proxy.RegisterEvent(SessionLockV1EventFinished, func(r *wire.Reader) {
 		var ev SessionLockV1FinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -341,19 +333,18 @@ func (o *SessionLockV1) Destroy() error {
 //
 // Attempting to create more than one lock surface for a given output
 // is a duplicate_output protocol error.
-func (o *SessionLockV1) GetLockSurface(surface wire.ObjectID, output wire.ObjectID) (*SessionLockSurfaceV1, error) {
+func (o *SessionLockV1) GetLockSurface(surface, output wire.ObjectID) (*SessionLockSurfaceV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewSessionLockSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SessionLockV1RequestGetLockSurface, &SessionLockV1GetLockSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SessionLockV1RequestGetLockSurface, &SessionLockV1GetLockSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
 		Output:  output,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -402,7 +393,7 @@ func (o *SessionLockV1) UnlockAndDestroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSessionLockV1(reg, name, min(g.Version,
 // VersionSessionLockV1)), to bind at the highest mutually supported version.
-func BindSessionLockV1(b wayland.Binder, name uint32, version uint32) (*SessionLockV1, error) {
+func BindSessionLockV1(b wayland.Binder, name, version uint32) (*SessionLockV1, error) {
 	if version < 1 || version > VersionSessionLockV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -126,8 +126,7 @@ const (
 // Unmap and destroy the window. The window will be effectively
 // hidden from the user's point of view, and all state like
 // maximization, fullscreen, and so on, will be lost.
-type SurfaceDestroyRequest struct {
-}
+type SurfaceDestroyRequest struct{}
 
 func (r *SurfaceDestroyRequest) Opcode() uint16 { return SurfaceRequestDestroy }
 
@@ -476,8 +475,7 @@ func (r *SurfaceSetWindowGeometryRequest) Since() uint32 { return 1 }
 // configure events to be emitted at any time, meaning trying to
 // match this request to a specific future configure event is
 // futile.
-type SurfaceSetMaximizedRequest struct {
-}
+type SurfaceSetMaximizedRequest struct{}
 
 func (r *SurfaceSetMaximizedRequest) Opcode() uint16 { return SurfaceRequestSetMaximized }
 
@@ -511,8 +509,7 @@ func (r *SurfaceSetMaximizedRequest) Since() uint32 { return 1 }
 // configure events to be emitted at any time, meaning trying to
 // match this request to a specific future configure event is
 // futile.
-type SurfaceUnsetMaximizedRequest struct {
-}
+type SurfaceUnsetMaximizedRequest struct{}
 
 func (r *SurfaceUnsetMaximizedRequest) Opcode() uint16 { return SurfaceRequestUnsetMaximized }
 
@@ -550,8 +547,7 @@ func (r *SurfaceSetFullscreenRequest) Marshal(w *wire.Writer) error {
 
 func (r *SurfaceSetFullscreenRequest) Since() uint32 { return 1 }
 
-type SurfaceUnsetFullscreenRequest struct {
-}
+type SurfaceUnsetFullscreenRequest struct{}
 
 func (r *SurfaceUnsetFullscreenRequest) Opcode() uint16 { return SurfaceRequestUnsetFullscreen }
 
@@ -571,8 +567,7 @@ func (r *SurfaceUnsetFullscreenRequest) Since() uint32 { return 1 }
 // instead use the wl_surface.frame event for this, as this will
 // also work with live previews on windows in Alt-Tab, Expose or
 // similar compositor features.
-type SurfaceSetMinimizedRequest struct {
-}
+type SurfaceSetMinimizedRequest struct{}
 
 func (r *SurfaceSetMinimizedRequest) Opcode() uint16 { return SurfaceRequestSetMinimized }
 
@@ -654,8 +649,7 @@ func (e *SurfaceConfigureEvent) Since() uint32 { return 1 }
 // This is only a request that the user intends to close your
 // window. The client may choose to ignore this request, or show
 // a dialog to ask the user to save their data...
-type SurfaceCloseEvent struct {
-}
+type SurfaceCloseEvent struct{}
 
 func (e *SurfaceCloseEvent) Opcode() uint16 { return SurfaceEventClose }
 
@@ -711,12 +705,10 @@ func (o *Surface) Proxy() *wayland.Proxy {
 func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(SurfaceEventConfigure, func(r *wire.Reader) {
 		var ev SurfaceConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -725,12 +717,10 @@ func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 func (o *Surface) OnClose(fn SurfaceCloseFunc) {
 	o.proxy.RegisterEvent(SurfaceEventClose, func(r *wire.Reader) {
 		var ev SurfaceCloseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Close", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -822,7 +812,7 @@ func (o *Surface) SetAppID(appID string) error {
 //
 // This request must be used in response to some sort of user action
 // like a button press, key press, or touch down event.
-func (o *Surface) ShowWindowMenu(seat wire.ObjectID, serial uint32, x int32, y int32) error {
+func (o *Surface) ShowWindowMenu(seat wire.ObjectID, serial uint32, x, y int32) error {
 	return o.proxy.SendRequest(SurfaceRequestShowWindowMenu, &SurfaceShowWindowMenuRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -888,7 +878,7 @@ func (o *Surface) Move(seat wire.ObjectID, serial uint32) error {
 // example when dragging the top left corner. The compositor may also
 // use this information to adapt its behavior, e.g. choose an
 // appropriate cursor image.
-func (o *Surface) Resize(seat wire.ObjectID, serial uint32, edges uint32) error {
+func (o *Surface) Resize(seat wire.ObjectID, serial, edges uint32) error {
 	return o.proxy.SendRequest(SurfaceRequestResize, &SurfaceResizeRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -949,7 +939,7 @@ func (o *Surface) AckConfigure(serial uint32) error {
 // the wl_surface associated with this xdg_surface.
 //
 // The width and height must be greater than zero.
-func (o *Surface) SetWindowGeometry(x int32, y int32, width int32, height int32) error {
+func (o *Surface) SetWindowGeometry(x, y, width, height int32) error {
 	return o.proxy.SendRequest(SurfaceRequestSetWindowGeometry, &SurfaceSetWindowGeometryRequest{
 		X:      x,
 		Y:      y,
@@ -1056,7 +1046,7 @@ func (o *Surface) SetMinimized() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSurface(reg, name, min(g.Version,
 // VersionSurface)), to bind at the highest mutually supported version.
-func BindSurface(b wayland.Binder, name uint32, version uint32) (*Surface, error) {
+func BindSurface(b wayland.Binder, name, version uint32) (*Surface, error) {
 	if version < 1 || version > VersionSurface {
 		return nil, wayland.ErrVersionMismatch
 	}

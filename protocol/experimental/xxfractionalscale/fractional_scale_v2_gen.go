@@ -73,8 +73,7 @@ func (r *FractionalScaleV2SetScaleFactorRequest) Since() uint32 { return 1 }
 //
 // The wl_surface's xx_fractional_scale_v2 object is destroyed, and the
 // associated scale is reset to 1.
-type FractionalScaleV2DestroyRequest struct {
-}
+type FractionalScaleV2DestroyRequest struct{}
 
 func (r *FractionalScaleV2DestroyRequest) Opcode() uint16 { return FractionalScaleV2RequestDestroy }
 
@@ -155,12 +154,10 @@ func (o *FractionalScaleV2) Proxy() *wayland.Proxy {
 func (o *FractionalScaleV2) OnScaleFactor(fn FractionalScaleV2ScaleFactorFunc) {
 	o.proxy.RegisterEvent(FractionalScaleV2EventScaleFactor, func(r *wire.Reader) {
 		var ev FractionalScaleV2ScaleFactorEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ScaleFactor", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -206,7 +203,7 @@ func (o *FractionalScaleV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFractionalScaleV2(reg, name, min(g.Version,
 // VersionFractionalScaleV2)), to bind at the highest mutually supported version.
-func BindFractionalScaleV2(b wayland.Binder, name uint32, version uint32) (*FractionalScaleV2, error) {
+func BindFractionalScaleV2(b wayland.Binder, name, version uint32) (*FractionalScaleV2, error) {
 	if version < 1 || version > VersionFractionalScaleV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -45,8 +45,7 @@ func (r *ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest) Since() 
 // Destroys the manager. This request may be sent at any time by the client
 // and objects created by the manager will remain valid after its
 // destruction.
-type ForeignToplevelImageCaptureSourceManagerV1DestroyRequest struct {
-}
+type ForeignToplevelImageCaptureSourceManagerV1DestroyRequest struct{}
 
 func (r *ForeignToplevelImageCaptureSourceManagerV1DestroyRequest) Opcode() uint16 {
 	return ForeignToplevelImageCaptureSourceManagerV1RequestDestroy
@@ -87,11 +86,10 @@ func (o *ForeignToplevelImageCaptureSourceManagerV1) CreateSource(toplevelHandle
 
 	wrapped := NewImageCaptureSourceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ForeignToplevelImageCaptureSourceManagerV1RequestCreateSource, &ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ForeignToplevelImageCaptureSourceManagerV1RequestCreateSource, &ForeignToplevelImageCaptureSourceManagerV1CreateSourceRequest{
 		Source:         wire.NewID(p.ID()),
 		ToplevelHandle: toplevelHandle,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -120,7 +118,7 @@ func (o *ForeignToplevelImageCaptureSourceManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindForeignToplevelImageCaptureSourceManagerV1(reg, name, min(g.Version,
 // VersionForeignToplevelImageCaptureSourceManagerV1)), to bind at the highest mutually supported version.
-func BindForeignToplevelImageCaptureSourceManagerV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelImageCaptureSourceManagerV1, error) {
+func BindForeignToplevelImageCaptureSourceManagerV1(b wayland.Binder, name, version uint32) (*ForeignToplevelImageCaptureSourceManagerV1, error) {
 	if version < 1 || version > VersionForeignToplevelImageCaptureSourceManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

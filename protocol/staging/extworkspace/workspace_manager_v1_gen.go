@@ -46,8 +46,7 @@ func init() {
 // even if they happen via multiple events, and even if they involve
 // multiple ext_workspace_handle_v1 objects, for example, deactivating one
 // workspace and activating another.
-type WorkspaceManagerV1CommitRequest struct {
-}
+type WorkspaceManagerV1CommitRequest struct{}
 
 func (r *WorkspaceManagerV1CommitRequest) Opcode() uint16 { return WorkspaceManagerV1RequestCommit }
 
@@ -66,8 +65,7 @@ func (r *WorkspaceManagerV1CommitRequest) Since() uint32 { return 1 }
 //
 // The client must not send any requests after this one, doing so will raise a wl_display
 // invalid_object error.
-type WorkspaceManagerV1StopRequest struct {
-}
+type WorkspaceManagerV1StopRequest struct{}
 
 func (r *WorkspaceManagerV1StopRequest) Opcode() uint16 { return WorkspaceManagerV1RequestStop }
 
@@ -124,8 +122,7 @@ func (e *WorkspaceManagerV1WorkspaceEvent) Since() uint32 { return 1 }
 // ext_workspace_group_handle_v1 objects in question. The compositor sends
 // the done event only after updating the output information in both
 // workspace groups.
-type WorkspaceManagerV1DoneEvent struct {
-}
+type WorkspaceManagerV1DoneEvent struct{}
 
 func (e *WorkspaceManagerV1DoneEvent) Opcode() uint16 { return WorkspaceManagerV1EventDone }
 
@@ -140,8 +137,7 @@ func (e *WorkspaceManagerV1DoneEvent) Since() uint32 { return 1 }
 // This event indicates that the compositor is done sending events to the
 // ext_workspace_manager_v1. The server will destroy the object
 // immediately after sending this request.
-type WorkspaceManagerV1FinishedEvent struct {
-}
+type WorkspaceManagerV1FinishedEvent struct{}
 
 func (e *WorkspaceManagerV1FinishedEvent) Opcode() uint16 { return WorkspaceManagerV1EventFinished }
 
@@ -203,7 +199,6 @@ func (o *WorkspaceManagerV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGroupFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspaceGroup, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceGroupEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("WorkspaceGroup", err)
@@ -213,7 +208,6 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 		o.proxy.Conn().RegisterProxy(p)
 		ev.WorkspaceGroup = NewWorkspaceGroupHandleV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -222,7 +216,6 @@ func (o *WorkspaceManagerV1) OnWorkspaceGroup(fn WorkspaceManagerV1WorkspaceGrou
 func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventWorkspace, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1WorkspaceEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Workspace", err)
@@ -232,7 +225,6 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Workspace = NewWorkspaceHandleV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -241,12 +233,10 @@ func (o *WorkspaceManagerV1) OnWorkspace(fn WorkspaceManagerV1WorkspaceFunc) {
 func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventDone, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -255,12 +245,10 @@ func (o *WorkspaceManagerV1) OnDone(fn WorkspaceManagerV1DoneFunc) {
 func (o *WorkspaceManagerV1) OnFinished(fn WorkspaceManagerV1FinishedFunc) {
 	o.proxy.RegisterEvent(WorkspaceManagerV1EventFinished, func(r *wire.Reader) {
 		var ev WorkspaceManagerV1FinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -298,7 +286,7 @@ func (o *WorkspaceManagerV1) Stop() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindWorkspaceManagerV1(reg, name, min(g.Version,
 // VersionWorkspaceManagerV1)), to bind at the highest mutually supported version.
-func BindWorkspaceManagerV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceManagerV1, error) {
+func BindWorkspaceManagerV1(b wayland.Binder, name, version uint32) (*WorkspaceManagerV1, error) {
 	if version < 1 || version > VersionWorkspaceManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

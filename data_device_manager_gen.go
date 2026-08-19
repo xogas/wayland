@@ -109,8 +109,7 @@ func (r *DataDeviceManagerGetDataDeviceRequest) Since() uint32 { return 1 }
 //
 // This request destroys the wl_data_device_manager. This has no effect on any other
 // objects.
-type DataDeviceManagerReleaseRequest struct {
-}
+type DataDeviceManagerReleaseRequest struct{}
 
 func (r *DataDeviceManagerReleaseRequest) Opcode() uint16 { return DataDeviceManagerRequestRelease }
 
@@ -156,10 +155,9 @@ func (o *DataDeviceManager) CreateDataSource() (*DataSource, error) {
 
 	wrapped := NewDataSource(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestCreateDataSource, &DataDeviceManagerCreateDataSourceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestCreateDataSource, &DataDeviceManagerCreateDataSourceRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -176,11 +174,10 @@ func (o *DataDeviceManager) GetDataDevice(seat wire.ObjectID) (*DataDevice, erro
 
 	wrapped := NewDataDevice(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestGetDataDevice, &DataDeviceManagerGetDataDeviceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DataDeviceManagerRequestGetDataDevice, &DataDeviceManagerGetDataDeviceRequest{
 		ID:   wire.NewID(p.ID()),
 		Seat: seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -211,7 +208,7 @@ func (o *DataDeviceManager) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataDeviceManager(reg, name, min(g.Version,
 // VersionDataDeviceManager)), to bind at the highest mutually supported version.
-func BindDataDeviceManager(b Binder, name uint32, version uint32) (*DataDeviceManager, error) {
+func BindDataDeviceManager(b Binder, name, version uint32) (*DataDeviceManager, error) {
 	if version < 1 || version > VersionDataDeviceManager {
 		return nil, ErrVersionMismatch
 	}

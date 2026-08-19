@@ -206,12 +206,10 @@ func (o *Display) Proxy() *Proxy {
 func (o *Display) OnError(fn DisplayErrorFunc) {
 	o.proxy.RegisterEvent(DisplayEventError, func(r *wire.Reader) {
 		var ev DisplayErrorEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Error", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -220,12 +218,10 @@ func (o *Display) OnError(fn DisplayErrorFunc) {
 func (o *Display) OnDeleteID(fn DisplayDeleteIDFunc) {
 	o.proxy.RegisterEvent(DisplayEventDeleteID, func(r *wire.Reader) {
 		var ev DisplayDeleteIDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DeleteID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -250,10 +246,9 @@ func (o *Display) Sync() (*Callback, error) {
 
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DisplayRequestSync, &DisplaySyncRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DisplayRequestSync, &DisplaySyncRequest{
 		Callback: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -278,10 +273,9 @@ func (o *Display) GetRegistry() (*Registry, error) {
 
 	wrapped := NewRegistry(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DisplayRequestGetRegistry, &DisplayGetRegistryRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DisplayRequestGetRegistry, &DisplayGetRegistryRequest{
 		Registry: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -294,7 +288,7 @@ func (o *Display) GetRegistry() (*Registry, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDisplay(reg, name, min(g.Version,
 // VersionDisplay)), to bind at the highest mutually supported version.
-func BindDisplay(b Binder, name uint32, version uint32) (*Display, error) {
+func BindDisplay(b Binder, name, version uint32) (*Display, error) {
 	if version < 1 || version > VersionDisplay {
 		return nil, ErrVersionMismatch
 	}

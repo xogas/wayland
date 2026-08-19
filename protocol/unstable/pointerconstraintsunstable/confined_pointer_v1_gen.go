@@ -36,8 +36,7 @@ func init() {
 //
 // Destroy the confined pointer object. If applicable, the compositor will
 // unconfine the pointer.
-type ConfinedPointerV1DestroyRequest struct {
-}
+type ConfinedPointerV1DestroyRequest struct{}
 
 func (r *ConfinedPointerV1DestroyRequest) Opcode() uint16 { return ConfinedPointerV1RequestDestroy }
 
@@ -83,8 +82,7 @@ func (r *ConfinedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 //
 // Notification that the pointer confinement of the seat's pointer is
 // activated.
-type ConfinedPointerV1ConfinedEvent struct {
-}
+type ConfinedPointerV1ConfinedEvent struct{}
 
 func (e *ConfinedPointerV1ConfinedEvent) Opcode() uint16 { return ConfinedPointerV1EventConfined }
 
@@ -102,8 +100,7 @@ func (e *ConfinedPointerV1ConfinedEvent) Since() uint32 { return 1 }
 // be destroyed. If this is a persistent pointer confinement (see
 // wp_pointer_constraints.lifetime) this pointer confinement may again
 // reactivate in the future.
-type ConfinedPointerV1UnconfinedEvent struct {
-}
+type ConfinedPointerV1UnconfinedEvent struct{}
 
 func (e *ConfinedPointerV1UnconfinedEvent) Opcode() uint16 { return ConfinedPointerV1EventUnconfined }
 
@@ -156,12 +153,10 @@ func (o *ConfinedPointerV1) Proxy() *wayland.Proxy {
 func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventConfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1ConfinedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Confined", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -170,12 +165,10 @@ func (o *ConfinedPointerV1) OnConfined(fn ConfinedPointerV1ConfinedFunc) {
 func (o *ConfinedPointerV1) OnUnconfined(fn ConfinedPointerV1UnconfinedFunc) {
 	o.proxy.RegisterEvent(ConfinedPointerV1EventUnconfined, func(r *wire.Reader) {
 		var ev ConfinedPointerV1UnconfinedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Unconfined", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -223,7 +216,7 @@ func (o *ConfinedPointerV1) SetRegion(region wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindConfinedPointerV1(reg, name, min(g.Version,
 // VersionConfinedPointerV1)), to bind at the highest mutually supported version.
-func BindConfinedPointerV1(b wayland.Binder, name uint32, version uint32) (*ConfinedPointerV1, error) {
+func BindConfinedPointerV1(b wayland.Binder, name, version uint32) (*ConfinedPointerV1, error) {
 	if version < 1 || version > VersionConfinedPointerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -536,8 +536,7 @@ func (r *ShmCreatePoolRequest) Since() uint32 { return 1 }
 // use the shm object anymore.
 //
 // Objects created via this interface remain unaffected.
-type ShmReleaseRequest struct {
-}
+type ShmReleaseRequest struct{}
 
 func (r *ShmReleaseRequest) Opcode() uint16 { return ShmRequestRelease }
 
@@ -607,12 +606,10 @@ func (o *Shm) Proxy() *Proxy {
 func (o *Shm) OnFormat(fn ShmFormatFunc) {
 	o.proxy.RegisterEvent(ShmEventFormat, func(r *wire.Reader) {
 		var ev ShmFormatEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Format", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -631,12 +628,11 @@ func (o *Shm) CreatePool(fd int, size int32) (*ShmPool, error) {
 
 	wrapped := NewShmPool(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShmRequestCreatePool, &ShmCreatePoolRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShmRequestCreatePool, &ShmCreatePoolRequest{
 		ID:   wire.NewID(p.ID()),
 		Fd:   fd,
 		Size: size,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -669,7 +665,7 @@ func (o *Shm) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShm(reg, name, min(g.Version,
 // VersionShm)), to bind at the highest mutually supported version.
-func BindShm(b Binder, name uint32, version uint32) (*Shm, error) {
+func BindShm(b Binder, name, version uint32) (*Shm, error) {
 	if version < 1 || version > VersionShm {
 		return nil, ErrVersionMismatch
 	}

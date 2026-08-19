@@ -18,8 +18,7 @@ const (
 // IdleInhibitManagerV1DestroyRequest destroy the idle inhibitor object.
 //
 // Destroy the inhibit manager.
-type IdleInhibitManagerV1DestroyRequest struct {
-}
+type IdleInhibitManagerV1DestroyRequest struct{}
 
 func (r *IdleInhibitManagerV1DestroyRequest) Opcode() uint16 {
 	return IdleInhibitManagerV1RequestDestroy
@@ -108,11 +107,10 @@ func (o *IdleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IdleInhi
 
 	wrapped := NewIdleInhibitorV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), IdleInhibitManagerV1RequestCreateInhibitor, &IdleInhibitManagerV1CreateInhibitorRequest{
+	if err := conn.SendRequest(o.proxy.ID(), IdleInhibitManagerV1RequestCreateInhibitor, &IdleInhibitManagerV1CreateInhibitorRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -125,7 +123,7 @@ func (o *IdleInhibitManagerV1) CreateInhibitor(surface wire.ObjectID) (*IdleInhi
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindIdleInhibitManagerV1(reg, name, min(g.Version,
 // VersionIdleInhibitManagerV1)), to bind at the highest mutually supported version.
-func BindIdleInhibitManagerV1(b wayland.Binder, name uint32, version uint32) (*IdleInhibitManagerV1, error) {
+func BindIdleInhibitManagerV1(b wayland.Binder, name, version uint32) (*IdleInhibitManagerV1, error) {
 	if version < 1 || version > VersionIdleInhibitManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

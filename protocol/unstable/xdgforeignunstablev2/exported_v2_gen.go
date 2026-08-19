@@ -34,8 +34,7 @@ func init() {
 // Revoke the previously exported surface. This invalidates any
 // relationship the importer may have set up using the xdg_imported created
 // given the handle sent via xdg_exported.handle.
-type ExportedV2DestroyRequest struct {
-}
+type ExportedV2DestroyRequest struct{}
 
 func (r *ExportedV2DestroyRequest) Opcode() uint16 { return ExportedV2RequestDestroy }
 
@@ -97,12 +96,10 @@ func (o *ExportedV2) Proxy() *wayland.Proxy {
 func (o *ExportedV2) OnHandle(fn ExportedV2HandleFunc) {
 	o.proxy.RegisterEvent(ExportedV2EventHandle, func(r *wire.Reader) {
 		var ev ExportedV2HandleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Handle", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -129,7 +126,7 @@ func (o *ExportedV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindExportedV2(reg, name, min(g.Version,
 // VersionExportedV2)), to bind at the highest mutually supported version.
-func BindExportedV2(b wayland.Binder, name uint32, version uint32) (*ExportedV2, error) {
+func BindExportedV2(b wayland.Binder, name, version uint32) (*ExportedV2, error) {
 	if version < 1 || version > VersionExportedV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

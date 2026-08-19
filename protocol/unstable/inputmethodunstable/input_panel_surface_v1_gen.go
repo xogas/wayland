@@ -53,8 +53,7 @@ func (r *InputPanelSurfaceV1SetToplevelRequest) Since() uint32 { return 1 }
 //
 // This is shown near the input cursor above the application window when
 // a text input is active.
-type InputPanelSurfaceV1SetOverlayPanelRequest struct {
-}
+type InputPanelSurfaceV1SetOverlayPanelRequest struct{}
 
 func (r *InputPanelSurfaceV1SetOverlayPanelRequest) Opcode() uint16 {
 	return InputPanelSurfaceV1RequestSetOverlayPanel
@@ -108,7 +107,7 @@ func (o *InputPanelSurfaceV1) SetOverlayPanel() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputPanelSurfaceV1(reg, name, min(g.Version,
 // VersionInputPanelSurfaceV1)), to bind at the highest mutually supported version.
-func BindInputPanelSurfaceV1(b wayland.Binder, name uint32, version uint32) (*InputPanelSurfaceV1, error) {
+func BindInputPanelSurfaceV1(b wayland.Binder, name, version uint32) (*InputPanelSurfaceV1, error) {
 	if version < 1 || version > VersionInputPanelSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -73,8 +73,7 @@ const (
 // SurfaceDestroyRequest delete surface.
 //
 // Deletes the surface and invalidates its object ID.
-type SurfaceDestroyRequest struct {
-}
+type SurfaceDestroyRequest struct{}
 
 func (r *SurfaceDestroyRequest) Opcode() uint16 { return SurfaceRequestDestroy }
 
@@ -413,8 +412,7 @@ func (r *SurfaceSetInputRegionRequest) Since() uint32 { return 1 }
 // the newly attached wl_buffers, except for wl_surface.attach itself. If
 // there is no newly attached wl_buffer, the coordinates are relative to
 // the previous content update.
-type SurfaceCommitRequest struct {
-}
+type SurfaceCommitRequest struct{}
 
 func (r *SurfaceCommitRequest) Opcode() uint16 { return SurfaceRequestCommit }
 
@@ -845,12 +843,10 @@ func (o *Surface) Proxy() *Proxy {
 func (o *Surface) OnEnter(fn SurfaceEnterFunc) {
 	o.proxy.RegisterEvent(SurfaceEventEnter, func(r *wire.Reader) {
 		var ev SurfaceEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -859,12 +855,10 @@ func (o *Surface) OnEnter(fn SurfaceEnterFunc) {
 func (o *Surface) OnLeave(fn SurfaceLeaveFunc) {
 	o.proxy.RegisterEvent(SurfaceEventLeave, func(r *wire.Reader) {
 		var ev SurfaceLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -873,12 +867,10 @@ func (o *Surface) OnLeave(fn SurfaceLeaveFunc) {
 func (o *Surface) OnPreferredBufferScale(fn SurfacePreferredBufferScaleFunc) {
 	o.proxy.RegisterEvent(SurfaceEventPreferredBufferScale, func(r *wire.Reader) {
 		var ev SurfacePreferredBufferScaleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredBufferScale", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -887,12 +879,10 @@ func (o *Surface) OnPreferredBufferScale(fn SurfacePreferredBufferScaleFunc) {
 func (o *Surface) OnPreferredBufferTransform(fn SurfacePreferredBufferTransformFunc) {
 	o.proxy.RegisterEvent(SurfaceEventPreferredBufferTransform, func(r *wire.Reader) {
 		var ev SurfacePreferredBufferTransformEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredBufferTransform", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -980,7 +970,7 @@ func (o *Surface) Destroy() error {
 // maximise compatibility should not destroy pending buffers and should
 // ensure that they explicitly remove content from surfaces, even after
 // destroying buffers.
-func (o *Surface) Attach(buffer wire.ObjectID, x int32, y int32) error {
+func (o *Surface) Attach(buffer wire.ObjectID, x, y int32) error {
 	return o.proxy.SendRequest(SurfaceRequestAttach, &SurfaceAttachRequest{
 		Buffer: buffer,
 		X:      x,
@@ -1011,7 +1001,7 @@ func (o *Surface) Attach(buffer wire.ObjectID, x int32, y int32) error {
 // Note! New clients should not use this request. Instead damage can be
 // posted with wl_surface.damage_buffer which uses buffer coordinates
 // instead of surface coordinates.
-func (o *Surface) Damage(x int32, y int32, width int32, height int32) error {
+func (o *Surface) Damage(x, y, width, height int32) error {
 	return o.proxy.SendRequest(SurfaceRequestDamage, &SurfaceDamageRequest{
 		X:      x,
 		Y:      y,
@@ -1061,10 +1051,9 @@ func (o *Surface) Frame() (*Callback, error) {
 
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestFrame, &SurfaceFrameRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceRequestFrame, &SurfaceFrameRequest{
 		Callback: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1295,7 +1284,7 @@ func (o *Surface) SetBufferScale(scale int32) error {
 // kinds of damage into account will have to accumulate damage from the
 // two requests separately and only transform from one to the other
 // after receiving the wl_surface.commit.
-func (o *Surface) DamageBuffer(x int32, y int32, width int32, height int32) error {
+func (o *Surface) DamageBuffer(x, y, width, height int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(4) {
 		return ErrVersionMismatch
 	}
@@ -1324,7 +1313,7 @@ func (o *Surface) DamageBuffer(x int32, y int32, width int32, height int32) erro
 // This request is semantically equivalent to and the replaces the x and y
 // arguments in the wl_surface.attach request in wl_surface versions prior
 // to 5. See wl_surface.attach for details.
-func (o *Surface) Offset(x int32, y int32) error {
+func (o *Surface) Offset(x, y int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(5) {
 		return ErrVersionMismatch
 	}
@@ -1364,10 +1353,9 @@ func (o *Surface) GetRelease() (*Callback, error) {
 
 	wrapped := NewCallback(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetRelease, &SurfaceGetReleaseRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetRelease, &SurfaceGetReleaseRequest{
 		Callback: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1380,7 +1368,7 @@ func (o *Surface) GetRelease() (*Callback, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSurface(reg, name, min(g.Version,
 // VersionSurface)), to bind at the highest mutually supported version.
-func BindSurface(b Binder, name uint32, version uint32) (*Surface, error) {
+func BindSurface(b Binder, name, version uint32) (*Surface, error) {
 	if version < 1 || version > VersionSurface {
 		return nil, ErrVersionMismatch
 	}

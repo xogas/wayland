@@ -38,8 +38,7 @@ func init() {
 //
 // Objects created through this interface, especially wl_buffers, will
 // remain valid.
-type LinuxDmabufV1DestroyRequest struct {
-}
+type LinuxDmabufV1DestroyRequest struct{}
 
 func (r *LinuxDmabufV1DestroyRequest) Opcode() uint16 { return LinuxDmabufV1RequestDestroy }
 
@@ -304,12 +303,10 @@ func (o *LinuxDmabufV1) Proxy() *wayland.Proxy {
 func (o *LinuxDmabufV1) OnFormat(fn LinuxDmabufV1FormatFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufV1EventFormat, func(r *wire.Reader) {
 		var ev LinuxDmabufV1FormatEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Format", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -318,12 +315,10 @@ func (o *LinuxDmabufV1) OnFormat(fn LinuxDmabufV1FormatFunc) {
 func (o *LinuxDmabufV1) OnModifier(fn LinuxDmabufV1ModifierFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufV1EventModifier, func(r *wire.Reader) {
 		var ev LinuxDmabufV1ModifierEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Modifier", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -356,10 +351,9 @@ func (o *LinuxDmabufV1) CreateParams() (*LinuxBufferParamsV1, error) {
 
 	wrapped := NewLinuxBufferParamsV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestCreateParams, &LinuxDmabufV1CreateParamsRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestCreateParams, &LinuxDmabufV1CreateParamsRequest{
 		ParamsID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -382,10 +376,9 @@ func (o *LinuxDmabufV1) GetDefaultFeedback() (*LinuxDmabufFeedbackV1, error) {
 
 	wrapped := NewLinuxDmabufFeedbackV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetDefaultFeedback, &LinuxDmabufV1GetDefaultFeedbackRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetDefaultFeedback, &LinuxDmabufV1GetDefaultFeedbackRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -410,11 +403,10 @@ func (o *LinuxDmabufV1) GetSurfaceFeedback(surface wire.ObjectID) (*LinuxDmabufF
 
 	wrapped := NewLinuxDmabufFeedbackV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetSurfaceFeedback, &LinuxDmabufV1GetSurfaceFeedbackRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxDmabufV1RequestGetSurfaceFeedback, &LinuxDmabufV1GetSurfaceFeedbackRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -427,7 +419,7 @@ func (o *LinuxDmabufV1) GetSurfaceFeedback(surface wire.ObjectID) (*LinuxDmabufF
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxDmabufV1(reg, name, min(g.Version,
 // VersionLinuxDmabufV1)), to bind at the highest mutually supported version.
-func BindLinuxDmabufV1(b wayland.Binder, name uint32, version uint32) (*LinuxDmabufV1, error) {
+func BindLinuxDmabufV1(b wayland.Binder, name, version uint32) (*LinuxDmabufV1, error) {
 	if version < 1 || version > VersionLinuxDmabufV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

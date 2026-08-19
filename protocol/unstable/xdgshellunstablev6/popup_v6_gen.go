@@ -46,8 +46,7 @@ const (
 //
 // If this xdg_popup is not the "topmost" popup, a protocol error
 // will be sent.
-type PopupV6DestroyRequest struct {
-}
+type PopupV6DestroyRequest struct{}
 
 func (r *PopupV6DestroyRequest) Opcode() uint16 { return PopupV6RequestDestroy }
 
@@ -174,8 +173,7 @@ func (e *PopupV6ConfigureEvent) Since() uint32 { return 1 }
 // The popup_done event is sent out when a popup is dismissed by the
 // compositor. The client should destroy the xdg_popup object at this
 // point.
-type PopupV6PopupDoneEvent struct {
-}
+type PopupV6PopupDoneEvent struct{}
 
 func (e *PopupV6PopupDoneEvent) Opcode() uint16 { return PopupV6EventPopupDone }
 
@@ -245,12 +243,10 @@ func (o *PopupV6) Proxy() *wayland.Proxy {
 func (o *PopupV6) OnConfigure(fn PopupV6ConfigureFunc) {
 	o.proxy.RegisterEvent(PopupV6EventConfigure, func(r *wire.Reader) {
 		var ev PopupV6ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -259,12 +255,10 @@ func (o *PopupV6) OnConfigure(fn PopupV6ConfigureFunc) {
 func (o *PopupV6) OnPopupDone(fn PopupV6PopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupV6EventPopupDone, func(r *wire.Reader) {
 		var ev PopupV6PopupDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -343,7 +337,7 @@ func (o *PopupV6) Grab(seat wire.ObjectID, serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPopupV6(reg, name, min(g.Version,
 // VersionPopupV6)), to bind at the highest mutually supported version.
-func BindPopupV6(b wayland.Binder, name uint32, version uint32) (*PopupV6, error) {
+func BindPopupV6(b wayland.Binder, name, version uint32) (*PopupV6, error) {
 	if version < 1 || version > VersionPopupV6 {
 		return nil, wayland.ErrVersionMismatch
 	}

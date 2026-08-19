@@ -60,8 +60,7 @@ const (
 // Destroy the xdg_surface object. An xdg_surface must only be destroyed
 // after its role object has been destroyed, otherwise
 // a defunct_role_object error is raised.
-type SurfaceDestroyRequest struct {
-}
+type SurfaceDestroyRequest struct{}
 
 func (r *SurfaceDestroyRequest) Opcode() uint16 { return SurfaceRequestDestroy }
 
@@ -361,12 +360,10 @@ func (o *Surface) Proxy() *wayland.Proxy {
 func (o *Surface) OnConfigure(fn SurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(SurfaceEventConfigure, func(r *wire.Reader) {
 		var ev SurfaceConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -401,10 +398,9 @@ func (o *Surface) GetToplevel() (*Toplevel, error) {
 
 	wrapped := NewToplevel(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetToplevel, &SurfaceGetToplevelRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetToplevel, &SurfaceGetToplevelRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -421,19 +417,18 @@ func (o *Surface) GetToplevel() (*Toplevel, error) {
 //
 // See the documentation of xdg_popup for more details about what an
 // xdg_popup is and how it is used.
-func (o *Surface) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*Popup, error) {
+func (o *Surface) GetPopup(parent, positioner wire.ObjectID) (*Popup, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewPopup(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetPopup, &SurfaceGetPopupRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceRequestGetPopup, &SurfaceGetPopupRequest{
 		ID:         wire.NewID(p.ID()),
 		Parent:     parent,
 		Positioner: positioner,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -482,7 +477,7 @@ func (o *Surface) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*Pop
 // The width and height of the effective window geometry must be
 // greater than zero. Setting an invalid size will raise an
 // invalid_size error.
-func (o *Surface) SetWindowGeometry(x int32, y int32, width int32, height int32) error {
+func (o *Surface) SetWindowGeometry(x, y, width, height int32) error {
 	return o.proxy.SendRequest(SurfaceRequestSetWindowGeometry, &SurfaceSetWindowGeometryRequest{
 		X:      x,
 		Y:      y,
@@ -537,7 +532,7 @@ func (o *Surface) AckConfigure(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSurface(reg, name, min(g.Version,
 // VersionSurface)), to bind at the highest mutually supported version.
-func BindSurface(b wayland.Binder, name uint32, version uint32) (*Surface, error) {
+func BindSurface(b wayland.Binder, name, version uint32) (*Surface, error) {
 	if version < 1 || version > VersionSurface {
 		return nil, wayland.ErrVersionMismatch
 	}

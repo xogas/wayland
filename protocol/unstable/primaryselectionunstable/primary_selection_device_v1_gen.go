@@ -63,8 +63,7 @@ func (r *PrimarySelectionDeviceV1SetSelectionRequest) Since() uint32 { return 1 
 // PrimarySelectionDeviceV1DestroyRequest destroy the primary selection device.
 //
 // Destroy the primary selection device.
-type PrimarySelectionDeviceV1DestroyRequest struct {
-}
+type PrimarySelectionDeviceV1DestroyRequest struct{}
 
 func (r *PrimarySelectionDeviceV1DestroyRequest) Opcode() uint16 {
 	return PrimarySelectionDeviceV1RequestDestroy
@@ -148,7 +147,6 @@ func (o *PrimarySelectionDeviceV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1DataOfferEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("DataOffer", err)
@@ -158,7 +156,6 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Offer = NewPrimarySelectionOfferV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -167,12 +164,10 @@ func (o *PrimarySelectionDeviceV1) OnDataOffer(fn PrimarySelectionDeviceV1DataOf
 func (o *PrimarySelectionDeviceV1) OnSelection(fn PrimarySelectionDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev PrimarySelectionDeviceV1SelectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -210,7 +205,7 @@ func (o *PrimarySelectionDeviceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPrimarySelectionDeviceV1(reg, name, min(g.Version,
 // VersionPrimarySelectionDeviceV1)), to bind at the highest mutually supported version.
-func BindPrimarySelectionDeviceV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionDeviceV1, error) {
+func BindPrimarySelectionDeviceV1(b wayland.Binder, name, version uint32) (*PrimarySelectionDeviceV1, error) {
 	if version < 1 || version > VersionPrimarySelectionDeviceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

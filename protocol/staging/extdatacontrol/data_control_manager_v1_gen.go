@@ -65,8 +65,7 @@ func (r *DataControlManagerV1GetDataDeviceRequest) Since() uint32 { return 1 }
 //
 // All objects created by the manager will still remain valid, until their
 // appropriate destroy request has been called.
-type DataControlManagerV1DestroyRequest struct {
-}
+type DataControlManagerV1DestroyRequest struct{}
 
 func (r *DataControlManagerV1DestroyRequest) Opcode() uint16 {
 	return DataControlManagerV1RequestDestroy
@@ -106,10 +105,9 @@ func (o *DataControlManagerV1) CreateDataSource() (*DataControlSourceV1, error) 
 
 	wrapped := NewDataControlSourceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestCreateDataSource, &DataControlManagerV1CreateDataSourceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestCreateDataSource, &DataControlManagerV1CreateDataSourceRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -126,11 +124,10 @@ func (o *DataControlManagerV1) GetDataDevice(seat wire.ObjectID) (*DataControlDe
 
 	wrapped := NewDataControlDeviceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestGetDataDevice, &DataControlManagerV1GetDataDeviceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DataControlManagerV1RequestGetDataDevice, &DataControlManagerV1GetDataDeviceRequest{
 		ID:   wire.NewID(p.ID()),
 		Seat: seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -158,7 +155,7 @@ func (o *DataControlManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataControlManagerV1(reg, name, min(g.Version,
 // VersionDataControlManagerV1)), to bind at the highest mutually supported version.
-func BindDataControlManagerV1(b wayland.Binder, name uint32, version uint32) (*DataControlManagerV1, error) {
+func BindDataControlManagerV1(b wayland.Binder, name, version uint32) (*DataControlManagerV1, error) {
 	if version < 1 || version > VersionDataControlManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

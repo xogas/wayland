@@ -31,8 +31,7 @@ const (
 // called after the underlying wl_data_source drag has ended, as indicated
 // by the dnd_drop_performed or cancelled events. In any other case an
 // ongoing_drag error is raised.
-type ToplevelDragV1DestroyRequest struct {
-}
+type ToplevelDragV1DestroyRequest struct{}
 
 func (r *ToplevelDragV1DestroyRequest) Opcode() uint16 { return ToplevelDragV1RequestDestroy }
 
@@ -133,7 +132,7 @@ func (o *ToplevelDragV1) Destroy() error {
 // This request can be called multiple times but issuing it while a
 // toplevel with an active role is attached raises a toplevel_attached
 // error.
-func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset int32, yOffset int32) error {
+func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset, yOffset int32) error {
 	return o.proxy.SendRequest(ToplevelDragV1RequestAttach, &ToplevelDragV1AttachRequest{
 		Toplevel: toplevel,
 		XOffset:  xOffset,
@@ -147,7 +146,7 @@ func (o *ToplevelDragV1) Attach(toplevel wire.ObjectID, xOffset int32, yOffset i
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelDragV1(reg, name, min(g.Version,
 // VersionToplevelDragV1)), to bind at the highest mutually supported version.
-func BindToplevelDragV1(b wayland.Binder, name uint32, version uint32) (*ToplevelDragV1, error) {
+func BindToplevelDragV1(b wayland.Binder, name, version uint32) (*ToplevelDragV1, error) {
 	if version < 1 || version > VersionToplevelDragV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -220,8 +220,7 @@ func (r *TabletToolV1SetCursorRequest) Since() uint32 { return 1 }
 // TabletToolV1DestroyRequest destroy the tool object.
 //
 // This destroys the client's resource for this tool object.
-type TabletToolV1DestroyRequest struct {
-}
+type TabletToolV1DestroyRequest struct{}
 
 func (r *TabletToolV1DestroyRequest) Opcode() uint16 { return TabletToolV1RequestDestroy }
 
@@ -367,8 +366,7 @@ func (e *TabletToolV1CapabilityEvent) Since() uint32 { return 1 }
 // This event signals the end of the initial burst of descriptive
 // events. A client may consider the static description of the tool to
 // be complete and finalize initialization of the tool.
-type TabletToolV1DoneEvent struct {
-}
+type TabletToolV1DoneEvent struct{}
 
 func (e *TabletToolV1DoneEvent) Opcode() uint16 { return TabletToolV1EventDone }
 
@@ -394,8 +392,7 @@ func (e *TabletToolV1DoneEvent) Since() uint32 { return 1 }
 //
 // When this event is received, the client must wp_tablet_tool.destroy
 // the object.
-type TabletToolV1RemovedEvent struct {
-}
+type TabletToolV1RemovedEvent struct{}
 
 func (e *TabletToolV1RemovedEvent) Opcode() uint16 { return TabletToolV1EventRemoved }
 
@@ -461,8 +458,7 @@ func (e *TabletToolV1ProximityInEvent) Since() uint32 { return 1 }
 // changes from one surface to another, a button release event may not
 // be sent until the button is actually released or the tool leaves the
 // proximity of the tablet.
-type TabletToolV1ProximityOutEvent struct {
-}
+type TabletToolV1ProximityOutEvent struct{}
 
 func (e *TabletToolV1ProximityOutEvent) Opcode() uint16 { return TabletToolV1EventProximityOut }
 
@@ -521,8 +517,7 @@ func (e *TabletToolV1DownEvent) Since() uint32 { return 1 }
 // contact. On some devices, a compositor may not consider a tool out
 // of logical contact until physical pressure falls below a specific
 // threshold.
-type TabletToolV1UpEvent struct {
-}
+type TabletToolV1UpEvent struct{}
 
 func (e *TabletToolV1UpEvent) Opcode() uint16 { return TabletToolV1EventUp }
 
@@ -889,12 +884,10 @@ func (o *TabletToolV1) Proxy() *wayland.Proxy {
 func (o *TabletToolV1) OnType(fn TabletToolV1TypeFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventType, func(r *wire.Reader) {
 		var ev TabletToolV1TypeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Type", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -903,12 +896,10 @@ func (o *TabletToolV1) OnType(fn TabletToolV1TypeFunc) {
 func (o *TabletToolV1) OnHardwareSerial(fn TabletToolV1HardwareSerialFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventHardwareSerial, func(r *wire.Reader) {
 		var ev TabletToolV1HardwareSerialEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("HardwareSerial", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -917,12 +908,10 @@ func (o *TabletToolV1) OnHardwareSerial(fn TabletToolV1HardwareSerialFunc) {
 func (o *TabletToolV1) OnHardwareIDWacom(fn TabletToolV1HardwareIDWacomFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventHardwareIDWacom, func(r *wire.Reader) {
 		var ev TabletToolV1HardwareIDWacomEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("HardwareIDWacom", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -931,12 +920,10 @@ func (o *TabletToolV1) OnHardwareIDWacom(fn TabletToolV1HardwareIDWacomFunc) {
 func (o *TabletToolV1) OnCapability(fn TabletToolV1CapabilityFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventCapability, func(r *wire.Reader) {
 		var ev TabletToolV1CapabilityEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capability", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -945,12 +932,10 @@ func (o *TabletToolV1) OnCapability(fn TabletToolV1CapabilityFunc) {
 func (o *TabletToolV1) OnDone(fn TabletToolV1DoneFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDone, func(r *wire.Reader) {
 		var ev TabletToolV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -959,12 +944,10 @@ func (o *TabletToolV1) OnDone(fn TabletToolV1DoneFunc) {
 func (o *TabletToolV1) OnRemoved(fn TabletToolV1RemovedFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventRemoved, func(r *wire.Reader) {
 		var ev TabletToolV1RemovedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -973,12 +956,10 @@ func (o *TabletToolV1) OnRemoved(fn TabletToolV1RemovedFunc) {
 func (o *TabletToolV1) OnProximityIn(fn TabletToolV1ProximityInFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventProximityIn, func(r *wire.Reader) {
 		var ev TabletToolV1ProximityInEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ProximityIn", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -987,12 +968,10 @@ func (o *TabletToolV1) OnProximityIn(fn TabletToolV1ProximityInFunc) {
 func (o *TabletToolV1) OnProximityOut(fn TabletToolV1ProximityOutFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventProximityOut, func(r *wire.Reader) {
 		var ev TabletToolV1ProximityOutEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ProximityOut", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1001,12 +980,10 @@ func (o *TabletToolV1) OnProximityOut(fn TabletToolV1ProximityOutFunc) {
 func (o *TabletToolV1) OnDown(fn TabletToolV1DownFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDown, func(r *wire.Reader) {
 		var ev TabletToolV1DownEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Down", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1015,12 +992,10 @@ func (o *TabletToolV1) OnDown(fn TabletToolV1DownFunc) {
 func (o *TabletToolV1) OnUp(fn TabletToolV1UpFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventUp, func(r *wire.Reader) {
 		var ev TabletToolV1UpEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Up", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1029,12 +1004,10 @@ func (o *TabletToolV1) OnUp(fn TabletToolV1UpFunc) {
 func (o *TabletToolV1) OnMotion(fn TabletToolV1MotionFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventMotion, func(r *wire.Reader) {
 		var ev TabletToolV1MotionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1043,12 +1016,10 @@ func (o *TabletToolV1) OnMotion(fn TabletToolV1MotionFunc) {
 func (o *TabletToolV1) OnPressure(fn TabletToolV1PressureFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventPressure, func(r *wire.Reader) {
 		var ev TabletToolV1PressureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Pressure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1057,12 +1028,10 @@ func (o *TabletToolV1) OnPressure(fn TabletToolV1PressureFunc) {
 func (o *TabletToolV1) OnDistance(fn TabletToolV1DistanceFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventDistance, func(r *wire.Reader) {
 		var ev TabletToolV1DistanceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Distance", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1071,12 +1040,10 @@ func (o *TabletToolV1) OnDistance(fn TabletToolV1DistanceFunc) {
 func (o *TabletToolV1) OnTilt(fn TabletToolV1TiltFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventTilt, func(r *wire.Reader) {
 		var ev TabletToolV1TiltEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Tilt", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1085,12 +1052,10 @@ func (o *TabletToolV1) OnTilt(fn TabletToolV1TiltFunc) {
 func (o *TabletToolV1) OnRotation(fn TabletToolV1RotationFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventRotation, func(r *wire.Reader) {
 		var ev TabletToolV1RotationEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Rotation", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1099,12 +1064,10 @@ func (o *TabletToolV1) OnRotation(fn TabletToolV1RotationFunc) {
 func (o *TabletToolV1) OnSlider(fn TabletToolV1SliderFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventSlider, func(r *wire.Reader) {
 		var ev TabletToolV1SliderEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Slider", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1113,12 +1076,10 @@ func (o *TabletToolV1) OnSlider(fn TabletToolV1SliderFunc) {
 func (o *TabletToolV1) OnWheel(fn TabletToolV1WheelFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventWheel, func(r *wire.Reader) {
 		var ev TabletToolV1WheelEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Wheel", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1127,12 +1088,10 @@ func (o *TabletToolV1) OnWheel(fn TabletToolV1WheelFunc) {
 func (o *TabletToolV1) OnButton(fn TabletToolV1ButtonFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventButton, func(r *wire.Reader) {
 		var ev TabletToolV1ButtonEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Button", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1141,12 +1100,10 @@ func (o *TabletToolV1) OnButton(fn TabletToolV1ButtonFunc) {
 func (o *TabletToolV1) OnFrame(fn TabletToolV1FrameFunc) {
 	o.proxy.RegisterEvent(TabletToolV1EventFrame, func(r *wire.Reader) {
 		var ev TabletToolV1FrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1185,7 +1142,7 @@ func (o *TabletToolV1) OnFrame(fn TabletToolV1FrameFunc) {
 // surface already has another role, it raises a protocol error.
 // The surface may be used on multiple tablets and across multiple
 // seats.
-func (o *TabletToolV1) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32, hotspotY int32) error {
+func (o *TabletToolV1) SetCursor(serial uint32, surface wire.ObjectID, hotspotX, hotspotY int32) error {
 	return o.proxy.SendRequest(TabletToolV1RequestSetCursor, &TabletToolV1SetCursorRequest{
 		Serial:   serial,
 		Surface:  surface,
@@ -1214,7 +1171,7 @@ func (o *TabletToolV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletToolV1(reg, name, min(g.Version,
 // VersionTabletToolV1)), to bind at the highest mutually supported version.
-func BindTabletToolV1(b wayland.Binder, name uint32, version uint32) (*TabletToolV1, error) {
+func BindTabletToolV1(b wayland.Binder, name, version uint32) (*TabletToolV1, error) {
 	if version < 1 || version > VersionTabletToolV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

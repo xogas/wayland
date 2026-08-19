@@ -89,8 +89,7 @@ func (r *ShmPoolCreateBufferRequest) Since() uint32 { return 1 }
 // The mmapped memory will be released when all
 // buffers that have been created from this pool
 // are gone.
-type ShmPoolDestroyRequest struct {
-}
+type ShmPoolDestroyRequest struct{}
 
 func (r *ShmPoolDestroyRequest) Opcode() uint16 { return ShmPoolRequestDestroy }
 
@@ -164,22 +163,21 @@ func (o *ShmPool) Proxy() *Proxy {
 // A buffer will keep a reference to the pool it was created from
 // so it is valid to destroy the pool immediately after creating
 // a buffer from it.
-func (o *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format ShmFormat) (*Buffer, error) {
+func (o *ShmPool) CreateBuffer(offset, width, height, stride int32, format ShmFormat) (*Buffer, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewBuffer(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShmPoolRequestCreateBuffer, &ShmPoolCreateBufferRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShmPoolRequestCreateBuffer, &ShmPoolCreateBufferRequest{
 		ID:     wire.NewID(p.ID()),
 		Offset: offset,
 		Width:  width,
 		Height: height,
 		Stride: stride,
 		Format: format,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -228,7 +226,7 @@ func (o *ShmPool) Resize(size int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShmPool(reg, name, min(g.Version,
 // VersionShmPool)), to bind at the highest mutually supported version.
-func BindShmPool(b Binder, name uint32, version uint32) (*ShmPool, error) {
+func BindShmPool(b Binder, name, version uint32) (*ShmPool, error) {
 	if version < 1 || version > VersionShmPool {
 		return nil, ErrVersionMismatch
 	}

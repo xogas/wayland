@@ -92,7 +92,6 @@ func (o *InputMethodV1) Proxy() *wayland.Proxy {
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Activate", err)
@@ -102,7 +101,6 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewInputMethodContextV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -111,12 +109,10 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Deactivate", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -127,7 +123,7 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputMethodV1(reg, name, min(g.Version,
 // VersionInputMethodV1)), to bind at the highest mutually supported version.
-func BindInputMethodV1(b wayland.Binder, name uint32, version uint32) (*InputMethodV1, error) {
+func BindInputMethodV1(b wayland.Binder, name, version uint32) (*InputMethodV1, error) {
 	if version < 1 || version > VersionInputMethodV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -21,8 +21,7 @@ const (
 // going to use the xdg_output_manager object anymore.
 //
 // Any objects already created through this instance are not affected.
-type OutputManagerV1DestroyRequest struct {
-}
+type OutputManagerV1DestroyRequest struct{}
 
 func (r *OutputManagerV1DestroyRequest) Opcode() uint16 { return OutputManagerV1RequestDestroy }
 
@@ -100,11 +99,10 @@ func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) 
 
 	wrapped := NewOutputV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), OutputManagerV1RequestGetXdgOutput, &OutputManagerV1GetXdgOutputRequest{
+	if err := conn.SendRequest(o.proxy.ID(), OutputManagerV1RequestGetXdgOutput, &OutputManagerV1GetXdgOutputRequest{
 		ID:     wire.NewID(p.ID()),
 		Output: output,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -117,7 +115,7 @@ func (o *OutputManagerV1) GetXdgOutput(output wire.ObjectID) (*OutputV1, error) 
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindOutputManagerV1(reg, name, min(g.Version,
 // VersionOutputManagerV1)), to bind at the highest mutually supported version.
-func BindOutputManagerV1(b wayland.Binder, name uint32, version uint32) (*OutputManagerV1, error) {
+func BindOutputManagerV1(b wayland.Binder, name, version uint32) (*OutputManagerV1, error) {
 	if version < 1 || version > VersionOutputManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

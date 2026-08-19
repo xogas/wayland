@@ -56,8 +56,7 @@ func (r *CompositorCreateRegionRequest) Since() uint32 { return 1 }
 // CompositorReleaseRequest destroy wl_compositor.
 //
 // This request destroys the wl_compositor. This has no effect on any other objects.
-type CompositorReleaseRequest struct {
-}
+type CompositorReleaseRequest struct{}
 
 func (r *CompositorReleaseRequest) Opcode() uint16 { return CompositorRequestRelease }
 
@@ -96,10 +95,9 @@ func (o *Compositor) CreateSurface() (*Surface, error) {
 
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateSurface, &CompositorCreateSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateSurface, &CompositorCreateSurfaceRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -116,10 +114,9 @@ func (o *Compositor) CreateRegion() (*Region, error) {
 
 	wrapped := NewRegion(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateRegion, &CompositorCreateRegionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), CompositorRequestCreateRegion, &CompositorCreateRegionRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -149,7 +146,7 @@ func (o *Compositor) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCompositor(reg, name, min(g.Version,
 // VersionCompositor)), to bind at the highest mutually supported version.
-func BindCompositor(b Binder, name uint32, version uint32) (*Compositor, error) {
+func BindCompositor(b Binder, name, version uint32) (*Compositor, error) {
 	if version < 1 || version > VersionCompositor {
 		return nil, ErrVersionMismatch
 	}

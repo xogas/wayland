@@ -37,8 +37,7 @@ func init() {
 //
 // Destroy the locked pointer object. If applicable, the compositor will
 // unlock the pointer.
-type LockedPointerV1DestroyRequest struct {
-}
+type LockedPointerV1DestroyRequest struct{}
 
 func (r *LockedPointerV1DestroyRequest) Opcode() uint16 { return LockedPointerV1RequestDestroy }
 
@@ -109,8 +108,7 @@ func (r *LockedPointerV1SetRegionRequest) Since() uint32 { return 1 }
 // LockedPointerV1LockedEvent lock activation event.
 //
 // Notification that the pointer lock of the seat's pointer is activated.
-type LockedPointerV1LockedEvent struct {
-}
+type LockedPointerV1LockedEvent struct{}
 
 func (e *LockedPointerV1LockedEvent) Opcode() uint16 { return LockedPointerV1EventLocked }
 
@@ -128,8 +126,7 @@ func (e *LockedPointerV1LockedEvent) Since() uint32 { return 1 }
 // be destroyed. If this is a persistent pointer lock (see
 // wp_pointer_constraints.lifetime) this pointer lock may again
 // reactivate in the future.
-type LockedPointerV1UnlockedEvent struct {
-}
+type LockedPointerV1UnlockedEvent struct{}
 
 func (e *LockedPointerV1UnlockedEvent) Opcode() uint16 { return LockedPointerV1EventUnlocked }
 
@@ -189,12 +186,10 @@ func (o *LockedPointerV1) Proxy() *wayland.Proxy {
 func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventLocked, func(r *wire.Reader) {
 		var ev LockedPointerV1LockedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Locked", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -203,12 +198,10 @@ func (o *LockedPointerV1) OnLocked(fn LockedPointerV1LockedFunc) {
 func (o *LockedPointerV1) OnUnlocked(fn LockedPointerV1UnlockedFunc) {
 	o.proxy.RegisterEvent(LockedPointerV1EventUnlocked, func(r *wire.Reader) {
 		var ev LockedPointerV1UnlockedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Unlocked", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -240,7 +233,7 @@ func (o *LockedPointerV1) Destroy() error {
 //
 // The cursor position hint is double-buffered state, see
 // wl_surface.commit.
-func (o *LockedPointerV1) SetCursorPositionHint(surfaceX wire.Fixed, surfaceY wire.Fixed) error {
+func (o *LockedPointerV1) SetCursorPositionHint(surfaceX, surfaceY wire.Fixed) error {
 	return o.proxy.SendRequest(LockedPointerV1RequestSetCursorPositionHint, &LockedPointerV1SetCursorPositionHintRequest{
 		SurfaceX: surfaceX,
 		SurfaceY: surfaceY,
@@ -266,7 +259,7 @@ func (o *LockedPointerV1) SetRegion(region wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLockedPointerV1(reg, name, min(g.Version,
 // VersionLockedPointerV1)), to bind at the highest mutually supported version.
-func BindLockedPointerV1(b wayland.Binder, name uint32, version uint32) (*LockedPointerV1, error) {
+func BindLockedPointerV1(b wayland.Binder, name, version uint32) (*LockedPointerV1, error) {
 	if version < 1 || version > VersionLockedPointerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

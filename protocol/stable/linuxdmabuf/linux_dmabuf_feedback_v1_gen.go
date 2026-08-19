@@ -66,8 +66,7 @@ const (
 //
 // Using this request a client can tell the server that it is not going to
 // use the zwp_linux_dmabuf_feedback_v1 object anymore.
-type LinuxDmabufFeedbackV1DestroyRequest struct {
-}
+type LinuxDmabufFeedbackV1DestroyRequest struct{}
 
 func (r *LinuxDmabufFeedbackV1DestroyRequest) Opcode() uint16 {
 	return LinuxDmabufFeedbackV1RequestDestroy
@@ -86,8 +85,7 @@ func (r *LinuxDmabufFeedbackV1DestroyRequest) Since() uint32 { return 1 }
 //
 // This allows changes to the zwp_linux_dmabuf_feedback_v1 parameters to be
 // seen as atomic, even if they happen via multiple events.
-type LinuxDmabufFeedbackV1DoneEvent struct {
-}
+type LinuxDmabufFeedbackV1DoneEvent struct{}
 
 func (e *LinuxDmabufFeedbackV1DoneEvent) Opcode() uint16 { return LinuxDmabufFeedbackV1EventDone }
 
@@ -196,8 +194,7 @@ func (e *LinuxDmabufFeedbackV1MainDeviceEvent) Since() uint32 { return 1 }
 // preference tranches. It is sent after a set of tranche_target_device
 // and tranche_formats events; it represents the end of a tranche. The
 // next tranche will have a lower preference.
-type LinuxDmabufFeedbackV1TrancheDoneEvent struct {
-}
+type LinuxDmabufFeedbackV1TrancheDoneEvent struct{}
 
 func (e *LinuxDmabufFeedbackV1TrancheDoneEvent) Opcode() uint16 {
 	return LinuxDmabufFeedbackV1EventTrancheDone
@@ -399,12 +396,10 @@ func (o *LinuxDmabufFeedbackV1) Proxy() *wayland.Proxy {
 func (o *LinuxDmabufFeedbackV1) OnDone(fn LinuxDmabufFeedbackV1DoneFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventDone, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -413,12 +408,10 @@ func (o *LinuxDmabufFeedbackV1) OnDone(fn LinuxDmabufFeedbackV1DoneFunc) {
 func (o *LinuxDmabufFeedbackV1) OnFormatTable(fn LinuxDmabufFeedbackV1FormatTableFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventFormatTable, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1FormatTableEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("FormatTable", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -427,12 +420,10 @@ func (o *LinuxDmabufFeedbackV1) OnFormatTable(fn LinuxDmabufFeedbackV1FormatTabl
 func (o *LinuxDmabufFeedbackV1) OnMainDevice(fn LinuxDmabufFeedbackV1MainDeviceFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventMainDevice, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1MainDeviceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("MainDevice", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -441,12 +432,10 @@ func (o *LinuxDmabufFeedbackV1) OnMainDevice(fn LinuxDmabufFeedbackV1MainDeviceF
 func (o *LinuxDmabufFeedbackV1) OnTrancheDone(fn LinuxDmabufFeedbackV1TrancheDoneFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheDone, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TrancheDone", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -455,12 +444,10 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheDone(fn LinuxDmabufFeedbackV1TrancheDon
 func (o *LinuxDmabufFeedbackV1) OnTrancheTargetDevice(fn LinuxDmabufFeedbackV1TrancheTargetDeviceFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheTargetDevice, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheTargetDeviceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TrancheTargetDevice", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -469,12 +456,10 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheTargetDevice(fn LinuxDmabufFeedbackV1Tr
 func (o *LinuxDmabufFeedbackV1) OnTrancheFormats(fn LinuxDmabufFeedbackV1TrancheFormatsFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheFormats, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheFormatsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TrancheFormats", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -483,12 +468,10 @@ func (o *LinuxDmabufFeedbackV1) OnTrancheFormats(fn LinuxDmabufFeedbackV1Tranche
 func (o *LinuxDmabufFeedbackV1) OnTrancheFlags(fn LinuxDmabufFeedbackV1TrancheFlagsFunc) {
 	o.proxy.RegisterEvent(LinuxDmabufFeedbackV1EventTrancheFlags, func(r *wire.Reader) {
 		var ev LinuxDmabufFeedbackV1TrancheFlagsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TrancheFlags", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -514,7 +497,7 @@ func (o *LinuxDmabufFeedbackV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxDmabufFeedbackV1(reg, name, min(g.Version,
 // VersionLinuxDmabufFeedbackV1)), to bind at the highest mutually supported version.
-func BindLinuxDmabufFeedbackV1(b wayland.Binder, name uint32, version uint32) (*LinuxDmabufFeedbackV1, error) {
+func BindLinuxDmabufFeedbackV1(b wayland.Binder, name, version uint32) (*LinuxDmabufFeedbackV1, error) {
 	if version < 1 || version > VersionLinuxDmabufFeedbackV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

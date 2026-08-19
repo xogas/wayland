@@ -35,8 +35,7 @@ func init() {
 //
 // Destroy the wp_tablet_seat object. Objects created from this
 // object are unaffected and should be destroyed separately.
-type TabletSeatV1DestroyRequest struct {
-}
+type TabletSeatV1DestroyRequest struct{}
 
 func (r *TabletSeatV1DestroyRequest) Opcode() uint16 { return TabletSeatV1RequestDestroy }
 
@@ -106,7 +105,6 @@ func (o *TabletSeatV1) Proxy() *wayland.Proxy {
 func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1TabletAddedEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("TabletAdded", err)
@@ -116,7 +114,6 @@ func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewTabletV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -125,7 +122,6 @@ func (o *TabletSeatV1) OnTabletAdded(fn TabletSeatV1TabletAddedFunc) {
 func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV1EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV1ToolAddedEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("ToolAdded", err)
@@ -135,7 +131,6 @@ func (o *TabletSeatV1) OnToolAdded(fn TabletSeatV1ToolAddedFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewTabletToolV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -161,7 +156,7 @@ func (o *TabletSeatV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletSeatV1(reg, name, min(g.Version,
 // VersionTabletSeatV1)), to bind at the highest mutually supported version.
-func BindTabletSeatV1(b wayland.Binder, name uint32, version uint32) (*TabletSeatV1, error) {
+func BindTabletSeatV1(b wayland.Binder, name, version uint32) (*TabletSeatV1, error) {
 	if version < 1 || version > VersionTabletSeatV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -68,8 +68,7 @@ func (r *InputMethodManagerV2GetPositionerRequest) Since() uint32 { return 1 }
 // Destroys the xx_input_method_manager_v2 object.
 //
 // The xx_input_method_v1 objects originating from it remain valid.
-type InputMethodManagerV2DestroyRequest struct {
-}
+type InputMethodManagerV2DestroyRequest struct{}
 
 func (r *InputMethodManagerV2DestroyRequest) Opcode() uint16 {
 	return InputMethodManagerV2RequestDestroy
@@ -113,11 +112,10 @@ func (o *InputMethodManagerV2) GetInputMethod(seat wire.ObjectID) (*InputMethodV
 
 	wrapped := NewInputMethodV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetInputMethod, &InputMethodManagerV2GetInputMethodRequest{
+	if err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetInputMethod, &InputMethodManagerV2GetInputMethodRequest{
 		Seat:        seat,
 		InputMethod: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -136,10 +134,9 @@ func (o *InputMethodManagerV2) GetPositioner() (*InputPopupPositionerV1, error) 
 
 	wrapped := NewInputPopupPositionerV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetPositioner, &InputMethodManagerV2GetPositionerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), InputMethodManagerV2RequestGetPositioner, &InputMethodManagerV2GetPositionerRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -168,7 +165,7 @@ func (o *InputMethodManagerV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputMethodManagerV2(reg, name, min(g.Version,
 // VersionInputMethodManagerV2)), to bind at the highest mutually supported version.
-func BindInputMethodManagerV2(b wayland.Binder, name uint32, version uint32) (*InputMethodManagerV2, error) {
+func BindInputMethodManagerV2(b wayland.Binder, name, version uint32) (*InputMethodManagerV2, error) {
 	if version < 1 || version > VersionInputMethodManagerV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -36,8 +36,7 @@ const (
 //
 // The associated wl_surface's crop and scale state is removed.
 // The change is applied on the next wl_surface.commit.
-type ViewportDestroyRequest struct {
-}
+type ViewportDestroyRequest struct{}
 
 func (r *ViewportDestroyRequest) Opcode() uint16 { return ViewportRequestDestroy }
 
@@ -221,7 +220,7 @@ func (o *Viewport) Destroy() error {
 // error.
 //
 // The crop and scale state is double-buffered, see wl_surface.commit.
-func (o *Viewport) SetSource(x wire.Fixed, y wire.Fixed, width wire.Fixed, height wire.Fixed) error {
+func (o *Viewport) SetSource(x, y, width, height wire.Fixed) error {
 	return o.proxy.SendRequest(ViewportRequestSetSource, &ViewportSetSourceRequest{
 		X:      x,
 		Y:      y,
@@ -242,7 +241,7 @@ func (o *Viewport) SetSource(x wire.Fixed, y wire.Fixed, width wire.Fixed, heigh
 // error.
 //
 // The crop and scale state is double-buffered, see wl_surface.commit.
-func (o *Viewport) SetDestination(width int32, height int32) error {
+func (o *Viewport) SetDestination(width, height int32) error {
 	return o.proxy.SendRequest(ViewportRequestSetDestination, &ViewportSetDestinationRequest{
 		Width:  width,
 		Height: height,
@@ -255,7 +254,7 @@ func (o *Viewport) SetDestination(width int32, height int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindViewport(reg, name, min(g.Version,
 // VersionViewport)), to bind at the highest mutually supported version.
-func BindViewport(b wayland.Binder, name uint32, version uint32) (*Viewport, error) {
+func BindViewport(b wayland.Binder, name, version uint32) (*Viewport, error) {
 	if version < 1 || version > VersionViewport {
 		return nil, wayland.ErrVersionMismatch
 	}

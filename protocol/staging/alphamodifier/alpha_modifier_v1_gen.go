@@ -26,8 +26,7 @@ const (
 //
 // Destroy the alpha modifier manager. This doesn't destroy objects
 // created with the manager.
-type AlphaModifierV1DestroyRequest struct {
-}
+type AlphaModifierV1DestroyRequest struct{}
 
 func (r *AlphaModifierV1DestroyRequest) Opcode() uint16 { return AlphaModifierV1RequestDestroy }
 
@@ -112,11 +111,10 @@ func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfa
 
 	wrapped := NewAlphaModifierSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), AlphaModifierV1RequestGetSurface, &AlphaModifierV1GetSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), AlphaModifierV1RequestGetSurface, &AlphaModifierV1GetSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -129,7 +127,7 @@ func (o *AlphaModifierV1) GetSurface(surface wire.ObjectID) (*AlphaModifierSurfa
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindAlphaModifierV1(reg, name, min(g.Version,
 // VersionAlphaModifierV1)), to bind at the highest mutually supported version.
-func BindAlphaModifierV1(b wayland.Binder, name uint32, version uint32) (*AlphaModifierV1, error) {
+func BindAlphaModifierV1(b wayland.Binder, name, version uint32) (*AlphaModifierV1, error) {
 	if version < 1 || version > VersionAlphaModifierV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

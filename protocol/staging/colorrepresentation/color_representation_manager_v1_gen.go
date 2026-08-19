@@ -46,8 +46,7 @@ const (
 //
 // Destroy the wp_color_representation_manager_v1 object. This does not
 // affect any other objects in any way.
-type ColorRepresentationManagerV1DestroyRequest struct {
-}
+type ColorRepresentationManagerV1DestroyRequest struct{}
 
 func (r *ColorRepresentationManagerV1DestroyRequest) Opcode() uint16 {
 	return ColorRepresentationManagerV1RequestDestroy
@@ -155,8 +154,7 @@ func (e *ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent) Since(
 // ColorRepresentationManagerV1DoneEvent all features have been sent.
 //
 // This event is sent when all supported features have been sent.
-type ColorRepresentationManagerV1DoneEvent struct {
-}
+type ColorRepresentationManagerV1DoneEvent struct{}
 
 func (e *ColorRepresentationManagerV1DoneEvent) Opcode() uint16 {
 	return ColorRepresentationManagerV1EventDone
@@ -203,12 +201,10 @@ func (o *ColorRepresentationManagerV1) Proxy() *wayland.Proxy {
 func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentationManagerV1SupportedAlphaModeFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedAlphaMode, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedAlphaModeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedAlphaMode", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -217,12 +213,10 @@ func (o *ColorRepresentationManagerV1) OnSupportedAlphaMode(fn ColorRepresentati
 func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn ColorRepresentationManagerV1SupportedCoefficientsAndRangesFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventSupportedCoefficientsAndRanges, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1SupportedCoefficientsAndRangesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedCoefficientsAndRanges", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -231,12 +225,10 @@ func (o *ColorRepresentationManagerV1) OnSupportedCoefficientsAndRanges(fn Color
 func (o *ColorRepresentationManagerV1) OnDone(fn ColorRepresentationManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorRepresentationManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorRepresentationManagerV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -272,11 +264,10 @@ func (o *ColorRepresentationManagerV1) GetSurface(surface wire.ObjectID) (*Color
 
 	wrapped := NewColorRepresentationSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorRepresentationManagerV1RequestGetSurface, &ColorRepresentationManagerV1GetSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorRepresentationManagerV1RequestGetSurface, &ColorRepresentationManagerV1GetSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -289,7 +280,7 @@ func (o *ColorRepresentationManagerV1) GetSurface(surface wire.ObjectID) (*Color
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorRepresentationManagerV1(reg, name, min(g.Version,
 // VersionColorRepresentationManagerV1)), to bind at the highest mutually supported version.
-func BindColorRepresentationManagerV1(b wayland.Binder, name uint32, version uint32) (*ColorRepresentationManagerV1, error) {
+func BindColorRepresentationManagerV1(b wayland.Binder, name, version uint32) (*ColorRepresentationManagerV1, error) {
 	if version < 1 || version > VersionColorRepresentationManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

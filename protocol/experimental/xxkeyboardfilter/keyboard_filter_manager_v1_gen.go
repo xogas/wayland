@@ -106,8 +106,7 @@ func (r *KeyboardFilterManagerV1BindToInputMethodRequest) Since() uint32 { retur
 // Destroys the xx_keyboard_filter_manager_v1 object.
 //
 // The xx_keyboard_filter_v1 objects originating from it remain unaffected.
-type KeyboardFilterManagerV1DestroyRequest struct {
-}
+type KeyboardFilterManagerV1DestroyRequest struct{}
 
 func (r *KeyboardFilterManagerV1DestroyRequest) Opcode() uint16 {
 	return KeyboardFilterManagerV1RequestDestroy
@@ -180,20 +179,19 @@ func (o *KeyboardFilterManagerV1) Proxy() *wayland.Proxy {
 // Once any of the bound objects are destroyed, the xx_keyboard_filter_v1 instance becomes disabled and it must ignore all following requests.
 //
 // When the input method gets destroyed, the compositor must stop issuing events to the keyboard and ignore any further requests to keyboard_filter, except keyboard_filter.destroy.
-func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard wire.ObjectID, inputMethod wire.ObjectID, surface wire.ObjectID) (*KeyboardFilterV1, error) {
+func (o *KeyboardFilterManagerV1) BindToInputMethod(keyboard, inputMethod, surface wire.ObjectID) (*KeyboardFilterV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewKeyboardFilterV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), KeyboardFilterManagerV1RequestBindToInputMethod, &KeyboardFilterManagerV1BindToInputMethodRequest{
+	if err := conn.SendRequest(o.proxy.ID(), KeyboardFilterManagerV1RequestBindToInputMethod, &KeyboardFilterManagerV1BindToInputMethodRequest{
 		Keyboard:    keyboard,
 		InputMethod: inputMethod,
 		Surface:     surface,
 		Extensions:  wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -222,7 +220,7 @@ func (o *KeyboardFilterManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindKeyboardFilterManagerV1(reg, name, min(g.Version,
 // VersionKeyboardFilterManagerV1)), to bind at the highest mutually supported version.
-func BindKeyboardFilterManagerV1(b wayland.Binder, name uint32, version uint32) (*KeyboardFilterManagerV1, error) {
+func BindKeyboardFilterManagerV1(b wayland.Binder, name, version uint32) (*KeyboardFilterManagerV1, error) {
 	if version < 1 || version > VersionKeyboardFilterManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

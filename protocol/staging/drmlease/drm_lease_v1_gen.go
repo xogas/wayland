@@ -40,8 +40,7 @@ func init() {
 // Upon destruction, the compositor should advertise the connector for
 // leasing again by sending the connector event through the
 // wp_drm_lease_device_v1 interface.
-type DrmLeaseV1DestroyRequest struct {
-}
+type DrmLeaseV1DestroyRequest struct{}
 
 func (r *DrmLeaseV1DestroyRequest) Opcode() uint16 { return DrmLeaseV1RequestDestroy }
 
@@ -93,8 +92,7 @@ func (e *DrmLeaseV1LeaseFdEvent) Since() uint32 { return 1 }
 // compositor loses DRM master. Compositors may advertise the connector
 // for leasing again, if the resource is available, by sending the
 // connector event through the wp_drm_lease_device_v1 interface.
-type DrmLeaseV1FinishedEvent struct {
-}
+type DrmLeaseV1FinishedEvent struct{}
 
 func (e *DrmLeaseV1FinishedEvent) Opcode() uint16 { return DrmLeaseV1EventFinished }
 
@@ -139,12 +137,10 @@ func (o *DrmLeaseV1) Proxy() *wayland.Proxy {
 func (o *DrmLeaseV1) OnLeaseFd(fn DrmLeaseV1LeaseFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventLeaseFd, func(r *wire.Reader) {
 		var ev DrmLeaseV1LeaseFdEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("LeaseFd", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -153,12 +149,10 @@ func (o *DrmLeaseV1) OnLeaseFd(fn DrmLeaseV1LeaseFdFunc) {
 func (o *DrmLeaseV1) OnFinished(fn DrmLeaseV1FinishedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseV1EventFinished, func(r *wire.Reader) {
 		var ev DrmLeaseV1FinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -189,7 +183,7 @@ func (o *DrmLeaseV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDrmLeaseV1(reg, name, min(g.Version,
 // VersionDrmLeaseV1)), to bind at the highest mutually supported version.
-func BindDrmLeaseV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseV1, error) {
+func BindDrmLeaseV1(b wayland.Binder, name, version uint32) (*DrmLeaseV1, error) {
 	if version < 1 || version > VersionDrmLeaseV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

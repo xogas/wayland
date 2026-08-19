@@ -644,10 +644,9 @@ func (o *ImageDescriptionCreatorParamsV1) Create() (*ImageDescriptionV1, error) 
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageDescriptionCreatorParamsV1RequestCreate, &ImageDescriptionCreatorParamsV1CreateRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageDescriptionCreatorParamsV1RequestCreate, &ImageDescriptionCreatorParamsV1CreateRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -733,7 +732,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetPrimariesNamed(primaries ColorManag
 // This request can be used if the compositor advertises
 // wp_color_manager_v1.feature.set_primaries. Otherwise this request raises
 // the protocol error unsupported_feature.
-func (o *ImageDescriptionCreatorParamsV1) SetPrimaries(rX int32, rY int32, gX int32, gY int32, bX int32, bY int32, wX int32, wY int32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetPrimaries(rX, rY, gX, gY, bX, bY, wX, wY int32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetPrimaries, &ImageDescriptionCreatorParamsV1SetPrimariesRequest{
 		RX: rX,
 		RY: rY,
@@ -797,7 +796,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetPrimaries(rX int32, rY int32, gX in
 // This request can be used if the compositor advertises
 // wp_color_manager_v1.feature.set_luminances. Otherwise this request
 // raises the protocol error unsupported_feature.
-func (o *ImageDescriptionCreatorParamsV1) SetLuminances(minLum uint32, maxLum uint32, referenceLum uint32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetLuminances(minLum, maxLum, referenceLum uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetLuminances, &ImageDescriptionCreatorParamsV1SetLuminancesRequest{
 		MinLum:       minLum,
 		MaxLum:       maxLum,
@@ -853,7 +852,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetLuminances(minLum uint32, maxLum ui
 // compositor does not support it, the result is implementation defined.
 // Compositors are recommended to detect this case and fail the image
 // description gracefully, but it may as well result in color artifacts.
-func (o *ImageDescriptionCreatorParamsV1) SetMasteringDisplayPrimaries(rX int32, rY int32, gX int32, gY int32, bX int32, bY int32, wX int32, wY int32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetMasteringDisplayPrimaries(rX, rY, gX, gY, bX, bY, wX, wY int32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMasteringDisplayPrimaries, &ImageDescriptionCreatorParamsV1SetMasteringDisplayPrimariesRequest{
 		RX: rX,
 		RY: rY,
@@ -901,7 +900,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetMasteringDisplayPrimaries(rX int32,
 // compositor does not support it, the result is implementation defined.
 // Compositors are recommended to detect this case and fail the image
 // description gracefully, but it may as well result in color artifacts.
-func (o *ImageDescriptionCreatorParamsV1) SetMasteringLuminance(minLum uint32, maxLum uint32) error {
+func (o *ImageDescriptionCreatorParamsV1) SetMasteringLuminance(minLum, maxLum uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorParamsV1RequestSetMasteringLuminance, &ImageDescriptionCreatorParamsV1SetMasteringLuminanceRequest{
 		MinLum: minLum,
 		MaxLum: maxLum,
@@ -937,7 +936,7 @@ func (o *ImageDescriptionCreatorParamsV1) SetMaxFall(maxFall uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageDescriptionCreatorParamsV1(reg, name, min(g.Version,
 // VersionImageDescriptionCreatorParamsV1)), to bind at the highest mutually supported version.
-func BindImageDescriptionCreatorParamsV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionCreatorParamsV1, error) {
+func BindImageDescriptionCreatorParamsV1(b wayland.Binder, name, version uint32) (*ImageDescriptionCreatorParamsV1, error) {
 	if version < 1 || version > VersionImageDescriptionCreatorParamsV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

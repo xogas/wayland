@@ -57,8 +57,7 @@ const (
 // If a lock surface on an active output is destroyed before the
 // ext_session_lock_v1.unlock_and_destroy event is sent, the compositor
 // must fall back to rendering a solid color.
-type SessionLockSurfaceV1DestroyRequest struct {
-}
+type SessionLockSurfaceV1DestroyRequest struct{}
 
 func (r *SessionLockSurfaceV1DestroyRequest) Opcode() uint16 {
 	return SessionLockSurfaceV1RequestDestroy
@@ -193,12 +192,10 @@ func (o *SessionLockSurfaceV1) Proxy() *wayland.Proxy {
 func (o *SessionLockSurfaceV1) OnConfigure(fn SessionLockSurfaceV1ConfigureFunc) {
 	o.proxy.RegisterEvent(SessionLockSurfaceV1EventConfigure, func(r *wire.Reader) {
 		var ev SessionLockSurfaceV1ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -263,7 +260,7 @@ func (o *SessionLockSurfaceV1) AckConfigure(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSessionLockSurfaceV1(reg, name, min(g.Version,
 // VersionSessionLockSurfaceV1)), to bind at the highest mutually supported version.
-func BindSessionLockSurfaceV1(b wayland.Binder, name uint32, version uint32) (*SessionLockSurfaceV1, error) {
+func BindSessionLockSurfaceV1(b wayland.Binder, name, version uint32) (*SessionLockSurfaceV1, error) {
 	if version < 1 || version > VersionSessionLockSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

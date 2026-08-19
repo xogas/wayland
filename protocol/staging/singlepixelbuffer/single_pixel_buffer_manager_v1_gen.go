@@ -20,8 +20,7 @@ const (
 // Destroy the wp_single_pixel_buffer_manager_v1 object.
 //
 // The child objects created via this interface are unaffected.
-type SinglePixelBufferManagerV1DestroyRequest struct {
-}
+type SinglePixelBufferManagerV1DestroyRequest struct{}
 
 func (r *SinglePixelBufferManagerV1DestroyRequest) Opcode() uint16 {
 	return SinglePixelBufferManagerV1RequestDestroy
@@ -134,20 +133,19 @@ func (o *SinglePixelBufferManagerV1) Destroy() error {
 // These arguments should be interpreted as a percentage, i.e.
 // - UINT32_MIN = 0% of the given color component
 // - UINT32_MAX = 100% of the given color component
-func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b uint32, a uint32) (*wayland.Proxy, error) {
+func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r, g, b, a uint32) (*wayland.Proxy, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SinglePixelBufferManagerV1RequestCreateU32RgbaBuffer, &SinglePixelBufferManagerV1CreateU32RgbaBufferRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SinglePixelBufferManagerV1RequestCreateU32RgbaBuffer, &SinglePixelBufferManagerV1CreateU32RgbaBufferRequest{
 		ID: wire.NewID(p.ID()),
 		R:  r,
 		G:  g,
 		B:  b,
 		A:  a,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -160,7 +158,7 @@ func (o *SinglePixelBufferManagerV1) CreateU32RgbaBuffer(r uint32, g uint32, b u
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSinglePixelBufferManagerV1(reg, name, min(g.Version,
 // VersionSinglePixelBufferManagerV1)), to bind at the highest mutually supported version.
-func BindSinglePixelBufferManagerV1(b wayland.Binder, name uint32, version uint32) (*SinglePixelBufferManagerV1, error) {
+func BindSinglePixelBufferManagerV1(b wayland.Binder, name, version uint32) (*SinglePixelBufferManagerV1, error) {
 	if version < 1 || version > VersionSinglePixelBufferManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

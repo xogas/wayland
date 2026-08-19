@@ -94,8 +94,7 @@ func (r *TabletPadRingV2SetFeedbackRequest) Since() uint32 { return 1 }
 // TabletPadRingV2DestroyRequest destroy the ring object.
 //
 // This destroys the client's resource for this ring object.
-type TabletPadRingV2DestroyRequest struct {
-}
+type TabletPadRingV2DestroyRequest struct{}
 
 func (r *TabletPadRingV2DestroyRequest) Opcode() uint16 { return TabletPadRingV2RequestDestroy }
 
@@ -173,8 +172,7 @@ func (e *TabletPadRingV2AngleEvent) Since() uint32 { return 1 }
 //
 // Any wp_tablet_pad_ring.angle events with the same source after this
 // event should be considered as the start of a new interaction.
-type TabletPadRingV2StopEvent struct {
-}
+type TabletPadRingV2StopEvent struct{}
 
 func (e *TabletPadRingV2StopEvent) Opcode() uint16 { return TabletPadRingV2EventStop }
 
@@ -255,12 +253,10 @@ func (o *TabletPadRingV2) Proxy() *wayland.Proxy {
 func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadRingV2SourceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Source", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -269,12 +265,10 @@ func (o *TabletPadRingV2) OnSource(fn TabletPadRingV2SourceFunc) {
 func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventAngle, func(r *wire.Reader) {
 		var ev TabletPadRingV2AngleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Angle", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -283,12 +277,10 @@ func (o *TabletPadRingV2) OnAngle(fn TabletPadRingV2AngleFunc) {
 func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadRingV2StopEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Stop", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -297,12 +289,10 @@ func (o *TabletPadRingV2) OnStop(fn TabletPadRingV2StopFunc) {
 func (o *TabletPadRingV2) OnFrame(fn TabletPadRingV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadRingV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadRingV2FrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -355,7 +345,7 @@ func (o *TabletPadRingV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletPadRingV2(reg, name, min(g.Version,
 // VersionTabletPadRingV2)), to bind at the highest mutually supported version.
-func BindTabletPadRingV2(b wayland.Binder, name uint32, version uint32) (*TabletPadRingV2, error) {
+func BindTabletPadRingV2(b wayland.Binder, name, version uint32) (*TabletPadRingV2, error) {
 	if version < 1 || version > VersionTabletPadRingV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

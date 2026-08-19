@@ -87,8 +87,7 @@ const (
 //
 // Using this request a client can tell the server that it is not
 // going to use the xx_cutouts object anymore.
-type CutoutsV1DestroyRequest struct {
-}
+type CutoutsV1DestroyRequest struct{}
 
 func (r *CutoutsV1DestroyRequest) Opcode() uint16 { return CutoutsV1RequestDestroy }
 
@@ -240,8 +239,7 @@ func (e *CutoutsV1CutoutCornerEvent) Since() uint32 { return 1 }
 // If the client receives multiple configure events before it can
 // respond to one, it is free to discard all but the last event
 // it received.
-type CutoutsV1ConfigureEvent struct {
-}
+type CutoutsV1ConfigureEvent struct{}
 
 func (e *CutoutsV1ConfigureEvent) Opcode() uint16 { return CutoutsV1EventConfigure }
 
@@ -301,12 +299,10 @@ func (o *CutoutsV1) Proxy() *wayland.Proxy {
 func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutBox, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutBoxEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CutoutBox", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -315,12 +311,10 @@ func (o *CutoutsV1) OnCutoutBox(fn CutoutsV1CutoutBoxFunc) {
 func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventCutoutCorner, func(r *wire.Reader) {
 		var ev CutoutsV1CutoutCornerEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CutoutCorner", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -329,12 +323,10 @@ func (o *CutoutsV1) OnCutoutCorner(fn CutoutsV1CutoutCornerFunc) {
 func (o *CutoutsV1) OnConfigure(fn CutoutsV1ConfigureFunc) {
 	o.proxy.RegisterEvent(CutoutsV1EventConfigure, func(r *wire.Reader) {
 		var ev CutoutsV1ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -378,7 +370,7 @@ func (o *CutoutsV1) SetUnhandled(unhandled []byte) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCutoutsV1(reg, name, min(g.Version,
 // VersionCutoutsV1)), to bind at the highest mutually supported version.
-func BindCutoutsV1(b wayland.Binder, name uint32, version uint32) (*CutoutsV1, error) {
+func BindCutoutsV1(b wayland.Binder, name, version uint32) (*CutoutsV1, error) {
 	if version < 1 || version > VersionCutoutsV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

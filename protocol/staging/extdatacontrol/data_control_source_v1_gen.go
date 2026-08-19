@@ -65,8 +65,7 @@ func (r *DataControlSourceV1OfferRequest) Since() uint32 { return 1 }
 // DataControlSourceV1DestroyRequest destroy this source.
 //
 // Destroys the data source object.
-type DataControlSourceV1DestroyRequest struct {
-}
+type DataControlSourceV1DestroyRequest struct{}
 
 func (r *DataControlSourceV1DestroyRequest) Opcode() uint16 { return DataControlSourceV1RequestDestroy }
 
@@ -111,8 +110,7 @@ func (e *DataControlSourceV1SendEvent) Since() uint32 { return 1 }
 // by another data source.
 //
 // The client should clean up and destroy this data source.
-type DataControlSourceV1CancelledEvent struct {
-}
+type DataControlSourceV1CancelledEvent struct{}
 
 func (e *DataControlSourceV1CancelledEvent) Opcode() uint16 { return DataControlSourceV1EventCancelled }
 
@@ -153,12 +151,10 @@ func (o *DataControlSourceV1) Proxy() *wayland.Proxy {
 func (o *DataControlSourceV1) OnSend(fn DataControlSourceV1SendFunc) {
 	o.proxy.RegisterEvent(DataControlSourceV1EventSend, func(r *wire.Reader) {
 		var ev DataControlSourceV1SendEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -167,12 +163,10 @@ func (o *DataControlSourceV1) OnSend(fn DataControlSourceV1SendFunc) {
 func (o *DataControlSourceV1) OnCancelled(fn DataControlSourceV1CancelledFunc) {
 	o.proxy.RegisterEvent(DataControlSourceV1EventCancelled, func(r *wire.Reader) {
 		var ev DataControlSourceV1CancelledEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -210,7 +204,7 @@ func (o *DataControlSourceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataControlSourceV1(reg, name, min(g.Version,
 // VersionDataControlSourceV1)), to bind at the highest mutually supported version.
-func BindDataControlSourceV1(b wayland.Binder, name uint32, version uint32) (*DataControlSourceV1, error) {
+func BindDataControlSourceV1(b wayland.Binder, name, version uint32) (*DataControlSourceV1, error) {
 	if version < 1 || version > VersionDataControlSourceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

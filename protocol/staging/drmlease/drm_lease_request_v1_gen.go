@@ -135,10 +135,9 @@ func (o *DrmLeaseRequestV1) Submit() (*DrmLeaseV1, error) {
 
 	wrapped := NewDrmLeaseV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DrmLeaseRequestV1RequestSubmit, &DrmLeaseRequestV1SubmitRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DrmLeaseRequestV1RequestSubmit, &DrmLeaseRequestV1SubmitRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -151,7 +150,7 @@ func (o *DrmLeaseRequestV1) Submit() (*DrmLeaseV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDrmLeaseRequestV1(reg, name, min(g.Version,
 // VersionDrmLeaseRequestV1)), to bind at the highest mutually supported version.
-func BindDrmLeaseRequestV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseRequestV1, error) {
+func BindDrmLeaseRequestV1(b wayland.Binder, name, version uint32) (*DrmLeaseRequestV1, error) {
 	if version < 1 || version > VersionDrmLeaseRequestV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

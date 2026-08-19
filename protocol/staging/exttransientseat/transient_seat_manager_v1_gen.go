@@ -45,8 +45,7 @@ func (r *TransientSeatManagerV1CreateRequest) Since() uint32 { return 1 }
 //
 // All objects created by the manager will remain valid until they are
 // destroyed themselves.
-type TransientSeatManagerV1DestroyRequest struct {
-}
+type TransientSeatManagerV1DestroyRequest struct{}
 
 func (r *TransientSeatManagerV1DestroyRequest) Opcode() uint16 {
 	return TransientSeatManagerV1RequestDestroy
@@ -89,10 +88,9 @@ func (o *TransientSeatManagerV1) Create() (*TransientSeatV1, error) {
 
 	wrapped := NewTransientSeatV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), TransientSeatManagerV1RequestCreate, &TransientSeatManagerV1CreateRequest{
+	if err := conn.SendRequest(o.proxy.ID(), TransientSeatManagerV1RequestCreate, &TransientSeatManagerV1CreateRequest{
 		Seat: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -122,7 +120,7 @@ func (o *TransientSeatManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTransientSeatManagerV1(reg, name, min(g.Version,
 // VersionTransientSeatManagerV1)), to bind at the highest mutually supported version.
-func BindTransientSeatManagerV1(b wayland.Binder, name uint32, version uint32) (*TransientSeatManagerV1, error) {
+func BindTransientSeatManagerV1(b wayland.Binder, name, version uint32) (*TransientSeatManagerV1, error) {
 	if version < 1 || version > VersionTransientSeatManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

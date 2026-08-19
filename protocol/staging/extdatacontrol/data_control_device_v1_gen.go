@@ -74,8 +74,7 @@ func (r *DataControlDeviceV1SetSelectionRequest) Since() uint32 { return 1 }
 // DataControlDeviceV1DestroyRequest destroy this data device.
 //
 // Destroys the data device object.
-type DataControlDeviceV1DestroyRequest struct {
-}
+type DataControlDeviceV1DestroyRequest struct{}
 
 func (r *DataControlDeviceV1DestroyRequest) Opcode() uint16 { return DataControlDeviceV1RequestDestroy }
 
@@ -169,8 +168,7 @@ func (e *DataControlDeviceV1SelectionEvent) Since() uint32 { return 1 }
 //
 // This data control object is no longer valid and should be destroyed by
 // the client.
-type DataControlDeviceV1FinishedEvent struct {
-}
+type DataControlDeviceV1FinishedEvent struct{}
 
 func (e *DataControlDeviceV1FinishedEvent) Opcode() uint16 { return DataControlDeviceV1EventFinished }
 
@@ -252,7 +250,6 @@ func (o *DataControlDeviceV1) Proxy() *wayland.Proxy {
 func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventDataOffer, func(r *wire.Reader) {
 		var ev DataControlDeviceV1DataOfferEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("DataOffer", err)
@@ -262,7 +259,6 @@ func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewDataControlOfferV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -271,12 +267,10 @@ func (o *DataControlDeviceV1) OnDataOffer(fn DataControlDeviceV1DataOfferFunc) {
 func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventSelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1SelectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -285,12 +279,10 @@ func (o *DataControlDeviceV1) OnSelection(fn DataControlDeviceV1SelectionFunc) {
 func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventFinished, func(r *wire.Reader) {
 		var ev DataControlDeviceV1FinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -299,12 +291,10 @@ func (o *DataControlDeviceV1) OnFinished(fn DataControlDeviceV1FinishedFunc) {
 func (o *DataControlDeviceV1) OnPrimarySelection(fn DataControlDeviceV1PrimarySelectionFunc) {
 	o.proxy.RegisterEvent(DataControlDeviceV1EventPrimarySelection, func(r *wire.Reader) {
 		var ev DataControlDeviceV1PrimarySelectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PrimarySelection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -364,7 +354,7 @@ func (o *DataControlDeviceV1) SetPrimarySelection(source wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataControlDeviceV1(reg, name, min(g.Version,
 // VersionDataControlDeviceV1)), to bind at the highest mutually supported version.
-func BindDataControlDeviceV1(b wayland.Binder, name uint32, version uint32) (*DataControlDeviceV1, error) {
+func BindDataControlDeviceV1(b wayland.Binder, name, version uint32) (*DataControlDeviceV1, error) {
 	if version < 1 || version > VersionDataControlDeviceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

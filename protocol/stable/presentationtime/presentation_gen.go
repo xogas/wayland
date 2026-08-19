@@ -49,8 +49,7 @@ const (
 // Informs the server that the client will no longer be using
 // this protocol object. Existing objects created by this object
 // are not affected.
-type PresentationDestroyRequest struct {
-}
+type PresentationDestroyRequest struct{}
 
 func (r *PresentationDestroyRequest) Opcode() uint16 { return PresentationRequestDestroy }
 
@@ -180,12 +179,10 @@ func (o *Presentation) Proxy() *wayland.Proxy {
 func (o *Presentation) OnClockID(fn PresentationClockIDFunc) {
 	o.proxy.RegisterEvent(PresentationEventClockID, func(r *wire.Reader) {
 		var ev PresentationClockIDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ClockID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -223,11 +220,10 @@ func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, e
 
 	wrapped := NewPresentationFeedback(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PresentationRequestFeedback, &PresentationFeedbackRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PresentationRequestFeedback, &PresentationFeedbackRequest{
 		Surface:  surface,
 		Callback: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -240,7 +236,7 @@ func (o *Presentation) Feedback(surface wire.ObjectID) (*PresentationFeedback, e
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPresentation(reg, name, min(g.Version,
 // VersionPresentation)), to bind at the highest mutually supported version.
-func BindPresentation(b wayland.Binder, name uint32, version uint32) (*Presentation, error) {
+func BindPresentation(b wayland.Binder, name, version uint32) (*Presentation, error) {
 	if version < 1 || version > VersionPresentation {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -74,8 +74,7 @@ func (r *SurfaceV1SetSerialRequest) Since() uint32 { return 1 }
 // Destroy the xwayland_surface_v1 object.
 //
 // Any already existing associations are unaffected by this action.
-type SurfaceV1DestroyRequest struct {
-}
+type SurfaceV1DestroyRequest struct{}
 
 func (r *SurfaceV1DestroyRequest) Opcode() uint16 { return SurfaceV1RequestDestroy }
 
@@ -132,7 +131,7 @@ func (o *SurfaceV1) Proxy() *wayland.Proxy {
 //
 // For each wl_surface, this state must not be committed more than once,
 // otherwise the `already_associated` protocol error will be raised.
-func (o *SurfaceV1) SetSerial(serialLo uint32, serialHi uint32) error {
+func (o *SurfaceV1) SetSerial(serialLo, serialHi uint32) error {
 	return o.proxy.SendRequest(SurfaceV1RequestSetSerial, &SurfaceV1SetSerialRequest{
 		SerialLo: serialLo,
 		SerialHi: serialHi,
@@ -161,7 +160,7 @@ func (o *SurfaceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSurfaceV1(reg, name, min(g.Version,
 // VersionSurfaceV1)), to bind at the highest mutually supported version.
-func BindSurfaceV1(b wayland.Binder, name uint32, version uint32) (*SurfaceV1, error) {
+func BindSurfaceV1(b wayland.Binder, name, version uint32) (*SurfaceV1, error) {
 	if version < 1 || version > VersionSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

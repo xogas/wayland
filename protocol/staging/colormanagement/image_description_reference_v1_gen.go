@@ -18,8 +18,7 @@ const (
 //
 // Destroy this object. This has no effect on the referenced image
 // description.
-type ImageDescriptionReferenceV1DestroyRequest struct {
-}
+type ImageDescriptionReferenceV1DestroyRequest struct{}
 
 func (r *ImageDescriptionReferenceV1DestroyRequest) Opcode() uint16 {
 	return ImageDescriptionReferenceV1RequestDestroy
@@ -74,7 +73,7 @@ func (o *ImageDescriptionReferenceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageDescriptionReferenceV1(reg, name, min(g.Version,
 // VersionImageDescriptionReferenceV1)), to bind at the highest mutually supported version.
-func BindImageDescriptionReferenceV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionReferenceV1, error) {
+func BindImageDescriptionReferenceV1(b wayland.Binder, name, version uint32) (*ImageDescriptionReferenceV1, error) {
 	if version < 1 || version > VersionImageDescriptionReferenceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

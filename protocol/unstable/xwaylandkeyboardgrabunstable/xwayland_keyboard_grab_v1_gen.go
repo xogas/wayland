@@ -18,8 +18,7 @@ const (
 //
 // Destroy the grabbed keyboard object. If applicable, the compositor
 // will ungrab the keyboard.
-type XwaylandKeyboardGrabV1DestroyRequest struct {
-}
+type XwaylandKeyboardGrabV1DestroyRequest struct{}
 
 func (r *XwaylandKeyboardGrabV1DestroyRequest) Opcode() uint16 {
 	return XwaylandKeyboardGrabV1RequestDestroy
@@ -69,7 +68,7 @@ func (o *XwaylandKeyboardGrabV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindXwaylandKeyboardGrabV1(reg, name, min(g.Version,
 // VersionXwaylandKeyboardGrabV1)), to bind at the highest mutually supported version.
-func BindXwaylandKeyboardGrabV1(b wayland.Binder, name uint32, version uint32) (*XwaylandKeyboardGrabV1, error) {
+func BindXwaylandKeyboardGrabV1(b wayland.Binder, name, version uint32) (*XwaylandKeyboardGrabV1, error) {
 	if version < 1 || version > VersionXwaylandKeyboardGrabV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

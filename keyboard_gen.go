@@ -77,8 +77,7 @@ const (
 )
 
 // KeyboardReleaseRequest release the keyboard object.
-type KeyboardReleaseRequest struct {
-}
+type KeyboardReleaseRequest struct{}
 
 func (r *KeyboardReleaseRequest) Opcode() uint16 { return KeyboardRequestRelease }
 
@@ -427,12 +426,10 @@ func (o *Keyboard) Proxy() *Proxy {
 func (o *Keyboard) OnKeymap(fn KeyboardKeymapFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKeymap, func(r *wire.Reader) {
 		var ev KeyboardKeymapEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Keymap", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -441,12 +438,10 @@ func (o *Keyboard) OnKeymap(fn KeyboardKeymapFunc) {
 func (o *Keyboard) OnEnter(fn KeyboardEnterFunc) {
 	o.proxy.RegisterEvent(KeyboardEventEnter, func(r *wire.Reader) {
 		var ev KeyboardEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -455,12 +450,10 @@ func (o *Keyboard) OnEnter(fn KeyboardEnterFunc) {
 func (o *Keyboard) OnLeave(fn KeyboardLeaveFunc) {
 	o.proxy.RegisterEvent(KeyboardEventLeave, func(r *wire.Reader) {
 		var ev KeyboardLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -469,12 +462,10 @@ func (o *Keyboard) OnLeave(fn KeyboardLeaveFunc) {
 func (o *Keyboard) OnKey(fn KeyboardKeyFunc) {
 	o.proxy.RegisterEvent(KeyboardEventKey, func(r *wire.Reader) {
 		var ev KeyboardKeyEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Key", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -483,12 +474,10 @@ func (o *Keyboard) OnKey(fn KeyboardKeyFunc) {
 func (o *Keyboard) OnModifiers(fn KeyboardModifiersFunc) {
 	o.proxy.RegisterEvent(KeyboardEventModifiers, func(r *wire.Reader) {
 		var ev KeyboardModifiersEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Modifiers", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -497,12 +486,10 @@ func (o *Keyboard) OnModifiers(fn KeyboardModifiersFunc) {
 func (o *Keyboard) OnRepeatInfo(fn KeyboardRepeatInfoFunc) {
 	o.proxy.RegisterEvent(KeyboardEventRepeatInfo, func(r *wire.Reader) {
 		var ev KeyboardRepeatInfoEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("RepeatInfo", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -528,7 +515,7 @@ func (o *Keyboard) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindKeyboard(reg, name, min(g.Version,
 // VersionKeyboard)), to bind at the highest mutually supported version.
-func BindKeyboard(b Binder, name uint32, version uint32) (*Keyboard, error) {
+func BindKeyboard(b Binder, name, version uint32) (*Keyboard, error) {
 	if version < 1 || version > VersionKeyboard {
 		return nil, ErrVersionMismatch
 	}

@@ -26,8 +26,7 @@ const (
 )
 
 // FixesDestroyRequest destroys this object.
-type FixesDestroyRequest struct {
-}
+type FixesDestroyRequest struct{}
 
 func (r *FixesDestroyRequest) Opcode() uint16 { return FixesRequestDestroy }
 
@@ -196,7 +195,7 @@ func (o *Fixes) AckGlobalRemove(registry wire.ObjectID, name uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFixes(reg, name, min(g.Version,
 // VersionFixes)), to bind at the highest mutually supported version.
-func BindFixes(b Binder, name uint32, version uint32) (*Fixes, error) {
+func BindFixes(b Binder, name, version uint32) (*Fixes, error) {
 	if version < 1 || version > VersionFixes {
 		return nil, ErrVersionMismatch
 	}

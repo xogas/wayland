@@ -41,8 +41,7 @@ func init() {
 //
 // Using this request a client can tell the server that it is not
 // going to use the xdg_output object anymore.
-type OutputV1DestroyRequest struct {
-}
+type OutputV1DestroyRequest struct{}
 
 func (r *OutputV1DestroyRequest) Opcode() uint16 { return OutputV1RequestDestroy }
 
@@ -155,8 +154,7 @@ func (e *OutputV1LogicalSizeEvent) Since() uint32 { return 1 }
 // For objects version 3 onwards, this event is deprecated. Compositors
 // are not required to send it anymore and must send wl_output.done
 // instead.
-type OutputV1DoneEvent struct {
-}
+type OutputV1DoneEvent struct{}
 
 func (e *OutputV1DoneEvent) Opcode() uint16 { return OutputV1EventDone }
 
@@ -290,12 +288,10 @@ func (o *OutputV1) Proxy() *wayland.Proxy {
 func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalPosition, func(r *wire.Reader) {
 		var ev OutputV1LogicalPositionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("LogicalPosition", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -304,12 +300,10 @@ func (o *OutputV1) OnLogicalPosition(fn OutputV1LogicalPositionFunc) {
 func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 	o.proxy.RegisterEvent(OutputV1EventLogicalSize, func(r *wire.Reader) {
 		var ev OutputV1LogicalSizeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("LogicalSize", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -318,12 +312,10 @@ func (o *OutputV1) OnLogicalSize(fn OutputV1LogicalSizeFunc) {
 func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDone, func(r *wire.Reader) {
 		var ev OutputV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -332,12 +324,10 @@ func (o *OutputV1) OnDone(fn OutputV1DoneFunc) {
 func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 	o.proxy.RegisterEvent(OutputV1EventName, func(r *wire.Reader) {
 		var ev OutputV1NameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -346,12 +336,10 @@ func (o *OutputV1) OnName(fn OutputV1NameFunc) {
 func (o *OutputV1) OnDescription(fn OutputV1DescriptionFunc) {
 	o.proxy.RegisterEvent(OutputV1EventDescription, func(r *wire.Reader) {
 		var ev OutputV1DescriptionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -377,7 +365,7 @@ func (o *OutputV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindOutputV1(reg, name, min(g.Version,
 // VersionOutputV1)), to bind at the highest mutually supported version.
-func BindOutputV1(b wayland.Binder, name uint32, version uint32) (*OutputV1, error) {
+func BindOutputV1(b wayland.Binder, name, version uint32) (*OutputV1, error) {
 	if version < 1 || version > VersionOutputV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

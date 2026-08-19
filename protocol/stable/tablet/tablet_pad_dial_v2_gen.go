@@ -77,8 +77,7 @@ func (r *TabletPadDialV2SetFeedbackRequest) Since() uint32 { return 1 }
 // TabletPadDialV2DestroyRequest destroy the dial object.
 //
 // This destroys the client's resource for this dial object.
-type TabletPadDialV2DestroyRequest struct {
-}
+type TabletPadDialV2DestroyRequest struct{}
 
 func (r *TabletPadDialV2DestroyRequest) Opcode() uint16 { return TabletPadDialV2RequestDestroy }
 
@@ -180,12 +179,10 @@ func (o *TabletPadDialV2) Proxy() *wayland.Proxy {
 func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventDelta, func(r *wire.Reader) {
 		var ev TabletPadDialV2DeltaEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Delta", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -194,12 +191,10 @@ func (o *TabletPadDialV2) OnDelta(fn TabletPadDialV2DeltaFunc) {
 func (o *TabletPadDialV2) OnFrame(fn TabletPadDialV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadDialV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadDialV2FrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -252,7 +247,7 @@ func (o *TabletPadDialV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletPadDialV2(reg, name, min(g.Version,
 // VersionTabletPadDialV2)), to bind at the highest mutually supported version.
-func BindTabletPadDialV2(b wayland.Binder, name uint32, version uint32) (*TabletPadDialV2, error) {
+func BindTabletPadDialV2(b wayland.Binder, name, version uint32) (*TabletPadDialV2, error) {
 	if version < 1 || version > VersionTabletPadDialV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

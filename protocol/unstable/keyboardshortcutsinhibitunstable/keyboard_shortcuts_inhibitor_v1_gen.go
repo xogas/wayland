@@ -34,8 +34,7 @@ func init() {
 // KeyboardShortcutsInhibitorV1DestroyRequest destroy the keyboard shortcuts inhibitor object.
 //
 // Remove the keyboard shortcuts inhibitor from the associated wl_surface.
-type KeyboardShortcutsInhibitorV1DestroyRequest struct {
-}
+type KeyboardShortcutsInhibitorV1DestroyRequest struct{}
 
 func (r *KeyboardShortcutsInhibitorV1DestroyRequest) Opcode() uint16 {
 	return KeyboardShortcutsInhibitorV1RequestDestroy
@@ -60,8 +59,7 @@ func (r *KeyboardShortcutsInhibitorV1DestroyRequest) Since() uint32 { return 1 }
 // first becomes active or when the user instructs the compositor to
 // re-enable and existing shortcuts inhibitor using any mechanism
 // offered by the compositor.
-type KeyboardShortcutsInhibitorV1ActiveEvent struct {
-}
+type KeyboardShortcutsInhibitorV1ActiveEvent struct{}
 
 func (e *KeyboardShortcutsInhibitorV1ActiveEvent) Opcode() uint16 {
 	return KeyboardShortcutsInhibitorV1EventActive
@@ -77,8 +75,7 @@ func (e *KeyboardShortcutsInhibitorV1ActiveEvent) Since() uint32 { return 1 }
 //
 // This event indicates that the shortcuts inhibitor is inactive,
 // normal shortcuts processing is restored by the compositor.
-type KeyboardShortcutsInhibitorV1InactiveEvent struct {
-}
+type KeyboardShortcutsInhibitorV1InactiveEvent struct{}
 
 func (e *KeyboardShortcutsInhibitorV1InactiveEvent) Opcode() uint16 {
 	return KeyboardShortcutsInhibitorV1EventInactive
@@ -150,12 +147,10 @@ func (o *KeyboardShortcutsInhibitorV1) Proxy() *wayland.Proxy {
 func (o *KeyboardShortcutsInhibitorV1) OnActive(fn KeyboardShortcutsInhibitorV1ActiveFunc) {
 	o.proxy.RegisterEvent(KeyboardShortcutsInhibitorV1EventActive, func(r *wire.Reader) {
 		var ev KeyboardShortcutsInhibitorV1ActiveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Active", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -164,12 +159,10 @@ func (o *KeyboardShortcutsInhibitorV1) OnActive(fn KeyboardShortcutsInhibitorV1A
 func (o *KeyboardShortcutsInhibitorV1) OnInactive(fn KeyboardShortcutsInhibitorV1InactiveFunc) {
 	o.proxy.RegisterEvent(KeyboardShortcutsInhibitorV1EventInactive, func(r *wire.Reader) {
 		var ev KeyboardShortcutsInhibitorV1InactiveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Inactive", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -194,7 +187,7 @@ func (o *KeyboardShortcutsInhibitorV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindKeyboardShortcutsInhibitorV1(reg, name, min(g.Version,
 // VersionKeyboardShortcutsInhibitorV1)), to bind at the highest mutually supported version.
-func BindKeyboardShortcutsInhibitorV1(b wayland.Binder, name uint32, version uint32) (*KeyboardShortcutsInhibitorV1, error) {
+func BindKeyboardShortcutsInhibitorV1(b wayland.Binder, name, version uint32) (*KeyboardShortcutsInhibitorV1, error) {
 	if version < 1 || version > VersionKeyboardShortcutsInhibitorV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

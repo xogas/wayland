@@ -127,8 +127,7 @@ func (r *InputPopupSurfaceV2RepositionRequest) Since() uint32 { return 1 }
 //
 // This destroys the popup. Explicitly destroying the input_popup_surface
 // object will also dismiss the popup, and unmap the surface.
-type InputPopupSurfaceV2DestroyRequest struct {
-}
+type InputPopupSurfaceV2DestroyRequest struct{}
 
 func (r *InputPopupSurfaceV2DestroyRequest) Opcode() uint16 { return InputPopupSurfaceV2RequestDestroy }
 
@@ -336,12 +335,10 @@ func (o *InputPopupSurfaceV2) Proxy() *wayland.Proxy {
 func (o *InputPopupSurfaceV2) OnStartConfigure(fn InputPopupSurfaceV2StartConfigureFunc) {
 	o.proxy.RegisterEvent(InputPopupSurfaceV2EventStartConfigure, func(r *wire.Reader) {
 		var ev InputPopupSurfaceV2StartConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("StartConfigure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -350,12 +347,10 @@ func (o *InputPopupSurfaceV2) OnStartConfigure(fn InputPopupSurfaceV2StartConfig
 func (o *InputPopupSurfaceV2) OnRepositioned(fn InputPopupSurfaceV2RepositionedFunc) {
 	o.proxy.RegisterEvent(InputPopupSurfaceV2EventRepositioned, func(r *wire.Reader) {
 		var ev InputPopupSurfaceV2RepositionedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Repositioned", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -437,7 +432,7 @@ func (o *InputPopupSurfaceV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputPopupSurfaceV2(reg, name, min(g.Version,
 // VersionInputPopupSurfaceV2)), to bind at the highest mutually supported version.
-func BindInputPopupSurfaceV2(b wayland.Binder, name uint32, version uint32) (*InputPopupSurfaceV2, error) {
+func BindInputPopupSurfaceV2(b wayland.Binder, name, version uint32) (*InputPopupSurfaceV2, error) {
 	if version < 1 || version > VersionInputPopupSurfaceV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

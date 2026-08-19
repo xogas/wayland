@@ -19,8 +19,7 @@ const (
 // CursorShapeManagerV1DestroyRequest destroy the manager.
 //
 // Destroy the cursor shape manager.
-type CursorShapeManagerV1DestroyRequest struct {
-}
+type CursorShapeManagerV1DestroyRequest struct{}
 
 func (r *CursorShapeManagerV1DestroyRequest) Opcode() uint16 {
 	return CursorShapeManagerV1RequestDestroy
@@ -137,11 +136,10 @@ func (o *CursorShapeManagerV1) GetPointer(pointer wire.ObjectID) (*CursorShapeDe
 
 	wrapped := NewCursorShapeDeviceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetPointer, &CursorShapeManagerV1GetPointerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetPointer, &CursorShapeManagerV1GetPointerRequest{
 		CursorShapeDevice: wire.NewID(p.ID()),
 		Pointer:           pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -161,11 +159,10 @@ func (o *CursorShapeManagerV1) GetTabletToolV2(tabletTool wire.ObjectID) (*Curso
 
 	wrapped := NewCursorShapeDeviceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetTabletToolV2, &CursorShapeManagerV1GetTabletToolV2Request{
+	if err := conn.SendRequest(o.proxy.ID(), CursorShapeManagerV1RequestGetTabletToolV2, &CursorShapeManagerV1GetTabletToolV2Request{
 		CursorShapeDevice: wire.NewID(p.ID()),
 		TabletTool:        tabletTool,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -178,7 +175,7 @@ func (o *CursorShapeManagerV1) GetTabletToolV2(tabletTool wire.ObjectID) (*Curso
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCursorShapeManagerV1(reg, name, min(g.Version,
 // VersionCursorShapeManagerV1)), to bind at the highest mutually supported version.
-func BindCursorShapeManagerV1(b wayland.Binder, name uint32, version uint32) (*CursorShapeManagerV1, error) {
+func BindCursorShapeManagerV1(b wayland.Binder, name, version uint32) (*CursorShapeManagerV1, error) {
 	if version < 1 || version > VersionCursorShapeManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

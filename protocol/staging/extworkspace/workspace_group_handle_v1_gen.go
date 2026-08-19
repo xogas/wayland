@@ -79,8 +79,7 @@ func (r *WorkspaceGroupHandleV1CreateWorkspaceRequest) Since() uint32 { return 1
 // This request should be send either when the client does not want to
 // use the workspace group object any more or after the removed event to finalize
 // the destruction of the object.
-type WorkspaceGroupHandleV1DestroyRequest struct {
-}
+type WorkspaceGroupHandleV1DestroyRequest struct{}
 
 func (r *WorkspaceGroupHandleV1DestroyRequest) Opcode() uint16 {
 	return WorkspaceGroupHandleV1RequestDestroy
@@ -230,8 +229,7 @@ func (e *WorkspaceGroupHandleV1WorkspaceLeaveEvent) Since() uint32 { return 1 }
 //
 // The compositor must remove all workspaces belonging to a workspace group
 // via a workspace_leave event before removing the workspace group.
-type WorkspaceGroupHandleV1RemovedEvent struct {
-}
+type WorkspaceGroupHandleV1RemovedEvent struct{}
 
 func (e *WorkspaceGroupHandleV1RemovedEvent) Opcode() uint16 {
 	return WorkspaceGroupHandleV1EventRemoved
@@ -293,12 +291,10 @@ func (o *WorkspaceGroupHandleV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1CapabilitiesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -307,12 +303,10 @@ func (o *WorkspaceGroupHandleV1) OnCapabilities(fn WorkspaceGroupHandleV1Capabil
 func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("OutputEnter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -321,12 +315,10 @@ func (o *WorkspaceGroupHandleV1) OnOutputEnter(fn WorkspaceGroupHandleV1OutputEn
 func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventOutputLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1OutputLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("OutputLeave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -335,12 +327,10 @@ func (o *WorkspaceGroupHandleV1) OnOutputLeave(fn WorkspaceGroupHandleV1OutputLe
 func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1WorkspaceEnterFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceEnter, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("WorkspaceEnter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -349,12 +339,10 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceEnter(fn WorkspaceGroupHandleV1Works
 func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1WorkspaceLeaveFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventWorkspaceLeave, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1WorkspaceLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("WorkspaceLeave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -363,12 +351,10 @@ func (o *WorkspaceGroupHandleV1) OnWorkspaceLeave(fn WorkspaceGroupHandleV1Works
 func (o *WorkspaceGroupHandleV1) OnRemoved(fn WorkspaceGroupHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceGroupHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceGroupHandleV1RemovedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -410,7 +396,7 @@ func (o *WorkspaceGroupHandleV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindWorkspaceGroupHandleV1(reg, name, min(g.Version,
 // VersionWorkspaceGroupHandleV1)), to bind at the highest mutually supported version.
-func BindWorkspaceGroupHandleV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceGroupHandleV1, error) {
+func BindWorkspaceGroupHandleV1(b wayland.Binder, name, version uint32) (*WorkspaceGroupHandleV1, error) {
 	if version < 1 || version > VersionWorkspaceGroupHandleV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

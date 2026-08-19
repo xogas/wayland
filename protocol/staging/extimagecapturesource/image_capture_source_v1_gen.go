@@ -18,8 +18,7 @@ const (
 //
 // Destroys the image capture source. This request may be sent at any time
 // by the client.
-type ImageCaptureSourceV1DestroyRequest struct {
-}
+type ImageCaptureSourceV1DestroyRequest struct{}
 
 func (r *ImageCaptureSourceV1DestroyRequest) Opcode() uint16 {
 	return ImageCaptureSourceV1RequestDestroy
@@ -75,7 +74,7 @@ func (o *ImageCaptureSourceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageCaptureSourceV1(reg, name, min(g.Version,
 // VersionImageCaptureSourceV1)), to bind at the highest mutually supported version.
-func BindImageCaptureSourceV1(b wayland.Binder, name uint32, version uint32) (*ImageCaptureSourceV1, error) {
+func BindImageCaptureSourceV1(b wayland.Binder, name, version uint32) (*ImageCaptureSourceV1, error) {
 	if version < 1 || version > VersionImageCaptureSourceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

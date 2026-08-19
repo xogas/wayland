@@ -34,8 +34,7 @@ func init() {
 // IdleNotificationV1DestroyRequest destroy the notification object.
 //
 // Destroy the notification object.
-type IdleNotificationV1DestroyRequest struct {
-}
+type IdleNotificationV1DestroyRequest struct{}
 
 func (r *IdleNotificationV1DestroyRequest) Opcode() uint16 { return IdleNotificationV1RequestDestroy }
 
@@ -51,8 +50,7 @@ func (r *IdleNotificationV1DestroyRequest) Since() uint32 { return 1 }
 //
 // It's a compositor protocol error to send this event twice without a
 // resumed event in-between.
-type IdleNotificationV1IdledEvent struct {
-}
+type IdleNotificationV1IdledEvent struct{}
 
 func (e *IdleNotificationV1IdledEvent) Opcode() uint16 { return IdleNotificationV1EventIdled }
 
@@ -69,8 +67,7 @@ func (e *IdleNotificationV1IdledEvent) Since() uint32 { return 1 }
 // It's a compositor protocol error to send this event twice without an
 // idled event in-between. It's a compositor protocol error to send this
 // event prior to any idled event.
-type IdleNotificationV1ResumedEvent struct {
-}
+type IdleNotificationV1ResumedEvent struct{}
 
 func (e *IdleNotificationV1ResumedEvent) Opcode() uint16 { return IdleNotificationV1EventResumed }
 
@@ -129,12 +126,10 @@ func (o *IdleNotificationV1) Proxy() *wayland.Proxy {
 func (o *IdleNotificationV1) OnIdled(fn IdleNotificationV1IdledFunc) {
 	o.proxy.RegisterEvent(IdleNotificationV1EventIdled, func(r *wire.Reader) {
 		var ev IdleNotificationV1IdledEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Idled", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -143,12 +138,10 @@ func (o *IdleNotificationV1) OnIdled(fn IdleNotificationV1IdledFunc) {
 func (o *IdleNotificationV1) OnResumed(fn IdleNotificationV1ResumedFunc) {
 	o.proxy.RegisterEvent(IdleNotificationV1EventResumed, func(r *wire.Reader) {
 		var ev IdleNotificationV1ResumedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Resumed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -173,7 +166,7 @@ func (o *IdleNotificationV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindIdleNotificationV1(reg, name, min(g.Version,
 // VersionIdleNotificationV1)), to bind at the highest mutually supported version.
-func BindIdleNotificationV1(b wayland.Binder, name uint32, version uint32) (*IdleNotificationV1, error) {
+func BindIdleNotificationV1(b wayland.Binder, name, version uint32) (*IdleNotificationV1, error) {
 	if version < 1 || version > VersionIdleNotificationV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

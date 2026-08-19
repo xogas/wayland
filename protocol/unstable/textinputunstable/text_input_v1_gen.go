@@ -248,8 +248,7 @@ func (r *TextInputV1DeactivateRequest) Since() uint32 { return 1 }
 // TextInputV1ShowInputPanelRequest show input panels.
 //
 // Requests input panels (virtual keyboard) to show.
-type TextInputV1ShowInputPanelRequest struct {
-}
+type TextInputV1ShowInputPanelRequest struct{}
 
 func (r *TextInputV1ShowInputPanelRequest) Opcode() uint16 { return TextInputV1RequestShowInputPanel }
 
@@ -262,8 +261,7 @@ func (r *TextInputV1ShowInputPanelRequest) Since() uint32 { return 1 }
 // TextInputV1HideInputPanelRequest hide input panels.
 //
 // Requests input panels (virtual keyboard) to hide.
-type TextInputV1HideInputPanelRequest struct {
-}
+type TextInputV1HideInputPanelRequest struct{}
 
 func (r *TextInputV1HideInputPanelRequest) Opcode() uint16 { return TextInputV1RequestHideInputPanel }
 
@@ -278,8 +276,7 @@ func (r *TextInputV1HideInputPanelRequest) Since() uint32 { return 1 }
 // Should be called by an editor widget when the input state should be
 // reset, for example after the text was changed outside of the normal
 // input method flow.
-type TextInputV1ResetRequest struct {
-}
+type TextInputV1ResetRequest struct{}
 
 func (r *TextInputV1ResetRequest) Opcode() uint16 { return TextInputV1RequestReset }
 
@@ -465,8 +462,7 @@ func (e *TextInputV1EnterEvent) Since() uint32 { return 1 }
 // Notify the text_input object when it lost focus. Either in response
 // to a deactivate request or when the assigned surface lost focus or was
 // destroyed.
-type TextInputV1LeaveEvent struct {
-}
+type TextInputV1LeaveEvent struct{}
 
 func (e *TextInputV1LeaveEvent) Opcode() uint16 { return TextInputV1EventLeave }
 
@@ -916,12 +912,10 @@ func (o *TextInputV1) Proxy() *wayland.Proxy {
 func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventEnter, func(r *wire.Reader) {
 		var ev TextInputV1EnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -930,12 +924,10 @@ func (o *TextInputV1) OnEnter(fn TextInputV1EnterFunc) {
 func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLeave, func(r *wire.Reader) {
 		var ev TextInputV1LeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -944,12 +936,10 @@ func (o *TextInputV1) OnLeave(fn TextInputV1LeaveFunc) {
 func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventModifiersMap, func(r *wire.Reader) {
 		var ev TextInputV1ModifiersMapEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ModifiersMap", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -958,12 +948,10 @@ func (o *TextInputV1) OnModifiersMap(fn TextInputV1ModifiersMapFunc) {
 func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventInputPanelState, func(r *wire.Reader) {
 		var ev TextInputV1InputPanelStateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("InputPanelState", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -972,12 +960,10 @@ func (o *TextInputV1) OnInputPanelState(fn TextInputV1InputPanelStateFunc) {
 func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -986,12 +972,10 @@ func (o *TextInputV1) OnPreeditString(fn TextInputV1PreeditStringFunc) {
 func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditStyling, func(r *wire.Reader) {
 		var ev TextInputV1PreeditStylingEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditStyling", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1000,12 +984,10 @@ func (o *TextInputV1) OnPreeditStyling(fn TextInputV1PreeditStylingFunc) {
 func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventPreeditCursor, func(r *wire.Reader) {
 		var ev TextInputV1PreeditCursorEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditCursor", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1014,12 +996,10 @@ func (o *TextInputV1) OnPreeditCursor(fn TextInputV1PreeditCursorFunc) {
 func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV1CommitStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CommitString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1028,12 +1008,10 @@ func (o *TextInputV1) OnCommitString(fn TextInputV1CommitStringFunc) {
 func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventCursorPosition, func(r *wire.Reader) {
 		var ev TextInputV1CursorPositionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CursorPosition", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1042,12 +1020,10 @@ func (o *TextInputV1) OnCursorPosition(fn TextInputV1CursorPositionFunc) {
 func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV1DeleteSurroundingTextEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DeleteSurroundingText", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1056,12 +1032,10 @@ func (o *TextInputV1) OnDeleteSurroundingText(fn TextInputV1DeleteSurroundingTex
 func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventKeysym, func(r *wire.Reader) {
 		var ev TextInputV1KeysymEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Keysym", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1070,12 +1044,10 @@ func (o *TextInputV1) OnKeysym(fn TextInputV1KeysymFunc) {
 func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventLanguage, func(r *wire.Reader) {
 		var ev TextInputV1LanguageEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Language", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1084,12 +1056,10 @@ func (o *TextInputV1) OnLanguage(fn TextInputV1LanguageFunc) {
 func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 	o.proxy.RegisterEvent(TextInputV1EventTextDirection, func(r *wire.Reader) {
 		var ev TextInputV1TextDirectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TextDirection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1103,7 +1073,7 @@ func (o *TextInputV1) OnTextDirection(fn TextInputV1TextDirectionFunc) {
 // activation. The surface argument is a wl_surface assigned to the
 // text_input object and tracked for focus lost. The enter event
 // is emitted on successful activation.
-func (o *TextInputV1) Activate(seat wire.ObjectID, surface wire.ObjectID) error {
+func (o *TextInputV1) Activate(seat, surface wire.ObjectID) error {
 	return o.proxy.SendRequest(TextInputV1RequestActivate, &TextInputV1ActivateRequest{
 		Seat:    seat,
 		Surface: surface,
@@ -1151,7 +1121,7 @@ func (o *TextInputV1) Reset() error {
 // surrounding text. Anchor is the byte offset of the
 // selection anchor within the surrounding text. If there is no selected
 // text anchor, then it is the same as cursor.
-func (o *TextInputV1) SetSurroundingText(text string, cursor uint32, anchor uint32) error {
+func (o *TextInputV1) SetSurroundingText(text string, cursor, anchor uint32) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetSurroundingText, &TextInputV1SetSurroundingTextRequest{
 		Text:   text,
 		Cursor: cursor,
@@ -1175,7 +1145,7 @@ func (o *TextInputV1) SetContentType(hint TextInputV1ContentHint, purpose TextIn
 	})
 }
 
-func (o *TextInputV1) SetCursorRectangle(x int32, y int32, width int32, height int32) error {
+func (o *TextInputV1) SetCursorRectangle(x, y, width, height int32) error {
 	return o.proxy.SendRequest(TextInputV1RequestSetCursorRectangle, &TextInputV1SetCursorRectangleRequest{
 		X:      x,
 		Y:      y,
@@ -1205,7 +1175,7 @@ func (o *TextInputV1) CommitState(serial uint32) error {
 	})
 }
 
-func (o *TextInputV1) InvokeAction(button uint32, index uint32) error {
+func (o *TextInputV1) InvokeAction(button, index uint32) error {
 	return o.proxy.SendRequest(TextInputV1RequestInvokeAction, &TextInputV1InvokeActionRequest{
 		Button: button,
 		Index:  index,
@@ -1218,7 +1188,7 @@ func (o *TextInputV1) InvokeAction(button uint32, index uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTextInputV1(reg, name, min(g.Version,
 // VersionTextInputV1)), to bind at the highest mutually supported version.
-func BindTextInputV1(b wayland.Binder, name uint32, version uint32) (*TextInputV1, error) {
+func BindTextInputV1(b wayland.Binder, name, version uint32) (*TextInputV1, error) {
 	if version < 1 || version > VersionTextInputV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

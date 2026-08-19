@@ -116,8 +116,7 @@ const (
 // Unmap and destroy the window. The window will be effectively
 // hidden from the user's point of view, and all state like
 // maximization, fullscreen, and so on, will be lost.
-type ToplevelV6DestroyRequest struct {
-}
+type ToplevelV6DestroyRequest struct{}
 
 func (r *ToplevelV6DestroyRequest) Opcode() uint16 { return ToplevelV6RequestDestroy }
 
@@ -486,8 +485,7 @@ func (r *ToplevelV6SetMinSizeRequest) Since() uint32 { return 1 }
 //	configure events to be emitted at any time, meaning trying to
 //	match this request to a specific future configure event is
 //	futile.
-type ToplevelV6SetMaximizedRequest struct {
-}
+type ToplevelV6SetMaximizedRequest struct{}
 
 func (r *ToplevelV6SetMaximizedRequest) Opcode() uint16 { return ToplevelV6RequestSetMaximized }
 
@@ -521,8 +519,7 @@ func (r *ToplevelV6SetMaximizedRequest) Since() uint32 { return 1 }
 //	configure events to be emitted by the compositor between processing
 //	this request and emitting corresponding configure event, so trying
 //	to match the request with the event is futile.
-type ToplevelV6UnsetMaximizedRequest struct {
-}
+type ToplevelV6UnsetMaximizedRequest struct{}
 
 func (r *ToplevelV6UnsetMaximizedRequest) Opcode() uint16 { return ToplevelV6RequestUnsetMaximized }
 
@@ -558,8 +555,7 @@ func (r *ToplevelV6SetFullscreenRequest) Marshal(w *wire.Writer) error {
 
 func (r *ToplevelV6SetFullscreenRequest) Since() uint32 { return 1 }
 
-type ToplevelV6UnsetFullscreenRequest struct {
-}
+type ToplevelV6UnsetFullscreenRequest struct{}
 
 func (r *ToplevelV6UnsetFullscreenRequest) Opcode() uint16 { return ToplevelV6RequestUnsetFullscreen }
 
@@ -579,8 +575,7 @@ func (r *ToplevelV6UnsetFullscreenRequest) Since() uint32 { return 1 }
 // instead use the wl_surface.frame event for this, as this will
 // also work with live previews on windows in Alt-Tab, Expose or
 // similar compositor features.
-type ToplevelV6SetMinimizedRequest struct {
-}
+type ToplevelV6SetMinimizedRequest struct{}
 
 func (r *ToplevelV6SetMinimizedRequest) Opcode() uint16 { return ToplevelV6RequestSetMinimized }
 
@@ -650,8 +645,7 @@ func (e *ToplevelV6ConfigureEvent) Since() uint32 { return 1 }
 // This is only a request that the user intends to close the
 // window. The client may choose to ignore this request, or show
 // a dialog to ask the user to save their data, etc.
-type ToplevelV6CloseEvent struct {
-}
+type ToplevelV6CloseEvent struct{}
 
 func (e *ToplevelV6CloseEvent) Opcode() uint16 { return ToplevelV6EventClose }
 
@@ -693,12 +687,10 @@ func (o *ToplevelV6) Proxy() *wayland.Proxy {
 func (o *ToplevelV6) OnConfigure(fn ToplevelV6ConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelV6EventConfigure, func(r *wire.Reader) {
 		var ev ToplevelV6ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -707,12 +699,10 @@ func (o *ToplevelV6) OnConfigure(fn ToplevelV6ConfigureFunc) {
 func (o *ToplevelV6) OnClose(fn ToplevelV6CloseFunc) {
 	o.proxy.RegisterEvent(ToplevelV6EventClose, func(r *wire.Reader) {
 		var ev ToplevelV6CloseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Close", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -804,7 +794,7 @@ func (o *ToplevelV6) SetAppID(appID string) error {
 //
 // This request must be used in response to some sort of user action
 // like a button press, key press, or touch down event.
-func (o *ToplevelV6) ShowWindowMenu(seat wire.ObjectID, serial uint32, x int32, y int32) error {
+func (o *ToplevelV6) ShowWindowMenu(seat wire.ObjectID, serial uint32, x, y int32) error {
 	return o.proxy.SendRequest(ToplevelV6RequestShowWindowMenu, &ToplevelV6ShowWindowMenuRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -870,7 +860,7 @@ func (o *ToplevelV6) Move(seat wire.ObjectID, serial uint32) error {
 // example when dragging the top left corner. The compositor may also
 // use this information to adapt its behavior, e.g. choose an
 // appropriate cursor image.
-func (o *ToplevelV6) Resize(seat wire.ObjectID, serial uint32, edges uint32) error {
+func (o *ToplevelV6) Resize(seat wire.ObjectID, serial, edges uint32) error {
 	return o.proxy.SendRequest(ToplevelV6RequestResize, &ToplevelV6ResizeRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -914,7 +904,7 @@ func (o *ToplevelV6) Resize(seat wire.ObjectID, serial uint32, edges uint32) err
 // strictly negative values for width and height will result in the
 //
 //	zxdg_shell_v6.invalid_surface_state error being raised.
-func (o *ToplevelV6) SetMaxSize(width int32, height int32) error {
+func (o *ToplevelV6) SetMaxSize(width, height int32) error {
 	return o.proxy.SendRequest(ToplevelV6RequestSetMaxSize, &ToplevelV6SetMaxSizeRequest{
 		Width:  width,
 		Height: height,
@@ -957,7 +947,7 @@ func (o *ToplevelV6) SetMaxSize(width int32, height int32) error {
 // strictly negative values for width and height will result in the
 //
 //	zxdg_shell_v6.invalid_surface_state error being raised.
-func (o *ToplevelV6) SetMinSize(width int32, height int32) error {
+func (o *ToplevelV6) SetMinSize(width, height int32) error {
 	return o.proxy.SendRequest(ToplevelV6RequestSetMinSize, &ToplevelV6SetMinSizeRequest{
 		Width:  width,
 		Height: height,
@@ -1060,7 +1050,7 @@ func (o *ToplevelV6) SetMinimized() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelV6(reg, name, min(g.Version,
 // VersionToplevelV6)), to bind at the highest mutually supported version.
-func BindToplevelV6(b wayland.Binder, name uint32, version uint32) (*ToplevelV6, error) {
+func BindToplevelV6(b wayland.Binder, name, version uint32) (*ToplevelV6, error) {
 	if version < 1 || version > VersionToplevelV6 {
 		return nil, wayland.ErrVersionMismatch
 	}

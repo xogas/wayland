@@ -153,8 +153,7 @@ const (
 // Destroy the cursor shape device.
 //
 // The device cursor shape remains unchanged.
-type CursorShapeDeviceV1DestroyRequest struct {
-}
+type CursorShapeDeviceV1DestroyRequest struct{}
 
 func (r *CursorShapeDeviceV1DestroyRequest) Opcode() uint16 { return CursorShapeDeviceV1RequestDestroy }
 
@@ -272,7 +271,7 @@ func (o *CursorShapeDeviceV1) SetShape(serial uint32, shape CursorShapeDeviceV1S
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCursorShapeDeviceV1(reg, name, min(g.Version,
 // VersionCursorShapeDeviceV1)), to bind at the highest mutually supported version.
-func BindCursorShapeDeviceV1(b wayland.Binder, name uint32, version uint32) (*CursorShapeDeviceV1, error) {
+func BindCursorShapeDeviceV1(b wayland.Binder, name, version uint32) (*CursorShapeDeviceV1, error) {
 	if version < 1 || version > VersionCursorShapeDeviceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

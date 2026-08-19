@@ -33,8 +33,7 @@ func init() {
 //
 // Destroy the fractional scale object. When this object is destroyed,
 // preferred_scale events will no longer be sent.
-type FractionalScaleV1DestroyRequest struct {
-}
+type FractionalScaleV1DestroyRequest struct{}
 
 func (r *FractionalScaleV1DestroyRequest) Opcode() uint16 { return FractionalScaleV1RequestDestroy }
 
@@ -96,12 +95,10 @@ func (o *FractionalScaleV1) Proxy() *wayland.Proxy {
 func (o *FractionalScaleV1) OnPreferredScale(fn FractionalScaleV1PreferredScaleFunc) {
 	o.proxy.RegisterEvent(FractionalScaleV1EventPreferredScale, func(r *wire.Reader) {
 		var ev FractionalScaleV1PreferredScaleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredScale", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -127,7 +124,7 @@ func (o *FractionalScaleV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFractionalScaleV1(reg, name, min(g.Version,
 // VersionFractionalScaleV1)), to bind at the highest mutually supported version.
-func BindFractionalScaleV1(b wayland.Binder, name uint32, version uint32) (*FractionalScaleV1, error) {
+func BindFractionalScaleV1(b wayland.Binder, name, version uint32) (*FractionalScaleV1, error) {
 	if version < 1 || version > VersionFractionalScaleV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

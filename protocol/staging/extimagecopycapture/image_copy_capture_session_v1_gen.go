@@ -78,8 +78,7 @@ func (r *ImageCopyCaptureSessionV1CreateFrameRequest) Since() uint32 { return 1 
 //
 // This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
 // this object.
-type ImageCopyCaptureSessionV1DestroyRequest struct {
-}
+type ImageCopyCaptureSessionV1DestroyRequest struct{}
 
 func (r *ImageCopyCaptureSessionV1DestroyRequest) Opcode() uint16 {
 	return ImageCopyCaptureSessionV1RequestDestroy
@@ -222,8 +221,7 @@ func (e *ImageCopyCaptureSessionV1DmabufFormatEvent) Since() uint32 { return 1 }
 // The compositor must always end a batch of buffer constraint events with
 // this event, regardless of whether it sends the initial constraints or
 // an update.
-type ImageCopyCaptureSessionV1DoneEvent struct {
-}
+type ImageCopyCaptureSessionV1DoneEvent struct{}
 
 func (e *ImageCopyCaptureSessionV1DoneEvent) Opcode() uint16 {
 	return ImageCopyCaptureSessionV1EventDone
@@ -243,8 +241,7 @@ func (e *ImageCopyCaptureSessionV1DoneEvent) Since() uint32 { return 1 }
 // capture, or if an unrecoverable runtime error has occurred.
 //
 // The client should destroy the session after receiving this event.
-type ImageCopyCaptureSessionV1StoppedEvent struct {
-}
+type ImageCopyCaptureSessionV1StoppedEvent struct{}
 
 func (e *ImageCopyCaptureSessionV1StoppedEvent) Opcode() uint16 {
 	return ImageCopyCaptureSessionV1EventStopped
@@ -311,12 +308,10 @@ func (o *ImageCopyCaptureSessionV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1BufferSizeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventBufferSize, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1BufferSizeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("BufferSize", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -325,12 +320,10 @@ func (o *ImageCopyCaptureSessionV1) OnBufferSize(fn ImageCopyCaptureSessionV1Buf
 func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventShmFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1ShmFormatEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ShmFormat", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -339,12 +332,10 @@ func (o *ImageCopyCaptureSessionV1) OnShmFormat(fn ImageCopyCaptureSessionV1ShmF
 func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1DmabufDeviceFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufDevice, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufDeviceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DmabufDevice", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -353,12 +344,10 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufDevice(fn ImageCopyCaptureSessionV1D
 func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1DmabufFormatFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDmabufFormat, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DmabufFormatEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DmabufFormat", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -367,12 +356,10 @@ func (o *ImageCopyCaptureSessionV1) OnDmabufFormat(fn ImageCopyCaptureSessionV1D
 func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventDone, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -381,12 +368,10 @@ func (o *ImageCopyCaptureSessionV1) OnDone(fn ImageCopyCaptureSessionV1DoneFunc)
 func (o *ImageCopyCaptureSessionV1) OnStopped(fn ImageCopyCaptureSessionV1StoppedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureSessionV1EventStopped, func(r *wire.Reader) {
 		var ev ImageCopyCaptureSessionV1StoppedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Stopped", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -405,10 +390,9 @@ func (o *ImageCopyCaptureSessionV1) CreateFrame() (*ImageCopyCaptureFrameV1, err
 
 	wrapped := NewImageCopyCaptureFrameV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureSessionV1RequestCreateFrame, &ImageCopyCaptureSessionV1CreateFrameRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureSessionV1RequestCreateFrame, &ImageCopyCaptureSessionV1CreateFrameRequest{
 		Frame: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -439,7 +423,7 @@ func (o *ImageCopyCaptureSessionV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageCopyCaptureSessionV1(reg, name, min(g.Version,
 // VersionImageCopyCaptureSessionV1)), to bind at the highest mutually supported version.
-func BindImageCopyCaptureSessionV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureSessionV1, error) {
+func BindImageCopyCaptureSessionV1(b wayland.Binder, name, version uint32) (*ImageCopyCaptureSessionV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureSessionV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -73,8 +73,7 @@ func (e *LinuxBufferReleaseV1FencedReleaseEvent) Since() uint32 { return 1 }
 // destroy the buffer.
 //
 // This event destroys the zwp_linux_buffer_release_v1 object.
-type LinuxBufferReleaseV1ImmediateReleaseEvent struct {
-}
+type LinuxBufferReleaseV1ImmediateReleaseEvent struct{}
 
 func (e *LinuxBufferReleaseV1ImmediateReleaseEvent) Opcode() uint16 {
 	return LinuxBufferReleaseV1EventImmediateRelease
@@ -130,12 +129,10 @@ func (o *LinuxBufferReleaseV1) Proxy() *wayland.Proxy {
 func (o *LinuxBufferReleaseV1) OnFencedRelease(fn LinuxBufferReleaseV1FencedReleaseFunc) {
 	o.proxy.RegisterEvent(LinuxBufferReleaseV1EventFencedRelease, func(r *wire.Reader) {
 		var ev LinuxBufferReleaseV1FencedReleaseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("FencedRelease", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -144,12 +141,10 @@ func (o *LinuxBufferReleaseV1) OnFencedRelease(fn LinuxBufferReleaseV1FencedRele
 func (o *LinuxBufferReleaseV1) OnImmediateRelease(fn LinuxBufferReleaseV1ImmediateReleaseFunc) {
 	o.proxy.RegisterEvent(LinuxBufferReleaseV1EventImmediateRelease, func(r *wire.Reader) {
 		var ev LinuxBufferReleaseV1ImmediateReleaseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ImmediateRelease", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -160,7 +155,7 @@ func (o *LinuxBufferReleaseV1) OnImmediateRelease(fn LinuxBufferReleaseV1Immedia
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxBufferReleaseV1(reg, name, min(g.Version,
 // VersionLinuxBufferReleaseV1)), to bind at the highest mutually supported version.
-func BindLinuxBufferReleaseV1(b wayland.Binder, name uint32, version uint32) (*LinuxBufferReleaseV1, error) {
+func BindLinuxBufferReleaseV1(b wayland.Binder, name, version uint32) (*LinuxBufferReleaseV1, error) {
 	if version < 1 || version > VersionLinuxBufferReleaseV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

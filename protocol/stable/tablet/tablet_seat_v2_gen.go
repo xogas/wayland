@@ -37,8 +37,7 @@ func init() {
 //
 // Destroy the zwp_tablet_seat_v2 object. Objects created from this
 // object are unaffected and should be destroyed separately.
-type TabletSeatV2DestroyRequest struct {
-}
+type TabletSeatV2DestroyRequest struct{}
 
 func (r *TabletSeatV2DestroyRequest) Opcode() uint16 { return TabletSeatV2RequestDestroy }
 
@@ -132,7 +131,6 @@ func (o *TabletSeatV2) Proxy() *wayland.Proxy {
 func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventTabletAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2TabletAddedEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("TabletAdded", err)
@@ -142,7 +140,6 @@ func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewTabletV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -151,7 +148,6 @@ func (o *TabletSeatV2) OnTabletAdded(fn TabletSeatV2TabletAddedFunc) {
 func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventToolAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2ToolAddedEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("ToolAdded", err)
@@ -161,7 +157,6 @@ func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewTabletToolV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -170,7 +165,6 @@ func (o *TabletSeatV2) OnToolAdded(fn TabletSeatV2ToolAddedFunc) {
 func (o *TabletSeatV2) OnPadAdded(fn TabletSeatV2PadAddedFunc) {
 	o.proxy.RegisterEvent(TabletSeatV2EventPadAdded, func(r *wire.Reader) {
 		var ev TabletSeatV2PadAddedEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("PadAdded", err)
@@ -180,7 +174,6 @@ func (o *TabletSeatV2) OnPadAdded(fn TabletSeatV2PadAddedFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewTabletPadV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -206,7 +199,7 @@ func (o *TabletSeatV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletSeatV2(reg, name, min(g.Version,
 // VersionTabletSeatV2)), to bind at the highest mutually supported version.
-func BindTabletSeatV2(b wayland.Binder, name uint32, version uint32) (*TabletSeatV2, error) {
+func BindTabletSeatV2(b wayland.Binder, name, version uint32) (*TabletSeatV2, error) {
 	if version < 1 || version > VersionTabletSeatV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

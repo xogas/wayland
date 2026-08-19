@@ -47,8 +47,7 @@ const (
 // ColorManagementSurfaceFeedbackV1DestroyRequest destroy the color management interface for a surface.
 //
 // Destroy the wp_color_management_surface_feedback_v1 object.
-type ColorManagementSurfaceFeedbackV1DestroyRequest struct {
-}
+type ColorManagementSurfaceFeedbackV1DestroyRequest struct{}
 
 func (r *ColorManagementSurfaceFeedbackV1DestroyRequest) Opcode() uint16 {
 	return ColorManagementSurfaceFeedbackV1RequestDestroy
@@ -240,12 +239,10 @@ func (o *ColorManagementSurfaceFeedbackV1) Proxy() *wayland.Proxy {
 func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagementSurfaceFeedbackV1PreferredChangedFunc) {
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChangedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredChanged", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -254,12 +251,10 @@ func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged(fn ColorManagement
 func (o *ColorManagementSurfaceFeedbackV1) OnPreferredChanged2(fn ColorManagementSurfaceFeedbackV1PreferredChanged2Func) {
 	o.proxy.RegisterEvent(ColorManagementSurfaceFeedbackV1EventPreferredChanged2, func(r *wire.Reader) {
 		var ev ColorManagementSurfaceFeedbackV1PreferredChanged2Event
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreferredChanged2", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -320,10 +315,9 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferred() (*ImageDescriptionV1, 
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferred, &ColorManagementSurfaceFeedbackV1GetPreferredRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferred, &ColorManagementSurfaceFeedbackV1GetPreferredRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -345,10 +339,9 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferredParametric() (*ImageDescr
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferredParametric, &ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagementSurfaceFeedbackV1RequestGetPreferredParametric, &ColorManagementSurfaceFeedbackV1GetPreferredParametricRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -361,7 +354,7 @@ func (o *ColorManagementSurfaceFeedbackV1) GetPreferredParametric() (*ImageDescr
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorManagementSurfaceFeedbackV1(reg, name, min(g.Version,
 // VersionColorManagementSurfaceFeedbackV1)), to bind at the highest mutually supported version.
-func BindColorManagementSurfaceFeedbackV1(b wayland.Binder, name uint32, version uint32) (*ColorManagementSurfaceFeedbackV1, error) {
+func BindColorManagementSurfaceFeedbackV1(b wayland.Binder, name, version uint32) (*ColorManagementSurfaceFeedbackV1, error) {
 	if version < 1 || version > VersionColorManagementSurfaceFeedbackV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

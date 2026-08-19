@@ -18,8 +18,7 @@ const (
 // XwaylandKeyboardGrabManagerV1DestroyRequest destroy the keyboard grab manager.
 //
 // Destroy the keyboard grab manager.
-type XwaylandKeyboardGrabManagerV1DestroyRequest struct {
-}
+type XwaylandKeyboardGrabManagerV1DestroyRequest struct{}
 
 func (r *XwaylandKeyboardGrabManagerV1DestroyRequest) Opcode() uint16 {
 	return XwaylandKeyboardGrabManagerV1RequestDestroy
@@ -131,19 +130,18 @@ func (o *XwaylandKeyboardGrabManagerV1) Destroy() error {
 //   - does not guarantee that events sent to this client are continuous,
 //     a compositor may change and reroute keyboard events while the grab
 //     is nominally active.
-func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface wire.ObjectID, seat wire.ObjectID) (*XwaylandKeyboardGrabV1, error) {
+func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface, seat wire.ObjectID) (*XwaylandKeyboardGrabV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewXwaylandKeyboardGrabV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), XwaylandKeyboardGrabManagerV1RequestGrabKeyboard, &XwaylandKeyboardGrabManagerV1GrabKeyboardRequest{
+	if err := conn.SendRequest(o.proxy.ID(), XwaylandKeyboardGrabManagerV1RequestGrabKeyboard, &XwaylandKeyboardGrabManagerV1GrabKeyboardRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
 		Seat:    seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -156,7 +154,7 @@ func (o *XwaylandKeyboardGrabManagerV1) GrabKeyboard(surface wire.ObjectID, seat
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindXwaylandKeyboardGrabManagerV1(reg, name, min(g.Version,
 // VersionXwaylandKeyboardGrabManagerV1)), to bind at the highest mutually supported version.
-func BindXwaylandKeyboardGrabManagerV1(b wayland.Binder, name uint32, version uint32) (*XwaylandKeyboardGrabManagerV1, error) {
+func BindXwaylandKeyboardGrabManagerV1(b wayland.Binder, name, version uint32) (*XwaylandKeyboardGrabManagerV1, error) {
 	if version < 1 || version > VersionXwaylandKeyboardGrabManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

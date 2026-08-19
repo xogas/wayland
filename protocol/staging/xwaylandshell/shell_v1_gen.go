@@ -27,8 +27,7 @@ const (
 // Destroy the xwayland_shell_v1 object.
 //
 // The child objects created via this interface are unaffected.
-type ShellV1DestroyRequest struct {
-}
+type ShellV1DestroyRequest struct{}
 
 func (r *ShellV1DestroyRequest) Opcode() uint16 { return ShellV1RequestDestroy }
 
@@ -133,11 +132,10 @@ func (o *ShellV1) GetXwaylandSurface(surface wire.ObjectID) (*SurfaceV1, error) 
 
 	wrapped := NewSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellV1RequestGetXwaylandSurface, &ShellV1GetXwaylandSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellV1RequestGetXwaylandSurface, &ShellV1GetXwaylandSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -150,7 +148,7 @@ func (o *ShellV1) GetXwaylandSurface(surface wire.ObjectID) (*SurfaceV1, error) 
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShellV1(reg, name, min(g.Version,
 // VersionShellV1)), to bind at the highest mutually supported version.
-func BindShellV1(b wayland.Binder, name uint32, version uint32) (*ShellV1, error) {
+func BindShellV1(b wayland.Binder, name, version uint32) (*ShellV1, error) {
 	if version < 1 || version > VersionShellV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -84,8 +84,7 @@ const (
 //
 // Cleans up the temporary data sent to the server for dmabuf-based
 // wl_buffer creation.
-type LinuxBufferParamsV1DestroyRequest struct {
-}
+type LinuxBufferParamsV1DestroyRequest struct{}
 
 func (r *LinuxBufferParamsV1DestroyRequest) Opcode() uint16 { return LinuxBufferParamsV1RequestDestroy }
 
@@ -378,8 +377,7 @@ func (e *LinuxBufferParamsV1CreatedEvent) Since() uint32 { return 1 }
 //
 // Upon receiving this event, the client should destroy the
 // zwp_linux_buffer_params_v1 object.
-type LinuxBufferParamsV1FailedEvent struct {
-}
+type LinuxBufferParamsV1FailedEvent struct{}
 
 func (e *LinuxBufferParamsV1FailedEvent) Opcode() uint16 { return LinuxBufferParamsV1EventFailed }
 
@@ -432,12 +430,10 @@ func (o *LinuxBufferParamsV1) Proxy() *wayland.Proxy {
 func (o *LinuxBufferParamsV1) OnCreated(fn LinuxBufferParamsV1CreatedFunc) {
 	o.proxy.RegisterEvent(LinuxBufferParamsV1EventCreated, func(r *wire.Reader) {
 		var ev LinuxBufferParamsV1CreatedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Created", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -446,12 +442,10 @@ func (o *LinuxBufferParamsV1) OnCreated(fn LinuxBufferParamsV1CreatedFunc) {
 func (o *LinuxBufferParamsV1) OnFailed(fn LinuxBufferParamsV1FailedFunc) {
 	o.proxy.RegisterEvent(LinuxBufferParamsV1EventFailed, func(r *wire.Reader) {
 		var ev LinuxBufferParamsV1FailedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -492,7 +486,7 @@ func (o *LinuxBufferParamsV1) Destroy() error {
 // This request raises the PLANE_IDX error if plane_idx is too large.
 // The error PLANE_SET is raised if attempting to set a plane that
 // was already set.
-func (o *LinuxBufferParamsV1) Add(fd int, planeIdx uint32, offset uint32, stride uint32, modifierHi uint32, modifierLo uint32) error {
+func (o *LinuxBufferParamsV1) Add(fd int, planeIdx, offset, stride, modifierHi, modifierLo uint32) error {
 	return o.proxy.SendRequest(LinuxBufferParamsV1RequestAdd, &LinuxBufferParamsV1AddRequest{
 		Fd:         fd,
 		PlaneIdx:   planeIdx,
@@ -564,7 +558,7 @@ func (o *LinuxBufferParamsV1) Add(fd int, planeIdx uint32, offset uint32, stride
 //
 // It is not mandatory to issue 'create'. If a client wants to
 // cancel the buffer creation, it can just destroy this object.
-func (o *LinuxBufferParamsV1) Create(width int32, height int32, format uint32, flags LinuxBufferParamsV1Flags) error {
+func (o *LinuxBufferParamsV1) Create(width, height int32, format uint32, flags LinuxBufferParamsV1Flags) error {
 	return o.proxy.SendRequest(LinuxBufferParamsV1RequestCreate, &LinuxBufferParamsV1CreateRequest{
 		Width:  width,
 		Height: height,
@@ -598,7 +592,7 @@ func (o *LinuxBufferParamsV1) Create(width int32, height int32, format uint32, f
 //
 // This takes the same arguments as a 'create' request, and obeys the
 // same restrictions.
-func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint32, flags LinuxBufferParamsV1Flags) (*wayland.Proxy, error) {
+func (o *LinuxBufferParamsV1) CreateImmed(width, height int32, format uint32, flags LinuxBufferParamsV1Flags) (*wayland.Proxy, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch
 	}
@@ -607,14 +601,13 @@ func (o *LinuxBufferParamsV1) CreateImmed(width int32, height int32, format uint
 	p.SetVersion(o.proxy.Version())
 
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxBufferParamsV1RequestCreateImmed, &LinuxBufferParamsV1CreateImmedRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxBufferParamsV1RequestCreateImmed, &LinuxBufferParamsV1CreateImmedRequest{
 		BufferID: wire.NewID(p.ID()),
 		Width:    width,
 		Height:   height,
 		Format:   format,
 		Flags:    flags,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -651,7 +644,7 @@ func (o *LinuxBufferParamsV1) SetSamplingDevice(device []byte) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxBufferParamsV1(reg, name, min(g.Version,
 // VersionLinuxBufferParamsV1)), to bind at the highest mutually supported version.
-func BindLinuxBufferParamsV1(b wayland.Binder, name uint32, version uint32) (*LinuxBufferParamsV1, error) {
+func BindLinuxBufferParamsV1(b wayland.Binder, name, version uint32) (*LinuxBufferParamsV1, error) {
 	if version < 1 || version > VersionLinuxBufferParamsV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

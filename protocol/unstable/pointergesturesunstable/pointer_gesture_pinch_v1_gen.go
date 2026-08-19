@@ -34,8 +34,7 @@ func init() {
 }
 
 // PointerGesturePinchV1DestroyRequest destroy the pinch gesture object.
-type PointerGesturePinchV1DestroyRequest struct {
-}
+type PointerGesturePinchV1DestroyRequest struct{}
 
 func (r *PointerGesturePinchV1DestroyRequest) Opcode() uint16 {
 	return PointerGesturePinchV1RequestDestroy
@@ -233,12 +232,10 @@ func (o *PointerGesturePinchV1) Proxy() *wayland.Proxy {
 func (o *PointerGesturePinchV1) OnBegin(fn PointerGesturePinchV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1BeginEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -247,12 +244,10 @@ func (o *PointerGesturePinchV1) OnBegin(fn PointerGesturePinchV1BeginFunc) {
 func (o *PointerGesturePinchV1) OnUpdate(fn PointerGesturePinchV1UpdateFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventUpdate, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1UpdateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Update", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -261,12 +256,10 @@ func (o *PointerGesturePinchV1) OnUpdate(fn PointerGesturePinchV1UpdateFunc) {
 func (o *PointerGesturePinchV1) OnEnd(fn PointerGesturePinchV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGesturePinchV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGesturePinchV1EndEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -289,7 +282,7 @@ func (o *PointerGesturePinchV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerGesturePinchV1(reg, name, min(g.Version,
 // VersionPointerGesturePinchV1)), to bind at the highest mutually supported version.
-func BindPointerGesturePinchV1(b wayland.Binder, name uint32, version uint32) (*PointerGesturePinchV1, error) {
+func BindPointerGesturePinchV1(b wayland.Binder, name, version uint32) (*PointerGesturePinchV1, error) {
 	if version < 1 || version > VersionPointerGesturePinchV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

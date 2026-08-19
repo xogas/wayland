@@ -37,8 +37,7 @@ func init() {
 //
 // Upon receiving this event, the client should destroy the
 // wl_fullscreen_shell_mode_feedback object.
-type FullscreenShellModeFeedbackV1ModeSuccessfulEvent struct {
-}
+type FullscreenShellModeFeedbackV1ModeSuccessfulEvent struct{}
 
 func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Opcode() uint16 {
 	return FullscreenShellModeFeedbackV1EventModeSuccessful
@@ -58,8 +57,7 @@ func (e *FullscreenShellModeFeedbackV1ModeSuccessfulEvent) Since() uint32 { retu
 //
 // Upon receiving this event, the client should destroy the
 // wl_fullscreen_shell_mode_feedback object.
-type FullscreenShellModeFeedbackV1ModeFailedEvent struct {
-}
+type FullscreenShellModeFeedbackV1ModeFailedEvent struct{}
 
 func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Opcode() uint16 {
 	return FullscreenShellModeFeedbackV1EventModeFailed
@@ -79,8 +77,7 @@ func (e *FullscreenShellModeFeedbackV1ModeFailedEvent) Since() uint32 { return 1
 //
 // Upon receiving this event, the client should destroy the
 // wl_fullscreen_shell_mode_feedback object.
-type FullscreenShellModeFeedbackV1PresentCancelledEvent struct {
-}
+type FullscreenShellModeFeedbackV1PresentCancelledEvent struct{}
 
 func (e *FullscreenShellModeFeedbackV1PresentCancelledEvent) Opcode() uint16 {
 	return FullscreenShellModeFeedbackV1EventPresentCancelled
@@ -120,12 +117,10 @@ func (o *FullscreenShellModeFeedbackV1) Proxy() *wayland.Proxy {
 func (o *FullscreenShellModeFeedbackV1) OnModeSuccessful(fn FullscreenShellModeFeedbackV1ModeSuccessfulFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventModeSuccessful, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1ModeSuccessfulEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ModeSuccessful", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -134,12 +129,10 @@ func (o *FullscreenShellModeFeedbackV1) OnModeSuccessful(fn FullscreenShellModeF
 func (o *FullscreenShellModeFeedbackV1) OnModeFailed(fn FullscreenShellModeFeedbackV1ModeFailedFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventModeFailed, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1ModeFailedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ModeFailed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -148,12 +141,10 @@ func (o *FullscreenShellModeFeedbackV1) OnModeFailed(fn FullscreenShellModeFeedb
 func (o *FullscreenShellModeFeedbackV1) OnPresentCancelled(fn FullscreenShellModeFeedbackV1PresentCancelledFunc) {
 	o.proxy.RegisterEvent(FullscreenShellModeFeedbackV1EventPresentCancelled, func(r *wire.Reader) {
 		var ev FullscreenShellModeFeedbackV1PresentCancelledEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PresentCancelled", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -164,7 +155,7 @@ func (o *FullscreenShellModeFeedbackV1) OnPresentCancelled(fn FullscreenShellMod
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFullscreenShellModeFeedbackV1(reg, name, min(g.Version,
 // VersionFullscreenShellModeFeedbackV1)), to bind at the highest mutually supported version.
-func BindFullscreenShellModeFeedbackV1(b wayland.Binder, name uint32, version uint32) (*FullscreenShellModeFeedbackV1, error) {
+func BindFullscreenShellModeFeedbackV1(b wayland.Binder, name, version uint32) (*FullscreenShellModeFeedbackV1, error) {
 	if version < 1 || version > VersionFullscreenShellModeFeedbackV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

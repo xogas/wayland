@@ -43,8 +43,7 @@ const (
 //
 // Requesting set_barrier after the fifo object's surface is
 // destroyed will generate a "surface_destroyed" error.
-type FifoV1SetBarrierRequest struct {
-}
+type FifoV1SetBarrierRequest struct{}
 
 func (r *FifoV1SetBarrierRequest) Opcode() uint16 { return FifoV1RequestSetBarrier }
 
@@ -76,8 +75,7 @@ func (r *FifoV1SetBarrierRequest) Since() uint32 { return 1 }
 //
 // Requesting "wait_barrier" after the fifo object's surface is
 // destroyed will generate a "surface_destroyed" error.
-type FifoV1WaitBarrierRequest struct {
-}
+type FifoV1WaitBarrierRequest struct{}
 
 func (r *FifoV1WaitBarrierRequest) Opcode() uint16 { return FifoV1RequestWaitBarrier }
 
@@ -94,8 +92,7 @@ func (r *FifoV1WaitBarrierRequest) Since() uint32 { return 1 }
 //
 // Surface state changes previously made by this protocol are
 // unaffected by this object's destruction.
-type FifoV1DestroyRequest struct {
-}
+type FifoV1DestroyRequest struct{}
 
 func (r *FifoV1DestroyRequest) Opcode() uint16 { return FifoV1RequestDestroy }
 
@@ -193,7 +190,7 @@ func (o *FifoV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFifoV1(reg, name, min(g.Version,
 // VersionFifoV1)), to bind at the highest mutually supported version.
-func BindFifoV1(b wayland.Binder, name uint32, version uint32) (*FifoV1, error) {
+func BindFifoV1(b wayland.Binder, name, version uint32) (*FifoV1, error) {
 	if version < 1 || version > VersionFifoV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

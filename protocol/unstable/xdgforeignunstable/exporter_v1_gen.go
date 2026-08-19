@@ -19,8 +19,7 @@ const (
 //
 // Notify the compositor that the xdg_exporter object will no longer be
 // used.
-type ExporterV1DestroyRequest struct {
-}
+type ExporterV1DestroyRequest struct{}
 
 func (r *ExporterV1DestroyRequest) Opcode() uint16 { return ExporterV1RequestDestroy }
 
@@ -111,11 +110,10 @@ func (o *ExporterV1) Export(surface wire.ObjectID) (*ExportedV1, error) {
 
 	wrapped := NewExportedV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ExporterV1RequestExport, &ExporterV1ExportRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ExporterV1RequestExport, &ExporterV1ExportRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -128,7 +126,7 @@ func (o *ExporterV1) Export(surface wire.ObjectID) (*ExportedV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindExporterV1(reg, name, min(g.Version,
 // VersionExporterV1)), to bind at the highest mutually supported version.
-func BindExporterV1(b wayland.Binder, name uint32, version uint32) (*ExporterV1, error) {
+func BindExporterV1(b wayland.Binder, name, version uint32) (*ExporterV1, error) {
 	if version < 1 || version > VersionExporterV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

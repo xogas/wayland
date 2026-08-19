@@ -55,8 +55,7 @@ const (
 // The zone itself must only be destroyed if no other client
 // is currently referencing it, so this request may only destroy the
 // object reference owned by the client.
-type ZoneV1DestroyRequest struct {
-}
+type ZoneV1DestroyRequest struct{}
 
 func (r *ZoneV1DestroyRequest) Opcode() uint16 { return ZoneV1RequestDestroy }
 
@@ -237,8 +236,7 @@ func (e *ZoneV1HandleEvent) Since() uint32 { return 1 }
 //
 // This allows changes to the xx_zone properties to be seen as
 // atomic, even if they happen via multiple events.
-type ZoneV1DoneEvent struct {
-}
+type ZoneV1DoneEvent struct{}
 
 func (e *ZoneV1DoneEvent) Opcode() uint16 { return ZoneV1EventDone }
 
@@ -407,12 +405,10 @@ func (o *ZoneV1) Proxy() *wayland.Proxy {
 func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventSize, func(r *wire.Reader) {
 		var ev ZoneV1SizeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Size", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -421,12 +417,10 @@ func (o *ZoneV1) OnSize(fn ZoneV1SizeFunc) {
 func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventHandle, func(r *wire.Reader) {
 		var ev ZoneV1HandleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Handle", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -435,12 +429,10 @@ func (o *ZoneV1) OnHandle(fn ZoneV1HandleFunc) {
 func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventDone, func(r *wire.Reader) {
 		var ev ZoneV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -449,12 +441,10 @@ func (o *ZoneV1) OnDone(fn ZoneV1DoneFunc) {
 func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemBlocked, func(r *wire.Reader) {
 		var ev ZoneV1ItemBlockedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ItemBlocked", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -463,12 +453,10 @@ func (o *ZoneV1) OnItemBlocked(fn ZoneV1ItemBlockedFunc) {
 func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemEntered, func(r *wire.Reader) {
 		var ev ZoneV1ItemEnteredEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ItemEntered", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -477,12 +465,10 @@ func (o *ZoneV1) OnItemEntered(fn ZoneV1ItemEnteredFunc) {
 func (o *ZoneV1) OnItemLeft(fn ZoneV1ItemLeftFunc) {
 	o.proxy.RegisterEvent(ZoneV1EventItemLeft, func(r *wire.Reader) {
 		var ev ZoneV1ItemLeftEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ItemLeft", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -578,7 +564,7 @@ func (o *ZoneV1) RemoveItem(item wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindZoneV1(reg, name, min(g.Version,
 // VersionZoneV1)), to bind at the highest mutually supported version.
-func BindZoneV1(b wayland.Binder, name uint32, version uint32) (*ZoneV1, error) {
+func BindZoneV1(b wayland.Binder, name, version uint32) (*ZoneV1, error) {
 	if version < 1 || version > VersionZoneV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -204,10 +204,9 @@ func (o *ImageDescriptionCreatorIccV1) Create() (*ImageDescriptionV1, error) {
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageDescriptionCreatorIccV1RequestCreate, &ImageDescriptionCreatorIccV1CreateRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageDescriptionCreatorIccV1RequestCreate, &ImageDescriptionCreatorIccV1CreateRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -255,7 +254,7 @@ func (o *ImageDescriptionCreatorIccV1) Create() (*ImageDescriptionV1, error) {
 //
 // If ICC file has already been set on this object, the protocol error
 // already_set is raised.
-func (o *ImageDescriptionCreatorIccV1) SetIccFile(iccProfile int, offset uint32, length uint32) error {
+func (o *ImageDescriptionCreatorIccV1) SetIccFile(iccProfile int, offset, length uint32) error {
 	return o.proxy.SendRequest(ImageDescriptionCreatorIccV1RequestSetIccFile, &ImageDescriptionCreatorIccV1SetIccFileRequest{
 		IccProfile: iccProfile,
 		Offset:     offset,
@@ -269,7 +268,7 @@ func (o *ImageDescriptionCreatorIccV1) SetIccFile(iccProfile int, offset uint32,
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageDescriptionCreatorIccV1(reg, name, min(g.Version,
 // VersionImageDescriptionCreatorIccV1)), to bind at the highest mutually supported version.
-func BindImageDescriptionCreatorIccV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionCreatorIccV1, error) {
+func BindImageDescriptionCreatorIccV1(b wayland.Binder, name, version uint32) (*ImageDescriptionCreatorIccV1, error) {
 	if version < 1 || version > VersionImageDescriptionCreatorIccV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

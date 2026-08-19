@@ -23,7 +23,7 @@ func camel(s string) string {
 	if p == "" {
 		return p
 	}
-	// Decapitalize: "ID" -> "id", "IDFoo" -> "idFoo", "FooBar" -> "fooBar".
+	// Lowercase the first letter: "ID" -> "id", "IDFoo" -> "idFoo".
 	var result string
 	if strings.HasPrefix(p, "ID") && (len(p) == 2 || isUpper(rune(p[2]))) {
 		result = "id" + p[2:]
@@ -98,7 +98,7 @@ func autoPrefix(ifaces []Interface) string {
 
 func longestCommonPrefix(a, b string) string {
 	n := min(len(a), len(b))
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if a[i] != b[i] {
 			return a[:i]
 		}

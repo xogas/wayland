@@ -69,8 +69,7 @@ const (
 // Destroying a bound xdg_shell object while there are surfaces
 // still alive created by this xdg_shell object instance is illegal
 // and will result in a protocol error.
-type ShellDestroyRequest struct {
-}
+type ShellDestroyRequest struct{}
 
 func (r *ShellDestroyRequest) Opcode() uint16 { return ShellRequestDestroy }
 
@@ -264,12 +263,10 @@ func (o *Shell) Proxy() *wayland.Proxy {
 func (o *Shell) OnPing(fn ShellPingFunc) {
 	o.proxy.RegisterEvent(ShellEventPing, func(r *wire.Reader) {
 		var ev ShellPingEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -322,11 +319,10 @@ func (o *Shell) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgSurface, &ShellGetXdgSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgSurface, &ShellGetXdgSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -346,14 +342,14 @@ func (o *Shell) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 //
 // See the documentation of xdg_popup for more details about what an
 // xdg_popup is and how it is used.
-func (o *Shell) GetXdgPopup(surface wire.ObjectID, parent wire.ObjectID, seat wire.ObjectID, serial uint32, x int32, y int32) (*Popup, error) {
+func (o *Shell) GetXdgPopup(surface, parent, seat wire.ObjectID, serial uint32, x, y int32) (*Popup, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewPopup(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgPopup, &ShellGetXdgPopupRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellRequestGetXdgPopup, &ShellGetXdgPopupRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
 		Parent:  parent,
@@ -361,8 +357,7 @@ func (o *Shell) GetXdgPopup(surface wire.ObjectID, parent wire.ObjectID, seat wi
 		Serial:  serial,
 		X:       x,
 		Y:       y,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -385,7 +380,7 @@ func (o *Shell) Pong(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShell(reg, name, min(g.Version,
 // VersionShell)), to bind at the highest mutually supported version.
-func BindShell(b wayland.Binder, name uint32, version uint32) (*Shell, error) {
+func BindShell(b wayland.Binder, name, version uint32) (*Shell, error) {
 	if version < 1 || version > VersionShell {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -32,8 +32,7 @@ func init() {
 }
 
 // PointerGestureHoldV1DestroyRequest destroy the hold gesture object.
-type PointerGestureHoldV1DestroyRequest struct {
-}
+type PointerGestureHoldV1DestroyRequest struct{}
 
 func (r *PointerGestureHoldV1DestroyRequest) Opcode() uint16 {
 	return PointerGestureHoldV1RequestDestroy
@@ -171,12 +170,10 @@ func (o *PointerGestureHoldV1) Proxy() *wayland.Proxy {
 func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventBegin, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1BeginEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Begin", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -185,12 +182,10 @@ func (o *PointerGestureHoldV1) OnBegin(fn PointerGestureHoldV1BeginFunc) {
 func (o *PointerGestureHoldV1) OnEnd(fn PointerGestureHoldV1EndFunc) {
 	o.proxy.RegisterEvent(PointerGestureHoldV1EventEnd, func(r *wire.Reader) {
 		var ev PointerGestureHoldV1EndEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("End", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -216,7 +211,7 @@ func (o *PointerGestureHoldV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerGestureHoldV1(reg, name, min(g.Version,
 // VersionPointerGestureHoldV1)), to bind at the highest mutually supported version.
-func BindPointerGestureHoldV1(b wayland.Binder, name uint32, version uint32) (*PointerGestureHoldV1, error) {
+func BindPointerGestureHoldV1(b wayland.Binder, name, version uint32) (*PointerGestureHoldV1, error) {
 	if version < 1 || version > VersionPointerGestureHoldV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

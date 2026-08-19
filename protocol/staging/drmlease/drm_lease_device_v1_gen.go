@@ -66,8 +66,7 @@ func (r *DrmLeaseDeviceV1CreateLeaseRequestRequest) Since() uint32 { return 1 }
 // connector events before the released event. The client must not send any
 // requests after this one, doing so will raise a wl_display error.
 // Existing connectors, lease request and leases will not be affected.
-type DrmLeaseDeviceV1ReleaseRequest struct {
-}
+type DrmLeaseDeviceV1ReleaseRequest struct{}
 
 func (r *DrmLeaseDeviceV1ReleaseRequest) Opcode() uint16 { return DrmLeaseDeviceV1RequestRelease }
 
@@ -133,8 +132,7 @@ func (e *DrmLeaseDeviceV1ConnectorEvent) Since() uint32 { return 1 }
 // change or when a leased connector becomes available again. It will
 // similarly send this event to group wp_drm_lease_connector_v1.withdrawn
 // events of connectors of this device.
-type DrmLeaseDeviceV1DoneEvent struct {
-}
+type DrmLeaseDeviceV1DoneEvent struct{}
 
 func (e *DrmLeaseDeviceV1DoneEvent) Opcode() uint16 { return DrmLeaseDeviceV1EventDone }
 
@@ -151,8 +149,7 @@ func (e *DrmLeaseDeviceV1DoneEvent) Since() uint32 { return 1 }
 // The compositor will destroy this object immediately after sending the
 // event and it will become invalid. The client should release any
 // resources associated with this device after receiving this event.
-type DrmLeaseDeviceV1ReleasedEvent struct {
-}
+type DrmLeaseDeviceV1ReleasedEvent struct{}
 
 func (e *DrmLeaseDeviceV1ReleasedEvent) Opcode() uint16 { return DrmLeaseDeviceV1EventReleased }
 
@@ -225,12 +222,10 @@ func (o *DrmLeaseDeviceV1) Proxy() *wayland.Proxy {
 func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDrmFd, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DrmFdEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DrmFd", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -239,7 +234,6 @@ func (o *DrmLeaseDeviceV1) OnDrmFd(fn DrmLeaseDeviceV1DrmFdFunc) {
 func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventConnector, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ConnectorEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Connector", err)
@@ -249,7 +243,6 @@ func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewDrmLeaseConnectorV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -258,12 +251,10 @@ func (o *DrmLeaseDeviceV1) OnConnector(fn DrmLeaseDeviceV1ConnectorFunc) {
 func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventDone, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -272,12 +263,10 @@ func (o *DrmLeaseDeviceV1) OnDone(fn DrmLeaseDeviceV1DoneFunc) {
 func (o *DrmLeaseDeviceV1) OnReleased(fn DrmLeaseDeviceV1ReleasedFunc) {
 	o.proxy.RegisterEvent(DrmLeaseDeviceV1EventReleased, func(r *wire.Reader) {
 		var ev DrmLeaseDeviceV1ReleasedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Released", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -294,10 +283,9 @@ func (o *DrmLeaseDeviceV1) CreateLeaseRequest() (*DrmLeaseRequestV1, error) {
 
 	wrapped := NewDrmLeaseRequestV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DrmLeaseDeviceV1RequestCreateLeaseRequest, &DrmLeaseDeviceV1CreateLeaseRequestRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DrmLeaseDeviceV1RequestCreateLeaseRequest, &DrmLeaseDeviceV1CreateLeaseRequestRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -322,7 +310,7 @@ func (o *DrmLeaseDeviceV1) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDrmLeaseDeviceV1(reg, name, min(g.Version,
 // VersionDrmLeaseDeviceV1)), to bind at the highest mutually supported version.
-func BindDrmLeaseDeviceV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseDeviceV1, error) {
+func BindDrmLeaseDeviceV1(b wayland.Binder, name, version uint32) (*DrmLeaseDeviceV1, error) {
 	if version < 1 || version > VersionDrmLeaseDeviceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

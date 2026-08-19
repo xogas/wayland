@@ -20,8 +20,7 @@ const (
 // This informs the compositor that the session lock manager object will
 // no longer be used. Existing objects created through this interface
 // remain valid.
-type SessionLockManagerV1DestroyRequest struct {
-}
+type SessionLockManagerV1DestroyRequest struct{}
 
 func (r *SessionLockManagerV1DestroyRequest) Opcode() uint16 {
 	return SessionLockManagerV1RequestDestroy
@@ -100,10 +99,9 @@ func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {
 
 	wrapped := NewSessionLockV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SessionLockManagerV1RequestLock, &SessionLockManagerV1LockRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SessionLockManagerV1RequestLock, &SessionLockManagerV1LockRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func (o *SessionLockManagerV1) Lock() (*SessionLockV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSessionLockManagerV1(reg, name, min(g.Version,
 // VersionSessionLockManagerV1)), to bind at the highest mutually supported version.
-func BindSessionLockManagerV1(b wayland.Binder, name uint32, version uint32) (*SessionLockManagerV1, error) {
+func BindSessionLockManagerV1(b wayland.Binder, name, version uint32) (*SessionLockManagerV1, error) {
 	if version < 1 || version > VersionSessionLockManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

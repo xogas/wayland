@@ -144,8 +144,7 @@ func (r *SeatGetTouchRequest) Since() uint32 { return 1 }
 //
 // Using this request a client can tell the server that it is not going to
 // use the seat object anymore.
-type SeatReleaseRequest struct {
-}
+type SeatReleaseRequest struct{}
 
 func (r *SeatReleaseRequest) Opcode() uint16 { return SeatRequestRelease }
 
@@ -267,12 +266,10 @@ func (o *Seat) Proxy() *Proxy {
 func (o *Seat) OnCapabilities(fn SeatCapabilitiesFunc) {
 	o.proxy.RegisterEvent(SeatEventCapabilities, func(r *wire.Reader) {
 		var ev SeatCapabilitiesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -281,12 +278,10 @@ func (o *Seat) OnCapabilities(fn SeatCapabilitiesFunc) {
 func (o *Seat) OnName(fn SeatNameFunc) {
 	o.proxy.RegisterEvent(SeatEventName, func(r *wire.Reader) {
 		var ev SeatNameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -308,10 +303,9 @@ func (o *Seat) GetPointer() (*Pointer, error) {
 
 	wrapped := NewPointer(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetPointer, &SeatGetPointerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SeatRequestGetPointer, &SeatGetPointerRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -335,10 +329,9 @@ func (o *Seat) GetKeyboard() (*Keyboard, error) {
 
 	wrapped := NewKeyboard(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetKeyboard, &SeatGetKeyboardRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SeatRequestGetKeyboard, &SeatGetKeyboardRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -362,10 +355,9 @@ func (o *Seat) GetTouch() (*Touch, error) {
 
 	wrapped := NewTouch(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SeatRequestGetTouch, &SeatGetTouchRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SeatRequestGetTouch, &SeatGetTouchRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -396,7 +388,7 @@ func (o *Seat) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSeat(reg, name, min(g.Version,
 // VersionSeat)), to bind at the highest mutually supported version.
-func BindSeat(b Binder, name uint32, version uint32) (*Seat, error) {
+func BindSeat(b Binder, name, version uint32) (*Seat, error) {
 	if version < 1 || version > VersionSeat {
 		return nil, ErrVersionMismatch
 	}

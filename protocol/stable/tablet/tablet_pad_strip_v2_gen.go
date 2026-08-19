@@ -96,8 +96,7 @@ func (r *TabletPadStripV2SetFeedbackRequest) Since() uint32 { return 1 }
 // TabletPadStripV2DestroyRequest destroy the strip object.
 //
 // This destroys the client's resource for this strip object.
-type TabletPadStripV2DestroyRequest struct {
-}
+type TabletPadStripV2DestroyRequest struct{}
 
 func (r *TabletPadStripV2DestroyRequest) Opcode() uint16 { return TabletPadStripV2RequestDestroy }
 
@@ -176,8 +175,7 @@ func (e *TabletPadStripV2PositionEvent) Since() uint32 { return 1 }
 //
 // Any zwp_tablet_pad_strip_v2.position events with the same source after this
 // event should be considered as the start of a new interaction.
-type TabletPadStripV2StopEvent struct {
-}
+type TabletPadStripV2StopEvent struct{}
 
 func (e *TabletPadStripV2StopEvent) Opcode() uint16 { return TabletPadStripV2EventStop }
 
@@ -259,12 +257,10 @@ func (o *TabletPadStripV2) Proxy() *wayland.Proxy {
 func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventSource, func(r *wire.Reader) {
 		var ev TabletPadStripV2SourceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Source", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -273,12 +269,10 @@ func (o *TabletPadStripV2) OnSource(fn TabletPadStripV2SourceFunc) {
 func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventPosition, func(r *wire.Reader) {
 		var ev TabletPadStripV2PositionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Position", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -287,12 +281,10 @@ func (o *TabletPadStripV2) OnPosition(fn TabletPadStripV2PositionFunc) {
 func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventStop, func(r *wire.Reader) {
 		var ev TabletPadStripV2StopEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Stop", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -301,12 +293,10 @@ func (o *TabletPadStripV2) OnStop(fn TabletPadStripV2StopFunc) {
 func (o *TabletPadStripV2) OnFrame(fn TabletPadStripV2FrameFunc) {
 	o.proxy.RegisterEvent(TabletPadStripV2EventFrame, func(r *wire.Reader) {
 		var ev TabletPadStripV2FrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -359,7 +349,7 @@ func (o *TabletPadStripV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletPadStripV2(reg, name, min(g.Version,
 // VersionTabletPadStripV2)), to bind at the highest mutually supported version.
-func BindTabletPadStripV2(b wayland.Binder, name uint32, version uint32) (*TabletPadStripV2, error) {
+func BindTabletPadStripV2(b wayland.Binder, name, version uint32) (*TabletPadStripV2, error) {
 	if version < 1 || version > VersionTabletPadStripV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -27,8 +27,7 @@ const (
 // Informs the server that the client will not be using this protocol
 // object anymore. This does not affect any other objects,
 // wp_fractional_scale_v1 objects included.
-type FractionalScaleManagerV1DestroyRequest struct {
-}
+type FractionalScaleManagerV1DestroyRequest struct{}
 
 func (r *FractionalScaleManagerV1DestroyRequest) Opcode() uint16 {
 	return FractionalScaleManagerV1RequestDestroy
@@ -115,11 +114,10 @@ func (o *FractionalScaleManagerV1) GetFractionalScale(surface wire.ObjectID) (*F
 
 	wrapped := NewFractionalScaleV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), FractionalScaleManagerV1RequestGetFractionalScale, &FractionalScaleManagerV1GetFractionalScaleRequest{
+	if err := conn.SendRequest(o.proxy.ID(), FractionalScaleManagerV1RequestGetFractionalScale, &FractionalScaleManagerV1GetFractionalScaleRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -132,7 +130,7 @@ func (o *FractionalScaleManagerV1) GetFractionalScale(surface wire.ObjectID) (*F
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFractionalScaleManagerV1(reg, name, min(g.Version,
 // VersionFractionalScaleManagerV1)), to bind at the highest mutually supported version.
-func BindFractionalScaleManagerV1(b wayland.Binder, name uint32, version uint32) (*FractionalScaleManagerV1, error) {
+func BindFractionalScaleManagerV1(b wayland.Binder, name, version uint32) (*FractionalScaleManagerV1, error) {
 	if version < 1 || version > VersionFractionalScaleManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -45,8 +45,7 @@ func (r *TabletManagerV2GetTabletSeatRequest) Since() uint32 { return 1 }
 //
 // Destroy the zwp_tablet_manager_v2 object. Objects created from this
 // object are unaffected and should be destroyed separately.
-type TabletManagerV2DestroyRequest struct {
-}
+type TabletManagerV2DestroyRequest struct{}
 
 func (r *TabletManagerV2DestroyRequest) Opcode() uint16 { return TabletManagerV2RequestDestroy }
 
@@ -86,11 +85,10 @@ func (o *TabletManagerV2) GetTabletSeat(seat wire.ObjectID) (*TabletSeatV2, erro
 
 	wrapped := NewTabletSeatV2(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), TabletManagerV2RequestGetTabletSeat, &TabletManagerV2GetTabletSeatRequest{
+	if err := conn.SendRequest(o.proxy.ID(), TabletManagerV2RequestGetTabletSeat, &TabletManagerV2GetTabletSeatRequest{
 		TabletSeat: wire.NewID(p.ID()),
 		Seat:       seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -118,7 +116,7 @@ func (o *TabletManagerV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletManagerV2(reg, name, min(g.Version,
 // VersionTabletManagerV2)), to bind at the highest mutually supported version.
-func BindTabletManagerV2(b wayland.Binder, name uint32, version uint32) (*TabletManagerV2, error) {
+func BindTabletManagerV2(b wayland.Binder, name, version uint32) (*TabletManagerV2, error) {
 	if version < 1 || version > VersionTabletManagerV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

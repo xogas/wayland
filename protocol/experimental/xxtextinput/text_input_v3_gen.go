@@ -207,8 +207,7 @@ const (
 //
 // Destroy the xx_text_input object. Also disables all surfaces enabled
 // through this xx_text_input object.
-type TextInputV3DestroyRequest struct {
-}
+type TextInputV3DestroyRequest struct{}
 
 func (r *TextInputV3DestroyRequest) Opcode() uint16 { return TextInputV3RequestDestroy }
 
@@ -250,8 +249,7 @@ func (r *TextInputV3DestroyRequest) Since() uint32 { return 1 }
 //
 // The changes must be applied by the compositor after issuing a
 // xx_text_input_v3.commit request.
-type TextInputV3EnableRequest struct {
-}
+type TextInputV3EnableRequest struct{}
 
 func (r *TextInputV3EnableRequest) Opcode() uint16 { return TextInputV3RequestEnable }
 
@@ -268,8 +266,7 @@ func (r *TextInputV3EnableRequest) Since() uint32 { return 1 }
 //
 // State set with this request is double-buffered. It will get applied on
 // the next xx_text_input_v3.commit request.
-type TextInputV3DisableRequest struct {
-}
+type TextInputV3DisableRequest struct{}
 
 func (r *TextInputV3DisableRequest) Opcode() uint16 { return TextInputV3RequestDisable }
 
@@ -475,8 +472,7 @@ func (r *TextInputV3SetCursorRectangleRequest) Since() uint32 { return 1 }
 // The compositor must count the number of commit requests coming from
 // each xx_text_input_v3 object and use the count as the serial in done
 // events.
-type TextInputV3CommitRequest struct {
-}
+type TextInputV3CommitRequest struct{}
 
 func (r *TextInputV3CommitRequest) Opcode() uint16 { return TextInputV3RequestCommit }
 
@@ -923,12 +919,10 @@ func (o *TextInputV3) Proxy() *wayland.Proxy {
 func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventEnter, func(r *wire.Reader) {
 		var ev TextInputV3EnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -937,12 +931,10 @@ func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLeave, func(r *wire.Reader) {
 		var ev TextInputV3LeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -951,12 +943,10 @@ func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV3PreeditStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -965,12 +955,10 @@ func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV3CommitStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CommitString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -979,12 +967,10 @@ func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV3DeleteSurroundingTextEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DeleteSurroundingText", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -993,12 +979,10 @@ func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTex
 func (o *TextInputV3) OnMoveCursor(fn TextInputV3MoveCursorFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventMoveCursor, func(r *wire.Reader) {
 		var ev TextInputV3MoveCursorEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("MoveCursor", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1007,12 +991,10 @@ func (o *TextInputV3) OnMoveCursor(fn TextInputV3MoveCursorFunc) {
 func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDone, func(r *wire.Reader) {
 		var ev TextInputV3DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1021,12 +1003,10 @@ func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 func (o *TextInputV3) OnPerformAction(fn TextInputV3PerformActionFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPerformAction, func(r *wire.Reader) {
 		var ev TextInputV3PerformActionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PerformAction", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1126,7 +1106,7 @@ func (o *TextInputV3) Disable() error {
 // The initial state for affected fields is empty, meaning that the text
 // input does not support sending surrounding text. If the empty values
 // get applied, subsequent attempts to change them may have no effect.
-func (o *TextInputV3) SetSurroundingText(text string, cursor int32, anchor int32) error {
+func (o *TextInputV3) SetSurroundingText(text string, cursor, anchor int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetSurroundingText, &TextInputV3SetSurroundingTextRequest{
 		Text:   text,
 		Cursor: cursor,
@@ -1195,7 +1175,7 @@ func (o *TextInputV3) SetContentType(hint TextInputV3ContentHint, purpose TextIn
 // the text input does not support describing the cursor area. If the
 // empty values get applied, subsequent attempts to change them may have
 // no effect.
-func (o *TextInputV3) SetCursorRectangle(x int32, y int32, width int32, height int32) error {
+func (o *TextInputV3) SetCursorRectangle(x, y, width, height int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetCursorRectangle, &TextInputV3SetCursorRectangleRequest{
 		X:      x,
 		Y:      y,
@@ -1279,7 +1259,7 @@ func (o *TextInputV3) AnnounceSupportedFeatures(features TextInputV3SupportedFea
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTextInputV3(reg, name, min(g.Version,
 // VersionTextInputV3)), to bind at the highest mutually supported version.
-func BindTextInputV3(b wayland.Binder, name uint32, version uint32) (*TextInputV3, error) {
+func BindTextInputV3(b wayland.Binder, name, version uint32) (*TextInputV3, error) {
 	if version < 1 || version > VersionTextInputV3 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -228,8 +228,7 @@ const (
 //
 // Destroy the wp_text_input object. Also disables all surfaces enabled
 // through this wp_text_input object.
-type TextInputV3DestroyRequest struct {
-}
+type TextInputV3DestroyRequest struct{}
 
 func (r *TextInputV3DestroyRequest) Opcode() uint16 { return TextInputV3RequestDestroy }
 
@@ -269,8 +268,7 @@ func (r *TextInputV3DestroyRequest) Since() uint32 { return 1 }
 //
 // The changes must be applied by the compositor after issuing a
 // zwp_text_input_v3.commit request.
-type TextInputV3EnableRequest struct {
-}
+type TextInputV3EnableRequest struct{}
 
 func (r *TextInputV3EnableRequest) Opcode() uint16 { return TextInputV3RequestEnable }
 
@@ -287,8 +285,7 @@ func (r *TextInputV3EnableRequest) Since() uint32 { return 1 }
 //
 // State set with this request is double-buffered. It will get applied on
 // the next zwp_text_input_v3.commit request.
-type TextInputV3DisableRequest struct {
-}
+type TextInputV3DisableRequest struct{}
 
 func (r *TextInputV3DisableRequest) Opcode() uint16 { return TextInputV3RequestDisable }
 
@@ -507,8 +504,7 @@ func (r *TextInputV3SetCursorRectangleRequest) Since() uint32 { return 1 }
 // The compositor must count the number of commit requests coming from
 // each zwp_text_input_v3 object and use the count as the serial in done
 // events.
-type TextInputV3CommitRequest struct {
-}
+type TextInputV3CommitRequest struct{}
 
 func (r *TextInputV3CommitRequest) Opcode() uint16 { return TextInputV3RequestCommit }
 
@@ -555,8 +551,7 @@ func (r *TextInputV3SetAvailableActionsRequest) Since() uint32 { return 2 }
 // This request only hints the desired interaction pattern from the
 // client side, and its effect may be ignored by compositors given
 // other environmental factors. Repeated calls will be ignored.
-type TextInputV3ShowInputPanelRequest struct {
-}
+type TextInputV3ShowInputPanelRequest struct{}
 
 func (r *TextInputV3ShowInputPanelRequest) Opcode() uint16 { return TextInputV3RequestShowInputPanel }
 
@@ -573,8 +568,7 @@ func (r *TextInputV3ShowInputPanelRequest) Since() uint32 { return 2 }
 // This request only hints the desired interaction pattern from the
 // client side, and its effect may be ignored by compositors given
 // other environmental factors. Repeated calls will be ignored.
-type TextInputV3HideInputPanelRequest struct {
-}
+type TextInputV3HideInputPanelRequest struct{}
 
 func (r *TextInputV3HideInputPanelRequest) Opcode() uint16 { return TextInputV3RequestHideInputPanel }
 
@@ -997,12 +991,10 @@ func (o *TextInputV3) Proxy() *wayland.Proxy {
 func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventEnter, func(r *wire.Reader) {
 		var ev TextInputV3EnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1011,12 +1003,10 @@ func (o *TextInputV3) OnEnter(fn TextInputV3EnterFunc) {
 func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLeave, func(r *wire.Reader) {
 		var ev TextInputV3LeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1025,12 +1015,10 @@ func (o *TextInputV3) OnLeave(fn TextInputV3LeaveFunc) {
 func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditString, func(r *wire.Reader) {
 		var ev TextInputV3PreeditStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1039,12 +1027,10 @@ func (o *TextInputV3) OnPreeditString(fn TextInputV3PreeditStringFunc) {
 func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventCommitString, func(r *wire.Reader) {
 		var ev TextInputV3CommitStringEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("CommitString", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1053,12 +1039,10 @@ func (o *TextInputV3) OnCommitString(fn TextInputV3CommitStringFunc) {
 func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTextFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDeleteSurroundingText, func(r *wire.Reader) {
 		var ev TextInputV3DeleteSurroundingTextEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DeleteSurroundingText", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1067,12 +1051,10 @@ func (o *TextInputV3) OnDeleteSurroundingText(fn TextInputV3DeleteSurroundingTex
 func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventDone, func(r *wire.Reader) {
 		var ev TextInputV3DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1081,12 +1063,10 @@ func (o *TextInputV3) OnDone(fn TextInputV3DoneFunc) {
 func (o *TextInputV3) OnAction(fn TextInputV3ActionFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventAction, func(r *wire.Reader) {
 		var ev TextInputV3ActionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1095,12 +1075,10 @@ func (o *TextInputV3) OnAction(fn TextInputV3ActionFunc) {
 func (o *TextInputV3) OnLanguage(fn TextInputV3LanguageFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventLanguage, func(r *wire.Reader) {
 		var ev TextInputV3LanguageEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Language", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1109,12 +1087,10 @@ func (o *TextInputV3) OnLanguage(fn TextInputV3LanguageFunc) {
 func (o *TextInputV3) OnPreeditHint(fn TextInputV3PreeditHintFunc) {
 	o.proxy.RegisterEvent(TextInputV3EventPreeditHint, func(r *wire.Reader) {
 		var ev TextInputV3PreeditHintEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PreeditHint", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1212,7 +1188,7 @@ func (o *TextInputV3) Disable() error {
 // The initial state for affected fields is empty, meaning that the text
 // input does not support sending surrounding text. If the empty values
 // get applied, subsequent attempts to change them may have no effect.
-func (o *TextInputV3) SetSurroundingText(text string, cursor int32, anchor int32) error {
+func (o *TextInputV3) SetSurroundingText(text string, cursor, anchor int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetSurroundingText, &TextInputV3SetSurroundingTextRequest{
 		Text:   text,
 		Cursor: cursor,
@@ -1294,7 +1270,7 @@ func (o *TextInputV3) SetContentType(hint TextInputV3ContentHint, purpose TextIn
 // This double stage application allows the compositor to position
 // the input method popup in the same frame as the contents
 // of the text on the surface are updated.
-func (o *TextInputV3) SetCursorRectangle(x int32, y int32, width int32, height int32) error {
+func (o *TextInputV3) SetCursorRectangle(x, y, width, height int32) error {
 	return o.proxy.SendRequest(TextInputV3RequestSetCursorRectangle, &TextInputV3SetCursorRectangleRequest{
 		X:      x,
 		Y:      y,
@@ -1387,7 +1363,7 @@ func (o *TextInputV3) HideInputPanel() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTextInputV3(reg, name, min(g.Version,
 // VersionTextInputV3)), to bind at the highest mutually supported version.
-func BindTextInputV3(b wayland.Binder, name uint32, version uint32) (*TextInputV3, error) {
+func BindTextInputV3(b wayland.Binder, name, version uint32) (*TextInputV3, error) {
 	if version < 1 || version > VersionTextInputV3 {
 		return nil, wayland.ErrVersionMismatch
 	}

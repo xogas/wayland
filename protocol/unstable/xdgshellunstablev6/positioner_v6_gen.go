@@ -160,8 +160,7 @@ const (
 // PositionerV6DestroyRequest destroy the xdg_positioner object.
 //
 // Notify the compositor that the xdg_positioner will no longer be used.
-type PositionerV6DestroyRequest struct {
-}
+type PositionerV6DestroyRequest struct{}
 
 func (r *PositionerV6DestroyRequest) Opcode() uint16 { return PositionerV6RequestDestroy }
 
@@ -420,7 +419,7 @@ func (o *PositionerV6) Destroy() error {
 // window geometry. See xdg_surface.set_window_geometry.
 //
 // If a zero or negative size is set the invalid_input error is raised.
-func (o *PositionerV6) SetSize(width int32, height int32) error {
+func (o *PositionerV6) SetSize(width, height int32) error {
 	return o.proxy.SendRequest(PositionerV6RequestSetSize, &PositionerV6SetSizeRequest{
 		Width:  width,
 		Height: height,
@@ -439,7 +438,7 @@ func (o *PositionerV6) SetSize(width int32, height int32) error {
 // positioned child's parent surface.
 //
 // If a zero or negative size is set the invalid_input error is raised.
-func (o *PositionerV6) SetAnchorRect(x int32, y int32, width int32, height int32) error {
+func (o *PositionerV6) SetAnchorRect(x, y, width, height int32) error {
 	return o.proxy.SendRequest(PositionerV6RequestSetAnchorRect, &PositionerV6SetAnchorRectRequest{
 		X:      x,
 		Y:      y,
@@ -517,7 +516,7 @@ func (o *PositionerV6) SetConstraintAdjustment(constraintAdjustment uint32) erro
 // An example use case is placing a popup menu on top of a user interface
 // element, while aligning the user interface element of the parent surface
 // with some user interface element placed somewhere in the popup surface.
-func (o *PositionerV6) SetOffset(x int32, y int32) error {
+func (o *PositionerV6) SetOffset(x, y int32) error {
 	return o.proxy.SendRequest(PositionerV6RequestSetOffset, &PositionerV6SetOffsetRequest{
 		X: x,
 		Y: y,
@@ -530,7 +529,7 @@ func (o *PositionerV6) SetOffset(x int32, y int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPositionerV6(reg, name, min(g.Version,
 // VersionPositionerV6)), to bind at the highest mutually supported version.
-func BindPositionerV6(b wayland.Binder, name uint32, version uint32) (*PositionerV6, error) {
+func BindPositionerV6(b wayland.Binder, name, version uint32) (*PositionerV6, error) {
 	if version < 1 || version > VersionPositionerV6 {
 		return nil, wayland.ErrVersionMismatch
 	}

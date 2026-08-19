@@ -34,8 +34,7 @@ func init() {
 //
 // Destroy the object. This has no effect window management of the
 // associated toplevel.
-type ToplevelSessionV1DestroyRequest struct {
-}
+type ToplevelSessionV1DestroyRequest struct{}
 
 func (r *ToplevelSessionV1DestroyRequest) Opcode() uint16 { return ToplevelSessionV1RequestDestroy }
 
@@ -51,8 +50,7 @@ func (r *ToplevelSessionV1DestroyRequest) Since() uint32 { return 1 }
 // xx_toplevel_session_v1 object inert. The compositor should remove any
 // data related to the toplevel in the corresponding session from its internal
 // storage.
-type ToplevelSessionV1RemoveRequest struct {
-}
+type ToplevelSessionV1RemoveRequest struct{}
 
 func (r *ToplevelSessionV1RemoveRequest) Opcode() uint16 { return ToplevelSessionV1RequestRemove }
 
@@ -108,12 +106,10 @@ func (o *ToplevelSessionV1) Proxy() *wayland.Proxy {
 func (o *ToplevelSessionV1) OnRestored(fn ToplevelSessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(ToplevelSessionV1EventRestored, func(r *wire.Reader) {
 		var ev ToplevelSessionV1RestoredEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Restored", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -156,7 +152,7 @@ func (o *ToplevelSessionV1) Remove() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelSessionV1(reg, name, min(g.Version,
 // VersionToplevelSessionV1)), to bind at the highest mutually supported version.
-func BindToplevelSessionV1(b wayland.Binder, name uint32, version uint32) (*ToplevelSessionV1, error) {
+func BindToplevelSessionV1(b wayland.Binder, name, version uint32) (*ToplevelSessionV1, error) {
 	if version < 1 || version > VersionToplevelSessionV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

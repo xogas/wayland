@@ -41,8 +41,7 @@ func init() {
 // further toplevel events until the stop request is processed.
 // The client should wait for a ext_foreign_toplevel_list_v1.finished
 // event before destroying this object.
-type ForeignToplevelListV1StopRequest struct {
-}
+type ForeignToplevelListV1StopRequest struct{}
 
 func (r *ForeignToplevelListV1StopRequest) Opcode() uint16 { return ForeignToplevelListV1RequestStop }
 
@@ -61,8 +60,7 @@ func (r *ForeignToplevelListV1StopRequest) Since() uint32 { return 1 }
 // If a client wishes to destroy this object it should send a
 // ext_foreign_toplevel_list_v1.stop request and wait for a ext_foreign_toplevel_list_v1.finished
 // event, then destroy the handles and then this object.
-type ForeignToplevelListV1DestroyRequest struct {
-}
+type ForeignToplevelListV1DestroyRequest struct{}
 
 func (r *ForeignToplevelListV1DestroyRequest) Opcode() uint16 {
 	return ForeignToplevelListV1RequestDestroy
@@ -101,8 +99,7 @@ func (e *ForeignToplevelListV1ToplevelEvent) Since() uint32 { return 1 }
 // See ext_foreign_toplevel_list_v1.destroy for more information.
 //
 // The compositor must not send any more toplevel events after this event.
-type ForeignToplevelListV1FinishedEvent struct {
-}
+type ForeignToplevelListV1FinishedEvent struct{}
 
 func (e *ForeignToplevelListV1FinishedEvent) Opcode() uint16 {
 	return ForeignToplevelListV1EventFinished
@@ -157,7 +154,6 @@ func (o *ForeignToplevelListV1) Proxy() *wayland.Proxy {
 func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventToplevel, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1ToplevelEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Toplevel", err)
@@ -167,7 +163,6 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Toplevel = NewForeignToplevelHandleV1(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -176,12 +171,10 @@ func (o *ForeignToplevelListV1) OnToplevel(fn ForeignToplevelListV1ToplevelFunc)
 func (o *ForeignToplevelListV1) OnFinished(fn ForeignToplevelListV1FinishedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelListV1EventFinished, func(r *wire.Reader) {
 		var ev ForeignToplevelListV1FinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Finished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -225,7 +218,7 @@ func (o *ForeignToplevelListV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindForeignToplevelListV1(reg, name, min(g.Version,
 // VersionForeignToplevelListV1)), to bind at the highest mutually supported version.
-func BindForeignToplevelListV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelListV1, error) {
+func BindForeignToplevelListV1(b wayland.Binder, name, version uint32) (*ForeignToplevelListV1, error) {
 	if version < 1 || version > VersionForeignToplevelListV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

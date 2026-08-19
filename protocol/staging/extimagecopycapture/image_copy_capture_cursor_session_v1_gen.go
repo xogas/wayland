@@ -50,8 +50,7 @@ const (
 //
 // This request doesn't affect ext_image_copy_capture_frame_v1 objects created by
 // this object.
-type ImageCopyCaptureCursorSessionV1DestroyRequest struct {
-}
+type ImageCopyCaptureCursorSessionV1DestroyRequest struct{}
 
 func (r *ImageCopyCaptureCursorSessionV1DestroyRequest) Opcode() uint16 {
 	return ImageCopyCaptureCursorSessionV1RequestDestroy
@@ -98,8 +97,7 @@ func (r *ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest) Since() uint32
 // The cursor enters the captured area when the cursor image intersects
 // with the captured area. Note, this is different from e.g.
 // wl_pointer.enter.
-type ImageCopyCaptureCursorSessionV1EnterEvent struct {
-}
+type ImageCopyCaptureCursorSessionV1EnterEvent struct{}
 
 func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Opcode() uint16 {
 	return ImageCopyCaptureCursorSessionV1EventEnter
@@ -116,8 +114,7 @@ func (e *ImageCopyCaptureCursorSessionV1EnterEvent) Since() uint32 { return 1 }
 // Sent when a cursor leaves the captured area. No "position" or "hotspot"
 // event is generated for the cursor until the cursor enters the captured
 // area again.
-type ImageCopyCaptureCursorSessionV1LeaveEvent struct {
-}
+type ImageCopyCaptureCursorSessionV1LeaveEvent struct{}
 
 func (e *ImageCopyCaptureCursorSessionV1LeaveEvent) Opcode() uint16 {
 	return ImageCopyCaptureCursorSessionV1EventLeave
@@ -239,12 +236,10 @@ func (o *ImageCopyCaptureCursorSessionV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessionV1EnterFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventEnter, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1EnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -253,12 +248,10 @@ func (o *ImageCopyCaptureCursorSessionV1) OnEnter(fn ImageCopyCaptureCursorSessi
 func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessionV1LeaveFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventLeave, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1LeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -267,12 +260,10 @@ func (o *ImageCopyCaptureCursorSessionV1) OnLeave(fn ImageCopyCaptureCursorSessi
 func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSessionV1PositionFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventPosition, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1PositionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Position", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -281,12 +272,10 @@ func (o *ImageCopyCaptureCursorSessionV1) OnPosition(fn ImageCopyCaptureCursorSe
 func (o *ImageCopyCaptureCursorSessionV1) OnHotspot(fn ImageCopyCaptureCursorSessionV1HotspotFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureCursorSessionV1EventHotspot, func(r *wire.Reader) {
 		var ev ImageCopyCaptureCursorSessionV1HotspotEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Hotspot", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -325,10 +314,9 @@ func (o *ImageCopyCaptureCursorSessionV1) GetCaptureSession() (*ImageCopyCapture
 
 	wrapped := NewImageCopyCaptureSessionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureCursorSessionV1RequestGetCaptureSession, &ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureCursorSessionV1RequestGetCaptureSession, &ImageCopyCaptureCursorSessionV1GetCaptureSessionRequest{
 		Session: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -341,7 +329,7 @@ func (o *ImageCopyCaptureCursorSessionV1) GetCaptureSession() (*ImageCopyCapture
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageCopyCaptureCursorSessionV1(reg, name, min(g.Version,
 // VersionImageCopyCaptureCursorSessionV1)), to bind at the highest mutually supported version.
-func BindImageCopyCaptureCursorSessionV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureCursorSessionV1, error) {
+func BindImageCopyCaptureCursorSessionV1(b wayland.Binder, name, version uint32) (*ImageCopyCaptureCursorSessionV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureCursorSessionV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

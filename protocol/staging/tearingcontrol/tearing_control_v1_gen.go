@@ -65,8 +65,7 @@ func (r *TearingControlV1SetPresentationHintRequest) Since() uint32 { return 1 }
 //
 // Destroy this surface tearing object and revert the presentation hint to
 // vsync. The change will be applied on the next wl_surface.commit.
-type TearingControlV1DestroyRequest struct {
-}
+type TearingControlV1DestroyRequest struct{}
 
 func (r *TearingControlV1DestroyRequest) Opcode() uint16 { return TearingControlV1RequestDestroy }
 
@@ -135,7 +134,7 @@ func (o *TearingControlV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTearingControlV1(reg, name, min(g.Version,
 // VersionTearingControlV1)), to bind at the highest mutually supported version.
-func BindTearingControlV1(b wayland.Binder, name uint32, version uint32) (*TearingControlV1, error) {
+func BindTearingControlV1(b wayland.Binder, name, version uint32) (*TearingControlV1, error) {
 	if version < 1 || version > VersionTearingControlV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -64,8 +64,7 @@ const (
 // Destroying a bound xdg_wm_base object while there are surfaces
 // still alive created by this xdg_wm_base object instance is illegal
 // and will result in a defunct_surfaces error.
-type WmBaseDestroyRequest struct {
-}
+type WmBaseDestroyRequest struct{}
 
 func (r *WmBaseDestroyRequest) Opcode() uint16 { return WmBaseRequestDestroy }
 
@@ -211,12 +210,10 @@ func (o *WmBase) Proxy() *wayland.Proxy {
 func (o *WmBase) OnPing(fn WmBasePingFunc) {
 	o.proxy.RegisterEvent(WmBaseEventPing, func(r *wire.Reader) {
 		var ev WmBasePingEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -251,10 +248,9 @@ func (o *WmBase) CreatePositioner() (*Positioner, error) {
 
 	wrapped := NewPositioner(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), WmBaseRequestCreatePositioner, &WmBaseCreatePositionerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), WmBaseRequestCreatePositioner, &WmBaseCreatePositionerRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -282,11 +278,10 @@ func (o *WmBase) GetXdgSurface(surface wire.ObjectID) (*Surface, error) {
 
 	wrapped := NewSurface(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), WmBaseRequestGetXdgSurface, &WmBaseGetXdgSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), WmBaseRequestGetXdgSurface, &WmBaseGetXdgSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -310,7 +305,7 @@ func (o *WmBase) Pong(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindWmBase(reg, name, min(g.Version,
 // VersionWmBase)), to bind at the highest mutually supported version.
-func BindWmBase(b wayland.Binder, name uint32, version uint32) (*WmBase, error) {
+func BindWmBase(b wayland.Binder, name, version uint32) (*WmBase, error) {
 	if version < 1 || version > VersionWmBase {
 		return nil, wayland.ErrVersionMismatch
 	}

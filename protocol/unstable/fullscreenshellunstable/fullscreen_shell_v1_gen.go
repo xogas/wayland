@@ -108,8 +108,7 @@ const (
 // This destroys the server-side object and frees this binding.  If
 // the client binds to wl_fullscreen_shell multiple times, it may wish
 // to free some of those bindings.
-type FullscreenShellV1ReleaseRequest struct {
-}
+type FullscreenShellV1ReleaseRequest struct{}
 
 func (r *FullscreenShellV1ReleaseRequest) Opcode() uint16 { return FullscreenShellV1RequestRelease }
 
@@ -323,12 +322,10 @@ func (o *FullscreenShellV1) Proxy() *wayland.Proxy {
 func (o *FullscreenShellV1) OnCapability(fn FullscreenShellV1CapabilityFunc) {
 	o.proxy.RegisterEvent(FullscreenShellV1EventCapability, func(r *wire.Reader) {
 		var ev FullscreenShellV1CapabilityEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capability", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -425,20 +422,19 @@ func (o *FullscreenShellV1) PresentSurface(surface wire.ObjectID, method Fullscr
 // This request gives the surface the role of a fullscreen shell surface.
 // If the surface already has another role, it raises a role protocol
 // error.
-func (o *FullscreenShellV1) PresentSurfaceForMode(surface wire.ObjectID, output wire.ObjectID, framerate int32) (*FullscreenShellModeFeedbackV1, error) {
+func (o *FullscreenShellV1) PresentSurfaceForMode(surface, output wire.ObjectID, framerate int32) (*FullscreenShellModeFeedbackV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewFullscreenShellModeFeedbackV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), FullscreenShellV1RequestPresentSurfaceForMode, &FullscreenShellV1PresentSurfaceForModeRequest{
+	if err := conn.SendRequest(o.proxy.ID(), FullscreenShellV1RequestPresentSurfaceForMode, &FullscreenShellV1PresentSurfaceForModeRequest{
 		Surface:   surface,
 		Output:    output,
 		Framerate: framerate,
 		Feedback:  wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -451,7 +447,7 @@ func (o *FullscreenShellV1) PresentSurfaceForMode(surface wire.ObjectID, output 
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFullscreenShellV1(reg, name, min(g.Version,
 // VersionFullscreenShellV1)), to bind at the highest mutually supported version.
-func BindFullscreenShellV1(b wayland.Binder, name uint32, version uint32) (*FullscreenShellV1, error) {
+func BindFullscreenShellV1(b wayland.Binder, name, version uint32) (*FullscreenShellV1, error) {
 	if version < 1 || version > VersionFullscreenShellV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -19,8 +19,7 @@ const (
 //
 // Used by the client to notify the server that it will no longer use this
 // relative pointer manager object.
-type RelativePointerManagerV1DestroyRequest struct {
-}
+type RelativePointerManagerV1DestroyRequest struct{}
 
 func (r *RelativePointerManagerV1DestroyRequest) Opcode() uint16 {
 	return RelativePointerManagerV1RequestDestroy
@@ -101,11 +100,10 @@ func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*R
 
 	wrapped := NewRelativePointerV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), RelativePointerManagerV1RequestGetRelativePointer, &RelativePointerManagerV1GetRelativePointerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), RelativePointerManagerV1RequestGetRelativePointer, &RelativePointerManagerV1GetRelativePointerRequest{
 		ID:      wire.NewID(p.ID()),
 		Pointer: pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -118,7 +116,7 @@ func (o *RelativePointerManagerV1) GetRelativePointer(pointer wire.ObjectID) (*R
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindRelativePointerManagerV1(reg, name, min(g.Version,
 // VersionRelativePointerManagerV1)), to bind at the highest mutually supported version.
-func BindRelativePointerManagerV1(b wayland.Binder, name uint32, version uint32) (*RelativePointerManagerV1, error) {
+func BindRelativePointerManagerV1(b wayland.Binder, name, version uint32) (*RelativePointerManagerV1, error) {
 	if version < 1 || version > VersionRelativePointerManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

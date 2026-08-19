@@ -56,8 +56,7 @@ const (
 //
 // Used by the client to notify the server that it will no longer use this
 // pointer constraints object.
-type PointerConstraintsV1DestroyRequest struct {
-}
+type PointerConstraintsV1DestroyRequest struct{}
 
 func (r *PointerConstraintsV1DestroyRequest) Opcode() uint16 {
 	return PointerConstraintsV1RequestDestroy
@@ -278,21 +277,20 @@ func (o *PointerConstraintsV1) Destroy() error {
 // relative motion events will still be emitted via wp_relative_pointer
 // objects of the same seat. wl_pointer.axis and wl_pointer.button events
 // are unaffected.
-func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*LockedPointerV1, error) {
+func (o *PointerConstraintsV1) LockPointer(surface, pointer, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*LockedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewLockedPointerV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestLockPointer, &PointerConstraintsV1LockPointerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestLockPointer, &PointerConstraintsV1LockPointerRequest{
 		ID:       wire.NewID(p.ID()),
 		Surface:  surface,
 		Pointer:  pointer,
 		Region:   region,
 		Lifetime: lifetime,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -318,21 +316,20 @@ func (o *PointerConstraintsV1) LockPointer(surface wire.ObjectID, pointer wire.O
 // to interact with the confinement as well as receive updates about its
 // state. See the the description of wp_confined_pointer for further
 // information.
-func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wire.ObjectID, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*ConfinedPointerV1, error) {
+func (o *PointerConstraintsV1) ConfinePointer(surface, pointer, region wire.ObjectID, lifetime PointerConstraintsV1Lifetime) (*ConfinedPointerV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewConfinedPointerV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestConfinePointer, &PointerConstraintsV1ConfinePointerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PointerConstraintsV1RequestConfinePointer, &PointerConstraintsV1ConfinePointerRequest{
 		ID:       wire.NewID(p.ID()),
 		Surface:  surface,
 		Pointer:  pointer,
 		Region:   region,
 		Lifetime: lifetime,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -345,7 +342,7 @@ func (o *PointerConstraintsV1) ConfinePointer(surface wire.ObjectID, pointer wir
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerConstraintsV1(reg, name, min(g.Version,
 // VersionPointerConstraintsV1)), to bind at the highest mutually supported version.
-func BindPointerConstraintsV1(b wayland.Binder, name uint32, version uint32) (*PointerConstraintsV1, error) {
+func BindPointerConstraintsV1(b wayland.Binder, name, version uint32) (*PointerConstraintsV1, error) {
 	if version < 1 || version > VersionPointerConstraintsV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

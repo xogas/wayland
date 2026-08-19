@@ -41,8 +41,7 @@ func init() {
 }
 
 // TouchReleaseRequest release the touch object.
-type TouchReleaseRequest struct {
-}
+type TouchReleaseRequest struct{}
 
 func (r *TouchReleaseRequest) Opcode() uint16 { return TouchRequestRelease }
 
@@ -200,8 +199,7 @@ func (e *TouchMotionEvent) Since() uint32 { return 1 }
 // guarantee is provided about the set of events within a frame. A client
 // must assume that any state not updated in a frame is unchanged from the
 // previously known state.
-type TouchFrameEvent struct {
-}
+type TouchFrameEvent struct{}
 
 func (e *TouchFrameEvent) Opcode() uint16 { return TouchEventFrame }
 
@@ -221,8 +219,7 @@ func (e *TouchFrameEvent) Since() uint32 { return 1 }
 // this surface may reuse the touch point ID.
 //
 // No frame event is required after the cancel event.
-type TouchCancelEvent struct {
-}
+type TouchCancelEvent struct{}
 
 func (e *TouchCancelEvent) Opcode() uint16 { return TouchEventCancel }
 
@@ -391,12 +388,10 @@ func (o *Touch) Proxy() *Proxy {
 func (o *Touch) OnDown(fn TouchDownFunc) {
 	o.proxy.RegisterEvent(TouchEventDown, func(r *wire.Reader) {
 		var ev TouchDownEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Down", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -405,12 +400,10 @@ func (o *Touch) OnDown(fn TouchDownFunc) {
 func (o *Touch) OnUp(fn TouchUpFunc) {
 	o.proxy.RegisterEvent(TouchEventUp, func(r *wire.Reader) {
 		var ev TouchUpEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Up", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -419,12 +412,10 @@ func (o *Touch) OnUp(fn TouchUpFunc) {
 func (o *Touch) OnMotion(fn TouchMotionFunc) {
 	o.proxy.RegisterEvent(TouchEventMotion, func(r *wire.Reader) {
 		var ev TouchMotionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -433,12 +424,10 @@ func (o *Touch) OnMotion(fn TouchMotionFunc) {
 func (o *Touch) OnFrame(fn TouchFrameFunc) {
 	o.proxy.RegisterEvent(TouchEventFrame, func(r *wire.Reader) {
 		var ev TouchFrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -447,12 +436,10 @@ func (o *Touch) OnFrame(fn TouchFrameFunc) {
 func (o *Touch) OnCancel(fn TouchCancelFunc) {
 	o.proxy.RegisterEvent(TouchEventCancel, func(r *wire.Reader) {
 		var ev TouchCancelEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Cancel", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -461,12 +448,10 @@ func (o *Touch) OnCancel(fn TouchCancelFunc) {
 func (o *Touch) OnShape(fn TouchShapeFunc) {
 	o.proxy.RegisterEvent(TouchEventShape, func(r *wire.Reader) {
 		var ev TouchShapeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Shape", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -475,12 +460,10 @@ func (o *Touch) OnShape(fn TouchShapeFunc) {
 func (o *Touch) OnOrientation(fn TouchOrientationFunc) {
 	o.proxy.RegisterEvent(TouchEventOrientation, func(r *wire.Reader) {
 		var ev TouchOrientationEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Orientation", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -506,7 +489,7 @@ func (o *Touch) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTouch(reg, name, min(g.Version,
 // VersionTouch)), to bind at the highest mutually supported version.
-func BindTouch(b Binder, name uint32, version uint32) (*Touch, error) {
+func BindTouch(b Binder, name, version uint32) (*Touch, error) {
 	if version < 1 || version > VersionTouch {
 		return nil, ErrVersionMismatch
 	}

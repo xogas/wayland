@@ -170,8 +170,7 @@ const (
 // InputPopupPositionerV1DestroyRequest destroy the input_popup_positioner object.
 //
 // Notify the compositor that the positioner will no longer be used.
-type InputPopupPositionerV1DestroyRequest struct {
-}
+type InputPopupPositionerV1DestroyRequest struct{}
 
 func (r *InputPopupPositionerV1DestroyRequest) Opcode() uint16 {
 	return InputPopupPositionerV1RequestDestroy
@@ -342,8 +341,7 @@ func (r *InputPopupPositionerV1SetOffsetRequest) Since() uint32 { return 1 }
 //
 // Whenever the conditions change and the popup gets reconstrained, a
 // configure sequence is sent with updated geometry.
-type InputPopupPositionerV1SetReactiveRequest struct {
-}
+type InputPopupPositionerV1SetReactiveRequest struct{}
 
 func (r *InputPopupPositionerV1SetReactiveRequest) Opcode() uint16 {
 	return InputPopupPositionerV1RequestSetReactive
@@ -418,7 +416,7 @@ func (o *InputPopupPositionerV1) Destroy() error {
 // window geometry. See xdg_surface.set_window_geometry.
 //
 // If any dimension is set to zero, the invalid_input error is raised.
-func (o *InputPopupPositionerV1) SetSize(width uint32, height uint32) error {
+func (o *InputPopupPositionerV1) SetSize(width, height uint32) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetSize, &InputPopupPositionerV1SetSizeRequest{
 		Width:  width,
 		Height: height,
@@ -488,7 +486,7 @@ func (o *InputPopupPositionerV1) SetConstraintAdjustment(constraintAdjustment In
 // An example use case is placing a popup menu on top of a user interface
 // element, while aligning the user interface element of the parent surface
 // with some user interface element placed somewhere in the popup surface.
-func (o *InputPopupPositionerV1) SetOffset(x int32, y int32) error {
+func (o *InputPopupPositionerV1) SetOffset(x, y int32) error {
 	return o.proxy.SendRequest(InputPopupPositionerV1RequestSetOffset, &InputPopupPositionerV1SetOffsetRequest{
 		X: x,
 		Y: y,
@@ -512,7 +510,7 @@ func (o *InputPopupPositionerV1) SetReactive() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputPopupPositionerV1(reg, name, min(g.Version,
 // VersionInputPopupPositionerV1)), to bind at the highest mutually supported version.
-func BindInputPopupPositionerV1(b wayland.Binder, name uint32, version uint32) (*InputPopupPositionerV1, error) {
+func BindInputPopupPositionerV1(b wayland.Binder, name, version uint32) (*InputPopupPositionerV1, error) {
 	if version < 1 || version > VersionInputPopupPositionerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

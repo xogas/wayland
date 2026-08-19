@@ -18,8 +18,7 @@ const (
 // SystemBellV1DestroyRequest destroy the system bell object.
 //
 // Notify that the object will no longer be used.
-type SystemBellV1DestroyRequest struct {
-}
+type SystemBellV1DestroyRequest struct{}
 
 func (r *SystemBellV1DestroyRequest) Opcode() uint16 { return SystemBellV1RequestDestroy }
 
@@ -115,7 +114,7 @@ func (o *SystemBellV1) Ring(surface wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSystemBellV1(reg, name, min(g.Version,
 // VersionSystemBellV1)), to bind at the highest mutually supported version.
-func BindSystemBellV1(b wayland.Binder, name uint32, version uint32) (*SystemBellV1, error) {
+func BindSystemBellV1(b wayland.Binder, name, version uint32) (*SystemBellV1, error) {
 	if version < 1 || version > VersionSystemBellV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

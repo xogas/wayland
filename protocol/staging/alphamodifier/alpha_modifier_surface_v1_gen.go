@@ -27,8 +27,7 @@ const (
 // This destroys the object, and is equivalent to set_multiplier with
 // a value of UINT32_MAX, with the same double-buffered semantics as
 // set_multiplier.
-type AlphaModifierSurfaceV1DestroyRequest struct {
-}
+type AlphaModifierSurfaceV1DestroyRequest struct{}
 
 func (r *AlphaModifierSurfaceV1DestroyRequest) Opcode() uint16 {
 	return AlphaModifierSurfaceV1RequestDestroy
@@ -138,7 +137,7 @@ func (o *AlphaModifierSurfaceV1) SetMultiplier(factor uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindAlphaModifierSurfaceV1(reg, name, min(g.Version,
 // VersionAlphaModifierSurfaceV1)), to bind at the highest mutually supported version.
-func BindAlphaModifierSurfaceV1(b wayland.Binder, name uint32, version uint32) (*AlphaModifierSurfaceV1, error) {
+func BindAlphaModifierSurfaceV1(b wayland.Binder, name, version uint32) (*AlphaModifierSurfaceV1, error) {
 	if version < 1 || version > VersionAlphaModifierSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

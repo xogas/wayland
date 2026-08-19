@@ -74,8 +74,7 @@ func (r *DataSourceOfferRequest) Since() uint32 { return 1 }
 // DataSourceDestroyRequest destroy the data source.
 //
 // Destroy the data source.
-type DataSourceDestroyRequest struct {
-}
+type DataSourceDestroyRequest struct{}
 
 func (r *DataSourceDestroyRequest) Opcode() uint16 { return DataSourceRequestDestroy }
 
@@ -192,8 +191,7 @@ func (e *DataSourceSendEvent) Since() uint32 { return 1 }
 // For objects of version 2 or older, wl_data_source.cancelled will
 // only be emitted if the data source was replaced by another data
 // source.
-type DataSourceCancelledEvent struct {
-}
+type DataSourceCancelledEvent struct{}
 
 func (e *DataSourceCancelledEvent) Opcode() uint16 { return DataSourceEventCancelled }
 
@@ -214,8 +212,7 @@ func (e *DataSourceCancelledEvent) Since() uint32 { return 1 }
 //
 // Note that the data_source may still be used in the future and should
 // not be destroyed here.
-type DataSourceDndDropPerformedEvent struct {
-}
+type DataSourceDndDropPerformedEvent struct{}
 
 func (e *DataSourceDndDropPerformedEvent) Opcode() uint16 { return DataSourceEventDndDropPerformed }
 
@@ -233,8 +230,7 @@ func (e *DataSourceDndDropPerformedEvent) Since() uint32 { return 3 }
 //
 // If the action used to perform the operation was "move", the
 // source can now delete the transferred data.
-type DataSourceDndFinishedEvent struct {
-}
+type DataSourceDndFinishedEvent struct{}
 
 func (e *DataSourceDndFinishedEvent) Opcode() uint16 { return DataSourceEventDndFinished }
 
@@ -332,12 +328,10 @@ func (o *DataSource) Proxy() *Proxy {
 func (o *DataSource) OnTarget(fn DataSourceTargetFunc) {
 	o.proxy.RegisterEvent(DataSourceEventTarget, func(r *wire.Reader) {
 		var ev DataSourceTargetEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Target", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -346,12 +340,10 @@ func (o *DataSource) OnTarget(fn DataSourceTargetFunc) {
 func (o *DataSource) OnSend(fn DataSourceSendFunc) {
 	o.proxy.RegisterEvent(DataSourceEventSend, func(r *wire.Reader) {
 		var ev DataSourceSendEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -360,12 +352,10 @@ func (o *DataSource) OnSend(fn DataSourceSendFunc) {
 func (o *DataSource) OnCancelled(fn DataSourceCancelledFunc) {
 	o.proxy.RegisterEvent(DataSourceEventCancelled, func(r *wire.Reader) {
 		var ev DataSourceCancelledEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -374,12 +364,10 @@ func (o *DataSource) OnCancelled(fn DataSourceCancelledFunc) {
 func (o *DataSource) OnDndDropPerformed(fn DataSourceDndDropPerformedFunc) {
 	o.proxy.RegisterEvent(DataSourceEventDndDropPerformed, func(r *wire.Reader) {
 		var ev DataSourceDndDropPerformedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DndDropPerformed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -388,12 +376,10 @@ func (o *DataSource) OnDndDropPerformed(fn DataSourceDndDropPerformedFunc) {
 func (o *DataSource) OnDndFinished(fn DataSourceDndFinishedFunc) {
 	o.proxy.RegisterEvent(DataSourceEventDndFinished, func(r *wire.Reader) {
 		var ev DataSourceDndFinishedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("DndFinished", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -402,12 +388,10 @@ func (o *DataSource) OnDndFinished(fn DataSourceDndFinishedFunc) {
 func (o *DataSource) OnAction(fn DataSourceActionFunc) {
 	o.proxy.RegisterEvent(DataSourceEventAction, func(r *wire.Reader) {
 		var ev DataSourceActionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -467,7 +451,7 @@ func (o *DataSource) SetActions(dndActions DataDeviceManagerDndAction) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataSource(reg, name, min(g.Version,
 // VersionDataSource)), to bind at the highest mutually supported version.
-func BindDataSource(b Binder, name uint32, version uint32) (*DataSource, error) {
+func BindDataSource(b Binder, name, version uint32) (*DataSource, error) {
 	if version < 1 || version > VersionDataSource {
 		return nil, ErrVersionMismatch
 	}

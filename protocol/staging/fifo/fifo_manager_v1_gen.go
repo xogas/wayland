@@ -31,8 +31,7 @@ const (
 // Informs the server that the client will no longer be using
 // this protocol object. Existing objects created by this object
 // are not affected.
-type FifoManagerV1DestroyRequest struct {
-}
+type FifoManagerV1DestroyRequest struct{}
 
 func (r *FifoManagerV1DestroyRequest) Opcode() uint16 { return FifoManagerV1RequestDestroy }
 
@@ -131,11 +130,10 @@ func (o *FifoManagerV1) GetFifo(surface wire.ObjectID) (*FifoV1, error) {
 
 	wrapped := NewFifoV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), FifoManagerV1RequestGetFifo, &FifoManagerV1GetFifoRequest{
+	if err := conn.SendRequest(o.proxy.ID(), FifoManagerV1RequestGetFifo, &FifoManagerV1GetFifoRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -148,7 +146,7 @@ func (o *FifoManagerV1) GetFifo(surface wire.ObjectID) (*FifoV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindFifoManagerV1(reg, name, min(g.Version,
 // VersionFifoManagerV1)), to bind at the highest mutually supported version.
-func BindFifoManagerV1(b wayland.Binder, name uint32, version uint32) (*FifoManagerV1, error) {
+func BindFifoManagerV1(b wayland.Binder, name, version uint32) (*FifoManagerV1, error) {
 	if version < 1 || version > VersionFifoManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

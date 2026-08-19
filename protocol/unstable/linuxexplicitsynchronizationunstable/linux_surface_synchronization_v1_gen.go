@@ -48,8 +48,7 @@ const (
 //
 // zwp_linux_buffer_release_v1 objects created by this object are not
 // affected by this request.
-type LinuxSurfaceSynchronizationV1DestroyRequest struct {
-}
+type LinuxSurfaceSynchronizationV1DestroyRequest struct{}
 
 func (r *LinuxSurfaceSynchronizationV1DestroyRequest) Opcode() uint16 {
 	return LinuxSurfaceSynchronizationV1RequestDestroy
@@ -265,10 +264,9 @@ func (o *LinuxSurfaceSynchronizationV1) GetRelease() (*LinuxBufferReleaseV1, err
 
 	wrapped := NewLinuxBufferReleaseV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxSurfaceSynchronizationV1RequestGetRelease, &LinuxSurfaceSynchronizationV1GetReleaseRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxSurfaceSynchronizationV1RequestGetRelease, &LinuxSurfaceSynchronizationV1GetReleaseRequest{
 		Release: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -281,7 +279,7 @@ func (o *LinuxSurfaceSynchronizationV1) GetRelease() (*LinuxBufferReleaseV1, err
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxSurfaceSynchronizationV1(reg, name, min(g.Version,
 // VersionLinuxSurfaceSynchronizationV1)), to bind at the highest mutually supported version.
-func BindLinuxSurfaceSynchronizationV1(b wayland.Binder, name uint32, version uint32) (*LinuxSurfaceSynchronizationV1, error) {
+func BindLinuxSurfaceSynchronizationV1(b wayland.Binder, name, version uint32) (*LinuxSurfaceSynchronizationV1, error) {
 	if version < 1 || version > VersionLinuxSurfaceSynchronizationV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

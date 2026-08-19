@@ -56,8 +56,7 @@ func (r *PrimarySelectionSourceV1OfferRequest) Since() uint32 { return 1 }
 // PrimarySelectionSourceV1DestroyRequest destroy the primary selection source.
 //
 // Destroy the primary selection source.
-type PrimarySelectionSourceV1DestroyRequest struct {
-}
+type PrimarySelectionSourceV1DestroyRequest struct{}
 
 func (r *PrimarySelectionSourceV1DestroyRequest) Opcode() uint16 {
 	return PrimarySelectionSourceV1RequestDestroy
@@ -101,8 +100,7 @@ func (e *PrimarySelectionSourceV1SendEvent) Since() uint32 { return 1 }
 //
 // This primary selection source is no longer valid. The client should
 // clean up and destroy this primary selection source.
-type PrimarySelectionSourceV1CancelledEvent struct {
-}
+type PrimarySelectionSourceV1CancelledEvent struct{}
 
 func (e *PrimarySelectionSourceV1CancelledEvent) Opcode() uint16 {
 	return PrimarySelectionSourceV1EventCancelled
@@ -144,12 +142,10 @@ func (o *PrimarySelectionSourceV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventSend, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1SendEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Send", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -158,12 +154,10 @@ func (o *PrimarySelectionSourceV1) OnSend(fn PrimarySelectionSourceV1SendFunc) {
 func (o *PrimarySelectionSourceV1) OnCancelled(fn PrimarySelectionSourceV1CancelledFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionSourceV1EventCancelled, func(r *wire.Reader) {
 		var ev PrimarySelectionSourceV1CancelledEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Cancelled", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -198,7 +192,7 @@ func (o *PrimarySelectionSourceV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPrimarySelectionSourceV1(reg, name, min(g.Version,
 // VersionPrimarySelectionSourceV1)), to bind at the highest mutually supported version.
-func BindPrimarySelectionSourceV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionSourceV1, error) {
+func BindPrimarySelectionSourceV1(b wayland.Binder, name, version uint32) (*PrimarySelectionSourceV1, error) {
 	if version < 1 || version > VersionPrimarySelectionSourceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

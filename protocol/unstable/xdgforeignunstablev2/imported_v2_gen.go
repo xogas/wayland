@@ -46,8 +46,7 @@ const (
 // Notify the compositor that it will no longer use the xdg_imported
 // object. Any relationship that may have been set up will at this point
 // be invalidated.
-type ImportedV2DestroyRequest struct {
-}
+type ImportedV2DestroyRequest struct{}
 
 func (r *ImportedV2DestroyRequest) Opcode() uint16 { return ImportedV2RequestDestroy }
 
@@ -86,8 +85,7 @@ func (r *ImportedV2SetParentOfRequest) Since() uint32 { return 1 }
 // up has been invalidated. This may happen for various reasons, for
 // example if the exported surface or the exported surface handle has been
 // destroyed, if the handle used for importing was invalid.
-type ImportedV2DestroyedEvent struct {
-}
+type ImportedV2DestroyedEvent struct{}
 
 func (e *ImportedV2DestroyedEvent) Opcode() uint16 { return ImportedV2EventDestroyed }
 
@@ -124,12 +122,10 @@ func (o *ImportedV2) Proxy() *wayland.Proxy {
 func (o *ImportedV2) OnDestroyed(fn ImportedV2DestroyedFunc) {
 	o.proxy.RegisterEvent(ImportedV2EventDestroyed, func(r *wire.Reader) {
 		var ev ImportedV2DestroyedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Destroyed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -169,7 +165,7 @@ func (o *ImportedV2) SetParentOf(surface wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImportedV2(reg, name, min(g.Version,
 // VersionImportedV2)), to bind at the highest mutually supported version.
-func BindImportedV2(b wayland.Binder, name uint32, version uint32) (*ImportedV2, error) {
+func BindImportedV2(b wayland.Binder, name, version uint32) (*ImportedV2, error) {
 	if version < 1 || version > VersionImportedV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

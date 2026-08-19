@@ -19,8 +19,7 @@ const (
 //
 // Notify the compositor that the xdg_importer object will no longer be
 // used.
-type ImporterV2DestroyRequest struct {
-}
+type ImporterV2DestroyRequest struct{}
 
 func (r *ImporterV2DestroyRequest) Opcode() uint16 { return ImporterV2RequestDestroy }
 
@@ -106,11 +105,10 @@ func (o *ImporterV2) ImportToplevel(handle string) (*ImportedV2, error) {
 
 	wrapped := NewImportedV2(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImporterV2RequestImportToplevel, &ImporterV2ImportToplevelRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImporterV2RequestImportToplevel, &ImporterV2ImportToplevelRequest{
 		ID:     wire.NewID(p.ID()),
 		Handle: handle,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -123,7 +121,7 @@ func (o *ImporterV2) ImportToplevel(handle string) (*ImportedV2, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImporterV2(reg, name, min(g.Version,
 // VersionImporterV2)), to bind at the highest mutually supported version.
-func BindImporterV2(b wayland.Binder, name uint32, version uint32) (*ImporterV2, error) {
+func BindImporterV2(b wayland.Binder, name, version uint32) (*ImporterV2, error) {
 	if version < 1 || version > VersionImporterV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

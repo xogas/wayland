@@ -29,8 +29,7 @@ const (
 //
 // Destroy the manager. This doesn't destroy objects created with the
 // manager.
-type SecurityContextManagerV1DestroyRequest struct {
-}
+type SecurityContextManagerV1DestroyRequest struct{}
 
 func (r *SecurityContextManagerV1DestroyRequest) Opcode() uint16 {
 	return SecurityContextManagerV1RequestDestroy
@@ -152,19 +151,18 @@ func (o *SecurityContextManagerV1) Destroy() error {
 //
 // After sending this request, closing listen_fd and close_fd remains the
 // only valid operation on them.
-func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*SecurityContextV1, error) {
+func (o *SecurityContextManagerV1) CreateListener(listenFd, closeFd int) (*SecurityContextV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewSecurityContextV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SecurityContextManagerV1RequestCreateListener, &SecurityContextManagerV1CreateListenerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SecurityContextManagerV1RequestCreateListener, &SecurityContextManagerV1CreateListenerRequest{
 		ID:       wire.NewID(p.ID()),
 		ListenFd: listenFd,
 		CloseFd:  closeFd,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -177,7 +175,7 @@ func (o *SecurityContextManagerV1) CreateListener(listenFd int, closeFd int) (*S
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSecurityContextManagerV1(reg, name, min(g.Version,
 // VersionSecurityContextManagerV1)), to bind at the highest mutually supported version.
-func BindSecurityContextManagerV1(b wayland.Binder, name uint32, version uint32) (*SecurityContextManagerV1, error) {
+func BindSecurityContextManagerV1(b wayland.Binder, name, version uint32) (*SecurityContextManagerV1, error) {
 	if version < 1 || version > VersionSecurityContextManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

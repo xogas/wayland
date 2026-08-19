@@ -171,8 +171,7 @@ const (
 // PositionerDestroyRequest destroy the xdg_positioner object.
 //
 // Notify the compositor that the xdg_positioner will no longer be used.
-type PositionerDestroyRequest struct {
-}
+type PositionerDestroyRequest struct{}
 
 func (r *PositionerDestroyRequest) Opcode() uint16 { return PositionerRequestDestroy }
 
@@ -377,8 +376,7 @@ func (r *PositionerSetOffsetRequest) Since() uint32 { return 1 }
 // If the conditions changed and the popup was reconstrained, an
 // xdg_popup.configure event is sent with updated geometry, followed by an
 // xdg_surface.configure event.
-type PositionerSetReactiveRequest struct {
-}
+type PositionerSetReactiveRequest struct{}
 
 func (r *PositionerSetReactiveRequest) Opcode() uint16 { return PositionerRequestSetReactive }
 
@@ -498,7 +496,7 @@ func (o *Positioner) Destroy() error {
 // window geometry. See xdg_surface.set_window_geometry.
 //
 // If a zero or negative size is set the invalid_input error is raised.
-func (o *Positioner) SetSize(width int32, height int32) error {
+func (o *Positioner) SetSize(width, height int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetSize, &PositionerSetSizeRequest{
 		Width:  width,
 		Height: height,
@@ -517,7 +515,7 @@ func (o *Positioner) SetSize(width int32, height int32) error {
 // positioned child's parent surface.
 //
 // If a negative size is set the invalid_input error is raised.
-func (o *Positioner) SetAnchorRect(x int32, y int32, width int32, height int32) error {
+func (o *Positioner) SetAnchorRect(x, y, width, height int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetAnchorRect, &PositionerSetAnchorRectRequest{
 		X:      x,
 		Y:      y,
@@ -589,7 +587,7 @@ func (o *Positioner) SetConstraintAdjustment(constraintAdjustment PositionerCons
 // An example use case is placing a popup menu on top of a user interface
 // element, while aligning the user interface element of the parent surface
 // with some user interface element placed somewhere in the popup surface.
-func (o *Positioner) SetOffset(x int32, y int32) error {
+func (o *Positioner) SetOffset(x, y int32) error {
 	return o.proxy.SendRequest(PositionerRequestSetOffset, &PositionerSetOffsetRequest{
 		X: x,
 		Y: y,
@@ -620,7 +618,7 @@ func (o *Positioner) SetReactive() error {
 // positioned against, the behavior is undefined.
 //
 // The arguments are given in the surface-local coordinate space.
-func (o *Positioner) SetParentSize(parentWidth int32, parentHeight int32) error {
+func (o *Positioner) SetParentSize(parentWidth, parentHeight int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
 	}
@@ -651,7 +649,7 @@ func (o *Positioner) SetParentConfigure(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPositioner(reg, name, min(g.Version,
 // VersionPositioner)), to bind at the highest mutually supported version.
-func BindPositioner(b wayland.Binder, name uint32, version uint32) (*Positioner, error) {
+func BindPositioner(b wayland.Binder, name, version uint32) (*Positioner, error) {
 	if version < 1 || version > VersionPositioner {
 		return nil, wayland.ErrVersionMismatch
 	}

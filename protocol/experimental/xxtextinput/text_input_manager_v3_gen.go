@@ -18,8 +18,7 @@ const (
 // TextInputManagerV3DestroyRequest destroy the xx_text_input_manager.
 //
 // Destroy the xx_text_input_manager object.
-type TextInputManagerV3DestroyRequest struct {
-}
+type TextInputManagerV3DestroyRequest struct{}
 
 func (r *TextInputManagerV3DestroyRequest) Opcode() uint16 { return TextInputManagerV3RequestDestroy }
 
@@ -94,11 +93,10 @@ func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, err
 
 	wrapped := NewTextInputV3(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), TextInputManagerV3RequestGetTextInput, &TextInputManagerV3GetTextInputRequest{
+	if err := conn.SendRequest(o.proxy.ID(), TextInputManagerV3RequestGetTextInput, &TextInputManagerV3GetTextInputRequest{
 		ID:   wire.NewID(p.ID()),
 		Seat: seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func (o *TextInputManagerV3) GetTextInput(seat wire.ObjectID) (*TextInputV3, err
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTextInputManagerV3(reg, name, min(g.Version,
 // VersionTextInputManagerV3)), to bind at the highest mutually supported version.
-func BindTextInputManagerV3(b wayland.Binder, name uint32, version uint32) (*TextInputManagerV3, error) {
+func BindTextInputManagerV3(b wayland.Binder, name, version uint32) (*TextInputManagerV3, error) {
 	if version < 1 || version > VersionTextInputManagerV3 {
 		return nil, wayland.ErrVersionMismatch
 	}

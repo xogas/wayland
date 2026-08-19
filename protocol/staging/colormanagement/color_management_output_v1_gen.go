@@ -34,8 +34,7 @@ func init() {
 //
 // Destroy the color wp_color_management_output_v1 object. This does not
 // affect any remaining protocol objects.
-type ColorManagementOutputV1DestroyRequest struct {
-}
+type ColorManagementOutputV1DestroyRequest struct{}
 
 func (r *ColorManagementOutputV1DestroyRequest) Opcode() uint16 {
 	return ColorManagementOutputV1RequestDestroy
@@ -106,8 +105,7 @@ func (r *ColorManagementOutputV1GetImageDescriptionRequest) Since() uint32 { ret
 // If the client wants to use the updated image description, it needs to do
 // get_image_description again, because image description objects are
 // immutable.
-type ColorManagementOutputV1ImageDescriptionChangedEvent struct {
-}
+type ColorManagementOutputV1ImageDescriptionChangedEvent struct{}
 
 func (e *ColorManagementOutputV1ImageDescriptionChangedEvent) Opcode() uint16 {
 	return ColorManagementOutputV1EventImageDescriptionChanged
@@ -150,12 +148,10 @@ func (o *ColorManagementOutputV1) Proxy() *wayland.Proxy {
 func (o *ColorManagementOutputV1) OnImageDescriptionChanged(fn ColorManagementOutputV1ImageDescriptionChangedFunc) {
 	o.proxy.RegisterEvent(ColorManagementOutputV1EventImageDescriptionChanged, func(r *wire.Reader) {
 		var ev ColorManagementOutputV1ImageDescriptionChangedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ImageDescriptionChanged", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -215,10 +211,9 @@ func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, er
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagementOutputV1RequestGetImageDescription, &ColorManagementOutputV1GetImageDescriptionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagementOutputV1RequestGetImageDescription, &ColorManagementOutputV1GetImageDescriptionRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -231,7 +226,7 @@ func (o *ColorManagementOutputV1) GetImageDescription() (*ImageDescriptionV1, er
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorManagementOutputV1(reg, name, min(g.Version,
 // VersionColorManagementOutputV1)), to bind at the highest mutually supported version.
-func BindColorManagementOutputV1(b wayland.Binder, name uint32, version uint32) (*ColorManagementOutputV1, error) {
+func BindColorManagementOutputV1(b wayland.Binder, name, version uint32) (*ColorManagementOutputV1, error) {
 	if version < 1 || version > VersionColorManagementOutputV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

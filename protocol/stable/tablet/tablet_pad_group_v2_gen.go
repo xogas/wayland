@@ -45,8 +45,7 @@ func init() {
 //
 // Destroy the zwp_tablet_pad_group_v2 object. Objects created from this object
 // are unaffected and should be destroyed separately.
-type TabletPadGroupV2DestroyRequest struct {
-}
+type TabletPadGroupV2DestroyRequest struct{}
 
 func (r *TabletPadGroupV2DestroyRequest) Opcode() uint16 { return TabletPadGroupV2RequestDestroy }
 
@@ -156,8 +155,7 @@ func (e *TabletPadGroupV2ModesEvent) Since() uint32 { return 1 }
 // burst of descriptive events. A client may consider the static
 // description of the tablet to be complete and finalize initialization
 // of the tablet group.
-type TabletPadGroupV2DoneEvent struct {
-}
+type TabletPadGroupV2DoneEvent struct{}
 
 func (e *TabletPadGroupV2DoneEvent) Opcode() uint16 { return TabletPadGroupV2EventDone }
 
@@ -305,12 +303,10 @@ func (o *TabletPadGroupV2) Proxy() *wayland.Proxy {
 func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventButtons, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ButtonsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Buttons", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -319,7 +315,6 @@ func (o *TabletPadGroupV2) OnButtons(fn TabletPadGroupV2ButtonsFunc) {
 func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventRing, func(r *wire.Reader) {
 		var ev TabletPadGroupV2RingEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Ring", err)
@@ -329,7 +324,6 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Ring = NewTabletPadRingV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -338,7 +332,6 @@ func (o *TabletPadGroupV2) OnRing(fn TabletPadGroupV2RingFunc) {
 func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventStrip, func(r *wire.Reader) {
 		var ev TabletPadGroupV2StripEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Strip", err)
@@ -348,7 +341,6 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Strip = NewTabletPadStripV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -357,12 +349,10 @@ func (o *TabletPadGroupV2) OnStrip(fn TabletPadGroupV2StripFunc) {
 func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModes, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Modes", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -371,12 +361,10 @@ func (o *TabletPadGroupV2) OnModes(fn TabletPadGroupV2ModesFunc) {
 func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventDone, func(r *wire.Reader) {
 		var ev TabletPadGroupV2DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -385,12 +373,10 @@ func (o *TabletPadGroupV2) OnDone(fn TabletPadGroupV2DoneFunc) {
 func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventModeSwitch, func(r *wire.Reader) {
 		var ev TabletPadGroupV2ModeSwitchEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ModeSwitch", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -399,7 +385,6 @@ func (o *TabletPadGroupV2) OnModeSwitch(fn TabletPadGroupV2ModeSwitchFunc) {
 func (o *TabletPadGroupV2) OnDial(fn TabletPadGroupV2DialFunc) {
 	o.proxy.RegisterEvent(TabletPadGroupV2EventDial, func(r *wire.Reader) {
 		var ev TabletPadGroupV2DialEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("Dial", err)
@@ -409,7 +394,6 @@ func (o *TabletPadGroupV2) OnDial(fn TabletPadGroupV2DialFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.Dial = NewTabletPadDialV2(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -435,7 +419,7 @@ func (o *TabletPadGroupV2) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletPadGroupV2(reg, name, min(g.Version,
 // VersionTabletPadGroupV2)), to bind at the highest mutually supported version.
-func BindTabletPadGroupV2(b wayland.Binder, name uint32, version uint32) (*TabletPadGroupV2, error) {
+func BindTabletPadGroupV2(b wayland.Binder, name, version uint32) (*TabletPadGroupV2, error) {
 	if version < 1 || version > VersionTabletPadGroupV2 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -34,8 +34,7 @@ const (
 // SecurityContextV1DestroyRequest destroy the security context object.
 //
 // Destroy the security context object.
-type SecurityContextV1DestroyRequest struct {
-}
+type SecurityContextV1DestroyRequest struct{}
 
 func (r *SecurityContextV1DestroyRequest) Opcode() uint16 { return SecurityContextV1RequestDestroy }
 
@@ -147,8 +146,7 @@ func (r *SecurityContextV1SetInstanceIDRequest) Since() uint32 { return 1 }
 //
 // It's a protocol error to send any request other than "destroy" after
 // this request. In this case, the already_used error is sent.
-type SecurityContextV1CommitRequest struct {
-}
+type SecurityContextV1CommitRequest struct{}
 
 func (r *SecurityContextV1CommitRequest) Opcode() uint16 { return SecurityContextV1RequestCommit }
 
@@ -276,7 +274,7 @@ func (o *SecurityContextV1) Commit() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSecurityContextV1(reg, name, min(g.Version,
 // VersionSecurityContextV1)), to bind at the highest mutually supported version.
-func BindSecurityContextV1(b wayland.Binder, name uint32, version uint32) (*SecurityContextV1, error) {
+func BindSecurityContextV1(b wayland.Binder, name, version uint32) (*SecurityContextV1, error) {
 	if version < 1 || version > VersionSecurityContextV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

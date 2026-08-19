@@ -66,8 +66,7 @@ func (r *DataControlOfferV1ReceiveRequest) Since() uint32 { return 1 }
 // DataControlOfferV1DestroyRequest destroy this offer.
 //
 // Destroys the data offer object.
-type DataControlOfferV1DestroyRequest struct {
-}
+type DataControlOfferV1DestroyRequest struct{}
 
 func (r *DataControlOfferV1DestroyRequest) Opcode() uint16 { return DataControlOfferV1RequestDestroy }
 
@@ -127,12 +126,10 @@ func (o *DataControlOfferV1) Proxy() *wayland.Proxy {
 func (o *DataControlOfferV1) OnOffer(fn DataControlOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(DataControlOfferV1EventOffer, func(r *wire.Reader) {
 		var ev DataControlOfferV1OfferEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Offer", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -176,7 +173,7 @@ func (o *DataControlOfferV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataControlOfferV1(reg, name, min(g.Version,
 // VersionDataControlOfferV1)), to bind at the highest mutually supported version.
-func BindDataControlOfferV1(b wayland.Binder, name uint32, version uint32) (*DataControlOfferV1, error) {
+func BindDataControlOfferV1(b wayland.Binder, name, version uint32) (*DataControlOfferV1, error) {
 	if version < 1 || version > VersionDataControlOfferV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

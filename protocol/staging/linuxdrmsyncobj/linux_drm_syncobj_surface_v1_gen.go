@@ -46,8 +46,7 @@ const (
 // set_release_point since the last commit may be discarded by the
 // compositor. Any timeline point set by this object before the last
 // commit will not be affected.
-type LinuxDrmSyncobjSurfaceV1DestroyRequest struct {
-}
+type LinuxDrmSyncobjSurfaceV1DestroyRequest struct{}
 
 func (r *LinuxDrmSyncobjSurfaceV1DestroyRequest) Opcode() uint16 {
 	return LinuxDrmSyncobjSurfaceV1RequestDestroy
@@ -266,7 +265,7 @@ func (o *LinuxDrmSyncobjSurfaceV1) Destroy() error {
 // surface commit time there is a pending buffer attached but no pending
 // acquire timeline point set, the no_acquire_point protocol error is
 // raised.
-func (o *LinuxDrmSyncobjSurfaceV1) SetAcquirePoint(timeline wire.ObjectID, pointHi uint32, pointLo uint32) error {
+func (o *LinuxDrmSyncobjSurfaceV1) SetAcquirePoint(timeline wire.ObjectID, pointHi, pointLo uint32) error {
 	return o.proxy.SendRequest(LinuxDrmSyncobjSurfaceV1RequestSetAcquirePoint, &LinuxDrmSyncobjSurfaceV1SetAcquirePointRequest{
 		Timeline: timeline,
 		PointHi:  pointHi,
@@ -319,7 +318,7 @@ func (o *LinuxDrmSyncobjSurfaceV1) SetAcquirePoint(timeline wire.ObjectID, point
 // surface commit time there is a pending buffer attached but no pending
 // release timeline point set, the no_release_point protocol error is
 // raised.
-func (o *LinuxDrmSyncobjSurfaceV1) SetReleasePoint(timeline wire.ObjectID, pointHi uint32, pointLo uint32) error {
+func (o *LinuxDrmSyncobjSurfaceV1) SetReleasePoint(timeline wire.ObjectID, pointHi, pointLo uint32) error {
 	return o.proxy.SendRequest(LinuxDrmSyncobjSurfaceV1RequestSetReleasePoint, &LinuxDrmSyncobjSurfaceV1SetReleasePointRequest{
 		Timeline: timeline,
 		PointHi:  pointHi,
@@ -333,7 +332,7 @@ func (o *LinuxDrmSyncobjSurfaceV1) SetReleasePoint(timeline wire.ObjectID, point
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxDrmSyncobjSurfaceV1(reg, name, min(g.Version,
 // VersionLinuxDrmSyncobjSurfaceV1)), to bind at the highest mutually supported version.
-func BindLinuxDrmSyncobjSurfaceV1(b wayland.Binder, name uint32, version uint32) (*LinuxDrmSyncobjSurfaceV1, error) {
+func BindLinuxDrmSyncobjSurfaceV1(b wayland.Binder, name, version uint32) (*LinuxDrmSyncobjSurfaceV1, error) {
 	if version < 1 || version > VersionLinuxDrmSyncobjSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

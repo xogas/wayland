@@ -50,8 +50,7 @@ const (
 //
 //	exists when this request is issued, the zxdg_shell_v6.defunct_surfaces
 //	is raised.
-type SurfaceV6DestroyRequest struct {
-}
+type SurfaceV6DestroyRequest struct{}
 
 func (r *SurfaceV6DestroyRequest) Opcode() uint16 { return SurfaceV6RequestDestroy }
 
@@ -299,12 +298,10 @@ func (o *SurfaceV6) Proxy() *wayland.Proxy {
 func (o *SurfaceV6) OnConfigure(fn SurfaceV6ConfigureFunc) {
 	o.proxy.RegisterEvent(SurfaceV6EventConfigure, func(r *wire.Reader) {
 		var ev SurfaceV6ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -343,10 +340,9 @@ func (o *SurfaceV6) GetToplevel() (*ToplevelV6, error) {
 
 	wrapped := NewToplevelV6(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetToplevel, &SurfaceV6GetToplevelRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetToplevel, &SurfaceV6GetToplevelRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -362,19 +358,18 @@ func (o *SurfaceV6) GetToplevel() (*ToplevelV6, error) {
 //
 // See the documentation of xdg_popup for more details about what an
 // xdg_popup is and how it is used.
-func (o *SurfaceV6) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*PopupV6, error) {
+func (o *SurfaceV6) GetPopup(parent, positioner wire.ObjectID) (*PopupV6, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewPopupV6(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetPopup, &SurfaceV6GetPopupRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SurfaceV6RequestGetPopup, &SurfaceV6GetPopupRequest{
 		ID:         wire.NewID(p.ID()),
 		Parent:     parent,
 		Positioner: positioner,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -406,7 +401,7 @@ func (o *SurfaceV6) GetPopup(parent wire.ObjectID, positioner wire.ObjectID) (*P
 // the set window geometry clamped to the bounding rectangle of the
 // combined geometry of the surface of the xdg_surface and the associated
 // subsurfaces.
-func (o *SurfaceV6) SetWindowGeometry(x int32, y int32, width int32, height int32) error {
+func (o *SurfaceV6) SetWindowGeometry(x, y, width, height int32) error {
 	return o.proxy.SendRequest(SurfaceV6RequestSetWindowGeometry, &SurfaceV6SetWindowGeometryRequest{
 		X:      x,
 		Y:      y,
@@ -451,7 +446,7 @@ func (o *SurfaceV6) AckConfigure(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSurfaceV6(reg, name, min(g.Version,
 // VersionSurfaceV6)), to bind at the highest mutually supported version.
-func BindSurfaceV6(b wayland.Binder, name uint32, version uint32) (*SurfaceV6, error) {
+func BindSurfaceV6(b wayland.Binder, name, version uint32) (*SurfaceV6, error) {
 	if version < 1 || version > VersionSurfaceV6 {
 		return nil, wayland.ErrVersionMismatch
 	}

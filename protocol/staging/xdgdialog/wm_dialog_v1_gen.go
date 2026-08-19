@@ -26,8 +26,7 @@ const (
 //
 // Destroys the xdg_wm_dialog_v1 object. This does not affect
 // the xdg_dialog_v1 objects generated through it.
-type WmDialogV1DestroyRequest struct {
-}
+type WmDialogV1DestroyRequest struct{}
 
 func (r *WmDialogV1DestroyRequest) Opcode() uint16 { return WmDialogV1RequestDestroy }
 
@@ -119,11 +118,10 @@ func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {
 
 	wrapped := NewDialogV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), WmDialogV1RequestGetXdgDialog, &WmDialogV1GetXdgDialogRequest{
+	if err := conn.SendRequest(o.proxy.ID(), WmDialogV1RequestGetXdgDialog, &WmDialogV1GetXdgDialogRequest{
 		ID:       wire.NewID(p.ID()),
 		Toplevel: toplevel,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -136,7 +134,7 @@ func (o *WmDialogV1) GetXdgDialog(toplevel wire.ObjectID) (*DialogV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindWmDialogV1(reg, name, min(g.Version,
 // VersionWmDialogV1)), to bind at the highest mutually supported version.
-func BindWmDialogV1(b wayland.Binder, name uint32, version uint32) (*WmDialogV1, error) {
+func BindWmDialogV1(b wayland.Binder, name, version uint32) (*WmDialogV1, error) {
 	if version < 1 || version > VersionWmDialogV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

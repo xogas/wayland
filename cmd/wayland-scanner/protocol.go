@@ -83,10 +83,10 @@ type Entry struct {
 	Description     Description `xml:"description"`
 }
 
-// IntValue is an integer that supports both decimal and 0x-prefixed hexadecimal values.
+// IntValue is an integer that accepts both decimal and 0x-hex values.
 type IntValue int
 
-// UnmarshalXMLAttr parses decimal or 0x-hex attribute values into an IntValue.
+// UnmarshalXMLAttr parses decimal or 0x-hex attribute values.
 func (v *IntValue) UnmarshalXMLAttr(attr xml.Attr) error {
 	parsed, err := strconv.ParseInt(attr.Value, 0, 0)
 	if err != nil {
@@ -143,7 +143,6 @@ func Parse(xmlPath string) (*Protocol, error) {
 	}
 	defer f.Close() //nolint: errcheck
 
-	// decodes and validates a Wayland protocol XML from a reader.
 	var proto Protocol
 	dec := xml.NewDecoder(f)
 	if err := dec.Decode(&proto); err != nil {

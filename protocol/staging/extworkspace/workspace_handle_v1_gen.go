@@ -89,8 +89,7 @@ const (
 // This request should be made either when the client does not want to
 // use the workspace object any more or after the remove event to finalize
 // the destruction of the object.
-type WorkspaceHandleV1DestroyRequest struct {
-}
+type WorkspaceHandleV1DestroyRequest struct{}
 
 func (r *WorkspaceHandleV1DestroyRequest) Opcode() uint16 { return WorkspaceHandleV1RequestDestroy }
 
@@ -108,8 +107,7 @@ func (r *WorkspaceHandleV1DestroyRequest) Since() uint32 { return 1 }
 // behaviour may be compositor-dependent. For example, activating a
 // workspace may or may not deactivate all other workspaces in the same
 // group.
-type WorkspaceHandleV1ActivateRequest struct {
-}
+type WorkspaceHandleV1ActivateRequest struct{}
 
 func (r *WorkspaceHandleV1ActivateRequest) Opcode() uint16 { return WorkspaceHandleV1RequestActivate }
 
@@ -124,8 +122,7 @@ func (r *WorkspaceHandleV1ActivateRequest) Since() uint32 { return 1 }
 // Request that this workspace be deactivated.
 //
 // There is no guarantee the workspace will be actually deactivated.
-type WorkspaceHandleV1DeactivateRequest struct {
-}
+type WorkspaceHandleV1DeactivateRequest struct{}
 
 func (r *WorkspaceHandleV1DeactivateRequest) Opcode() uint16 {
 	return WorkspaceHandleV1RequestDeactivate
@@ -162,8 +159,7 @@ func (r *WorkspaceHandleV1AssignRequest) Since() uint32 { return 1 }
 // Request that this workspace be removed.
 //
 // There is no guarantee the workspace will be actually removed.
-type WorkspaceHandleV1RemoveRequest struct {
-}
+type WorkspaceHandleV1RemoveRequest struct{}
 
 func (r *WorkspaceHandleV1RemoveRequest) Opcode() uint16 { return WorkspaceHandleV1RequestRemove }
 
@@ -337,8 +333,7 @@ func (e *WorkspaceHandleV1CapabilitiesEvent) Since() uint32 { return 1 }
 //
 // The compositor must only remove a workspaces not currently belonging to any
 // workspace_group.
-type WorkspaceHandleV1RemovedEvent struct {
-}
+type WorkspaceHandleV1RemovedEvent struct{}
 
 func (e *WorkspaceHandleV1RemovedEvent) Opcode() uint16 { return WorkspaceHandleV1EventRemoved }
 
@@ -403,12 +398,10 @@ func (o *WorkspaceHandleV1) Proxy() *wayland.Proxy {
 func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventID, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1IDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -417,12 +410,10 @@ func (o *WorkspaceHandleV1) OnID(fn WorkspaceHandleV1IDFunc) {
 func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventName, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1NameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -431,12 +422,10 @@ func (o *WorkspaceHandleV1) OnName(fn WorkspaceHandleV1NameFunc) {
 func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCoordinates, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CoordinatesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Coordinates", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -445,12 +434,10 @@ func (o *WorkspaceHandleV1) OnCoordinates(fn WorkspaceHandleV1CoordinatesFunc) {
 func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventState, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1StateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("State", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -459,12 +446,10 @@ func (o *WorkspaceHandleV1) OnState(fn WorkspaceHandleV1StateFunc) {
 func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventCapabilities, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1CapabilitiesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -473,12 +458,10 @@ func (o *WorkspaceHandleV1) OnCapabilities(fn WorkspaceHandleV1CapabilitiesFunc)
 func (o *WorkspaceHandleV1) OnRemoved(fn WorkspaceHandleV1RemovedFunc) {
 	o.proxy.RegisterEvent(WorkspaceHandleV1EventRemoved, func(r *wire.Reader) {
 		var ev WorkspaceHandleV1RemovedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -548,7 +531,7 @@ func (o *WorkspaceHandleV1) Remove() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindWorkspaceHandleV1(reg, name, min(g.Version,
 // VersionWorkspaceHandleV1)), to bind at the highest mutually supported version.
-func BindWorkspaceHandleV1(b wayland.Binder, name uint32, version uint32) (*WorkspaceHandleV1, error) {
+func BindWorkspaceHandleV1(b wayland.Binder, name, version uint32) (*WorkspaceHandleV1, error) {
 	if version < 1 || version > VersionWorkspaceHandleV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

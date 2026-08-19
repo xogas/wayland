@@ -34,8 +34,7 @@ const (
 // Destroys the 'xdg_toplevel_icon_v1' object.
 // The icon must still remain set on every toplevel it was assigned to,
 // until the toplevel icon is reset explicitly.
-type ToplevelIconV1DestroyRequest struct {
-}
+type ToplevelIconV1DestroyRequest struct{}
 
 func (r *ToplevelIconV1DestroyRequest) Opcode() uint16 { return ToplevelIconV1RequestDestroy }
 
@@ -225,7 +224,7 @@ func (o *ToplevelIconV1) AddBuffer(buffer wire.ObjectID, scale int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelIconV1(reg, name, min(g.Version,
 // VersionToplevelIconV1)), to bind at the highest mutually supported version.
-func BindToplevelIconV1(b wayland.Binder, name uint32, version uint32) (*ToplevelIconV1, error) {
+func BindToplevelIconV1(b wayland.Binder, name, version uint32) (*ToplevelIconV1, error) {
 	if version < 1 || version > VersionToplevelIconV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

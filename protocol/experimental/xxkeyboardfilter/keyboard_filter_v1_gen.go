@@ -40,8 +40,7 @@ const (
 // Unbinds the bound keyboard and the input method. the compositor must stop redirecting keyboard events. Events that the keyboard_filter client has not yet responded to are treated as if they received the "passthrough" action.
 //
 // This request takes effect immediately.
-type KeyboardFilterV1UnbindRequest struct {
-}
+type KeyboardFilterV1UnbindRequest struct{}
 
 func (r *KeyboardFilterV1UnbindRequest) Opcode() uint16 { return KeyboardFilterV1RequestUnbind }
 
@@ -98,8 +97,7 @@ func (r *KeyboardFilterV1FilterRequest) Since() uint32 { return 1 }
 // KeyboardFilterV1DestroyRequest destroy the keyboard.
 //
 // Destroys the keyboard_filter object, stops event interception, and unbinds the wl_keyboard and input_method objects bound to it.
-type KeyboardFilterV1DestroyRequest struct {
-}
+type KeyboardFilterV1DestroyRequest struct{}
 
 func (r *KeyboardFilterV1DestroyRequest) Opcode() uint16 { return KeyboardFilterV1RequestDestroy }
 
@@ -189,7 +187,7 @@ func (o *KeyboardFilterV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindKeyboardFilterV1(reg, name, min(g.Version,
 // VersionKeyboardFilterV1)), to bind at the highest mutually supported version.
-func BindKeyboardFilterV1(b wayland.Binder, name uint32, version uint32) (*KeyboardFilterV1, error) {
+func BindKeyboardFilterV1(b wayland.Binder, name, version uint32) (*KeyboardFilterV1, error) {
 	if version < 1 || version > VersionKeyboardFilterV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

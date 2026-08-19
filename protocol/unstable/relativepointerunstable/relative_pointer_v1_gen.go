@@ -30,8 +30,7 @@ func init() {
 }
 
 // RelativePointerV1DestroyRequest release the relative pointer object.
-type RelativePointerV1DestroyRequest struct {
-}
+type RelativePointerV1DestroyRequest struct{}
 
 func (r *RelativePointerV1DestroyRequest) Opcode() uint16 { return RelativePointerV1RequestDestroy }
 
@@ -156,12 +155,10 @@ func (o *RelativePointerV1) Proxy() *wayland.Proxy {
 func (o *RelativePointerV1) OnRelativeMotion(fn RelativePointerV1RelativeMotionFunc) {
 	o.proxy.RegisterEvent(RelativePointerV1EventRelativeMotion, func(r *wire.Reader) {
 		var ev RelativePointerV1RelativeMotionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("RelativeMotion", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -184,7 +181,7 @@ func (o *RelativePointerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindRelativePointerV1(reg, name, min(g.Version,
 // VersionRelativePointerV1)), to bind at the highest mutually supported version.
-func BindRelativePointerV1(b wayland.Binder, name uint32, version uint32) (*RelativePointerV1, error) {
+func BindRelativePointerV1(b wayland.Binder, name, version uint32) (*RelativePointerV1, error) {
 	if version < 1 || version > VersionRelativePointerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

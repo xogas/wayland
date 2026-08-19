@@ -71,8 +71,7 @@ func (r *PointerGesturesV1GetPinchGestureRequest) Since() uint32 { return 1 }
 //
 // Destroy the pointer gesture object. Swipe, pinch and hold objects
 // created via this gesture object remain valid.
-type PointerGesturesV1ReleaseRequest struct {
-}
+type PointerGesturesV1ReleaseRequest struct{}
 
 func (r *PointerGesturesV1ReleaseRequest) Opcode() uint16 { return PointerGesturesV1RequestRelease }
 
@@ -150,11 +149,10 @@ func (o *PointerGesturesV1) GetSwipeGesture(pointer wire.ObjectID) (*PointerGest
 
 	wrapped := NewPointerGestureSwipeV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetSwipeGesture, &PointerGesturesV1GetSwipeGestureRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetSwipeGesture, &PointerGesturesV1GetSwipeGestureRequest{
 		ID:      wire.NewID(p.ID()),
 		Pointer: pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -172,11 +170,10 @@ func (o *PointerGesturesV1) GetPinchGesture(pointer wire.ObjectID) (*PointerGest
 
 	wrapped := NewPointerGesturePinchV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetPinchGesture, &PointerGesturesV1GetPinchGestureRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetPinchGesture, &PointerGesturesV1GetPinchGestureRequest{
 		ID:      wire.NewID(p.ID()),
 		Pointer: pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -215,11 +212,10 @@ func (o *PointerGesturesV1) GetHoldGesture(pointer wire.ObjectID) (*PointerGestu
 
 	wrapped := NewPointerGestureHoldV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetHoldGesture, &PointerGesturesV1GetHoldGestureRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PointerGesturesV1RequestGetHoldGesture, &PointerGesturesV1GetHoldGestureRequest{
 		ID:      wire.NewID(p.ID()),
 		Pointer: pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -232,7 +228,7 @@ func (o *PointerGesturesV1) GetHoldGesture(pointer wire.ObjectID) (*PointerGestu
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointerGesturesV1(reg, name, min(g.Version,
 // VersionPointerGesturesV1)), to bind at the highest mutually supported version.
-func BindPointerGesturesV1(b wayland.Binder, name uint32, version uint32) (*PointerGesturesV1, error) {
+func BindPointerGesturesV1(b wayland.Binder, name, version uint32) (*PointerGesturesV1, error) {
 	if version < 1 || version > VersionPointerGesturesV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

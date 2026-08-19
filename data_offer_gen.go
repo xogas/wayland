@@ -130,8 +130,7 @@ func (r *DataOfferReceiveRequest) Since() uint32 { return 1 }
 // DataOfferDestroyRequest destroy data offer.
 //
 // Destroy the data offer.
-type DataOfferDestroyRequest struct {
-}
+type DataOfferDestroyRequest struct{}
 
 func (r *DataOfferDestroyRequest) Opcode() uint16 { return DataOfferRequestDestroy }
 
@@ -157,8 +156,7 @@ func (r *DataOfferDestroyRequest) Since() uint32 { return 1 }
 //
 // If wl_data_offer.finish request is received for a non drag and drop
 // operation, the invalid_finish protocol error is raised.
-type DataOfferFinishRequest struct {
-}
+type DataOfferFinishRequest struct{}
 
 func (r *DataOfferFinishRequest) Opcode() uint16 { return DataOfferRequestFinish }
 
@@ -359,12 +357,10 @@ func (o *DataOffer) Proxy() *Proxy {
 func (o *DataOffer) OnOffer(fn DataOfferOfferFunc) {
 	o.proxy.RegisterEvent(DataOfferEventOffer, func(r *wire.Reader) {
 		var ev DataOfferOfferEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Offer", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -373,12 +369,10 @@ func (o *DataOffer) OnOffer(fn DataOfferOfferFunc) {
 func (o *DataOffer) OnSourceActions(fn DataOfferSourceActionsFunc) {
 	o.proxy.RegisterEvent(DataOfferEventSourceActions, func(r *wire.Reader) {
 		var ev DataOfferSourceActionsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SourceActions", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -387,12 +381,10 @@ func (o *DataOffer) OnSourceActions(fn DataOfferSourceActionsFunc) {
 func (o *DataOffer) OnAction(fn DataOfferActionFunc) {
 	o.proxy.RegisterEvent(DataOfferEventAction, func(r *wire.Reader) {
 		var ev DataOfferActionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Action", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -514,7 +506,7 @@ func (o *DataOffer) Finish() error {
 //
 // This request can only be made on drag-and-drop offers, a protocol error
 // will be raised otherwise.
-func (o *DataOffer) SetActions(dndActions DataDeviceManagerDndAction, preferredAction DataDeviceManagerDndAction) error {
+func (o *DataOffer) SetActions(dndActions, preferredAction DataDeviceManagerDndAction) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return ErrVersionMismatch
 	}
@@ -530,7 +522,7 @@ func (o *DataOffer) SetActions(dndActions DataDeviceManagerDndAction, preferredA
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataOffer(reg, name, min(g.Version,
 // VersionDataOffer)), to bind at the highest mutually supported version.
-func BindDataOffer(b Binder, name uint32, version uint32) (*DataOffer, error) {
+func BindDataOffer(b Binder, name, version uint32) (*DataOffer, error) {
 	if version < 1 || version > VersionDataOffer {
 		return nil, ErrVersionMismatch
 	}

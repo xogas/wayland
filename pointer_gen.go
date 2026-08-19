@@ -206,8 +206,7 @@ func (r *PointerSetCursorRequest) Since() uint32 { return 1 }
 //
 // This request destroys the pointer proxy object, so clients must not call
 // wl_pointer_destroy() after using this request.
-type PointerReleaseRequest struct {
-}
+type PointerReleaseRequest struct{}
 
 func (r *PointerReleaseRequest) Opcode() uint16 { return PointerRequestRelease }
 
@@ -474,8 +473,7 @@ func (e *PointerAxisEvent) Since() uint32 { return 1 }
 // Compositor-specific policies may require the wl_pointer.leave and
 // wl_pointer.enter event being split across multiple wl_pointer.frame
 // groups.
-type PointerFrameEvent struct {
-}
+type PointerFrameEvent struct{}
 
 func (e *PointerFrameEvent) Opcode() uint16 { return PointerEventFrame }
 
@@ -845,12 +843,10 @@ func (o *Pointer) Proxy() *Proxy {
 func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 	o.proxy.RegisterEvent(PointerEventEnter, func(r *wire.Reader) {
 		var ev PointerEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -859,12 +855,10 @@ func (o *Pointer) OnEnter(fn PointerEnterFunc) {
 func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 	o.proxy.RegisterEvent(PointerEventLeave, func(r *wire.Reader) {
 		var ev PointerLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -873,12 +867,10 @@ func (o *Pointer) OnLeave(fn PointerLeaveFunc) {
 func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 	o.proxy.RegisterEvent(PointerEventMotion, func(r *wire.Reader) {
 		var ev PointerMotionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -887,12 +879,10 @@ func (o *Pointer) OnMotion(fn PointerMotionFunc) {
 func (o *Pointer) OnButton(fn PointerButtonFunc) {
 	o.proxy.RegisterEvent(PointerEventButton, func(r *wire.Reader) {
 		var ev PointerButtonEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Button", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -901,12 +891,10 @@ func (o *Pointer) OnButton(fn PointerButtonFunc) {
 func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 	o.proxy.RegisterEvent(PointerEventAxis, func(r *wire.Reader) {
 		var ev PointerAxisEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Axis", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -915,12 +903,10 @@ func (o *Pointer) OnAxis(fn PointerAxisFunc) {
 func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 	o.proxy.RegisterEvent(PointerEventFrame, func(r *wire.Reader) {
 		var ev PointerFrameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Frame", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -929,12 +915,10 @@ func (o *Pointer) OnFrame(fn PointerFrameFunc) {
 func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisSource, func(r *wire.Reader) {
 		var ev PointerAxisSourceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisSource", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -943,12 +927,10 @@ func (o *Pointer) OnAxisSource(fn PointerAxisSourceFunc) {
 func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisStop, func(r *wire.Reader) {
 		var ev PointerAxisStopEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisStop", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -957,12 +939,10 @@ func (o *Pointer) OnAxisStop(fn PointerAxisStopFunc) {
 func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisDiscrete, func(r *wire.Reader) {
 		var ev PointerAxisDiscreteEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisDiscrete", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -971,12 +951,10 @@ func (o *Pointer) OnAxisDiscrete(fn PointerAxisDiscreteFunc) {
 func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 	o.proxy.RegisterEvent(PointerEventAxisValue120, func(r *wire.Reader) {
 		var ev PointerAxisValue120Event
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisValue120", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -985,12 +963,10 @@ func (o *Pointer) OnAxisValue120(fn PointerAxisValue120Func) {
 func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 	o.proxy.RegisterEvent(PointerEventAxisRelativeDirection, func(r *wire.Reader) {
 		var ev PointerAxisRelativeDirectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AxisRelativeDirection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -999,12 +975,10 @@ func (o *Pointer) OnAxisRelativeDirection(fn PointerAxisRelativeDirectionFunc) {
 func (o *Pointer) OnWarp(fn PointerWarpFunc) {
 	o.proxy.RegisterEvent(PointerEventWarp, func(r *wire.Reader) {
 		var ev PointerWarpEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Warp", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -1044,7 +1018,7 @@ func (o *Pointer) OnWarp(fn PointerWarpFunc) {
 // The serial parameter must match the latest wl_pointer.enter
 // serial number sent to the client. Otherwise the request will be
 // ignored.
-func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX int32, hotspotY int32) error {
+func (o *Pointer) SetCursor(serial uint32, surface wire.ObjectID, hotspotX, hotspotY int32) error {
 	return o.proxy.SendRequest(PointerRequestSetCursor, &PointerSetCursorRequest{
 		Serial:   serial,
 		Surface:  surface,
@@ -1080,7 +1054,7 @@ func (o *Pointer) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPointer(reg, name, min(g.Version,
 // VersionPointer)), to bind at the highest mutually supported version.
-func BindPointer(b Binder, name uint32, version uint32) (*Pointer, error) {
+func BindPointer(b Binder, name, version uint32) (*Pointer, error) {
 	if version < 1 || version > VersionPointer {
 		return nil, ErrVersionMismatch
 	}

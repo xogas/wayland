@@ -27,8 +27,7 @@ const (
 // Destroy this tearing control factory object. Other objects, including
 // wp_tearing_control_v1 objects created by this factory, are not affected
 // by this request.
-type TearingControlManagerV1DestroyRequest struct {
-}
+type TearingControlManagerV1DestroyRequest struct{}
 
 func (r *TearingControlManagerV1DestroyRequest) Opcode() uint16 {
 	return TearingControlManagerV1RequestDestroy
@@ -129,11 +128,10 @@ func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*Tea
 
 	wrapped := NewTearingControlV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), TearingControlManagerV1RequestGetTearingControl, &TearingControlManagerV1GetTearingControlRequest{
+	if err := conn.SendRequest(o.proxy.ID(), TearingControlManagerV1RequestGetTearingControl, &TearingControlManagerV1GetTearingControlRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -146,7 +144,7 @@ func (o *TearingControlManagerV1) GetTearingControl(surface wire.ObjectID) (*Tea
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTearingControlManagerV1(reg, name, min(g.Version,
 // VersionTearingControlManagerV1)), to bind at the highest mutually supported version.
-func BindTearingControlManagerV1(b wayland.Binder, name uint32, version uint32) (*TearingControlManagerV1, error) {
+func BindTearingControlManagerV1(b wayland.Binder, name, version uint32) (*TearingControlManagerV1, error) {
 	if version < 1 || version > VersionTearingControlManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

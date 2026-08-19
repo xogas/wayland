@@ -25,8 +25,7 @@ const (
 // KeyboardShortcutsInhibitManagerV1DestroyRequest destroy the keyboard shortcuts inhibitor object.
 //
 // Destroy the keyboard shortcuts inhibitor manager.
-type KeyboardShortcutsInhibitManagerV1DestroyRequest struct {
-}
+type KeyboardShortcutsInhibitManagerV1DestroyRequest struct{}
 
 func (r *KeyboardShortcutsInhibitManagerV1DestroyRequest) Opcode() uint16 {
 	return KeyboardShortcutsInhibitManagerV1RequestDestroy
@@ -110,19 +109,18 @@ func (o *KeyboardShortcutsInhibitManagerV1) Destroy() error {
 //
 // If shortcuts are already inhibited for the specified seat and surface,
 // a protocol error "already_inhibited" is raised by the compositor.
-func (o *KeyboardShortcutsInhibitManagerV1) InhibitShortcuts(surface wire.ObjectID, seat wire.ObjectID) (*KeyboardShortcutsInhibitorV1, error) {
+func (o *KeyboardShortcutsInhibitManagerV1) InhibitShortcuts(surface, seat wire.ObjectID) (*KeyboardShortcutsInhibitorV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewKeyboardShortcutsInhibitorV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), KeyboardShortcutsInhibitManagerV1RequestInhibitShortcuts, &KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest{
+	if err := conn.SendRequest(o.proxy.ID(), KeyboardShortcutsInhibitManagerV1RequestInhibitShortcuts, &KeyboardShortcutsInhibitManagerV1InhibitShortcutsRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
 		Seat:    seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -135,7 +133,7 @@ func (o *KeyboardShortcutsInhibitManagerV1) InhibitShortcuts(surface wire.Object
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindKeyboardShortcutsInhibitManagerV1(reg, name, min(g.Version,
 // VersionKeyboardShortcutsInhibitManagerV1)), to bind at the highest mutually supported version.
-func BindKeyboardShortcutsInhibitManagerV1(b wayland.Binder, name uint32, version uint32) (*KeyboardShortcutsInhibitManagerV1, error) {
+func BindKeyboardShortcutsInhibitManagerV1(b wayland.Binder, name, version uint32) (*KeyboardShortcutsInhibitManagerV1, error) {
 	if version < 1 || version > VersionKeyboardShortcutsInhibitManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

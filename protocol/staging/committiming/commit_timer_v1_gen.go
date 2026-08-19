@@ -76,8 +76,7 @@ func (r *CommitTimerV1SetTimestampRequest) Since() uint32 { return 1 }
 // this protocol object.
 //
 // Existing timing constraints are not affected by the destruction.
-type CommitTimerV1DestroyRequest struct {
-}
+type CommitTimerV1DestroyRequest struct{}
 
 func (r *CommitTimerV1DestroyRequest) Opcode() uint16 { return CommitTimerV1RequestDestroy }
 
@@ -120,7 +119,7 @@ func (o *CommitTimerV1) Proxy() *wayland.Proxy {
 //
 // Requesting set_timestamp after the commit_timer object's surface is
 // destroyed will generate a "surface_destroyed" error.
-func (o *CommitTimerV1) SetTimestamp(tvSecHi uint32, tvSecLo uint32, tvNsec uint32) error {
+func (o *CommitTimerV1) SetTimestamp(tvSecHi, tvSecLo, tvNsec uint32) error {
 	return o.proxy.SendRequest(CommitTimerV1RequestSetTimestamp, &CommitTimerV1SetTimestampRequest{
 		TvSecHi: tvSecHi,
 		TvSecLo: tvSecLo,
@@ -151,7 +150,7 @@ func (o *CommitTimerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCommitTimerV1(reg, name, min(g.Version,
 // VersionCommitTimerV1)), to bind at the highest mutually supported version.
-func BindCommitTimerV1(b wayland.Binder, name uint32, version uint32) (*CommitTimerV1, error) {
+func BindCommitTimerV1(b wayland.Binder, name, version uint32) (*CommitTimerV1, error) {
 	if version < 1 || version > VersionCommitTimerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

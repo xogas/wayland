@@ -128,8 +128,7 @@ func (r *ActivationTokenV1SetSurfaceRequest) Since() uint32 { return 1 }
 //
 // Requests an activation token based on the different parameters that
 // have been offered through set_serial, set_surface and set_app_id.
-type ActivationTokenV1CommitRequest struct {
-}
+type ActivationTokenV1CommitRequest struct{}
 
 func (r *ActivationTokenV1CommitRequest) Opcode() uint16 { return ActivationTokenV1RequestCommit }
 
@@ -143,8 +142,7 @@ func (r *ActivationTokenV1CommitRequest) Since() uint32 { return 1 }
 //
 // Notify the compositor that the xdg_activation_token_v1 object will no
 // longer be used. The received token stays valid.
-type ActivationTokenV1DestroyRequest struct {
-}
+type ActivationTokenV1DestroyRequest struct{}
 
 func (r *ActivationTokenV1DestroyRequest) Opcode() uint16 { return ActivationTokenV1RequestDestroy }
 
@@ -208,12 +206,10 @@ func (o *ActivationTokenV1) Proxy() *wayland.Proxy {
 func (o *ActivationTokenV1) OnDone(fn ActivationTokenV1DoneFunc) {
 	o.proxy.RegisterEvent(ActivationTokenV1EventDone, func(r *wire.Reader) {
 		var ev ActivationTokenV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -295,7 +291,7 @@ func (o *ActivationTokenV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindActivationTokenV1(reg, name, min(g.Version,
 // VersionActivationTokenV1)), to bind at the highest mutually supported version.
-func BindActivationTokenV1(b wayland.Binder, name uint32, version uint32) (*ActivationTokenV1, error) {
+func BindActivationTokenV1(b wayland.Binder, name, version uint32) (*ActivationTokenV1, error) {
 	if version < 1 || version > VersionActivationTokenV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

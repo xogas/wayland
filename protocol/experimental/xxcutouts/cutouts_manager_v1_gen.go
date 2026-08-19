@@ -31,8 +31,7 @@ const (
 // going to use the xx_cutouts_manger object anymore.
 //
 // Any objects already created through this instance are not affected.
-type CutoutsManagerV1DestroyRequest struct {
-}
+type CutoutsManagerV1DestroyRequest struct{}
 
 func (r *CutoutsManagerV1DestroyRequest) Opcode() uint16 { return CutoutsManagerV1RequestDestroy }
 
@@ -115,11 +114,10 @@ func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error)
 
 	wrapped := NewCutoutsV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CutoutsManagerV1RequestGetCutouts, &CutoutsManagerV1GetCutoutsRequest{
+	if err := conn.SendRequest(o.proxy.ID(), CutoutsManagerV1RequestGetCutouts, &CutoutsManagerV1GetCutoutsRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -132,7 +130,7 @@ func (o *CutoutsManagerV1) GetCutouts(surface wire.ObjectID) (*CutoutsV1, error)
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCutoutsManagerV1(reg, name, min(g.Version,
 // VersionCutoutsManagerV1)), to bind at the highest mutually supported version.
-func BindCutoutsManagerV1(b wayland.Binder, name uint32, version uint32) (*CutoutsManagerV1, error) {
+func BindCutoutsManagerV1(b wayland.Binder, name, version uint32) (*CutoutsManagerV1, error) {
 	if version < 1 || version > VersionCutoutsManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -200,8 +200,7 @@ func (r *ShellSurfaceResizeRequest) Since() uint32 { return 1 }
 // Map the surface as a toplevel surface.
 //
 // A toplevel surface is not fullscreen, maximized or transient.
-type ShellSurfaceSetToplevelRequest struct {
-}
+type ShellSurfaceSetToplevelRequest struct{}
 
 func (r *ShellSurfaceSetToplevelRequest) Opcode() uint16 { return ShellSurfaceRequestSetToplevel }
 
@@ -537,8 +536,7 @@ func (e *ShellSurfaceConfigureEvent) Since() uint32 { return 1 }
 // The popup_done event is sent out when a popup grab is broken,
 // that is, when the user clicks a surface that doesn't belong
 // to the client owning the popup surface.
-type ShellSurfacePopupDoneEvent struct {
-}
+type ShellSurfacePopupDoneEvent struct{}
 
 func (e *ShellSurfacePopupDoneEvent) Opcode() uint16 { return ShellSurfaceEventPopupDone }
 
@@ -589,12 +587,10 @@ func (o *ShellSurface) Proxy() *Proxy {
 func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPing, func(r *wire.Reader) {
 		var ev ShellSurfacePingEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -603,12 +599,10 @@ func (o *ShellSurface) OnPing(fn ShellSurfacePingFunc) {
 func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventConfigure, func(r *wire.Reader) {
 		var ev ShellSurfaceConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -617,12 +611,10 @@ func (o *ShellSurface) OnConfigure(fn ShellSurfaceConfigureFunc) {
 func (o *ShellSurface) OnPopupDone(fn ShellSurfacePopupDoneFunc) {
 	o.proxy.RegisterEvent(ShellSurfaceEventPopupDone, func(r *wire.Reader) {
 		var ev ShellSurfacePopupDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -684,7 +676,7 @@ func (o *ShellSurface) SetToplevel() error {
 // parent surface, in surface-local coordinates.
 //
 // The flags argument controls details of the transient behaviour.
-func (o *ShellSurface) SetTransient(parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
+func (o *ShellSurface) SetTransient(parent wire.ObjectID, x, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetTransient, &ShellSurfaceSetTransientRequest{
 		Parent: parent,
 		X:      x,
@@ -757,7 +749,7 @@ func (o *ShellSurface) SetFullscreen(method ShellSurfaceFullscreenMethod, framer
 // The x and y arguments specify the location of the upper left
 // corner of the surface relative to the upper left corner of the
 // parent surface, in surface-local coordinates.
-func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.ObjectID, x int32, y int32, flags ShellSurfaceTransient) error {
+func (o *ShellSurface) SetPopup(seat wire.ObjectID, serial uint32, parent wire.ObjectID, x, y int32, flags ShellSurfaceTransient) error {
 	return o.proxy.SendRequest(ShellSurfaceRequestSetPopup, &ShellSurfaceSetPopupRequest{
 		Seat:   seat,
 		Serial: serial,
@@ -829,7 +821,7 @@ func (o *ShellSurface) SetClass(class string) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShellSurface(reg, name, min(g.Version,
 // VersionShellSurface)), to bind at the highest mutually supported version.
-func BindShellSurface(b Binder, name uint32, version uint32) (*ShellSurface, error) {
+func BindShellSurface(b Binder, name, version uint32) (*ShellSurface, error) {
 	if version < 1 || version > VersionShellSurface {
 		return nil, ErrVersionMismatch
 	}

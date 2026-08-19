@@ -19,8 +19,7 @@ const (
 //
 // Destroy the decoration manager. This doesn't destroy objects created
 // with the manager.
-type DecorationManagerV1DestroyRequest struct {
-}
+type DecorationManagerV1DestroyRequest struct{}
 
 func (r *DecorationManagerV1DestroyRequest) Opcode() uint16 { return DecorationManagerV1RequestDestroy }
 
@@ -159,11 +158,10 @@ func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*To
 
 	wrapped := NewToplevelDecorationV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), DecorationManagerV1RequestGetToplevelDecoration, &DecorationManagerV1GetToplevelDecorationRequest{
+	if err := conn.SendRequest(o.proxy.ID(), DecorationManagerV1RequestGetToplevelDecoration, &DecorationManagerV1GetToplevelDecorationRequest{
 		ID:       wire.NewID(p.ID()),
 		Toplevel: toplevel,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -176,7 +174,7 @@ func (o *DecorationManagerV1) GetToplevelDecoration(toplevel wire.ObjectID) (*To
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDecorationManagerV1(reg, name, min(g.Version,
 // VersionDecorationManagerV1)), to bind at the highest mutually supported version.
-func BindDecorationManagerV1(b wayland.Binder, name uint32, version uint32) (*DecorationManagerV1, error) {
+func BindDecorationManagerV1(b wayland.Binder, name, version uint32) (*DecorationManagerV1, error) {
 	if version < 1 || version > VersionDecorationManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

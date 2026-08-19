@@ -360,8 +360,7 @@ func (r *InputMethodV1GetInputPopupSurfaceRequest) Since() uint32 { return 2 }
 //
 // Destroys the xx_input_method_v1 object and any associated child
 // objects.
-type InputMethodV1DestroyRequest struct {
-}
+type InputMethodV1DestroyRequest struct{}
 
 func (r *InputMethodV1DestroyRequest) Opcode() uint16 { return InputMethodV1RequestDestroy }
 
@@ -391,8 +390,7 @@ func (r *InputMethodV1DestroyRequest) Since() uint32 { return 1 }
 //
 // State set with this event is double-buffered. It will get applied on
 // the next xx_input_method_v1.done event, and stay valid until changed.
-type InputMethodV1ActivateEvent struct {
-}
+type InputMethodV1ActivateEvent struct{}
 
 func (e *InputMethodV1ActivateEvent) Opcode() uint16 { return InputMethodV1EventActivate }
 
@@ -417,8 +415,7 @@ func (e *InputMethodV1ActivateEvent) Since() uint32 { return 1 }
 //
 // State set with this event is double-buffered. It will get applied on
 // the next xx_input_method_v1.done event, and stay valid until changed.
-type InputMethodV1DeactivateEvent struct {
-}
+type InputMethodV1DeactivateEvent struct{}
 
 func (e *InputMethodV1DeactivateEvent) Opcode() uint16 { return InputMethodV1EventDeactivate }
 
@@ -666,8 +663,7 @@ func (e *InputMethodV1AnnounceProtocolCompatEvent) Since() uint32 { return 3 }
 // Events must be applied in the order of arrival.
 //
 // Neither current nor pending state are modified unless noted otherwise.
-type InputMethodV1DoneEvent struct {
-}
+type InputMethodV1DoneEvent struct{}
 
 func (e *InputMethodV1DoneEvent) Opcode() uint16 { return InputMethodV1EventDone }
 
@@ -691,8 +687,7 @@ func (e *InputMethodV1DoneEvent) Since() uint32 { return 1 }
 // The input method context becomes inert and should be destroyed after
 // deactivation is handled. Any further requests and events except for the
 // destroy request must be ignored.
-type InputMethodV1UnavailableEvent struct {
-}
+type InputMethodV1UnavailableEvent struct{}
 
 func (e *InputMethodV1UnavailableEvent) Opcode() uint16 { return InputMethodV1EventUnavailable }
 
@@ -769,12 +764,10 @@ func (o *InputMethodV1) Proxy() *wayland.Proxy {
 func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventActivate, func(r *wire.Reader) {
 		var ev InputMethodV1ActivateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Activate", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -783,12 +776,10 @@ func (o *InputMethodV1) OnActivate(fn InputMethodV1ActivateFunc) {
 func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDeactivate, func(r *wire.Reader) {
 		var ev InputMethodV1DeactivateEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Deactivate", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -797,12 +788,10 @@ func (o *InputMethodV1) OnDeactivate(fn InputMethodV1DeactivateFunc) {
 func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSurroundingText, func(r *wire.Reader) {
 		var ev InputMethodV1SurroundingTextEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SurroundingText", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -811,12 +800,10 @@ func (o *InputMethodV1) OnSurroundingText(fn InputMethodV1SurroundingTextFunc) {
 func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventTextChangeCause, func(r *wire.Reader) {
 		var ev InputMethodV1TextChangeCauseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TextChangeCause", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -825,12 +812,10 @@ func (o *InputMethodV1) OnTextChangeCause(fn InputMethodV1TextChangeCauseFunc) {
 func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventContentType, func(r *wire.Reader) {
 		var ev InputMethodV1ContentTypeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ContentType", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -839,12 +824,10 @@ func (o *InputMethodV1) OnContentType(fn InputMethodV1ContentTypeFunc) {
 func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableActionsFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventSetAvailableActions, func(r *wire.Reader) {
 		var ev InputMethodV1SetAvailableActionsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SetAvailableActions", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -853,12 +836,10 @@ func (o *InputMethodV1) OnSetAvailableActions(fn InputMethodV1SetAvailableAction
 func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupportedFeaturesFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceSupportedFeatures, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceSupportedFeaturesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AnnounceSupportedFeatures", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -867,12 +848,10 @@ func (o *InputMethodV1) OnAnnounceSupportedFeatures(fn InputMethodV1AnnounceSupp
 func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtocolCompatFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventAnnounceProtocolCompat, func(r *wire.Reader) {
 		var ev InputMethodV1AnnounceProtocolCompatEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AnnounceProtocolCompat", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -881,12 +860,10 @@ func (o *InputMethodV1) OnAnnounceProtocolCompat(fn InputMethodV1AnnounceProtoco
 func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventDone, func(r *wire.Reader) {
 		var ev InputMethodV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -895,12 +872,10 @@ func (o *InputMethodV1) OnDone(fn InputMethodV1DoneFunc) {
 func (o *InputMethodV1) OnUnavailable(fn InputMethodV1UnavailableFunc) {
 	o.proxy.RegisterEvent(InputMethodV1EventUnavailable, func(r *wire.Reader) {
 		var ev InputMethodV1UnavailableEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Unavailable", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -971,7 +946,7 @@ func (o *InputMethodV1) CommitString(text string) error {
 //
 // The initial value of text is an empty string. The initial value of
 // cursor_begin, and cursor_end are both 0.
-func (o *InputMethodV1) SetPreeditString(text string, cursorBegin int32, cursorEnd int32) error {
+func (o *InputMethodV1) SetPreeditString(text string, cursorBegin, cursorEnd int32) error {
 	return o.proxy.SendRequest(InputMethodV1RequestSetPreeditString, &InputMethodV1SetPreeditStringRequest{
 		Text:        text,
 		CursorBegin: cursorBegin,
@@ -1000,7 +975,7 @@ func (o *InputMethodV1) SetPreeditString(text string, cursorBegin int32, cursorE
 // and reset to initial on the next xx_input_method_v1.commit request.
 //
 // The initial values of both before_length and after_length are 0.
-func (o *InputMethodV1) DeleteSurroundingText(beforeLength uint32, afterLength uint32) error {
+func (o *InputMethodV1) DeleteSurroundingText(beforeLength, afterLength uint32) error {
 	return o.proxy.SendRequest(InputMethodV1RequestDeleteSurroundingText, &InputMethodV1DeleteSurroundingTextRequest{
 		BeforeLength: beforeLength,
 		AfterLength:  afterLength,
@@ -1030,7 +1005,7 @@ func (o *InputMethodV1) DeleteSurroundingText(beforeLength uint32, afterLength u
 // and reset to initial on the next commit request.
 //
 // The initial values of both cursor and anchor are 0.
-func (o *InputMethodV1) MoveCursor(cursor int32, anchor int32) error {
+func (o *InputMethodV1) MoveCursor(cursor, anchor int32) error {
 	if v := o.proxy.Version(); v > 0 && v < uint32(3) {
 		return wayland.ErrVersionMismatch
 	}
@@ -1091,7 +1066,7 @@ func (o *InputMethodV1) Commit(serial uint32) error {
 // error.
 //
 // Issuing this request before receiving a committed .activate causes the "inactive" error.
-func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner wire.ObjectID) (*InputPopupSurfaceV2, error) {
+func (o *InputMethodV1) GetInputPopupSurface(surface, positioner wire.ObjectID) (*InputPopupSurfaceV2, error) {
 	if v := o.proxy.Version(); v > 0 && v < uint32(2) {
 		return nil, wayland.ErrVersionMismatch
 	}
@@ -1101,12 +1076,11 @@ func (o *InputMethodV1) GetInputPopupSurface(surface wire.ObjectID, positioner w
 
 	wrapped := NewInputPopupSurfaceV2(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), InputMethodV1RequestGetInputPopupSurface, &InputMethodV1GetInputPopupSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), InputMethodV1RequestGetInputPopupSurface, &InputMethodV1GetInputPopupSurfaceRequest{
 		ID:         wire.NewID(p.ID()),
 		Surface:    surface,
 		Positioner: positioner,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1134,7 +1108,7 @@ func (o *InputMethodV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputMethodV1(reg, name, min(g.Version,
 // VersionInputMethodV1)), to bind at the highest mutually supported version.
-func BindInputMethodV1(b wayland.Binder, name uint32, version uint32) (*InputMethodV1, error) {
+func BindInputMethodV1(b wayland.Binder, name, version uint32) (*InputMethodV1, error) {
 	if version < 1 || version > VersionInputMethodV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

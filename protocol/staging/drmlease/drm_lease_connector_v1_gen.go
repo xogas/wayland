@@ -44,8 +44,7 @@ func init() {
 // "withdrawn" event so that the server can release the resources
 // associated with this connector offer. Neither existing lease requests
 // nor leases will be affected.
-type DrmLeaseConnectorV1DestroyRequest struct {
-}
+type DrmLeaseConnectorV1DestroyRequest struct{}
 
 func (r *DrmLeaseConnectorV1DestroyRequest) Opcode() uint16 { return DrmLeaseConnectorV1RequestDestroy }
 
@@ -140,8 +139,7 @@ func (e *DrmLeaseConnectorV1ConnectorIDEvent) Since() uint32 { return 1 }
 // This event is sent after all properties of a connector have been sent.
 // This allows changes to the properties to be seen as atomic even if they
 // happen via multiple events.
-type DrmLeaseConnectorV1DoneEvent struct {
-}
+type DrmLeaseConnectorV1DoneEvent struct{}
 
 func (e *DrmLeaseConnectorV1DoneEvent) Opcode() uint16 { return DrmLeaseConnectorV1EventDone }
 
@@ -164,8 +162,7 @@ func (e *DrmLeaseConnectorV1DoneEvent) Since() uint32 { return 1 }
 // If a client holds a lease for the connector, the status of the lease
 // remains the same. The client should destroy the object after receiving
 // this event.
-type DrmLeaseConnectorV1WithdrawnEvent struct {
-}
+type DrmLeaseConnectorV1WithdrawnEvent struct{}
 
 func (e *DrmLeaseConnectorV1WithdrawnEvent) Opcode() uint16 { return DrmLeaseConnectorV1EventWithdrawn }
 
@@ -218,12 +215,10 @@ func (o *DrmLeaseConnectorV1) Proxy() *wayland.Proxy {
 func (o *DrmLeaseConnectorV1) OnName(fn DrmLeaseConnectorV1NameFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventName, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1NameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -232,12 +227,10 @@ func (o *DrmLeaseConnectorV1) OnName(fn DrmLeaseConnectorV1NameFunc) {
 func (o *DrmLeaseConnectorV1) OnDescription(fn DrmLeaseConnectorV1DescriptionFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventDescription, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1DescriptionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -246,12 +239,10 @@ func (o *DrmLeaseConnectorV1) OnDescription(fn DrmLeaseConnectorV1DescriptionFun
 func (o *DrmLeaseConnectorV1) OnConnectorID(fn DrmLeaseConnectorV1ConnectorIDFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventConnectorID, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1ConnectorIDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ConnectorID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -260,12 +251,10 @@ func (o *DrmLeaseConnectorV1) OnConnectorID(fn DrmLeaseConnectorV1ConnectorIDFun
 func (o *DrmLeaseConnectorV1) OnDone(fn DrmLeaseConnectorV1DoneFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventDone, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -274,12 +263,10 @@ func (o *DrmLeaseConnectorV1) OnDone(fn DrmLeaseConnectorV1DoneFunc) {
 func (o *DrmLeaseConnectorV1) OnWithdrawn(fn DrmLeaseConnectorV1WithdrawnFunc) {
 	o.proxy.RegisterEvent(DrmLeaseConnectorV1EventWithdrawn, func(r *wire.Reader) {
 		var ev DrmLeaseConnectorV1WithdrawnEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Withdrawn", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -308,7 +295,7 @@ func (o *DrmLeaseConnectorV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDrmLeaseConnectorV1(reg, name, min(g.Version,
 // VersionDrmLeaseConnectorV1)), to bind at the highest mutually supported version.
-func BindDrmLeaseConnectorV1(b wayland.Binder, name uint32, version uint32) (*DrmLeaseConnectorV1, error) {
+func BindDrmLeaseConnectorV1(b wayland.Binder, name, version uint32) (*DrmLeaseConnectorV1, error) {
 	if version < 1 || version > VersionDrmLeaseConnectorV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

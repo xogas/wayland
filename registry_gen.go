@@ -179,12 +179,10 @@ func (o *Registry) Proxy() *Proxy {
 func (o *Registry) OnGlobal(fn RegistryGlobalFunc) {
 	o.proxy.RegisterEvent(RegistryEventGlobal, func(r *wire.Reader) {
 		var ev RegistryGlobalEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Global", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -193,12 +191,10 @@ func (o *Registry) OnGlobal(fn RegistryGlobalFunc) {
 func (o *Registry) OnGlobalRemove(fn RegistryGlobalRemoveFunc) {
 	o.proxy.RegisterEvent(RegistryEventGlobalRemove, func(r *wire.Reader) {
 		var ev RegistryGlobalRemoveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("GlobalRemove", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -216,13 +212,12 @@ func (o *Registry) Bind(name uint32, interface_ string, version uint32) (*Proxy,
 	}
 
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), RegistryRequestBind, &RegistryBindRequest{
+	if err := conn.SendRequest(o.proxy.ID(), RegistryRequestBind, &RegistryBindRequest{
 		Name:      name,
 		Interface: interface_,
 		Version:   version,
 		ID:        wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -235,7 +230,7 @@ func (o *Registry) Bind(name uint32, interface_ string, version uint32) (*Proxy,
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindRegistry(reg, name, min(g.Version,
 // VersionRegistry)), to bind at the highest mutually supported version.
-func BindRegistry(b Binder, name uint32, version uint32) (*Registry, error) {
+func BindRegistry(b Binder, name, version uint32) (*Registry, error) {
 	if version < 1 || version > VersionRegistry {
 		return nil, ErrVersionMismatch
 	}

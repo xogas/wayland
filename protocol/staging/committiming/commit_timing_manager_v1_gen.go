@@ -27,8 +27,7 @@ const (
 // Informs the server that the client will no longer be using
 // this protocol object. Existing objects created by this object
 // are not affected.
-type CommitTimingManagerV1DestroyRequest struct {
-}
+type CommitTimingManagerV1DestroyRequest struct{}
 
 func (r *CommitTimingManagerV1DestroyRequest) Opcode() uint16 {
 	return CommitTimingManagerV1RequestDestroy
@@ -133,11 +132,10 @@ func (o *CommitTimingManagerV1) GetTimer(surface wire.ObjectID) (*CommitTimerV1,
 
 	wrapped := NewCommitTimerV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), CommitTimingManagerV1RequestGetTimer, &CommitTimingManagerV1GetTimerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), CommitTimingManagerV1RequestGetTimer, &CommitTimingManagerV1GetTimerRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -150,7 +148,7 @@ func (o *CommitTimingManagerV1) GetTimer(surface wire.ObjectID) (*CommitTimerV1,
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindCommitTimingManagerV1(reg, name, min(g.Version,
 // VersionCommitTimingManagerV1)), to bind at the highest mutually supported version.
-func BindCommitTimingManagerV1(b wayland.Binder, name uint32, version uint32) (*CommitTimingManagerV1, error) {
+func BindCommitTimingManagerV1(b wayland.Binder, name, version uint32) (*CommitTimingManagerV1, error) {
 	if version < 1 || version > VersionCommitTimingManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

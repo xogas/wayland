@@ -50,8 +50,7 @@ const (
 // Informs the server that the client will no longer be using this
 // protocol object. Existing objects created by this object are not
 // affected.
-type BackgroundEffectManagerV1DestroyRequest struct {
-}
+type BackgroundEffectManagerV1DestroyRequest struct{}
 
 func (r *BackgroundEffectManagerV1DestroyRequest) Opcode() uint16 {
 	return BackgroundEffectManagerV1RequestDestroy
@@ -149,12 +148,10 @@ func (o *BackgroundEffectManagerV1) Proxy() *wayland.Proxy {
 func (o *BackgroundEffectManagerV1) OnCapabilities(fn BackgroundEffectManagerV1CapabilitiesFunc) {
 	o.proxy.RegisterEvent(BackgroundEffectManagerV1EventCapabilities, func(r *wire.Reader) {
 		var ev BackgroundEffectManagerV1CapabilitiesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Capabilities", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -190,11 +187,10 @@ func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (
 
 	wrapped := NewBackgroundEffectSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), BackgroundEffectManagerV1RequestGetBackgroundEffect, &BackgroundEffectManagerV1GetBackgroundEffectRequest{
+	if err := conn.SendRequest(o.proxy.ID(), BackgroundEffectManagerV1RequestGetBackgroundEffect, &BackgroundEffectManagerV1GetBackgroundEffectRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -207,7 +203,7 @@ func (o *BackgroundEffectManagerV1) GetBackgroundEffect(surface wire.ObjectID) (
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindBackgroundEffectManagerV1(reg, name, min(g.Version,
 // VersionBackgroundEffectManagerV1)), to bind at the highest mutually supported version.
-func BindBackgroundEffectManagerV1(b wayland.Binder, name uint32, version uint32) (*BackgroundEffectManagerV1, error) {
+func BindBackgroundEffectManagerV1(b wayland.Binder, name, version uint32) (*BackgroundEffectManagerV1, error) {
 	if version < 1 || version > VersionBackgroundEffectManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -53,8 +53,7 @@ const (
 // Switch back to not specifying the content type of this surface. This is
 // equivalent to setting the content type to none, including double
 // buffering semantics. See set_content_type for details.
-type ContentTypeV1DestroyRequest struct {
-}
+type ContentTypeV1DestroyRequest struct{}
 
 func (r *ContentTypeV1DestroyRequest) Opcode() uint16 { return ContentTypeV1RequestDestroy }
 
@@ -153,7 +152,7 @@ func (o *ContentTypeV1) SetContentType(contentType ContentTypeV1Type) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindContentTypeV1(reg, name, min(g.Version,
 // VersionContentTypeV1)), to bind at the highest mutually supported version.
-func BindContentTypeV1(b wayland.Binder, name uint32, version uint32) (*ContentTypeV1, error) {
+func BindContentTypeV1(b wayland.Binder, name, version uint32) (*ContentTypeV1, error) {
 	if version < 1 || version > VersionContentTypeV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

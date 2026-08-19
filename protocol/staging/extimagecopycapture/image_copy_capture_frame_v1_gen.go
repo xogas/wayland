@@ -77,8 +77,7 @@ const (
 //
 // Destroys the frame. This request can be sent at any time by the
 // client.
-type ImageCopyCaptureFrameV1DestroyRequest struct {
-}
+type ImageCopyCaptureFrameV1DestroyRequest struct{}
 
 func (r *ImageCopyCaptureFrameV1DestroyRequest) Opcode() uint16 {
 	return ImageCopyCaptureFrameV1RequestDestroy
@@ -184,8 +183,7 @@ func (r *ImageCopyCaptureFrameV1DamageBufferRequest) Since() uint32 { return 1 }
 // This request may only be sent once, or else the already_captured
 // protocol error is raised. A buffer must be attached before this request
 // is sent, or else the no_buffer protocol error is raised.
-type ImageCopyCaptureFrameV1CaptureRequest struct {
-}
+type ImageCopyCaptureFrameV1CaptureRequest struct{}
 
 func (r *ImageCopyCaptureFrameV1CaptureRequest) Opcode() uint16 {
 	return ImageCopyCaptureFrameV1RequestCapture
@@ -324,8 +322,7 @@ func (e *ImageCopyCaptureFrameV1PresentationTimeEvent) Since() uint32 { return 1
 // The buffer may be re-used by the client after this event.
 //
 // After receiving this event, the client must destroy the object.
-type ImageCopyCaptureFrameV1ReadyEvent struct {
-}
+type ImageCopyCaptureFrameV1ReadyEvent struct{}
 
 func (e *ImageCopyCaptureFrameV1ReadyEvent) Opcode() uint16 { return ImageCopyCaptureFrameV1EventReady }
 
@@ -405,12 +402,10 @@ func (o *ImageCopyCaptureFrameV1) Proxy() *wayland.Proxy {
 func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1TransformFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventTransform, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1TransformEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Transform", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -419,12 +414,10 @@ func (o *ImageCopyCaptureFrameV1) OnTransform(fn ImageCopyCaptureFrameV1Transfor
 func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventDamage, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1DamageEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Damage", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -433,12 +426,10 @@ func (o *ImageCopyCaptureFrameV1) OnDamage(fn ImageCopyCaptureFrameV1DamageFunc)
 func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1PresentationTimeFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventPresentationTime, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1PresentationTimeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PresentationTime", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -447,12 +438,10 @@ func (o *ImageCopyCaptureFrameV1) OnPresentationTime(fn ImageCopyCaptureFrameV1P
 func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventReady, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1ReadyEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -461,12 +450,10 @@ func (o *ImageCopyCaptureFrameV1) OnReady(fn ImageCopyCaptureFrameV1ReadyFunc) {
 func (o *ImageCopyCaptureFrameV1) OnFailed(fn ImageCopyCaptureFrameV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageCopyCaptureFrameV1EventFailed, func(r *wire.Reader) {
 		var ev ImageCopyCaptureFrameV1FailedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -525,7 +512,7 @@ func (o *ImageCopyCaptureFrameV1) AttachBuffer(buffer wire.ObjectID) error {
 //
 // This request must not be sent after capture, or else the
 // already_captured protocol error is raised.
-func (o *ImageCopyCaptureFrameV1) DamageBuffer(x int32, y int32, width int32, height int32) error {
+func (o *ImageCopyCaptureFrameV1) DamageBuffer(x, y, width, height int32) error {
 	return o.proxy.SendRequest(ImageCopyCaptureFrameV1RequestDamageBuffer, &ImageCopyCaptureFrameV1DamageBufferRequest{
 		X:      x,
 		Y:      y,
@@ -555,7 +542,7 @@ func (o *ImageCopyCaptureFrameV1) Capture() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageCopyCaptureFrameV1(reg, name, min(g.Version,
 // VersionImageCopyCaptureFrameV1)), to bind at the highest mutually supported version.
-func BindImageCopyCaptureFrameV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureFrameV1, error) {
+func BindImageCopyCaptureFrameV1(b wayland.Binder, name, version uint32) (*ImageCopyCaptureFrameV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureFrameV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

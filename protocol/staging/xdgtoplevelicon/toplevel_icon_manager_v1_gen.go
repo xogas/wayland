@@ -37,8 +37,7 @@ func init() {
 //
 // Destroy the toplevel icon manager.
 // This does not destroy objects created with the manager.
-type ToplevelIconManagerV1DestroyRequest struct {
-}
+type ToplevelIconManagerV1DestroyRequest struct{}
 
 func (r *ToplevelIconManagerV1DestroyRequest) Opcode() uint16 {
 	return ToplevelIconManagerV1RequestDestroy
@@ -152,8 +151,7 @@ func (e *ToplevelIconManagerV1IconSizeEvent) Since() uint32 { return 1 }
 // ToplevelIconManagerV1DoneEvent all information has been sent.
 //
 // This event is sent after all 'icon_size' events have been sent.
-type ToplevelIconManagerV1DoneEvent struct {
-}
+type ToplevelIconManagerV1DoneEvent struct{}
 
 func (e *ToplevelIconManagerV1DoneEvent) Opcode() uint16 { return ToplevelIconManagerV1EventDone }
 
@@ -192,12 +190,10 @@ func (o *ToplevelIconManagerV1) Proxy() *wayland.Proxy {
 func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventIconSize, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1IconSizeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("IconSize", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -206,12 +202,10 @@ func (o *ToplevelIconManagerV1) OnIconSize(fn ToplevelIconManagerV1IconSizeFunc)
 func (o *ToplevelIconManagerV1) OnDone(fn ToplevelIconManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ToplevelIconManagerV1EventDone, func(r *wire.Reader) {
 		var ev ToplevelIconManagerV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -242,10 +236,9 @@ func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {
 
 	wrapped := NewToplevelIconV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ToplevelIconManagerV1RequestCreateIcon, &ToplevelIconManagerV1CreateIconRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ToplevelIconManagerV1RequestCreateIcon, &ToplevelIconManagerV1CreateIconRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -274,7 +267,7 @@ func (o *ToplevelIconManagerV1) CreateIcon() (*ToplevelIconV1, error) {
 // its desktop-entry file, or a placeholder icon).
 // If this request is passed an icon with no pixel buffers or icon name
 // assigned, the icon must be reset just like if 'icon' was null.
-func (o *ToplevelIconManagerV1) SetIcon(toplevel wire.ObjectID, icon wire.ObjectID) error {
+func (o *ToplevelIconManagerV1) SetIcon(toplevel, icon wire.ObjectID) error {
 	return o.proxy.SendRequest(ToplevelIconManagerV1RequestSetIcon, &ToplevelIconManagerV1SetIconRequest{
 		Toplevel: toplevel,
 		Icon:     icon,
@@ -287,7 +280,7 @@ func (o *ToplevelIconManagerV1) SetIcon(toplevel wire.ObjectID, icon wire.Object
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelIconManagerV1(reg, name, min(g.Version,
 // VersionToplevelIconManagerV1)), to bind at the highest mutually supported version.
-func BindToplevelIconManagerV1(b wayland.Binder, name uint32, version uint32) (*ToplevelIconManagerV1, error) {
+func BindToplevelIconManagerV1(b wayland.Binder, name, version uint32) (*ToplevelIconManagerV1, error) {
 	if version < 1 || version > VersionToplevelIconManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

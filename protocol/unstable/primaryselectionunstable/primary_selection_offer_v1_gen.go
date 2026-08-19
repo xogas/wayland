@@ -65,8 +65,7 @@ func (r *PrimarySelectionOfferV1ReceiveRequest) Since() uint32 { return 1 }
 // PrimarySelectionOfferV1DestroyRequest destroy the primary selection offer.
 //
 // Destroy the primary selection offer.
-type PrimarySelectionOfferV1DestroyRequest struct {
-}
+type PrimarySelectionOfferV1DestroyRequest struct{}
 
 func (r *PrimarySelectionOfferV1DestroyRequest) Opcode() uint16 {
 	return PrimarySelectionOfferV1RequestDestroy
@@ -130,12 +129,10 @@ func (o *PrimarySelectionOfferV1) Proxy() *wayland.Proxy {
 func (o *PrimarySelectionOfferV1) OnOffer(fn PrimarySelectionOfferV1OfferFunc) {
 	o.proxy.RegisterEvent(PrimarySelectionOfferV1EventOffer, func(r *wire.Reader) {
 		var ev PrimarySelectionOfferV1OfferEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Offer", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -178,7 +175,7 @@ func (o *PrimarySelectionOfferV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPrimarySelectionOfferV1(reg, name, min(g.Version,
 // VersionPrimarySelectionOfferV1)), to bind at the highest mutually supported version.
-func BindPrimarySelectionOfferV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionOfferV1, error) {
+func BindPrimarySelectionOfferV1(b wayland.Binder, name, version uint32) (*PrimarySelectionOfferV1, error) {
 	if version < 1 || version > VersionPrimarySelectionOfferV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

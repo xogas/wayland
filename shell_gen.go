@@ -87,11 +87,10 @@ func (o *Shell) GetShellSurface(surface wire.ObjectID) (*ShellSurface, error) {
 
 	wrapped := NewShellSurface(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellRequestGetShellSurface, &ShellGetShellSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellRequestGetShellSurface, &ShellGetShellSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -104,7 +103,7 @@ func (o *Shell) GetShellSurface(surface wire.ObjectID) (*ShellSurface, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShell(reg, name, min(g.Version,
 // VersionShell)), to bind at the highest mutually supported version.
-func BindShell(b Binder, name uint32, version uint32) (*Shell, error) {
+func BindShell(b Binder, name, version uint32) (*Shell, error) {
 	if version < 1 || version > VersionShell {
 		return nil, ErrVersionMismatch
 	}

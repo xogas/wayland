@@ -27,8 +27,7 @@ const (
 // Destroy this xdg_toplevel_drag_manager_v1 object. Other objects,
 // including xdg_toplevel_drag_v1 objects created by this factory, are not
 // affected by this request.
-type ToplevelDragManagerV1DestroyRequest struct {
-}
+type ToplevelDragManagerV1DestroyRequest struct{}
 
 func (r *ToplevelDragManagerV1DestroyRequest) Opcode() uint16 {
 	return ToplevelDragManagerV1RequestDestroy
@@ -157,11 +156,10 @@ func (o *ToplevelDragManagerV1) GetXdgToplevelDrag(dataSource wire.ObjectID) (*T
 
 	wrapped := NewToplevelDragV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ToplevelDragManagerV1RequestGetXdgToplevelDrag, &ToplevelDragManagerV1GetXdgToplevelDragRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ToplevelDragManagerV1RequestGetXdgToplevelDrag, &ToplevelDragManagerV1GetXdgToplevelDragRequest{
 		ID:         wire.NewID(p.ID()),
 		DataSource: dataSource,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -174,7 +172,7 @@ func (o *ToplevelDragManagerV1) GetXdgToplevelDrag(dataSource wire.ObjectID) (*T
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelDragManagerV1(reg, name, min(g.Version,
 // VersionToplevelDragManagerV1)), to bind at the highest mutually supported version.
-func BindToplevelDragManagerV1(b wayland.Binder, name uint32, version uint32) (*ToplevelDragManagerV1, error) {
+func BindToplevelDragManagerV1(b wayland.Binder, name, version uint32) (*ToplevelDragManagerV1, error) {
 	if version < 1 || version > VersionToplevelDragManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

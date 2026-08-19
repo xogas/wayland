@@ -27,8 +27,7 @@ const (
 // Destroy this explicit synchronization factory object. Other objects,
 // including zwp_linux_surface_synchronization_v1 objects created by this
 // factory, shall not be affected by this request.
-type LinuxExplicitSynchronizationV1DestroyRequest struct {
-}
+type LinuxExplicitSynchronizationV1DestroyRequest struct{}
 
 func (r *LinuxExplicitSynchronizationV1DestroyRequest) Opcode() uint16 {
 	return LinuxExplicitSynchronizationV1RequestDestroy
@@ -146,11 +145,10 @@ func (o *LinuxExplicitSynchronizationV1) GetSynchronization(surface wire.ObjectI
 
 	wrapped := NewLinuxSurfaceSynchronizationV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxExplicitSynchronizationV1RequestGetSynchronization, &LinuxExplicitSynchronizationV1GetSynchronizationRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxExplicitSynchronizationV1RequestGetSynchronization, &LinuxExplicitSynchronizationV1GetSynchronizationRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -163,7 +161,7 @@ func (o *LinuxExplicitSynchronizationV1) GetSynchronization(surface wire.ObjectI
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxExplicitSynchronizationV1(reg, name, min(g.Version,
 // VersionLinuxExplicitSynchronizationV1)), to bind at the highest mutually supported version.
-func BindLinuxExplicitSynchronizationV1(b wayland.Binder, name uint32, version uint32) (*LinuxExplicitSynchronizationV1, error) {
+func BindLinuxExplicitSynchronizationV1(b wayland.Binder, name, version uint32) (*LinuxExplicitSynchronizationV1, error) {
 	if version < 1 || version > VersionLinuxExplicitSynchronizationV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

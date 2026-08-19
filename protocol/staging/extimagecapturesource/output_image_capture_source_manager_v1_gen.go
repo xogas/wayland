@@ -47,8 +47,7 @@ func (r *OutputImageCaptureSourceManagerV1CreateSourceRequest) Since() uint32 { 
 // Destroys the manager. This request may be sent at any time by the client
 // and objects created by the manager will remain valid after its
 // destruction.
-type OutputImageCaptureSourceManagerV1DestroyRequest struct {
-}
+type OutputImageCaptureSourceManagerV1DestroyRequest struct{}
 
 func (r *OutputImageCaptureSourceManagerV1DestroyRequest) Opcode() uint16 {
 	return OutputImageCaptureSourceManagerV1RequestDestroy
@@ -90,11 +89,10 @@ func (o *OutputImageCaptureSourceManagerV1) CreateSource(output wire.ObjectID) (
 
 	wrapped := NewImageCaptureSourceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), OutputImageCaptureSourceManagerV1RequestCreateSource, &OutputImageCaptureSourceManagerV1CreateSourceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), OutputImageCaptureSourceManagerV1RequestCreateSource, &OutputImageCaptureSourceManagerV1CreateSourceRequest{
 		Source: wire.NewID(p.ID()),
 		Output: output,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -123,7 +121,7 @@ func (o *OutputImageCaptureSourceManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindOutputImageCaptureSourceManagerV1(reg, name, min(g.Version,
 // VersionOutputImageCaptureSourceManagerV1)), to bind at the highest mutually supported version.
-func BindOutputImageCaptureSourceManagerV1(b wayland.Binder, name uint32, version uint32) (*OutputImageCaptureSourceManagerV1, error) {
+func BindOutputImageCaptureSourceManagerV1(b wayland.Binder, name, version uint32) (*OutputImageCaptureSourceManagerV1, error) {
 	if version < 1 || version > VersionOutputImageCaptureSourceManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

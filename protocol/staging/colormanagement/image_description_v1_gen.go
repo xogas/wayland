@@ -69,8 +69,7 @@ const (
 // Destroying a wp_image_description_v1 object has no side-effects, not
 // even if a wp_color_management_surface_v1.set_image_description has not
 // yet been followed by a wl_surface.commit.
-type ImageDescriptionV1DestroyRequest struct {
-}
+type ImageDescriptionV1DestroyRequest struct{}
 
 func (r *ImageDescriptionV1DestroyRequest) Opcode() uint16 { return ImageDescriptionV1RequestDestroy }
 
@@ -277,12 +276,10 @@ func (o *ImageDescriptionV1) Proxy() *wayland.Proxy {
 func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventFailed, func(r *wire.Reader) {
 		var ev ImageDescriptionV1FailedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Failed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -291,12 +288,10 @@ func (o *ImageDescriptionV1) OnFailed(fn ImageDescriptionV1FailedFunc) {
 func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady, func(r *wire.Reader) {
 		var ev ImageDescriptionV1ReadyEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -305,12 +300,10 @@ func (o *ImageDescriptionV1) OnReady(fn ImageDescriptionV1ReadyFunc) {
 func (o *ImageDescriptionV1) OnReady2(fn ImageDescriptionV1Ready2Func) {
 	o.proxy.RegisterEvent(ImageDescriptionV1EventReady2, func(r *wire.Reader) {
 		var ev ImageDescriptionV1Ready2Event
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ready2", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -349,10 +342,9 @@ func (o *ImageDescriptionV1) GetInformation() (*ImageDescriptionInfoV1, error) {
 
 	wrapped := NewImageDescriptionInfoV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageDescriptionV1RequestGetInformation, &ImageDescriptionV1GetInformationRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageDescriptionV1RequestGetInformation, &ImageDescriptionV1GetInformationRequest{
 		Information: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -365,7 +357,7 @@ func (o *ImageDescriptionV1) GetInformation() (*ImageDescriptionInfoV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageDescriptionV1(reg, name, min(g.Version,
 // VersionImageDescriptionV1)), to bind at the highest mutually supported version.
-func BindImageDescriptionV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionV1, error) {
+func BindImageDescriptionV1(b wayland.Binder, name, version uint32) (*ImageDescriptionV1, error) {
 	if version < 1 || version > VersionImageDescriptionV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -40,8 +40,7 @@ func init() {
 // TabletV1DestroyRequest destroy the tablet object.
 //
 // This destroys the client's resource for this tablet object.
-type TabletV1DestroyRequest struct {
-}
+type TabletV1DestroyRequest struct{}
 
 func (r *TabletV1DestroyRequest) Opcode() uint16 { return TabletV1RequestDestroy }
 
@@ -142,8 +141,7 @@ func (e *TabletV1PathEvent) Since() uint32 { return 1 }
 // burst of descriptive events. A client may consider the static
 // description of the tablet to be complete and finalize initialization
 // of the tablet.
-type TabletV1DoneEvent struct {
-}
+type TabletV1DoneEvent struct{}
 
 func (e *TabletV1DoneEvent) Opcode() uint16 { return TabletV1EventDone }
 
@@ -160,8 +158,7 @@ func (e *TabletV1DoneEvent) Since() uint32 { return 1 }
 //
 // When this event is received, the client must wp_tablet.destroy
 // the object.
-type TabletV1RemovedEvent struct {
-}
+type TabletV1RemovedEvent struct{}
 
 func (e *TabletV1RemovedEvent) Opcode() uint16 { return TabletV1EventRemoved }
 
@@ -215,12 +212,10 @@ func (o *TabletV1) Proxy() *wayland.Proxy {
 func (o *TabletV1) OnName(fn TabletV1NameFunc) {
 	o.proxy.RegisterEvent(TabletV1EventName, func(r *wire.Reader) {
 		var ev TabletV1NameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -229,12 +224,10 @@ func (o *TabletV1) OnName(fn TabletV1NameFunc) {
 func (o *TabletV1) OnID(fn TabletV1IDFunc) {
 	o.proxy.RegisterEvent(TabletV1EventID, func(r *wire.Reader) {
 		var ev TabletV1IDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("ID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -243,12 +236,10 @@ func (o *TabletV1) OnID(fn TabletV1IDFunc) {
 func (o *TabletV1) OnPath(fn TabletV1PathFunc) {
 	o.proxy.RegisterEvent(TabletV1EventPath, func(r *wire.Reader) {
 		var ev TabletV1PathEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Path", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -257,12 +248,10 @@ func (o *TabletV1) OnPath(fn TabletV1PathFunc) {
 func (o *TabletV1) OnDone(fn TabletV1DoneFunc) {
 	o.proxy.RegisterEvent(TabletV1EventDone, func(r *wire.Reader) {
 		var ev TabletV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -271,12 +260,10 @@ func (o *TabletV1) OnDone(fn TabletV1DoneFunc) {
 func (o *TabletV1) OnRemoved(fn TabletV1RemovedFunc) {
 	o.proxy.RegisterEvent(TabletV1EventRemoved, func(r *wire.Reader) {
 		var ev TabletV1RemovedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Removed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -301,7 +288,7 @@ func (o *TabletV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTabletV1(reg, name, min(g.Version,
 // VersionTabletV1)), to bind at the highest mutually supported version.
-func BindTabletV1(b wayland.Binder, name uint32, version uint32) (*TabletV1, error) {
+func BindTabletV1(b wayland.Binder, name, version uint32) (*TabletV1, error) {
 	if version < 1 || version > VersionTabletV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

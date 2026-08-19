@@ -35,8 +35,7 @@ func init() {
 //
 // When the transient seat object is destroyed by the client, the
 // associated seat created by the compositor is also destroyed.
-type TransientSeatV1DestroyRequest struct {
-}
+type TransientSeatV1DestroyRequest struct{}
 
 func (r *TransientSeatV1DestroyRequest) Opcode() uint16 { return TransientSeatV1RequestDestroy }
 
@@ -80,8 +79,7 @@ func (e *TransientSeatV1ReadyEvent) Since() uint32 { return 1 }
 // created, if and only if the creation of the transient seat was denied.
 //
 // After receiving this event, the client should destroy the object.
-type TransientSeatV1DeniedEvent struct {
-}
+type TransientSeatV1DeniedEvent struct{}
 
 func (e *TransientSeatV1DeniedEvent) Opcode() uint16 { return TransientSeatV1EventDenied }
 
@@ -120,12 +118,10 @@ func (o *TransientSeatV1) Proxy() *wayland.Proxy {
 func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventReady, func(r *wire.Reader) {
 		var ev TransientSeatV1ReadyEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ready", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -134,12 +130,10 @@ func (o *TransientSeatV1) OnReady(fn TransientSeatV1ReadyFunc) {
 func (o *TransientSeatV1) OnDenied(fn TransientSeatV1DeniedFunc) {
 	o.proxy.RegisterEvent(TransientSeatV1EventDenied, func(r *wire.Reader) {
 		var ev TransientSeatV1DeniedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Denied", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -165,7 +159,7 @@ func (o *TransientSeatV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTransientSeatV1(reg, name, min(g.Version,
 // VersionTransientSeatV1)), to bind at the highest mutually supported version.
-func BindTransientSeatV1(b wayland.Binder, name uint32, version uint32) (*TransientSeatV1, error) {
+func BindTransientSeatV1(b wayland.Binder, name, version uint32) (*TransientSeatV1, error) {
 	if version < 1 || version > VersionTransientSeatV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

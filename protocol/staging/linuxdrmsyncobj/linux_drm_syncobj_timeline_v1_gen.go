@@ -19,8 +19,7 @@ const (
 // Destroy the synchronization object timeline. Other objects are not
 // affected by this request, in particular timeline points set by
 // set_acquire_point and set_release_point are not unset.
-type LinuxDrmSyncobjTimelineV1DestroyRequest struct {
-}
+type LinuxDrmSyncobjTimelineV1DestroyRequest struct{}
 
 func (r *LinuxDrmSyncobjTimelineV1DestroyRequest) Opcode() uint16 {
 	return LinuxDrmSyncobjTimelineV1RequestDestroy
@@ -72,7 +71,7 @@ func (o *LinuxDrmSyncobjTimelineV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxDrmSyncobjTimelineV1(reg, name, min(g.Version,
 // VersionLinuxDrmSyncobjTimelineV1)), to bind at the highest mutually supported version.
-func BindLinuxDrmSyncobjTimelineV1(b wayland.Binder, name uint32, version uint32) (*LinuxDrmSyncobjTimelineV1, error) {
+func BindLinuxDrmSyncobjTimelineV1(b wayland.Binder, name, version uint32) (*LinuxDrmSyncobjTimelineV1, error) {
 	if version < 1 || version > VersionLinuxDrmSyncobjTimelineV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

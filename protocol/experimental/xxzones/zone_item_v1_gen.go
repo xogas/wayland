@@ -48,8 +48,7 @@ func init() {
 // If the item was associated with a zone when this request is sent,
 // the compositor must emit 'item_left' on the respective zone, unless
 // it had already been emitted before a 'closed' event.
-type ZoneItemV1DestroyRequest struct {
-}
+type ZoneItemV1DestroyRequest struct{}
 
 func (r *ZoneItemV1DestroyRequest) Opcode() uint16 { return ZoneItemV1RequestDestroy }
 
@@ -227,8 +226,7 @@ func (e *ZoneItemV1PositionEvent) Since() uint32 { return 1 }
 //
 // This event will also be emitted if 'set_position' was called while the
 // item had no zone associated with it.
-type ZoneItemV1PositionFailedEvent struct {
-}
+type ZoneItemV1PositionFailedEvent struct{}
 
 func (e *ZoneItemV1PositionFailedEvent) Opcode() uint16 { return ZoneItemV1EventPositionFailed }
 
@@ -251,8 +249,7 @@ func (e *ZoneItemV1PositionFailedEvent) Since() uint32 { return 1 }
 // If the item was associated with a zone when this event is sent,
 // the compositor must also emit 'item_left' on the respective zone
 // before sending this event.
-type ZoneItemV1ClosedEvent struct {
-}
+type ZoneItemV1ClosedEvent struct{}
 
 func (e *ZoneItemV1ClosedEvent) Opcode() uint16 { return ZoneItemV1EventClosed }
 
@@ -304,12 +301,10 @@ func (o *ZoneItemV1) Proxy() *wayland.Proxy {
 func (o *ZoneItemV1) OnFrameExtents(fn ZoneItemV1FrameExtentsFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventFrameExtents, func(r *wire.Reader) {
 		var ev ZoneItemV1FrameExtentsEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("FrameExtents", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -318,12 +313,10 @@ func (o *ZoneItemV1) OnFrameExtents(fn ZoneItemV1FrameExtentsFunc) {
 func (o *ZoneItemV1) OnPosition(fn ZoneItemV1PositionFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPosition, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Position", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -332,12 +325,10 @@ func (o *ZoneItemV1) OnPosition(fn ZoneItemV1PositionFunc) {
 func (o *ZoneItemV1) OnPositionFailed(fn ZoneItemV1PositionFailedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventPositionFailed, func(r *wire.Reader) {
 		var ev ZoneItemV1PositionFailedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PositionFailed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -346,12 +337,10 @@ func (o *ZoneItemV1) OnPositionFailed(fn ZoneItemV1PositionFailedFunc) {
 func (o *ZoneItemV1) OnClosed(fn ZoneItemV1ClosedFunc) {
 	o.proxy.RegisterEvent(ZoneItemV1EventClosed, func(r *wire.Reader) {
 		var ev ZoneItemV1ClosedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Closed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -420,7 +409,7 @@ func (o *ZoneItemV1) Destroy() error {
 // event must be emitted.
 // If the compositor did not move the item at all, not even with sanitized
 // values, a 'position_failed' event must be emitted as well.
-func (o *ZoneItemV1) SetPosition(x int32, y int32) error {
+func (o *ZoneItemV1) SetPosition(x, y int32) error {
 	return o.proxy.SendRequest(ZoneItemV1RequestSetPosition, &ZoneItemV1SetPositionRequest{
 		X: x,
 		Y: y,
@@ -433,7 +422,7 @@ func (o *ZoneItemV1) SetPosition(x int32, y int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindZoneItemV1(reg, name, min(g.Version,
 // VersionZoneItemV1)), to bind at the highest mutually supported version.
-func BindZoneItemV1(b wayland.Binder, name uint32, version uint32) (*ZoneItemV1, error) {
+func BindZoneItemV1(b wayland.Binder, name, version uint32) (*ZoneItemV1, error) {
 	if version < 1 || version > VersionZoneItemV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

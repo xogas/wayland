@@ -30,8 +30,7 @@ const (
 //
 // Destroy this explicit synchronization factory object. Other objects
 // shall not be affected by this request.
-type LinuxDrmSyncobjManagerV1DestroyRequest struct {
-}
+type LinuxDrmSyncobjManagerV1DestroyRequest struct{}
 
 func (r *LinuxDrmSyncobjManagerV1DestroyRequest) Opcode() uint16 {
 	return LinuxDrmSyncobjManagerV1RequestDestroy
@@ -161,11 +160,10 @@ func (o *LinuxDrmSyncobjManagerV1) GetSurface(surface wire.ObjectID) (*LinuxDrmS
 
 	wrapped := NewLinuxDrmSyncobjSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestGetSurface, &LinuxDrmSyncobjManagerV1GetSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestGetSurface, &LinuxDrmSyncobjManagerV1GetSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -184,11 +182,10 @@ func (o *LinuxDrmSyncobjManagerV1) ImportTimeline(fd int) (*LinuxDrmSyncobjTimel
 
 	wrapped := NewLinuxDrmSyncobjTimelineV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestImportTimeline, &LinuxDrmSyncobjManagerV1ImportTimelineRequest{
+	if err := conn.SendRequest(o.proxy.ID(), LinuxDrmSyncobjManagerV1RequestImportTimeline, &LinuxDrmSyncobjManagerV1ImportTimelineRequest{
 		ID: wire.NewID(p.ID()),
 		Fd: fd,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -201,7 +198,7 @@ func (o *LinuxDrmSyncobjManagerV1) ImportTimeline(fd int) (*LinuxDrmSyncobjTimel
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindLinuxDrmSyncobjManagerV1(reg, name, min(g.Version,
 // VersionLinuxDrmSyncobjManagerV1)), to bind at the highest mutually supported version.
-func BindLinuxDrmSyncobjManagerV1(b wayland.Binder, name uint32, version uint32) (*LinuxDrmSyncobjManagerV1, error) {
+func BindLinuxDrmSyncobjManagerV1(b wayland.Binder, name, version uint32) (*LinuxDrmSyncobjManagerV1, error) {
 	if version < 1 || version > VersionLinuxDrmSyncobjManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

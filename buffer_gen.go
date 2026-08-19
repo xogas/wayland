@@ -34,8 +34,7 @@ func init() {
 // storage is defined by the buffer factory interface.
 //
 // For possible side-effects to a surface, see wl_surface.attach.
-type BufferDestroyRequest struct {
-}
+type BufferDestroyRequest struct{}
 
 func (r *BufferDestroyRequest) Opcode() uint16 { return BufferRequestDestroy }
 
@@ -61,8 +60,7 @@ func (r *BufferDestroyRequest) Since() uint32 { return 1 }
 // this is possible, when the compositor maintains a copy of the
 // wl_surface contents, e.g. as a GL texture. This is an important
 // optimization for GL(ES) compositors with wl_shm clients.
-type BufferReleaseEvent struct {
-}
+type BufferReleaseEvent struct{}
 
 func (e *BufferReleaseEvent) Opcode() uint16 { return BufferEventRelease }
 
@@ -111,12 +109,10 @@ func (o *Buffer) Proxy() *Proxy {
 func (o *Buffer) OnRelease(fn BufferReleaseFunc) {
 	o.proxy.RegisterEvent(BufferEventRelease, func(r *wire.Reader) {
 		var ev BufferReleaseEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Release", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -144,7 +140,7 @@ func (o *Buffer) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindBuffer(reg, name, min(g.Version,
 // VersionBuffer)), to bind at the highest mutually supported version.
-func BindBuffer(b Binder, name uint32, version uint32) (*Buffer, error) {
+func BindBuffer(b Binder, name, version uint32) (*Buffer, error) {
 	if version < 1 || version > VersionBuffer {
 		return nil, ErrVersionMismatch
 	}

@@ -23,8 +23,7 @@ const (
 //
 // The child objects created via this interface are unaffected and should
 // be destroyed separately.
-type ActivationV1DestroyRequest struct {
-}
+type ActivationV1DestroyRequest struct{}
 
 func (r *ActivationV1DestroyRequest) Opcode() uint16 { return ActivationV1RequestDestroy }
 
@@ -138,10 +137,9 @@ func (o *ActivationV1) GetActivationToken() (*ActivationTokenV1, error) {
 
 	wrapped := NewActivationTokenV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ActivationV1RequestGetActivationToken, &ActivationV1GetActivationTokenRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ActivationV1RequestGetActivationToken, &ActivationV1GetActivationTokenRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -173,7 +171,7 @@ func (o *ActivationV1) Activate(token string, surface wire.ObjectID) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindActivationV1(reg, name, min(g.Version,
 // VersionActivationV1)), to bind at the highest mutually supported version.
-func BindActivationV1(b wayland.Binder, name uint32, version uint32) (*ActivationV1, error) {
+func BindActivationV1(b wayland.Binder, name, version uint32) (*ActivationV1, error) {
 	if version < 1 || version > VersionActivationV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

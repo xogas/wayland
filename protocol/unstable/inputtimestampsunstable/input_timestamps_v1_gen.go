@@ -34,8 +34,7 @@ func init() {
 // Informs the server that the client will no longer be using this
 // protocol object. After the server processes the request, no more
 // timestamp events will be emitted.
-type InputTimestampsV1DestroyRequest struct {
-}
+type InputTimestampsV1DestroyRequest struct{}
 
 func (r *InputTimestampsV1DestroyRequest) Opcode() uint16 { return InputTimestampsV1RequestDestroy }
 
@@ -120,12 +119,10 @@ func (o *InputTimestampsV1) Proxy() *wayland.Proxy {
 func (o *InputTimestampsV1) OnTimestamp(fn InputTimestampsV1TimestampFunc) {
 	o.proxy.RegisterEvent(InputTimestampsV1EventTimestamp, func(r *wire.Reader) {
 		var ev InputTimestampsV1TimestampEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Timestamp", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -152,7 +149,7 @@ func (o *InputTimestampsV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputTimestampsV1(reg, name, min(g.Version,
 // VersionInputTimestampsV1)), to bind at the highest mutually supported version.
-func BindInputTimestampsV1(b wayland.Binder, name uint32, version uint32) (*InputTimestampsV1, error) {
+func BindInputTimestampsV1(b wayland.Binder, name, version uint32) (*InputTimestampsV1, error) {
 	if version < 1 || version > VersionInputTimestampsV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

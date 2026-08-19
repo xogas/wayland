@@ -146,8 +146,7 @@ func (r *DataDeviceSetSelectionRequest) Since() uint32 { return 1 }
 // DataDeviceReleaseRequest destroy data device.
 //
 // This request destroys the data device.
-type DataDeviceReleaseRequest struct {
-}
+type DataDeviceReleaseRequest struct{}
 
 func (r *DataDeviceReleaseRequest) Opcode() uint16 { return DataDeviceRequestRelease }
 
@@ -232,8 +231,7 @@ func (e *DataDeviceEnterEvent) Since() uint32 { return 1 }
 // This event is sent when the drag-and-drop pointer leaves the
 // surface and the session ends.  The client must destroy the
 // wl_data_offer introduced at enter time at this point.
-type DataDeviceLeaveEvent struct {
-}
+type DataDeviceLeaveEvent struct{}
 
 func (e *DataDeviceLeaveEvent) Opcode() uint16 { return DataDeviceEventLeave }
 
@@ -296,8 +294,7 @@ func (e *DataDeviceMotionEvent) Since() uint32 { return 1 }
 // final. The drag-and-drop destination is expected to perform one last
 // wl_data_offer.set_actions request, or wl_data_offer.destroy in order
 // to cancel the operation.
-type DataDeviceDropEvent struct {
-}
+type DataDeviceDropEvent struct{}
 
 func (e *DataDeviceDropEvent) Opcode() uint16 { return DataDeviceEventDrop }
 
@@ -383,7 +380,6 @@ func (o *DataDevice) Proxy() *Proxy {
 func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDataOffer, func(r *wire.Reader) {
 		var ev DataDeviceDataOfferEvent
-
 		rawID, err := r.NewID()
 		if err != nil {
 			o.proxy.Conn().FailEvent("DataOffer", err)
@@ -393,7 +389,6 @@ func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 		o.proxy.Conn().RegisterProxy(p)
 		ev.ID = NewDataOffer(p)
 		p.SetVersion(o.proxy.Version())
-
 		fn(ev)
 	})
 }
@@ -402,12 +397,10 @@ func (o *DataDevice) OnDataOffer(fn DataDeviceDataOfferFunc) {
 func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventEnter, func(r *wire.Reader) {
 		var ev DataDeviceEnterEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Enter", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -416,12 +409,10 @@ func (o *DataDevice) OnEnter(fn DataDeviceEnterFunc) {
 func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventLeave, func(r *wire.Reader) {
 		var ev DataDeviceLeaveEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Leave", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -430,12 +421,10 @@ func (o *DataDevice) OnLeave(fn DataDeviceLeaveFunc) {
 func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventMotion, func(r *wire.Reader) {
 		var ev DataDeviceMotionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Motion", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -444,12 +433,10 @@ func (o *DataDevice) OnMotion(fn DataDeviceMotionFunc) {
 func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventDrop, func(r *wire.Reader) {
 		var ev DataDeviceDropEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Drop", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -458,12 +445,10 @@ func (o *DataDevice) OnDrop(fn DataDeviceDropFunc) {
 func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 	o.proxy.RegisterEvent(DataDeviceEventSelection, func(r *wire.Reader) {
 		var ev DataDeviceSelectionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Selection", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -499,7 +484,7 @@ func (o *DataDevice) OnSelection(fn DataDeviceSelectionFunc) {
 // The given source may not be used in any further set_selection or
 // start_drag requests. Attempting to reuse a previously-used source
 // may send a used_source error.
-func (o *DataDevice) StartDrag(source wire.ObjectID, origin wire.ObjectID, icon wire.ObjectID, serial uint32) error {
+func (o *DataDevice) StartDrag(source, origin, icon wire.ObjectID, serial uint32) error {
 	return o.proxy.SendRequest(DataDeviceRequestStartDrag, &DataDeviceStartDragRequest{
 		Source: source,
 		Origin: origin,
@@ -548,7 +533,7 @@ func (o *DataDevice) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindDataDevice(reg, name, min(g.Version,
 // VersionDataDevice)), to bind at the highest mutually supported version.
-func BindDataDevice(b Binder, name uint32, version uint32) (*DataDevice, error) {
+func BindDataDevice(b Binder, name, version uint32) (*DataDevice, error) {
 	if version < 1 || version > VersionDataDevice {
 		return nil, ErrVersionMismatch
 	}

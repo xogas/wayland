@@ -100,8 +100,7 @@ func (r *ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest) Since() uin
 // Destroy the manager object.
 //
 // Other objects created via this interface are unaffected.
-type ImageCopyCaptureManagerV1DestroyRequest struct {
-}
+type ImageCopyCaptureManagerV1DestroyRequest struct{}
 
 func (r *ImageCopyCaptureManagerV1DestroyRequest) Opcode() uint16 {
 	return ImageCopyCaptureManagerV1RequestDestroy
@@ -148,12 +147,11 @@ func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options 
 
 	wrapped := NewImageCopyCaptureSessionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreateSession, &ImageCopyCaptureManagerV1CreateSessionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreateSession, &ImageCopyCaptureManagerV1CreateSessionRequest{
 		Session: wire.NewID(p.ID()),
 		Source:  source,
 		Options: options,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -164,19 +162,18 @@ func (o *ImageCopyCaptureManagerV1) CreateSession(source wire.ObjectID, options 
 //
 // Create a cursor capturing session for the pointer of an image capture
 // source.
-func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source wire.ObjectID, pointer wire.ObjectID) (*ImageCopyCaptureCursorSessionV1, error) {
+func (o *ImageCopyCaptureManagerV1) CreatePointerCursorSession(source, pointer wire.ObjectID) (*ImageCopyCaptureCursorSessionV1, error) {
 	conn := o.proxy.Conn()
 	p := wayland.NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewImageCopyCaptureCursorSessionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreatePointerCursorSession, &ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ImageCopyCaptureManagerV1RequestCreatePointerCursorSession, &ImageCopyCaptureManagerV1CreatePointerCursorSessionRequest{
 		Session: wire.NewID(p.ID()),
 		Source:  source,
 		Pointer: pointer,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -205,7 +202,7 @@ func (o *ImageCopyCaptureManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageCopyCaptureManagerV1(reg, name, min(g.Version,
 // VersionImageCopyCaptureManagerV1)), to bind at the highest mutually supported version.
-func BindImageCopyCaptureManagerV1(b wayland.Binder, name uint32, version uint32) (*ImageCopyCaptureManagerV1, error) {
+func BindImageCopyCaptureManagerV1(b wayland.Binder, name, version uint32) (*ImageCopyCaptureManagerV1, error) {
 	if version < 1 || version > VersionImageCopyCaptureManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

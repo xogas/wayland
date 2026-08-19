@@ -18,8 +18,7 @@ const (
 // RegionDestroyRequest destroy region.
 //
 // Destroy the region.  This will invalidate the object ID.
-type RegionDestroyRequest struct {
-}
+type RegionDestroyRequest struct{}
 
 func (r *RegionDestroyRequest) Opcode() uint16 { return RegionRequestDestroy }
 
@@ -134,7 +133,7 @@ func (o *Region) Destroy() error {
 // Add add rectangle to region.
 //
 // Add the specified rectangle to the region.
-func (o *Region) Add(x int32, y int32, width int32, height int32) error {
+func (o *Region) Add(x, y, width, height int32) error {
 	return o.proxy.SendRequest(RegionRequestAdd, &RegionAddRequest{
 		X:      x,
 		Y:      y,
@@ -146,7 +145,7 @@ func (o *Region) Add(x int32, y int32, width int32, height int32) error {
 // Subtract subtract rectangle from region.
 //
 // Subtract the specified rectangle from the region.
-func (o *Region) Subtract(x int32, y int32, width int32, height int32) error {
+func (o *Region) Subtract(x, y, width, height int32) error {
 	return o.proxy.SendRequest(RegionRequestSubtract, &RegionSubtractRequest{
 		X:      x,
 		Y:      y,
@@ -161,7 +160,7 @@ func (o *Region) Subtract(x int32, y int32, width int32, height int32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindRegion(reg, name, min(g.Version,
 // VersionRegion)), to bind at the highest mutually supported version.
-func BindRegion(b Binder, name uint32, version uint32) (*Region, error) {
+func BindRegion(b Binder, name, version uint32) (*Region, error) {
 	if version < 1 || version > VersionRegion {
 		return nil, ErrVersionMismatch
 	}

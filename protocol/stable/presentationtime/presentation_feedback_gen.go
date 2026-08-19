@@ -217,8 +217,7 @@ func (e *PresentationFeedbackPresentedEvent) Since() uint32 { return 1 }
 // PresentationFeedbackDiscardedEvent the content update was not displayed.
 //
 // The content update was never displayed to the user.
-type PresentationFeedbackDiscardedEvent struct {
-}
+type PresentationFeedbackDiscardedEvent struct{}
 
 func (e *PresentationFeedbackDiscardedEvent) Opcode() uint16 {
 	return PresentationFeedbackEventDiscarded
@@ -271,12 +270,10 @@ func (o *PresentationFeedback) Proxy() *wayland.Proxy {
 func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventSyncOutput, func(r *wire.Reader) {
 		var ev PresentationFeedbackSyncOutputEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SyncOutput", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -285,12 +282,10 @@ func (o *PresentationFeedback) OnSyncOutput(fn PresentationFeedbackSyncOutputFun
 func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventPresented, func(r *wire.Reader) {
 		var ev PresentationFeedbackPresentedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Presented", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -299,12 +294,10 @@ func (o *PresentationFeedback) OnPresented(fn PresentationFeedbackPresentedFunc)
 func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc) {
 	o.proxy.RegisterEvent(PresentationFeedbackEventDiscarded, func(r *wire.Reader) {
 		var ev PresentationFeedbackDiscardedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Discarded", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -315,7 +308,7 @@ func (o *PresentationFeedback) OnDiscarded(fn PresentationFeedbackDiscardedFunc)
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPresentationFeedback(reg, name, min(g.Version,
 // VersionPresentationFeedback)), to bind at the highest mutually supported version.
-func BindPresentationFeedback(b wayland.Binder, name uint32, version uint32) (*PresentationFeedback, error) {
+func BindPresentationFeedback(b wayland.Binder, name, version uint32) (*PresentationFeedback, error) {
 	if version < 1 || version > VersionPresentationFeedback {
 		return nil, wayland.ErrVersionMismatch
 	}

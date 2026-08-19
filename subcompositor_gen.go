@@ -29,8 +29,7 @@ const (
 // Informs the server that the client will not be using this
 // protocol object anymore. This does not affect any other
 // objects, wl_subsurface objects included.
-type SubcompositorDestroyRequest struct {
-}
+type SubcompositorDestroyRequest struct{}
 
 func (r *SubcompositorDestroyRequest) Opcode() uint16 { return SubcompositorRequestDestroy }
 
@@ -159,19 +158,18 @@ func (o *Subcompositor) Destroy() error {
 //
 // This request modifies the behaviour of wl_surface.commit request on
 // the sub-surface, see the documentation on wl_subsurface interface.
-func (o *Subcompositor) GetSubsurface(surface wire.ObjectID, parent wire.ObjectID) (*Subsurface, error) {
+func (o *Subcompositor) GetSubsurface(surface, parent wire.ObjectID) (*Subsurface, error) {
 	conn := o.proxy.Conn()
 	p := NewProxy(conn)
 	p.SetVersion(o.proxy.Version())
 
 	wrapped := NewSubsurface(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SubcompositorRequestGetSubsurface, &SubcompositorGetSubsurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SubcompositorRequestGetSubsurface, &SubcompositorGetSubsurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
 		Parent:  parent,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -184,7 +182,7 @@ func (o *Subcompositor) GetSubsurface(surface wire.ObjectID, parent wire.ObjectI
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSubcompositor(reg, name, min(g.Version,
 // VersionSubcompositor)), to bind at the highest mutually supported version.
-func BindSubcompositor(b Binder, name uint32, version uint32) (*Subcompositor, error) {
+func BindSubcompositor(b Binder, name, version uint32) (*Subcompositor, error) {
 	if version < 1 || version > VersionSubcompositor {
 		return nil, ErrVersionMismatch
 	}

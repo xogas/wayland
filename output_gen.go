@@ -124,8 +124,7 @@ const (
 //
 // Using this request a client can tell the server that it is not going to
 // use the output object anymore.
-type OutputReleaseRequest struct {
-}
+type OutputReleaseRequest struct{}
 
 func (r *OutputReleaseRequest) Opcode() uint16 { return OutputRequestRelease }
 
@@ -305,8 +304,7 @@ func (e *OutputModeEvent) Since() uint32 { return 1 }
 // other property changes done after that. This allows
 // changes to the output properties to be seen as
 // atomic, even if they happen via multiple events.
-type OutputDoneEvent struct {
-}
+type OutputDoneEvent struct{}
 
 func (e *OutputDoneEvent) Opcode() uint16 { return OutputEventDone }
 
@@ -481,12 +479,10 @@ func (o *Output) Proxy() *Proxy {
 func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 	o.proxy.RegisterEvent(OutputEventGeometry, func(r *wire.Reader) {
 		var ev OutputGeometryEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Geometry", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -495,12 +491,10 @@ func (o *Output) OnGeometry(fn OutputGeometryFunc) {
 func (o *Output) OnMode(fn OutputModeFunc) {
 	o.proxy.RegisterEvent(OutputEventMode, func(r *wire.Reader) {
 		var ev OutputModeEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Mode", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -509,12 +503,10 @@ func (o *Output) OnMode(fn OutputModeFunc) {
 func (o *Output) OnDone(fn OutputDoneFunc) {
 	o.proxy.RegisterEvent(OutputEventDone, func(r *wire.Reader) {
 		var ev OutputDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -523,12 +515,10 @@ func (o *Output) OnDone(fn OutputDoneFunc) {
 func (o *Output) OnScale(fn OutputScaleFunc) {
 	o.proxy.RegisterEvent(OutputEventScale, func(r *wire.Reader) {
 		var ev OutputScaleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Scale", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -537,12 +527,10 @@ func (o *Output) OnScale(fn OutputScaleFunc) {
 func (o *Output) OnName(fn OutputNameFunc) {
 	o.proxy.RegisterEvent(OutputEventName, func(r *wire.Reader) {
 		var ev OutputNameEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Name", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -551,12 +539,10 @@ func (o *Output) OnName(fn OutputNameFunc) {
 func (o *Output) OnDescription(fn OutputDescriptionFunc) {
 	o.proxy.RegisterEvent(OutputEventDescription, func(r *wire.Reader) {
 		var ev OutputDescriptionEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Description", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -585,7 +571,7 @@ func (o *Output) Release() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindOutput(reg, name, min(g.Version,
 // VersionOutput)), to bind at the highest mutually supported version.
-func BindOutput(b Binder, name uint32, version uint32) (*Output, error) {
+func BindOutput(b Binder, name, version uint32) (*Output, error) {
 	if version < 1 || version > VersionOutput {
 		return nil, ErrVersionMismatch
 	}

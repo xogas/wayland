@@ -34,8 +34,7 @@ const (
 //
 // Destroy the wp_color_management_surface_v1 object and do the same as
 // unset_image_description.
-type ColorManagementSurfaceV1DestroyRequest struct {
-}
+type ColorManagementSurfaceV1DestroyRequest struct{}
 
 func (r *ColorManagementSurfaceV1DestroyRequest) Opcode() uint16 {
 	return ColorManagementSurfaceV1RequestDestroy
@@ -118,8 +117,7 @@ func (r *ColorManagementSurfaceV1SetImageDescriptionRequest) Since() uint32 { re
 // set_image_description for how a compositor handles a surface without
 // an image description. This is double-buffered state, see
 // wl_surface.commit.
-type ColorManagementSurfaceV1UnsetImageDescriptionRequest struct {
-}
+type ColorManagementSurfaceV1UnsetImageDescriptionRequest struct{}
 
 func (r *ColorManagementSurfaceV1UnsetImageDescriptionRequest) Opcode() uint16 {
 	return ColorManagementSurfaceV1RequestUnsetImageDescription
@@ -233,7 +231,7 @@ func (o *ColorManagementSurfaceV1) UnsetImageDescription() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorManagementSurfaceV1(reg, name, min(g.Version,
 // VersionColorManagementSurfaceV1)), to bind at the highest mutually supported version.
-func BindColorManagementSurfaceV1(b wayland.Binder, name uint32, version uint32) (*ColorManagementSurfaceV1, error) {
+func BindColorManagementSurfaceV1(b wayland.Binder, name, version uint32) (*ColorManagementSurfaceV1, error) {
 	if version < 1 || version > VersionColorManagementSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

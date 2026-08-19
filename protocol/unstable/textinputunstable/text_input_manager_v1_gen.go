@@ -61,10 +61,9 @@ func (o *TextInputManagerV1) CreateTextInput() (*TextInputV1, error) {
 
 	wrapped := NewTextInputV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), TextInputManagerV1RequestCreateTextInput, &TextInputManagerV1CreateTextInputRequest{
+	if err := conn.SendRequest(o.proxy.ID(), TextInputManagerV1RequestCreateTextInput, &TextInputManagerV1CreateTextInputRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func (o *TextInputManagerV1) CreateTextInput() (*TextInputV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindTextInputManagerV1(reg, name, min(g.Version,
 // VersionTextInputManagerV1)), to bind at the highest mutually supported version.
-func BindTextInputManagerV1(b wayland.Binder, name uint32, version uint32) (*TextInputManagerV1, error) {
+func BindTextInputManagerV1(b wayland.Binder, name, version uint32) (*TextInputManagerV1, error) {
 	if version < 1 || version > VersionTextInputManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

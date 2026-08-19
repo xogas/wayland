@@ -59,11 +59,10 @@ func (o *InputPanelV1) GetInputPanelSurface(surface wire.ObjectID) (*InputPanelS
 
 	wrapped := NewInputPanelSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), InputPanelV1RequestGetInputPanelSurface, &InputPanelV1GetInputPanelSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), InputPanelV1RequestGetInputPanelSurface, &InputPanelV1GetInputPanelSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (o *InputPanelV1) GetInputPanelSurface(surface wire.ObjectID) (*InputPanelS
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindInputPanelV1(reg, name, min(g.Version,
 // VersionInputPanelV1)), to bind at the highest mutually supported version.
-func BindInputPanelV1(b wayland.Binder, name uint32, version uint32) (*InputPanelV1, error) {
+func BindInputPanelV1(b wayland.Binder, name, version uint32) (*InputPanelV1, error) {
 	if version < 1 || version > VersionInputPanelV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

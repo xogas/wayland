@@ -54,8 +54,7 @@ const (
 // Destroy a session object, preserving the current state but not continuing
 // to make further updates if state changes occur. This makes the associated
 // xx_toplevel_session_v1 objects inert.
-type SessionV1DestroyRequest struct {
-}
+type SessionV1DestroyRequest struct{}
 
 func (r *SessionV1DestroyRequest) Opcode() uint16 { return SessionV1RequestDestroy }
 
@@ -70,8 +69,7 @@ func (r *SessionV1DestroyRequest) Since() uint32 { return 1 }
 // Remove the session, making it no longer available for restoration. A
 // compositor should in response to this request remove the data related to
 // this session from its storage.
-type SessionV1RemoveRequest struct {
-}
+type SessionV1RemoveRequest struct{}
 
 func (r *SessionV1RemoveRequest) Opcode() uint16 { return SessionV1RequestRemove }
 
@@ -177,8 +175,7 @@ func (e *SessionV1CreatedEvent) Since() uint32 { return 1 }
 // Emitted at most once some time after getting a new session object. It
 // means that previous state was at least partially restored. The same id
 // can again be used to restore previous sessions.
-type SessionV1RestoredEvent struct {
-}
+type SessionV1RestoredEvent struct{}
 
 func (e *SessionV1RestoredEvent) Opcode() uint16 { return SessionV1EventRestored }
 
@@ -193,8 +190,7 @@ func (e *SessionV1RestoredEvent) Since() uint32 { return 1 }
 // Emitted at most once, if the session was taken over by some other
 // client. When this happens, the session and all its toplevel session
 // objects become inert, and should be destroyed.
-type SessionV1ReplacedEvent struct {
-}
+type SessionV1ReplacedEvent struct{}
 
 func (e *SessionV1ReplacedEvent) Opcode() uint16 { return SessionV1EventReplaced }
 
@@ -244,12 +240,10 @@ func (o *SessionV1) Proxy() *wayland.Proxy {
 func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventCreated, func(r *wire.Reader) {
 		var ev SessionV1CreatedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Created", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -258,12 +252,10 @@ func (o *SessionV1) OnCreated(fn SessionV1CreatedFunc) {
 func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 	o.proxy.RegisterEvent(SessionV1EventRestored, func(r *wire.Reader) {
 		var ev SessionV1RestoredEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Restored", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -272,12 +264,10 @@ func (o *SessionV1) OnRestored(fn SessionV1RestoredFunc) {
 func (o *SessionV1) OnReplaced(fn SessionV1ReplacedFunc) {
 	o.proxy.RegisterEvent(SessionV1EventReplaced, func(r *wire.Reader) {
 		var ev SessionV1ReplacedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Replaced", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -329,12 +319,11 @@ func (o *SessionV1) AddToplevel(toplevel wire.ObjectID, name string) (*ToplevelS
 
 	wrapped := NewToplevelSessionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SessionV1RequestAddToplevel, &SessionV1AddToplevelRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SessionV1RequestAddToplevel, &SessionV1AddToplevelRequest{
 		ID:       wire.NewID(p.ID()),
 		Toplevel: toplevel,
 		Name:     name,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -363,12 +352,11 @@ func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*Tople
 
 	wrapped := NewToplevelSessionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), SessionV1RequestRestoreToplevel, &SessionV1RestoreToplevelRequest{
+	if err := conn.SendRequest(o.proxy.ID(), SessionV1RequestRestoreToplevel, &SessionV1RestoreToplevelRequest{
 		ID:       wire.NewID(p.ID()),
 		Toplevel: toplevel,
 		Name:     name,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -381,7 +369,7 @@ func (o *SessionV1) RestoreToplevel(toplevel wire.ObjectID, name string) (*Tople
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSessionV1(reg, name, min(g.Version,
 // VersionSessionV1)), to bind at the highest mutually supported version.
-func BindSessionV1(b wayland.Binder, name uint32, version uint32) (*SessionV1, error) {
+func BindSessionV1(b wayland.Binder, name, version uint32) (*SessionV1, error) {
 	if version < 1 || version > VersionSessionV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

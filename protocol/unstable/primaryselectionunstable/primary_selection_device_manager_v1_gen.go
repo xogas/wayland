@@ -63,8 +63,7 @@ func (r *PrimarySelectionDeviceManagerV1GetDeviceRequest) Since() uint32 { retur
 // PrimarySelectionDeviceManagerV1DestroyRequest destroy the primary selection device manager.
 //
 // Destroy the primary selection device manager.
-type PrimarySelectionDeviceManagerV1DestroyRequest struct {
-}
+type PrimarySelectionDeviceManagerV1DestroyRequest struct{}
 
 func (r *PrimarySelectionDeviceManagerV1DestroyRequest) Opcode() uint16 {
 	return PrimarySelectionDeviceManagerV1RequestDestroy
@@ -106,10 +105,9 @@ func (o *PrimarySelectionDeviceManagerV1) CreateSource() (*PrimarySelectionSourc
 
 	wrapped := NewPrimarySelectionSourceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestCreateSource, &PrimarySelectionDeviceManagerV1CreateSourceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestCreateSource, &PrimarySelectionDeviceManagerV1CreateSourceRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -126,11 +124,10 @@ func (o *PrimarySelectionDeviceManagerV1) GetDevice(seat wire.ObjectID) (*Primar
 
 	wrapped := NewPrimarySelectionDeviceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestGetDevice, &PrimarySelectionDeviceManagerV1GetDeviceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), PrimarySelectionDeviceManagerV1RequestGetDevice, &PrimarySelectionDeviceManagerV1GetDeviceRequest{
 		ID:   wire.NewID(p.ID()),
 		Seat: seat,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -157,7 +154,7 @@ func (o *PrimarySelectionDeviceManagerV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPrimarySelectionDeviceManagerV1(reg, name, min(g.Version,
 // VersionPrimarySelectionDeviceManagerV1)), to bind at the highest mutually supported version.
-func BindPrimarySelectionDeviceManagerV1(b wayland.Binder, name uint32, version uint32) (*PrimarySelectionDeviceManagerV1, error) {
+func BindPrimarySelectionDeviceManagerV1(b wayland.Binder, name, version uint32) (*PrimarySelectionDeviceManagerV1, error) {
 	if version < 1 || version > VersionPrimarySelectionDeviceManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

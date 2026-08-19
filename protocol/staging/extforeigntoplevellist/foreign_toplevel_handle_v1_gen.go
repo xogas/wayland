@@ -52,8 +52,7 @@ func init() {
 // Other protocols which extend the ext_foreign_toplevel_handle_v1
 // interface should require destructors for extension interfaces be
 // called before allowing the toplevel handle to be destroyed.
-type ForeignToplevelHandleV1DestroyRequest struct {
-}
+type ForeignToplevelHandleV1DestroyRequest struct{}
 
 func (r *ForeignToplevelHandleV1DestroyRequest) Opcode() uint16 {
 	return ForeignToplevelHandleV1RequestDestroy
@@ -73,8 +72,7 @@ func (r *ForeignToplevelHandleV1DestroyRequest) Since() uint32 { return 1 }
 //
 // Other protocols which extend the ext_foreign_toplevel_handle_v1
 // interface must also ignore requests other than destructors.
-type ForeignToplevelHandleV1ClosedEvent struct {
-}
+type ForeignToplevelHandleV1ClosedEvent struct{}
 
 func (e *ForeignToplevelHandleV1ClosedEvent) Opcode() uint16 {
 	return ForeignToplevelHandleV1EventClosed
@@ -98,8 +96,7 @@ func (e *ForeignToplevelHandleV1ClosedEvent) Since() uint32 { return 1 }
 //
 // This event must not be sent after the ext_foreign_toplevel_handle_v1.closed
 // event.
-type ForeignToplevelHandleV1DoneEvent struct {
-}
+type ForeignToplevelHandleV1DoneEvent struct{}
 
 func (e *ForeignToplevelHandleV1DoneEvent) Opcode() uint16 { return ForeignToplevelHandleV1EventDone }
 
@@ -234,12 +231,10 @@ func (o *ForeignToplevelHandleV1) Proxy() *wayland.Proxy {
 func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventClosed, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1ClosedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Closed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -248,12 +243,10 @@ func (o *ForeignToplevelHandleV1) OnClosed(fn ForeignToplevelHandleV1ClosedFunc)
 func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventDone, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -262,12 +255,10 @@ func (o *ForeignToplevelHandleV1) OnDone(fn ForeignToplevelHandleV1DoneFunc) {
 func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventTitle, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1TitleEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Title", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -276,12 +267,10 @@ func (o *ForeignToplevelHandleV1) OnTitle(fn ForeignToplevelHandleV1TitleFunc) {
 func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventAppID, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1AppIDEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("AppID", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -290,12 +279,10 @@ func (o *ForeignToplevelHandleV1) OnAppID(fn ForeignToplevelHandleV1AppIDFunc) {
 func (o *ForeignToplevelHandleV1) OnIdentifier(fn ForeignToplevelHandleV1IdentifierFunc) {
 	o.proxy.RegisterEvent(ForeignToplevelHandleV1EventIdentifier, func(r *wire.Reader) {
 		var ev ForeignToplevelHandleV1IdentifierEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Identifier", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -332,7 +319,7 @@ func (o *ForeignToplevelHandleV1) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindForeignToplevelHandleV1(reg, name, min(g.Version,
 // VersionForeignToplevelHandleV1)), to bind at the highest mutually supported version.
-func BindForeignToplevelHandleV1(b wayland.Binder, name uint32, version uint32) (*ForeignToplevelHandleV1, error) {
+func BindForeignToplevelHandleV1(b wayland.Binder, name, version uint32) (*ForeignToplevelHandleV1, error) {
 	if version < 1 || version > VersionForeignToplevelHandleV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

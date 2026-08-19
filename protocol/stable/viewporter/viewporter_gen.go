@@ -27,8 +27,7 @@ const (
 // Informs the server that the client will not be using this
 // protocol object anymore. This does not affect any other objects,
 // wp_viewport objects included.
-type ViewporterDestroyRequest struct {
-}
+type ViewporterDestroyRequest struct{}
 
 func (r *ViewporterDestroyRequest) Opcode() uint16 { return ViewporterRequestDestroy }
 
@@ -116,11 +115,10 @@ func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {
 
 	wrapped := NewViewport(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ViewporterRequestGetViewport, &ViewporterGetViewportRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ViewporterRequestGetViewport, &ViewporterGetViewportRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -133,7 +131,7 @@ func (o *Viewporter) GetViewport(surface wire.ObjectID) (*Viewport, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindViewporter(reg, name, min(g.Version,
 // VersionViewporter)), to bind at the highest mutually supported version.
-func BindViewporter(b wayland.Binder, name uint32, version uint32) (*Viewporter, error) {
+func BindViewporter(b wayland.Binder, name, version uint32) (*Viewporter, error) {
 	if version < 1 || version > VersionViewporter {
 		return nil, wayland.ErrVersionMismatch
 	}

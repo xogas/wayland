@@ -246,8 +246,7 @@ const (
 // description for how a compositor handles a surface without color
 // representation metadata. Unsetting is double-buffered state, see
 // wl_surface.commit.
-type ColorRepresentationSurfaceV1DestroyRequest struct {
-}
+type ColorRepresentationSurfaceV1DestroyRequest struct{}
 
 func (r *ColorRepresentationSurfaceV1DestroyRequest) Opcode() uint16 {
 	return ColorRepresentationSurfaceV1RequestDestroy
@@ -509,7 +508,7 @@ func (o *ColorRepresentationSurfaceV1) SetChromaLocation(chromaLocation ColorRep
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorRepresentationSurfaceV1(reg, name, min(g.Version,
 // VersionColorRepresentationSurfaceV1)), to bind at the highest mutually supported version.
-func BindColorRepresentationSurfaceV1(b wayland.Binder, name uint32, version uint32) (*ColorRepresentationSurfaceV1, error) {
+func BindColorRepresentationSurfaceV1(b wayland.Binder, name, version uint32) (*ColorRepresentationSurfaceV1, error) {
 	if version < 1 || version > VersionColorRepresentationSurfaceV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

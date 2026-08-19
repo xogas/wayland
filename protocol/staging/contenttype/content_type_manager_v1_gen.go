@@ -26,8 +26,7 @@ const (
 //
 // Destroy the content type manager. This doesn't destroy objects created
 // with the manager.
-type ContentTypeManagerV1DestroyRequest struct {
-}
+type ContentTypeManagerV1DestroyRequest struct{}
 
 func (r *ContentTypeManagerV1DestroyRequest) Opcode() uint16 {
 	return ContentTypeManagerV1RequestDestroy
@@ -117,11 +116,10 @@ func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*Co
 
 	wrapped := NewContentTypeV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ContentTypeManagerV1RequestGetSurfaceContentType, &ContentTypeManagerV1GetSurfaceContentTypeRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ContentTypeManagerV1RequestGetSurfaceContentType, &ContentTypeManagerV1GetSurfaceContentTypeRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -134,7 +132,7 @@ func (o *ContentTypeManagerV1) GetSurfaceContentType(surface wire.ObjectID) (*Co
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindContentTypeManagerV1(reg, name, min(g.Version,
 // VersionContentTypeManagerV1)), to bind at the highest mutually supported version.
-func BindContentTypeManagerV1(b wayland.Binder, name uint32, version uint32) (*ContentTypeManagerV1, error) {
+func BindContentTypeManagerV1(b wayland.Binder, name, version uint32) (*ContentTypeManagerV1, error) {
 	if version < 1 || version > VersionContentTypeManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

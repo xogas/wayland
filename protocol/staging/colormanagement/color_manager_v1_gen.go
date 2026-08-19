@@ -369,8 +369,7 @@ const (
 //
 // Destroy the wp_color_manager_v1 object. This does not affect any other
 // objects in any way.
-type ColorManagerV1DestroyRequest struct {
-}
+type ColorManagerV1DestroyRequest struct{}
 
 func (r *ColorManagerV1DestroyRequest) Opcode() uint16 { return ColorManagerV1RequestDestroy }
 
@@ -764,8 +763,7 @@ func (e *ColorManagerV1SupportedPrimariesNamedEvent) Since() uint32 { return 1 }
 //
 // This event is sent when all supported rendering intents, features,
 // transfer functions and named primaries have been sent.
-type ColorManagerV1DoneEvent struct {
-}
+type ColorManagerV1DoneEvent struct{}
 
 func (e *ColorManagerV1DoneEvent) Opcode() uint16 { return ColorManagerV1EventDone }
 
@@ -818,12 +816,10 @@ func (o *ColorManagerV1) Proxy() *wayland.Proxy {
 func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedIntent, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedIntentEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedIntent", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -832,12 +828,10 @@ func (o *ColorManagerV1) OnSupportedIntent(fn ColorManagerV1SupportedIntentFunc)
 func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedFeature, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedFeatureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedFeature", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -846,12 +840,10 @@ func (o *ColorManagerV1) OnSupportedFeature(fn ColorManagerV1SupportedFeatureFun
 func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedTfNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedTfNamedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedTfNamed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -860,12 +852,10 @@ func (o *ColorManagerV1) OnSupportedTfNamed(fn ColorManagerV1SupportedTfNamedFun
 func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPrimariesNamedFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventSupportedPrimariesNamed, func(r *wire.Reader) {
 		var ev ColorManagerV1SupportedPrimariesNamedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("SupportedPrimariesNamed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -874,12 +864,10 @@ func (o *ColorManagerV1) OnSupportedPrimariesNamed(fn ColorManagerV1SupportedPri
 func (o *ColorManagerV1) OnDone(fn ColorManagerV1DoneFunc) {
 	o.proxy.RegisterEvent(ColorManagerV1EventDone, func(r *wire.Reader) {
 		var ev ColorManagerV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -912,11 +900,10 @@ func (o *ColorManagerV1) GetOutput(output wire.ObjectID) (*ColorManagementOutput
 
 	wrapped := NewColorManagementOutputV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetOutput, &ColorManagerV1GetOutputRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetOutput, &ColorManagerV1GetOutputRequest{
 		ID:     wire.NewID(p.ID()),
 		Output: output,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -939,11 +926,10 @@ func (o *ColorManagerV1) GetSurface(surface wire.ObjectID) (*ColorManagementSurf
 
 	wrapped := NewColorManagementSurfaceV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurface, &ColorManagerV1GetSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurface, &ColorManagerV1GetSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -964,11 +950,10 @@ func (o *ColorManagerV1) GetSurfaceFeedback(surface wire.ObjectID) (*ColorManage
 
 	wrapped := NewColorManagementSurfaceFeedbackV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurfaceFeedback, &ColorManagerV1GetSurfaceFeedbackRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetSurfaceFeedback, &ColorManagerV1GetSurfaceFeedbackRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -992,10 +977,9 @@ func (o *ColorManagerV1) CreateIccCreator() (*ImageDescriptionCreatorIccV1, erro
 
 	wrapped := NewImageDescriptionCreatorIccV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateIccCreator, &ColorManagerV1CreateIccCreatorRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateIccCreator, &ColorManagerV1CreateIccCreatorRequest{
 		Obj: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1019,10 +1003,9 @@ func (o *ColorManagerV1) CreateParametricCreator() (*ImageDescriptionCreatorPara
 
 	wrapped := NewImageDescriptionCreatorParamsV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateParametricCreator, &ColorManagerV1CreateParametricCreatorRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateParametricCreator, &ColorManagerV1CreateParametricCreatorRequest{
 		Obj: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1082,10 +1065,9 @@ func (o *ColorManagerV1) CreateWindowsScrgb() (*ImageDescriptionV1, error) {
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsScrgb, &ColorManagerV1CreateWindowsScrgbRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsScrgb, &ColorManagerV1CreateWindowsScrgbRequest{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1108,11 +1090,10 @@ func (o *ColorManagerV1) GetImageDescription(reference wire.ObjectID) (*ImageDes
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetImageDescription, &ColorManagerV1GetImageDescriptionRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestGetImageDescription, &ColorManagerV1GetImageDescriptionRequest{
 		ImageDescription: wire.NewID(p.ID()),
 		Reference:        reference,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1155,10 +1136,9 @@ func (o *ColorManagerV1) CreateWindowsBt2100() (*ImageDescriptionV1, error) {
 
 	wrapped := NewImageDescriptionV1(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsBt2100, &ColorManagerV1CreateWindowsBt2100Request{
+	if err := conn.SendRequest(o.proxy.ID(), ColorManagerV1RequestCreateWindowsBt2100, &ColorManagerV1CreateWindowsBt2100Request{
 		ImageDescription: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -1171,7 +1151,7 @@ func (o *ColorManagerV1) CreateWindowsBt2100() (*ImageDescriptionV1, error) {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindColorManagerV1(reg, name, min(g.Version,
 // VersionColorManagerV1)), to bind at the highest mutually supported version.
-func BindColorManagerV1(b wayland.Binder, name uint32, version uint32) (*ColorManagerV1, error) {
+func BindColorManagerV1(b wayland.Binder, name, version uint32) (*ColorManagerV1, error) {
 	if version < 1 || version > VersionColorManagerV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

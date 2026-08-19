@@ -36,8 +36,7 @@ func init() {
 //
 // If this xdg_popup is not the "topmost" popup, a protocol error
 // will be sent.
-type PopupDestroyRequest struct {
-}
+type PopupDestroyRequest struct{}
 
 func (r *PopupDestroyRequest) Opcode() uint16 { return PopupRequestDestroy }
 
@@ -52,8 +51,7 @@ func (r *PopupDestroyRequest) Since() uint32 { return 1 }
 // The popup_done event is sent out when a popup is dismissed by the
 // compositor. The client should destroy the xdg_popup object at this
 // point.
-type PopupPopupDoneEvent struct {
-}
+type PopupPopupDoneEvent struct{}
 
 func (e *PopupPopupDoneEvent) Opcode() uint16 { return PopupEventPopupDone }
 
@@ -138,12 +136,10 @@ func (o *Popup) Proxy() *wayland.Proxy {
 func (o *Popup) OnPopupDone(fn PopupPopupDoneFunc) {
 	o.proxy.RegisterEvent(PopupEventPopupDone, func(r *wire.Reader) {
 		var ev PopupPopupDoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PopupDone", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -172,7 +168,7 @@ func (o *Popup) Destroy() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindPopup(reg, name, min(g.Version,
 // VersionPopup)), to bind at the highest mutually supported version.
-func BindPopup(b wayland.Binder, name uint32, version uint32) (*Popup, error) {
+func BindPopup(b wayland.Binder, name, version uint32) (*Popup, error) {
 	if version < 1 || version > VersionPopup {
 		return nil, wayland.ErrVersionMismatch
 	}

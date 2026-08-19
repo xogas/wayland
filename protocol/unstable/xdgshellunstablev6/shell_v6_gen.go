@@ -61,8 +61,7 @@ const (
 // Destroying a bound xdg_shell object while there are surfaces
 // still alive created by this xdg_shell object instance is illegal
 // and will result in a protocol error.
-type ShellV6DestroyRequest struct {
-}
+type ShellV6DestroyRequest struct{}
 
 func (r *ShellV6DestroyRequest) Opcode() uint16 { return ShellV6RequestDestroy }
 
@@ -203,12 +202,10 @@ func (o *ShellV6) Proxy() *wayland.Proxy {
 func (o *ShellV6) OnPing(fn ShellV6PingFunc) {
 	o.proxy.RegisterEvent(ShellV6EventPing, func(r *wire.Reader) {
 		var ev ShellV6PingEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Ping", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -243,10 +240,9 @@ func (o *ShellV6) CreatePositioner() (*PositionerV6, error) {
 
 	wrapped := NewPositionerV6(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellV6RequestCreatePositioner, &ShellV6CreatePositionerRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellV6RequestCreatePositioner, &ShellV6CreatePositionerRequest{
 		ID: wire.NewID(p.ID()),
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -273,11 +269,10 @@ func (o *ShellV6) GetXdgSurface(surface wire.ObjectID) (*SurfaceV6, error) {
 
 	wrapped := NewSurfaceV6(p)
 	conn.RegisterProxy(p)
-	err := conn.SendRequest(o.proxy.ID(), ShellV6RequestGetXdgSurface, &ShellV6GetXdgSurfaceRequest{
+	if err := conn.SendRequest(o.proxy.ID(), ShellV6RequestGetXdgSurface, &ShellV6GetXdgSurfaceRequest{
 		ID:      wire.NewID(p.ID()),
 		Surface: surface,
-	})
-	if err != nil {
+	}); err != nil {
 		conn.UnregisterProxy(p.ID())
 		return nil, err
 	}
@@ -300,7 +295,7 @@ func (o *ShellV6) Pong(serial uint32) error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindShellV6(reg, name, min(g.Version,
 // VersionShellV6)), to bind at the highest mutually supported version.
-func BindShellV6(b wayland.Binder, name uint32, version uint32) (*ShellV6, error) {
+func BindShellV6(b wayland.Binder, name, version uint32) (*ShellV6, error) {
 	if version < 1 || version > VersionShellV6 {
 		return nil, wayland.ErrVersionMismatch
 	}

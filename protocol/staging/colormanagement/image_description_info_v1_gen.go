@@ -48,8 +48,7 @@ func init() {
 // ImageDescriptionInfoV1DoneEvent end of information.
 //
 // Signals the end of information events and destroys the object.
-type ImageDescriptionInfoV1DoneEvent struct {
-}
+type ImageDescriptionInfoV1DoneEvent struct{}
 
 func (e *ImageDescriptionInfoV1DoneEvent) Opcode() uint16 { return ImageDescriptionInfoV1EventDone }
 
@@ -545,12 +544,10 @@ func (o *ImageDescriptionInfoV1) Proxy() *wayland.Proxy {
 func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventDone, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1DoneEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Done", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -559,12 +556,10 @@ func (o *ImageDescriptionInfoV1) OnDone(fn ImageDescriptionInfoV1DoneFunc) {
 func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventIccFile, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1IccFileEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("IccFile", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -573,12 +568,10 @@ func (o *ImageDescriptionInfoV1) OnIccFile(fn ImageDescriptionInfoV1IccFileFunc)
 func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Primaries", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -587,12 +580,10 @@ func (o *ImageDescriptionInfoV1) OnPrimaries(fn ImageDescriptionInfoV1PrimariesF
 func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1PrimariesNamedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventPrimariesNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1PrimariesNamedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("PrimariesNamed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -601,12 +592,10 @@ func (o *ImageDescriptionInfoV1) OnPrimariesNamed(fn ImageDescriptionInfoV1Prima
 func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfPower, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfPowerEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TfPower", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -615,12 +604,10 @@ func (o *ImageDescriptionInfoV1) OnTfPower(fn ImageDescriptionInfoV1TfPowerFunc)
 func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTfNamed, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TfNamedEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TfNamed", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -629,12 +616,10 @@ func (o *ImageDescriptionInfoV1) OnTfNamed(fn ImageDescriptionInfoV1TfNamedFunc)
 func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1LuminancesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventLuminances, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1LuminancesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Luminances", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -643,12 +628,10 @@ func (o *ImageDescriptionInfoV1) OnLuminances(fn ImageDescriptionInfoV1Luminance
 func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1TargetPrimariesFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetPrimaries, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetPrimariesEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TargetPrimaries", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -657,12 +640,10 @@ func (o *ImageDescriptionInfoV1) OnTargetPrimaries(fn ImageDescriptionInfoV1Targ
 func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1TargetLuminanceFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetLuminance, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetLuminanceEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TargetLuminance", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -671,12 +652,10 @@ func (o *ImageDescriptionInfoV1) OnTargetLuminance(fn ImageDescriptionInfoV1Targ
 func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetMaxCllFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxCll, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxCllEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TargetMaxCll", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -685,12 +664,10 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxCll(fn ImageDescriptionInfoV1TargetM
 func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1TargetMaxFallFunc) {
 	o.proxy.RegisterEvent(ImageDescriptionInfoV1EventTargetMaxFall, func(r *wire.Reader) {
 		var ev ImageDescriptionInfoV1TargetMaxFallEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("TargetMaxFall", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -701,7 +678,7 @@ func (o *ImageDescriptionInfoV1) OnTargetMaxFall(fn ImageDescriptionInfoV1Target
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindImageDescriptionInfoV1(reg, name, min(g.Version,
 // VersionImageDescriptionInfoV1)), to bind at the highest mutually supported version.
-func BindImageDescriptionInfoV1(b wayland.Binder, name uint32, version uint32) (*ImageDescriptionInfoV1, error) {
+func BindImageDescriptionInfoV1(b wayland.Binder, name, version uint32) (*ImageDescriptionInfoV1, error) {
 	if version < 1 || version > VersionImageDescriptionInfoV1 {
 		return nil, wayland.ErrVersionMismatch
 	}

@@ -31,8 +31,7 @@ const (
 // that was turned into a sub-surface with a
 // wl_subcompositor.get_subsurface request. The wl_surface's association
 // to the parent is deleted. The wl_surface is unmapped immediately.
-type SubsurfaceDestroyRequest struct {
-}
+type SubsurfaceDestroyRequest struct{}
 
 func (r *SubsurfaceDestroyRequest) Opcode() uint16 { return SubsurfaceRequestDestroy }
 
@@ -133,8 +132,7 @@ func (r *SubsurfacePlaceBelowRequest) Since() uint32 { return 1 }
 // mode.
 //
 // See wl_subsurface and wl_surface.commit for more information.
-type SubsurfaceSetSyncRequest struct {
-}
+type SubsurfaceSetSyncRequest struct{}
 
 func (r *SubsurfaceSetSyncRequest) Opcode() uint16 { return SubsurfaceRequestSetSync }
 
@@ -150,8 +148,7 @@ func (r *SubsurfaceSetSyncRequest) Since() uint32 { return 1 }
 // mode.
 //
 // See wl_subsurface and wl_surface.commit for more information.
-type SubsurfaceSetDesyncRequest struct {
-}
+type SubsurfaceSetDesyncRequest struct{}
 
 func (r *SubsurfaceSetDesyncRequest) Opcode() uint16 { return SubsurfaceRequestSetDesync }
 
@@ -255,7 +252,7 @@ func (o *Subsurface) Destroy() error {
 //
 // Position is double-buffered state on the parent surface, see
 // wl_subsurface and wl_surface.commit for more information.
-func (o *Subsurface) SetPosition(x int32, y int32) error {
+func (o *Subsurface) SetPosition(x, y int32) error {
 	return o.proxy.SendRequest(SubsurfaceRequestSetPosition, &SubsurfaceSetPositionRequest{
 		X: x,
 		Y: y,
@@ -318,7 +315,7 @@ func (o *Subsurface) SetDesync() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindSubsurface(reg, name, min(g.Version,
 // VersionSubsurface)), to bind at the highest mutually supported version.
-func BindSubsurface(b Binder, name uint32, version uint32) (*Subsurface, error) {
+func BindSubsurface(b Binder, name, version uint32) (*Subsurface, error) {
 	if version < 1 || version > VersionSubsurface {
 		return nil, ErrVersionMismatch
 	}

@@ -65,8 +65,7 @@ const (
 // Switch back to a mode without any server-side decorations at the next
 // commit, unless a new xdg_toplevel_decoration is created for the surface
 // first.
-type ToplevelDecorationV1DestroyRequest struct {
-}
+type ToplevelDecorationV1DestroyRequest struct{}
 
 func (r *ToplevelDecorationV1DestroyRequest) Opcode() uint16 {
 	return ToplevelDecorationV1RequestDestroy
@@ -125,8 +124,7 @@ func (r *ToplevelDecorationV1SetModeRequest) Since() uint32 { return 1 }
 // that the client doesn't prefer a particular decoration mode.
 //
 // This request has the same semantics as set_mode.
-type ToplevelDecorationV1UnsetModeRequest struct {
-}
+type ToplevelDecorationV1UnsetModeRequest struct{}
 
 func (r *ToplevelDecorationV1UnsetModeRequest) Opcode() uint16 {
 	return ToplevelDecorationV1RequestUnsetMode
@@ -197,12 +195,10 @@ func (o *ToplevelDecorationV1) Proxy() *wayland.Proxy {
 func (o *ToplevelDecorationV1) OnConfigure(fn ToplevelDecorationV1ConfigureFunc) {
 	o.proxy.RegisterEvent(ToplevelDecorationV1EventConfigure, func(r *wire.Reader) {
 		var ev ToplevelDecorationV1ConfigureEvent
-
 		if err := ev.Unmarshal(r); err != nil {
 			o.proxy.Conn().FailEvent("Configure", err)
 			return
 		}
-
 		fn(ev)
 	})
 }
@@ -268,7 +264,7 @@ func (o *ToplevelDecorationV1) UnsetMode() error {
 // than this library may advertise a higher version: clamp the advertised
 // version with the builtin min, e.g. BindToplevelDecorationV1(reg, name, min(g.Version,
 // VersionToplevelDecorationV1)), to bind at the highest mutually supported version.
-func BindToplevelDecorationV1(b wayland.Binder, name uint32, version uint32) (*ToplevelDecorationV1, error) {
+func BindToplevelDecorationV1(b wayland.Binder, name, version uint32) (*ToplevelDecorationV1, error) {
 	if version < 1 || version > VersionToplevelDecorationV1 {
 		return nil, wayland.ErrVersionMismatch
 	}
