@@ -1,6 +1,6 @@
 //go:build linux
 
-// Minimal Wayland client: connects, discovers all globals, prints them, exits.
+// Minimal Wayland client: connects, lists all advertised globals, exits.
 package main
 
 import (
@@ -13,17 +13,24 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	dpy, _, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
+	defer func() { _ = dpy.Close() }()
 
 	for _, g := range globals.All() {
 		fmt.Printf("interface: '%s', version: %d, name: %d\n", g.Interface, g.Version, g.Name)
 	}
+	return nil
 }

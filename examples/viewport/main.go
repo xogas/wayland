@@ -1,9 +1,9 @@
 //go:build linux
 
-// Viewport crop-and-scale demo: a 512x512 logical buffer with a moving 256x256
-// source rectangle rotating around the buffer center, scaled to a configurable
-// destination size (default 384x384). Demonstrates wp_viewporter without
-// re-attaching the buffer each frame, buffer-scale (HiDPI) rendering, and
+// Viewport crop-and-scale demo: a 512x512 logical buffer with a moving
+// 256x256 source rectangle rotating around the buffer center, scaled to a
+// configurable destination size. Demonstrates wp_viewporter without
+// re-attaching the buffer each frame, buffer-scale (HiDPI) rendering and
 // wl_shm format negotiation.
 package main
 
@@ -33,48 +33,86 @@ const (
 	keyS     = 39
 )
 
+// viewportApp owns the buffer whose source rectangle the viewport moves.
+type viewportApp struct {
+	surface        *wayland.Surface
+	viewport       *viewporter.Viewport
+	useBufferScale bool
+	scale          int32
+	bufCleanup     func()
+}
+
+// rebuildBuffer recreates the buffer at the current scale and commits it.
+// The content is static, so between frames only the viewport source moves.
+func (a *viewportApp) rebuildBuffer(shm *wayland.Shm) error {
+	if a.bufCleanup != nil {
+		a.bufCleanup()
+		a.bufCleanup = nil
+	}
+	bufSize := logBufSize * a.scale
+	id, pixels, cleanup, err := shared.NewBuffer(shm, bufSize, bufSize, wayland.ShmFormatXrgb8888)
+	if err != nil {
+		return err
+	}
+	drawBuffer(pixels, int(bufSize*4), a.scale)
+	if a.useBufferScale {
+		if err := a.surface.SetBufferScale(a.scale); err != nil {
+			cleanup()
+			return err
+		}
+	}
+	srcSize := wire.FixedFromFloat64(float64(logSrcW * a.scale))
+	_ = a.viewport.SetSource(
+		wire.FixedFromInt(128*a.scale), wire.FixedFromInt(128*a.scale),
+		srcSize, srcSize,
+	)
+	_ = a.surface.Attach(id, 0, 0)
+	_ = a.surface.Damage(0, 0, initDest, initDest)
+	_ = a.surface.Commit()
+	a.bufCleanup = cleanup
+	return nil
+}
+
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	vpG, ok := globals.Find(viewporter.InterfaceViewporter)
 	if !ok {
-		fmt.Fprintln(os.Stderr, "wp_viewporter not available")
-		os.Exit(1)
+		return fmt.Errorf("wp_viewporter not available")
 	}
 	viewporterObj, err := viewporter.BindViewporter(reg, vpG.Name, min(vpG.Version, viewporter.VersionViewporter))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind viewporter: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("bind viewporter: %w", err)
 	}
 
-	// wl_shm format negotiation: the compositor announces the formats it
-	// accepts right after the bind; rendering must pick one of them.
+	// wl_shm format negotiation: the compositor announces accepted formats
+	// right after the bind; rendering must pick one of them.
 	shmFormats := map[uint32]bool{}
 	core.Shm.OnFormat(func(ev wayland.ShmFormatEvent) {
 		shmFormats[uint32(ev.Format)] = true
 	})
 	_ = dpy.Roundtrip(ctx)
 	if !shmFormats[uint32(wayland.ShmFormatXrgb8888)] {
-		fmt.Fprintln(os.Stderr, "compositor does not support xrgb8888")
-		os.Exit(1)
+		return fmt.Errorf("compositor does not support xrgb8888")
 	}
 	fmt.Println("shm format xrgb8888 advertised by compositor")
 
@@ -88,15 +126,13 @@ func main() {
 
 	toplevel, err := shared.NewToplevel(ctx, dpy, core, "viewport", "viewport", initDest, initDest, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 	surface := toplevel.Surface
 
 	viewport, err := viewporterObj.GetViewport(wire.ObjectID(surface.Proxy().ID()))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_viewport: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("get viewport: %w", err)
 	}
 
 	// Optional: fractional-scale reports the compositor's preferred scale.
@@ -107,7 +143,7 @@ func main() {
 		} else {
 			fs, err := fsm.GetFractionalScale(wire.ObjectID(surface.Proxy().ID()))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "get_fractional_scale: %v\n", err)
+				fmt.Fprintf(os.Stderr, "get fractional_scale: %v\n", err)
 			} else {
 				fs.OnPreferredScale(func(ev fractionalscale.FractionalScaleV1PreferredScaleEvent) {
 					fmt.Printf("fractional-scale preferred_scale: %d (%.5f)\n", ev.Scale, float64(ev.Scale)/120.0)
@@ -118,12 +154,12 @@ func main() {
 		fmt.Println("wp_fractional_scale_manager_v1 not available")
 	}
 
-	// Optional keyboard for interactive keys.
+	// Optional keyboard: keys arrive on keyCh, consumed by the main loop.
 	keyCh := make(chan uint32, 16)
 	if seat, err := shared.BindSeat(reg, globals); err == nil {
 		kbd, err := seat.GetKeyboard()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "get_keyboard: %v\n", err)
+			fmt.Fprintf(os.Stderr, "get keyboard: %v\n", err)
 		} else {
 			kbd.OnKey(func(ev wayland.KeyboardKeyEvent) {
 				if ev.State != wayland.KeyboardKeyStatePressed {
@@ -137,42 +173,16 @@ func main() {
 		}
 	}
 
-	// The buffer is recreated at the current scale; its content is static, so
-	// only the viewport source moves between frames.
-	scale := int32(1)
-	var bufCleanup func()
-	rebuildBuffer := func() error {
-		if bufCleanup != nil {
-			bufCleanup()
-			bufCleanup = nil
-		}
-		bufSize := logBufSize * scale
-		id, pixels, cleanup, err := shared.NewBuffer(core.Shm, bufSize, bufSize, wayland.ShmFormatXrgb8888)
-		if err != nil {
-			return err
-		}
-		drawBuffer(pixels, int(bufSize*4), scale)
-		if useBufferScale {
-			if err := surface.SetBufferScale(scale); err != nil {
-				cleanup()
-				return err
-			}
-		}
-		srcSize := wire.FixedFromFloat64(float64(logSrcW * scale))
-		_ = viewport.SetSource(
-			wire.FixedFromInt(128*scale), wire.FixedFromInt(128*scale),
-			srcSize, srcSize,
-		)
-		_ = surface.Attach(id, 0, 0)
-		_ = surface.Damage(0, 0, initDest, initDest)
-		_ = surface.Commit()
-		bufCleanup = cleanup
-		return nil
+	ap := &viewportApp{
+		surface:        surface,
+		viewport:       viewport,
+		useBufferScale: useBufferScale,
+		scale:          1,
 	}
-	if err := rebuildBuffer(); err != nil {
-		fmt.Fprintf(os.Stderr, "buffer: %v\n", err)
-		os.Exit(1)
+	if err := ap.rebuildBuffer(core.Shm); err != nil {
+		return fmt.Errorf("buffer: %w", err)
 	}
+	defer func() { ap.bufCleanup() }()
 
 	paused := false
 	destSize := int32(initDest)
@@ -202,13 +212,13 @@ func main() {
 				fmt.Println("buffer scale unsupported on this compositor")
 				return
 			}
-			if scale == 1 {
-				scale = 2
+			if ap.scale == 1 {
+				ap.scale = 2
 			} else {
-				scale = 1
+				ap.scale = 1
 			}
-			fmt.Printf("buffer scale: %d (buffer %dx%d)\n", scale, logBufSize*scale, logBufSize*scale)
-			if err := rebuildBuffer(); err != nil {
+			fmt.Printf("buffer scale: %d (buffer %dx%d)\n", ap.scale, logBufSize*ap.scale, logBufSize*ap.scale)
+			if err := ap.rebuildBuffer(core.Shm); err != nil {
 				fmt.Fprintf(os.Stderr, "rebuild: %v\n", err)
 			}
 		}
@@ -222,42 +232,35 @@ func main() {
 		if paused {
 			select {
 			case <-toplevel.Closed:
-				printStats(start, frames)
-				return
+				shared.ReportFPS(start, frames)
+				return nil
 			case <-ctx.Done():
-				printStats(start, frames)
-				return
+				shared.ReportFPS(start, frames)
+				return nil
 			case err := <-errCh:
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-				}
-				printStats(start, frames)
-				return
+				return err
 			case key := <-keyCh:
 				handleKey(key)
 			}
 			continue
 		}
 
-		done := make(chan struct{})
-		cb, err := surface.Frame()
+		done, err := shared.Frame(surface)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "frame: %v\n", err)
-			printStats(start, frames)
-			return
+			shared.ReportFPS(start, frames)
+			return fmt.Errorf("frame: %w", err)
 		}
-		cb.OnDone(func(ev wayland.CallbackDoneEvent) {
-			close(done)
-		})
 
+		// Move the viewport source along a circular path over the static
+		// buffer; only the viewport and damage change between frames.
 		angle := float64(frames) * 0.05
-		sx := (128.0 + radius*math.Cos(angle)) * float64(scale)
-		sy := (128.0 + radius*math.Sin(angle)) * float64(scale)
+		sx := (128.0 + radius*math.Cos(angle)) * float64(ap.scale)
+		sy := (128.0 + radius*math.Sin(angle)) * float64(ap.scale)
 		_ = viewport.SetSource(
 			wire.FixedFromFloat64(sx),
 			wire.FixedFromFloat64(sy),
-			wire.FixedFromFloat64(float64(logSrcW*scale)),
-			wire.FixedFromFloat64(float64(logSrcW*scale)),
+			wire.FixedFromFloat64(float64(logSrcW*ap.scale)),
+			wire.FixedFromFloat64(float64(logSrcW*ap.scale)),
 		)
 		_ = viewport.SetDestination(destSize, destSize)
 		_ = surface.Damage(0, 0, destSize, destSize)
@@ -265,17 +268,13 @@ func main() {
 
 		select {
 		case <-toplevel.Closed:
-			printStats(start, frames)
-			return
+			shared.ReportFPS(start, frames)
+			return nil
 		case <-ctx.Done():
-			printStats(start, frames)
-			return
+			shared.ReportFPS(start, frames)
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			}
-			printStats(start, frames)
-			return
+			return err
 		case key := <-keyCh:
 			handleKey(key)
 			if !paused {
@@ -290,45 +289,5 @@ func main() {
 			elapsed := time.Since(start).Seconds()
 			fmt.Printf("%d frames (%.1f fps)\n", frames, float64(frames)/elapsed)
 		}
-	}
-}
-
-// drawBuffer renders the checkerboard pattern at physical resolution: each
-// logical pixel of the 512x512 design becomes a scale x scale block.
-func drawBuffer(data []byte, stride int, scale int32) {
-	size := logBufSize * scale
-	for y := 0; y < int(size); y++ {
-		for x := 0; x < int(size); x++ {
-			lx := x / int(scale)
-			ly := y / int(scale)
-			cx := lx / 64
-			cy := ly / 64
-			var r, g, b uint8
-			if (cx+cy)&1 == 0 {
-				r = uint8((cx * 37) % 256)
-				g = uint8((cy * 53) % 256)
-				b = uint8(((cx + cy) * 23) % 256)
-			} else {
-				r = uint8(((7 - cx) * 37) % 256)
-				g = uint8(((7 - cy) * 53) % 256)
-				b = uint8(((14 - cx - cy) * 23) % 256)
-			}
-			t := float64(lx+ly) / float64(logBufSize*2-2)
-			r = uint8(float64(r)*(1-t) + 255*t)
-			g = uint8(float64(g)*(1-t) + 140*t)
-			b = uint8(float64(b)*(1-t) + 60*t)
-			off := y*stride + x*4
-			data[off+0] = b
-			data[off+1] = g
-			data[off+2] = r
-			data[off+3] = 0xff
-		}
-	}
-}
-
-func printStats(start time.Time, frames int) {
-	elapsed := time.Since(start).Seconds()
-	if elapsed > 0 {
-		fmt.Printf("%d frames in %.1fs (%.1f fps)\n", frames, elapsed, float64(frames)/elapsed)
 	}
 }

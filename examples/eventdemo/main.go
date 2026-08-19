@@ -1,8 +1,8 @@
 //go:build linux
 
-// eventdemo: unified input event viewer for wl_keyboard, wl_pointer and wl_touch.
-// Every event is logged to the terminal and drawn into the window; the whole
-// buffer is redrawn per event (deliberately simple, not performance-optimized).
+// Unified input event viewer: logs every wl_keyboard, wl_pointer and
+// wl_touch event to the terminal and shows the last few lines in the window.
+// The whole buffer is redrawn per event (deliberately simple, not optimized).
 package main
 
 import (
@@ -23,82 +23,44 @@ const (
 	margin = 8
 )
 
-func keyName(code uint32) string {
-	names := map[uint32]string{
-		1: "ESC", 2: "1", 3: "2", 4: "3", 5: "4", 6: "5", 7: "6", 8: "7",
-		9: "8", 10: "9", 11: "0", 12: "-", 13: "=", 14: "BACKSPACE", 15: "TAB",
-		16: "Q", 17: "W", 18: "E", 19: "R", 20: "T", 21: "Y", 22: "U",
-		23: "I", 24: "O", 25: "P", 26: "[", 27: "]", 28: "ENTER", 29: "LCTRL",
-		30: "A", 31: "S", 32: "D", 33: "F", 34: "G", 35: "H", 36: "J",
-		37: "K", 38: "L", 39: ";", 40: "'", 41: "`", 42: "LSHIFT", 43: "\\",
-		44: "Z", 45: "X", 46: "C", 47: "V", 48: "B", 49: "N", 50: "M",
-		51: ",", 52: ".", 53: "/", 54: "RSHIFT", 56: "LALT", 57: "SPACE",
-		58: "CAPS", 59: "F1", 60: "F2", 61: "F3", 62: "F4", 63: "F5",
-		64: "F6", 65: "F7", 66: "F8", 67: "F9", 68: "F10", 87: "F11",
-		88: "F12", 97: "RCTRL", 100: "RALT", 105: "LEFT", 106: "RIGHT",
-		107: "DOWN", 103: "UP", 110: "INSERT", 111: "DELETE", 119: "PAUSE",
-	}
-	if n, ok := names[code]; ok {
-		return n
-	}
-	return fmt.Sprintf("key(%d)", code)
-}
-
-func btnName(code uint32) string {
-	names := map[uint32]string{
-		272: "left", 273: "right", 274: "middle", 275: "side1", 276: "side2",
-	}
-	if n, ok := names[code]; ok {
-		return n
-	}
-	return fmt.Sprintf("btn(%d)", code)
-}
-
-func axisName(code wayland.PointerAxis) string {
-	switch code {
-	case wayland.PointerAxisVerticalScroll:
-		return "vertical"
-	case wayland.PointerAxisHorizontalScroll:
-		return "horizontal"
-	}
-	return "?"
-}
-
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: %v\n", pe)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
+
 	seat, err := shared.BindSeat(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	toplevel, err := shared.NewToplevel(ctx, dpy, core, "Event Demo", "eventdemo", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	surface := toplevel.Surface
 
-	stride := int32(winW * 4)
-	var logLines []string
+	var (
+		logLines     []string
+		havePointer  bool
+		haveKeyboard bool
+		haveTouch    bool
+	)
 	const maxLines = 10
 
 	// addLog prints the line and redraws the window: a fresh shm buffer is
@@ -109,27 +71,20 @@ func main() {
 		if len(logLines) > maxLines {
 			logLines = logLines[len(logLines)-maxLines:]
 		}
-		bufID, data, cleanup, err := shared.NewBuffer(core.Shm, winW, winH, wayland.ShmFormatXrgb8888)
+		cleanup, err := shared.StaticBuffer(toplevel.Surface, core.Shm, winW, winH,
+			func(pixels []byte, stride int32) {
+				shared.FillSolid(pixels, 0xff, 0xff, 0xff)
+				lineH := shared.TextHeight(scale)
+				for i, ln := range logLines {
+					shared.DrawText(pixels, int(stride), winW, winH, ln, margin, margin+i*lineH, scale, 0x000000)
+				}
+			})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "buffer: %v\n", err)
 			return
 		}
-		shared.FillSolid(data, 0xff, 0xff, 0xff)
-		lineH := shared.TextHeight(scale)
-		for i, ln := range logLines {
-			shared.DrawText(data, int(stride), winW, winH, ln, margin, margin+i*lineH, scale, 0x000000)
-		}
-		_ = surface.Attach(bufID, 0, 0)
-		_ = surface.Damage(0, 0, winW, winH)
-		_ = surface.Commit()
 		cleanup()
 	}
-
-	var (
-		havePointer  bool
-		haveKeyboard bool
-		haveTouch    bool
-	)
 
 	registerPointer := func(p *wayland.Pointer) {
 		p.OnEnter(func(ev wayland.PointerEnterEvent) {
@@ -195,60 +150,40 @@ func main() {
 		})
 	}
 
-	// Bind the devices advertised by the initial capabilities event.
+	// Bind the devices advertised by the first capabilities event, then
+	// follow later changes (hot-plugged devices).
 	var caps wayland.SeatCapability
 	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
 		caps = ev.Capabilities
 	})
 	if err := dpy.Roundtrip(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-		os.Exit(1)
+		return err
 	}
-	if caps&wayland.SeatCapabilityPointer != 0 {
-		if p, err := seat.GetPointer(); err == nil {
-			registerPointer(p)
-			havePointer = true
-		}
-	}
-	if caps&wayland.SeatCapabilityKeyboard != 0 {
-		if k, err := seat.GetKeyboard(); err == nil {
-			registerKeyboard(k)
-			haveKeyboard = true
-		}
-	}
-	if caps&wayland.SeatCapabilityTouch != 0 {
-		if t, err := seat.GetTouch(); err == nil {
-			registerTouch(t)
-			haveTouch = true
-		}
-	}
-
-	// Follow capability changes (hot-plugged devices).
-	var ready bool
-	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
-		if !ready {
-			return
-		}
-		if ev.Capabilities&wayland.SeatCapabilityPointer != 0 && !havePointer {
+	bindDevices := func() {
+		if caps&wayland.SeatCapabilityPointer != 0 && !havePointer {
 			if p, err := seat.GetPointer(); err == nil {
 				registerPointer(p)
 				havePointer = true
 			}
 		}
-		if ev.Capabilities&wayland.SeatCapabilityKeyboard != 0 && !haveKeyboard {
+		if caps&wayland.SeatCapabilityKeyboard != 0 && !haveKeyboard {
 			if k, err := seat.GetKeyboard(); err == nil {
 				registerKeyboard(k)
 				haveKeyboard = true
 			}
 		}
-		if ev.Capabilities&wayland.SeatCapabilityTouch != 0 && !haveTouch {
+		if caps&wayland.SeatCapabilityTouch != 0 && !haveTouch {
 			if t, err := seat.GetTouch(); err == nil {
 				registerTouch(t)
 				haveTouch = true
 			}
 		}
+	}
+	bindDevices()
+	seat.OnCapabilities(func(ev wayland.SeatCapabilitiesEvent) {
+		caps = ev.Capabilities
+		bindDevices()
 	})
-	ready = true
 
 	addLog("eventdemo: listening...")
 
@@ -257,15 +192,12 @@ func main() {
 		select {
 		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
-			return
+			return nil
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
-			return
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch error: %v\n", err)
-			}
-			return
+			return err
 		}
 	}
 }

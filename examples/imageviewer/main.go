@@ -1,8 +1,7 @@
 //go:build linux
 
-// A simple Wayland image viewer: decodes PNG/JPEG/GIF with the standard
-// library, scales down images larger than 1600x1000, and shows them in an
-// xdg toplevel window.
+// A simple image viewer: decodes PNG/JPEG/GIF with the standard library,
+// scales down images larger than 1600x1000, and shows them in an xdg window.
 package main
 
 import (
@@ -17,7 +16,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/xogas/wayland"
 	"github.com/xogas/wayland/examples/internal/shared"
 )
 
@@ -31,61 +29,50 @@ func main() {
 		fmt.Fprintf(os.Stderr, "usage: %s <image-file>\n", os.Args[0])
 		os.Exit(1)
 	}
-	imagePath := os.Args[1]
-
-	f, err := os.Open(imagePath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open: %v\n", err)
+	if err := run(os.Args[1]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer f.Close() //nolint: errcheck
+}
+
+func run(imagePath string) error {
+	f, err := os.Open(imagePath)
+	if err != nil {
+		return fmt.Errorf("open: %w", err)
+	}
+	defer func() { _ = f.Close() }()
 
 	img, _, err := image.Decode(f)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "decode: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("decode: %w", err)
 	}
-	srcW := img.Bounds().Dx()
-	srcH := img.Bounds().Dy()
-	dstW, dstH := fitSize(srcW, srcH)
+	dstW, dstH := fitSize(img.Bounds().Dx(), img.Bounds().Dy())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	toplevel, err := shared.NewToplevel(ctx, dpy, core, filepath.Base(imagePath), "go-wayland-imageviewer", int32(dstW), int32(dstH), nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	bufID, data, cleanup, err := shared.NewBuffer(core.Shm, int32(dstW), int32(dstH), wayland.ShmFormatXrgb8888)
+	cleanup, err := shared.StaticBuffer(toplevel.Surface, core.Shm, int32(dstW), int32(dstH),
+		func(pixels []byte, stride int32) { drawImage(pixels, img, dstW, dstH, int(stride)) })
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "buffer: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer cleanup()
-
-	drawImage(data, img, dstW, dstH, dstW*4)
-	_ = toplevel.Surface.Attach(bufID, 0, 0)
-	_ = toplevel.Surface.Damage(0, 0, int32(dstW), int32(dstH))
-	_ = toplevel.Surface.Commit()
 
 	fmt.Printf("imageviewer: %dx%d %s, waiting for close or 60s timeout.\n", dstW, dstH, imagePath)
 
@@ -94,28 +81,25 @@ func main() {
 		select {
 		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
-			return
+			return nil
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
-			return
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch error: %v\n", err)
-			}
-			return
+			return err
 		}
 	}
 }
 
+// fitSize scales w x h down to fit within maxWidth x maxHeight, preserving
+// the aspect ratio.
 func fitSize(w, h int) (int, int) {
 	if w <= maxWidth && h <= maxHeight {
 		return w, h
 	}
-	scaleW := float64(maxWidth) / float64(w)
-	scaleH := float64(maxHeight) / float64(h)
-	scale := scaleW
-	if scaleH < scaleW {
-		scale = scaleH
+	scale := float64(maxWidth) / float64(w)
+	if sh := float64(maxHeight) / float64(h); sh < scale {
+		scale = sh
 	}
 	nw := int(float64(w) * scale)
 	nh := int(float64(h) * scale)
@@ -128,16 +112,18 @@ func fitSize(w, h int) (int, int) {
 	return nw, nh
 }
 
+// drawImage blits img into an XRGB8888 buffer with nearest-neighbor
+// sampling, compositing alpha over black.
 func drawImage(data []byte, img image.Image, dstW, dstH, stride int) {
-	srcBounds := img.Bounds()
-	srcW := srcBounds.Dx()
-	srcH := srcBounds.Dy()
+	bounds := img.Bounds()
+	srcW := bounds.Dx()
+	srcH := bounds.Dy()
 
-	for dy := 0; dy < dstH; dy++ {
-		for dx := 0; dx < dstW; dx++ {
-			sx := dx * srcW / dstW
-			sy := dy * srcH / dstH
-			c := color.RGBAModel.Convert(img.At(sx+srcBounds.Min.X, sy+srcBounds.Min.Y)).(color.RGBA)
+	for dy := range dstH {
+		for dx := range dstW {
+			sx := dx*srcW/dstW + bounds.Min.X
+			sy := dy*srcH/dstH + bounds.Min.Y
+			c := color.RGBAModel.Convert(img.At(sx, sy)).(color.RGBA)
 			off := dy*stride + dx*4
 			switch c.A {
 			case 255:

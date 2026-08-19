@@ -127,21 +127,21 @@ func DrawText(dst []byte, stride, width, height int, text string, x, y, scale in
 			penX += glyphWidth * scale
 			continue
 		}
-		for row := 0; row < glyphHeight; row++ {
+		for row := range glyphHeight {
 			bits := glyph[row]
 			if bits == 0 {
 				continue
 			}
-			for col := 0; col < glyphWidth; col++ {
+			for col := range glyphWidth {
 				if bits&(1<<col) == 0 {
 					continue
 				}
-				for dy := 0; dy < scale; dy++ {
+				for dy := range scale {
 					py := y + row*scale + dy
 					if py < 0 || py >= height {
 						continue
 					}
-					for dx := 0; dx < scale; dx++ {
+					for dx := range scale {
 						px := penX + col*scale + dx
 						if px < 0 || px >= width {
 							continue

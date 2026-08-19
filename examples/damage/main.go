@@ -1,6 +1,7 @@
 //go:build linux
 
-// Incremental damage demonstration with a small square moving along a circular path.
+// Incremental damage demonstration: a small square moves along a circular
+// path and only the dirty rectangles are redrawn on the wire.
 package main
 
 import (
@@ -22,52 +23,53 @@ const (
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	compVer, _ := globals.Version(wayland.InterfaceCompositor)
 
+	// wl_surface.damage_buffer exists since wl_surface v4 and uses buffer
+	// coordinates (matching the scale), which is what we want.
+	compVer, _ := globals.Version(wayland.InterfaceCompositor)
 	useDamageBuffer := compVer >= 4
 	if useDamageBuffer {
-		fmt.Printf("using DamageBuffer (compositor version %d)\n", compVer)
+		fmt.Printf("using damage_buffer (compositor version %d)\n", compVer)
 	} else {
-		fmt.Println("using Damage (surface coordinates)")
+		fmt.Println("using damage (surface coordinates)")
 	}
 
 	seat, err := shared.BindSeat(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	toplevel, err := shared.NewToplevel(ctx, dpy, core, "damage", "damagedemo", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	keyboard, err := seat.GetKeyboard()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_keyboard: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("get keyboard: %w", err)
 	}
 
+	// D toggles between incremental and full-window damage.
 	incDamage := true
 	keyboard.OnKey(func(ev wayland.KeyboardKeyEvent) {
 		if ev.Key == keyD && ev.State == wayland.KeyboardKeyStatePressed {
@@ -82,13 +84,12 @@ func main() {
 
 	db, err := shared.NewDoubleBuffer(core.Shm, winW, winH)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer db.Close()
 
-	// Each slot remembers where the square was drawn so the previous position
-	// can be erased before drawing the new one.
+	// Each slot remembers where its square is drawn so the previous position
+	// can be erased and damaged before drawing the new one.
 	var prevX, prevY [2]int32
 	for i := 0; i < 2; i++ {
 		prevX[i], prevY[i] = -sqSz, -sqSz
@@ -106,36 +107,28 @@ func main() {
 	for {
 		select {
 		case <-toplevel.Closed:
-			return
+			return nil
 		case <-ctx.Done():
-			return
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			}
-			return
+			return err
 		case idx := <-db.Free():
 			t := float64(frames) * 0.06
 			nx := int32(cx + radius*math.Cos(t) - sqSz/2)
 			ny := int32(cy + radius*math.Sin(t) - sqSz/2)
 
+			// Erase the old position, draw the new one.
 			shared.FillRect(db.Pixels[idx], int(db.Stride), winW, winH,
 				int(prevX[idx]), int(prevY[idx]), sqSz, sqSz, 0x40, 0x30, 0x30)
 			shared.FillRect(db.Pixels[idx], int(db.Stride), winW, winH,
 				int(nx), int(ny), sqSz, sqSz, 0xff, 0xcc, 0x00)
 
-			done := make(chan struct{})
-			cb, err := toplevel.Surface.Frame()
+			done, err := shared.Frame(toplevel.Surface)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "frame: %v\n", err)
-				return
+				return fmt.Errorf("frame: %w", err)
 			}
-			cb.OnDone(func(ev wayland.CallbackDoneEvent) {
-				close(done)
-			})
 
 			_ = toplevel.Surface.Attach(db.IDs[idx], 0, 0)
-
 			if incDamage {
 				a1 := damageRect(toplevel, useDamageBuffer, prevX[idx], prevY[idx], sqSz, sqSz)
 				a2 := damageRect(toplevel, useDamageBuffer, nx, ny, sqSz, sqSz)
@@ -144,23 +137,19 @@ func main() {
 				damageRect(toplevel, useDamageBuffer, 0, 0, winW, winH)
 				accumArea += fullArea
 			}
-
 			_ = toplevel.Surface.Commit()
 
 			prevX[idx] = nx
 			prevY[idx] = ny
 
 			select {
-			case <-toplevel.Closed:
-				return
-			case <-ctx.Done():
-				return
-			case err := <-errCh:
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-				}
-				return
 			case <-done:
+			case <-toplevel.Closed:
+				return nil
+			case <-ctx.Done():
+				return nil
+			case err := <-errCh:
+				return err
 			}
 			frames++
 
@@ -172,6 +161,8 @@ func main() {
 	}
 }
 
+// damageRect marks a rectangle dirty, clipped to the window, and returns its
+// area for the statistics. It uses damage_buffer when available.
 func damageRect(t *shared.Toplevel, useDB bool, x, y, w, h int32) int32 {
 	if x < 0 {
 		w += x

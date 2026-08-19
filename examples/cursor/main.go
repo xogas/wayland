@@ -1,6 +1,7 @@
 //go:build linux
 
-// Cursor demo: self-drawn cursor surface vs cursor-shape-v1 protocol.
+// Cursor demo: switches between a self-drawn cursor surface (mode A) and the
+// compositor's built-in cursors via cursor-shape-v1 (mode B).
 package main
 
 import (
@@ -16,84 +17,42 @@ import (
 )
 
 const (
-	modeCustom = 1
-	modeShape  = 2
-
 	key1     = 2
 	key2     = 3
 	keyLeft  = 105
 	keyRight = 106
-
-	cursorSize int32 = 32
-	hotspot    int32 = 16
 )
 
-var shapeCycle = []cursorshape.CursorShapeDeviceV1Shape{
-	cursorshape.CursorShapeDeviceV1ShapeDefault,
-	cursorshape.CursorShapeDeviceV1ShapePointer,
-	cursorshape.CursorShapeDeviceV1ShapeCrosshair,
-	cursorshape.CursorShapeDeviceV1ShapeText,
-	cursorshape.CursorShapeDeviceV1ShapeMove,
-	cursorshape.CursorShapeDeviceV1ShapeGrab,
-}
-
-var shapeNames = []string{
-	"default",
-	"pointer",
-	"crosshair",
-	"text",
-	"move",
-	"grab",
-}
-
-type app struct {
-	pointer        *wayland.Pointer
-	cursorSurface  *wayland.Surface
-	csDevice       *cursorshape.CursorShapeDeviceV1
-	hasCursorShape bool
-	mode           int
-	lastSerial     uint32
-	shapeIdx       int
-}
-
-func (a *app) applyCursor() {
-	if a.mode == modeCustom {
-		_ = a.pointer.SetCursor(a.lastSerial, wire.ObjectID(a.cursorSurface.Proxy().ID()), hotspot, hotspot)
-	} else if a.mode == modeShape && a.csDevice != nil {
-		_ = a.csDevice.SetShape(a.lastSerial, shapeCycle[a.shapeIdx])
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
 
-func main() {
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: %v\n", pe)
-		os.Exit(1)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-	seat, err := shared.BindSeat(reg, globals)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	// Optional cursor-shape-v1: bind once, use it for GetPointer below.
+	seat, err := shared.BindSeat(reg, globals)
+	if err != nil {
+		return err
+	}
+
+	// Optional cursor-shape-v1: mode B is only available when the compositor
+	// advertises wp_cursor_shape_manager_v1.
 	var csMgr *cursorshape.CursorShapeManagerV1
-	var csDevice *cursorshape.CursorShapeDeviceV1
 	hasCursorShape := false
 	if csMgrG, ok := globals.Find(cursorshape.InterfaceCursorShapeManagerV1); ok {
 		csMgr, err = cursorshape.BindCursorShapeManagerV1(reg, csMgrG.Name, min(csMgrG.Version, cursorshape.VersionCursorShapeManagerV1))
@@ -101,7 +60,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "bind cursor_shape_manager: %v\n", err)
 		} else {
 			hasCursorShape = true
-			defer csMgr.Destroy() //nolint: errcheck
+			defer func() { _ = csMgr.Destroy() }()
 		}
 	}
 	if !hasCursorShape {
@@ -110,75 +69,47 @@ func main() {
 
 	toplevel, err := shared.NewToplevel(ctx, dpy, core, "Cursor Demo", "cursor-demo", 400, 300, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	// Static blue window content.
-	winID, winData, winCleanup, err := shared.NewBuffer(core.Shm, 400, 300, wayland.ShmFormatXrgb8888)
+	winCleanup, err := shared.StaticBuffer(toplevel.Surface, core.Shm, 400, 300,
+		func(pixels []byte, stride int32) { shared.FillSolid(pixels, 0x80, 0x60, 0x40) })
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "window buffer: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer winCleanup()
-	shared.FillSolid(winData, 0x80, 0x60, 0x40)
-	_ = toplevel.Surface.Attach(winID, 0, 0)
-	_ = toplevel.Surface.Damage(0, 0, 400, 300)
-	_ = toplevel.Surface.Commit()
 
 	pointer, err := seat.GetPointer()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_pointer: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("get pointer: %w", err)
 	}
 
 	// Self-drawn crosshair cursor surface (ARGB, transparent outside the bars).
-	cursorID, cursorData, cursorCleanup, err := shared.NewBuffer(core.Shm, cursorSize, cursorSize, wayland.ShmFormatArgb8888)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cursor buffer: %v\n", err)
-		os.Exit(1)
-	}
-	defer cursorCleanup()
-	shared.FillSolid(cursorData, 0, 0, 0)
-	for x := range cursorSize {
-		off := int(hotspot*int32(4)*cursorSize + x*4)
-		cursorData[off+0] = 0xFF
-		cursorData[off+1] = 0xFF
-		cursorData[off+2] = 0xFF
-		cursorData[off+3] = 0xFF
-	}
-	for y := range cursorSize {
-		off := int(y*4*cursorSize + hotspot*4)
-		cursorData[off+0] = 0xFF
-		cursorData[off+1] = 0xFF
-		cursorData[off+2] = 0xFF
-		cursorData[off+3] = 0xFF
-	}
-
 	cursorSurface, err := core.Compositor.CreateSurface()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cursor create_surface: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("create cursor surface: %w", err)
 	}
-	_ = cursorSurface.Attach(cursorID, 0, 0)
-	_ = cursorSurface.Damage(0, 0, cursorSize, cursorSize)
-	_ = cursorSurface.Commit()
-
-	if hasCursorShape {
-		csDevice, err = csMgr.GetPointer(wire.ObjectID(pointer.Proxy().ID()))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cursor_shape get_pointer: %v\n", err)
-			os.Exit(1)
-		}
-		defer csDevice.Destroy() //nolint: errcheck
+	cursorCleanup, err := shared.StaticBuffer(cursorSurface, core.Shm, cursorSize, cursorSize,
+		func(pixels []byte, stride int32) { drawCrosshair(pixels, stride) })
+	if err != nil {
+		return err
 	}
+	defer cursorCleanup()
 
 	ap := &app{
 		pointer:        pointer,
 		cursorSurface:  cursorSurface,
-		csDevice:       csDevice,
 		hasCursorShape: hasCursorShape,
 		mode:           modeCustom,
+	}
+
+	if hasCursorShape {
+		ap.csDevice, err = csMgr.GetPointer(wire.ObjectID(pointer.Proxy().ID()))
+		if err != nil {
+			return fmt.Errorf("cursor_shape get_pointer: %w", err)
+		}
+		defer func() { _ = ap.csDevice.Destroy() }()
 	}
 
 	pointer.OnEnter(func(ev wayland.PointerEnterEvent) {
@@ -188,8 +119,7 @@ func main() {
 
 	keyboard, err := seat.GetKeyboard()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "get_keyboard: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("get keyboard: %w", err)
 	}
 	keyboard.OnKey(func(ev wayland.KeyboardKeyEvent) {
 		if ev.State != wayland.KeyboardKeyStatePressed {
@@ -239,15 +169,12 @@ func main() {
 		select {
 		case <-toplevel.Closed:
 			fmt.Println("window closed by compositor.")
-			return
+			return nil
 		case <-ctx.Done():
 			fmt.Println("timeout reached.")
-			return
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			}
-			return
+			return err
 		}
 	}
 }

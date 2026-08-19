@@ -25,8 +25,8 @@ func ShmFile(size int64) (fd int, closeFn func(), err error) {
 }
 
 // DoubleBuffer is a two-slot shm buffer pool with release tracking. The
-// compositor releases a slot once it is done with it; Next / Free then return
-// that slot for redrawing.
+// compositor releases a slot once it is done with it, and Free reports that
+// slot as available for redrawing.
 type DoubleBuffer struct {
 	W, H, Stride int32
 	IDs          [2]wire.ObjectID
@@ -40,8 +40,8 @@ type DoubleBuffer struct {
 	clFD func()
 }
 
-// NewDoubleBuffer allocates two w×h XRGB8888 buffers in one shm pool. Both
-// slots are initially free.
+// NewDoubleBuffer allocates two w x h XRGB8888 buffers in one shm pool.
+// Both slots are initially free.
 func NewDoubleBuffer(shm *wayland.Shm, w, h int32) (*DoubleBuffer, error) {
 	stride := w * 4
 	oneSize := int64(h) * int64(stride)
@@ -60,7 +60,7 @@ func NewDoubleBuffer(shm *wayland.Shm, w, h int32) (*DoubleBuffer, error) {
 	if err != nil {
 		_ = syscall.Munmap(data)
 		closeFd()
-		return nil, fmt.Errorf("create_pool: %w", err)
+		return nil, fmt.Errorf("create pool: %w", err)
 	}
 
 	db := &DoubleBuffer{
@@ -73,12 +73,12 @@ func NewDoubleBuffer(shm *wayland.Shm, w, h int32) (*DoubleBuffer, error) {
 		fd:     fd,
 		clFD:   closeFd,
 	}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		off := int32(i) * int32(oneSize)
 		buf, err := pool.CreateBuffer(off, w, h, stride, wayland.ShmFormatXrgb8888)
 		if err != nil {
 			db.Close()
-			return nil, fmt.Errorf("create_buffer %d: %w", i, err)
+			return nil, fmt.Errorf("create buffer %d: %w", i, err)
 		}
 		db.IDs[i] = wire.ObjectID(buf.Proxy().ID())
 		db.Pixels[i] = data[off : off+int32(oneSize)]
@@ -102,7 +102,7 @@ func (db *DoubleBuffer) Free() <-chan int {
 	return db.free
 }
 
-// Close releases the buffers, pool, mapping and shm file.
+// Close destroys the buffers, the pool, the mapping and the shm file.
 func (db *DoubleBuffer) Close() {
 	for _, buf := range db.bufs {
 		_ = buf.Destroy()
@@ -112,8 +112,8 @@ func (db *DoubleBuffer) Close() {
 	db.clFD()
 }
 
-// NewBuffer allocates a single w×h shm buffer and returns its object id,
-// pixel data and a cleanup function. The buffer is not attached anywhere.
+// NewBuffer allocates a single w x h shm buffer and returns its object id,
+// its pixel data and a cleanup function. The buffer is not attached anywhere.
 func NewBuffer(shm *wayland.Shm, w, h int32, format wayland.ShmFormat) (id wire.ObjectID, pixels []byte, cleanup func(), err error) {
 	stride := w * 4
 	bufSize := int64(h) * int64(stride)
@@ -130,16 +130,32 @@ func NewBuffer(shm *wayland.Shm, w, h int32, format wayland.ShmFormat) (id wire.
 	if err != nil {
 		_ = syscall.Munmap(data)
 		closeFd()
-		return 0, nil, nil, fmt.Errorf("create_pool: %w", err)
+		return 0, nil, nil, fmt.Errorf("create pool: %w", err)
 	}
 	buf, err := pool.CreateBuffer(0, w, h, stride, format)
 	if err != nil {
 		_ = pool.Destroy()
 		_ = syscall.Munmap(data)
 		closeFd()
-		return 0, nil, nil, fmt.Errorf("create_buffer: %w", err)
+		return 0, nil, nil, fmt.Errorf("create buffer: %w", err)
 	}
 	return wire.ObjectID(buf.Proxy().ID()), data,
 		func() { _ = buf.Destroy(); _ = pool.Destroy(); _ = syscall.Munmap(data); closeFd() },
 		nil
+}
+
+// StaticBuffer fills a single w x h XRGB8888 buffer via draw, attaches it to
+// surface and commits. It is meant for windows whose content never changes.
+// The returned cleanup function destroys the buffer, its pool and the
+// mapping; call it when the surface content is replaced or the window closes.
+func StaticBuffer(surface *wayland.Surface, shm *wayland.Shm, w, h int32, draw func(pixels []byte, stride int32)) (cleanup func(), err error) {
+	bufID, data, cleanup, err := NewBuffer(shm, w, h, wayland.ShmFormatXrgb8888)
+	if err != nil {
+		return nil, err
+	}
+	draw(data, w*4)
+	_ = surface.Attach(bufID, 0, 0)
+	_ = surface.Damage(0, 0, w, h)
+	_ = surface.Commit()
+	return cleanup, nil
 }

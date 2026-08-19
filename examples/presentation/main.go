@@ -1,170 +1,73 @@
 //go:build linux
 
-// Moving block animation with presentation-time feedback statistics.
+// Moving-block animation with presentation-time feedback: measures the
+// commit-to-present delay on every frame and reports its statistics.
 package main
 
 import (
 	"context"
 	"fmt"
 	"os"
-	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
-	"unsafe"
 
-	"github.com/xogas/wayland"
 	"github.com/xogas/wayland/examples/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/presentationtime"
 	"github.com/xogas/wayland/wire"
 )
 
 const (
-	winWidth  = 256
-	winHeight = 256
+	winW = 256
+	winH = 256
 )
 
-type latencyStats struct {
-	mu        sync.Mutex
-	n         int
-	minNS     int64
-	maxNS     int64
-	totalNS   int64
-	refresh   uint32
-	flags     presentationtime.PresentationFeedbackKind
-	discarded int
-}
-
-func (s *latencyStats) record(ns int64, refresh uint32, flags presentationtime.PresentationFeedbackKind) {
-	s.mu.Lock()
-	s.n++
-	s.totalNS += ns
-	if s.minNS == 0 || ns < s.minNS {
-		s.minNS = ns
-	}
-	if ns > s.maxNS {
-		s.maxNS = ns
-	}
-	s.refresh = refresh
-	s.flags = flags
-	s.mu.Unlock()
-}
-
-func (s *latencyStats) discard() {
-	s.mu.Lock()
-	s.discarded++
-	s.mu.Unlock()
-}
-
-func (s *latencyStats) report() {
-	s.mu.Lock()
-	if s.n == 0 {
-		s.mu.Unlock()
-		return
-	}
-	avgMS := float64(s.totalNS/int64(s.n)) / 1e6
-	minMS := float64(s.minNS) / 1e6
-	maxMS := float64(s.maxNS) / 1e6
-	refresh := s.refresh
-	flags := s.flags
-	discarded := s.discarded
-	s.n = 0
-	s.minNS = 0
-	s.maxNS = 0
-	s.totalNS = 0
-	s.refresh = 0
-	s.flags = 0
-	s.discarded = 0
-	s.mu.Unlock()
-
-	fmt.Printf("presentation: avg %.2f ms min %.2f ms max %.2f ms | refresh %d ns | flags %s",
-		avgMS, minMS, maxMS, refresh, flagsString(flags))
-	if discarded > 0 {
-		fmt.Printf(" | discarded %d", discarded)
-	}
-	fmt.Println()
-}
-
-func flagsString(f presentationtime.PresentationFeedbackKind) string {
-	s := ""
-	if f&presentationtime.PresentationFeedbackKindVsync != 0 {
-		s += "vsync "
-	}
-	if f&presentationtime.PresentationFeedbackKindHwClock != 0 {
-		s += "hw_clock "
-	}
-	if f&presentationtime.PresentationFeedbackKindHwCompletion != 0 {
-		s += "hw_completion "
-	}
-	if f&presentationtime.PresentationFeedbackKindZeroCopy != 0 {
-		s += "zero_copy "
-	}
-	if s == "" {
-		return "none"
-	}
-	return s[:len(s)-1]
-}
-
-// monotonicNow reads the compositor's presentation clock (CLOCK_MONOTONIC by
-// default; use the clock_id reported by wp_presentation for the exact clock).
-func monotonicNow(clkID int32) int64 {
-	var ts syscall.Timespec
-	_, _, e1 := syscall.Syscall(syscall.SYS_CLOCK_GETTIME, uintptr(clkID), uintptr(unsafe.Pointer(&ts)), 0)
-	if e1 != 0 {
-		return 0
-	}
-	return ts.Sec*1e9 + ts.Nsec
-}
-
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	presG, ok := globals.Find(presentationtime.InterfacePresentation)
 	if !ok {
-		fmt.Fprintln(os.Stderr, "wp_presentation not available")
-		os.Exit(1)
+		return fmt.Errorf("wp_presentation not available")
 	}
 	presentation, err := presentationtime.BindPresentation(reg, presG.Name, min(presG.Version, presentationtime.VersionPresentation))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bind wp_presentation: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("bind wp_presentation: %w", err)
 	}
 
-	var clkID atomic.Int32 // default CLOCK_MONOTONIC, overridden by the clock_id event
+	// CLOCK_MONOTONIC is the default; the clock_id event overrides it.
+	var clkID atomic.Int32
 	clkID.Store(1)
 	presentation.OnClockID(func(ev presentationtime.PresentationClockIDEvent) {
 		clkID.Store(int32(ev.ClkID))
 		fmt.Printf("wp_presentation: clock_id = %d\n", ev.ClkID)
 	})
 
-	toplevel, err := shared.NewToplevel(ctx, dpy, core, "presentation-shm", "presentationshm", winWidth, winHeight, nil)
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "presentation-shm", "presentationshm", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	db, err := shared.NewDoubleBuffer(core.Shm, winWidth, winHeight)
+	db, err := shared.NewDoubleBuffer(core.Shm, winW, winH)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer db.Close()
 
@@ -176,34 +79,27 @@ func main() {
 		select {
 		case <-toplevel.Closed:
 			stats.report()
-			return
+			return nil
 		case <-ctx.Done():
 			stats.report()
-			return
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			}
 			stats.report()
-			return
+			return err
 		case idx := <-db.Free():
 			drawFrame(db.Pixels[idx], int(db.Stride), frames)
 
-			done := make(chan struct{})
-			cb, err := toplevel.Surface.Frame()
+			done, err := shared.Frame(toplevel.Surface)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "frame: %v\n", err)
-				return
+				return fmt.Errorf("frame: %w", err)
 			}
-			cb.OnDone(func(ev wayland.CallbackDoneEvent) {
-				close(done)
-			})
 
+			// Ask for presentation feedback on this commit and measure the
+			// delay until the compositor presents it.
 			commitNS := monotonicNow(clkID.Load())
 			feedback, err := presentation.Feedback(wire.ObjectID(toplevel.Surface.Proxy().ID()))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "presentation feedback: %v\n", err)
-				return
+				return fmt.Errorf("presentation feedback: %w", err)
 			}
 			feedback.OnPresented(func(ev presentationtime.PresentationFeedbackPresentedEvent) {
 				presentNS := (int64(ev.TvSecHi)<<32|int64(ev.TvSecLo))*1e9 + int64(ev.TvNsec)
@@ -218,19 +114,16 @@ func main() {
 			_ = toplevel.Surface.Commit()
 
 			select {
+			case <-done:
 			case <-toplevel.Closed:
 				stats.report()
-				return
+				return nil
 			case <-ctx.Done():
 				stats.report()
-				return
+				return nil
 			case err := <-errCh:
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-				}
 				stats.report()
-				return
-			case <-done:
+				return err
 			}
 			frames++
 			if frames%60 == 0 {
@@ -240,10 +133,11 @@ func main() {
 	}
 }
 
+// drawFrame renders the background and a moving block whose color cycles.
 func drawFrame(data []byte, stride, frame int) {
-	for y := 0; y < winHeight; y++ {
+	for y := range winH {
 		rowOff := y * stride
-		for x := 0; x < winWidth; x++ {
+		for x := range winW {
 			off := rowOff + x*4
 			data[off+0] = 0x18
 			data[off+1] = 0x18
@@ -255,21 +149,15 @@ func drawFrame(data []byte, stride, frame int) {
 	blockSize := 64
 	cycle := 200
 	phase := frame % cycle
-	bx := phase * (winWidth - blockSize) / cycle
-	by := phase * (winHeight - blockSize) / cycle
+	bx := phase * (winW - blockSize) / cycle
+	by := phase * (winH - blockSize) / cycle
 
 	r := uint8((frame * 3) % 256)
 	g := uint8((frame*3 + 85) % 256)
 	b := uint8((frame*3 + 170) % 256)
 
-	yEnd := by + blockSize
-	if yEnd > winHeight {
-		yEnd = winHeight
-	}
-	xEnd := bx + blockSize
-	if xEnd > winWidth {
-		xEnd = winWidth
-	}
+	yEnd := min(by+blockSize, winH)
+	xEnd := min(bx+blockSize, winW)
 	for y := by; y < yEnd; y++ {
 		rowOff := y * stride
 		for x := bx; x < xEnd; x++ {

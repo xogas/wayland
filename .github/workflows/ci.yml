@@ -34,7 +34,7 @@ jobs:
           go run ./cmd/wayland-scanner
           git diff --exit-code
       - name: Build all commands and examples
-        run: go build ./cmd/... ./example/...
+        run: go build ./cmd/... ./examples/...
 
   integration:
     runs-on: ubuntu-latest

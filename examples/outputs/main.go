@@ -1,8 +1,7 @@
 //go:build linux
 
-// Connects to the Wayland compositor, binds all wl_output globals, prints
-// display information (name, resolution, refresh rate, scale), then
-// demonstrates dynamic global monitoring for 5 seconds.
+// Binds every wl_output global, prints the display information (name,
+// description, modes, scale), then watches for hot-plug events for 5 seconds.
 package main
 
 import (
@@ -15,29 +14,37 @@ import (
 	"github.com/xogas/wayland/examples/internal/shared"
 )
 
+// outputInfo accumulates the state of one wl_output object.
+type outputInfo struct {
+	name        string
+	description string
+	modes       []modeInfo
+	scale       int32
+}
+
+type modeInfo struct {
+	width   int32
+	height  int32
+	refresh int32
+	flags   wayland.OutputMode
+}
+
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	type modeInfo struct {
-		width   int32
-		height  int32
-		refresh int32
-		flags   wayland.OutputMode
-	}
-	type outputInfo struct {
-		name        string
-		description string
-		modes       []modeInfo
-		scale       int32
-	}
+	defer func() { _ = dpy.Close() }()
 
 	var outputs []*outputInfo
 	for _, g := range globals.All() {
@@ -50,7 +57,6 @@ func main() {
 			continue
 		}
 		oi := &outputInfo{}
-		out.OnGeometry(func(ev wayland.OutputGeometryEvent) {})
 		out.OnMode(func(ev wayland.OutputModeEvent) {
 			oi.modes = append(oi.modes, modeInfo{ev.Width, ev.Height, ev.Refresh, ev.Flags})
 		})
@@ -62,37 +68,22 @@ func main() {
 
 	if len(outputs) > 0 {
 		if err := dpy.Roundtrip(ctx); err != nil {
-			fmt.Fprintf(os.Stderr, "roundtrip: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 	}
 
 	for _, o := range outputs {
-		name := o.name
-		if name == "" {
-			name = "(unnamed)"
-		}
-		desc := o.description
-		fmt.Printf("output: %s", name)
-		if desc != "" {
-			fmt.Printf(" (%s)", desc)
+		fmt.Printf("output: %s", o.name)
+		if o.description != "" {
+			fmt.Printf(" (%s)", o.description)
 		}
 		fmt.Println()
 		if o.scale > 0 {
 			fmt.Printf("\tscale: %d\n", o.scale)
 		}
 		for _, m := range o.modes {
-			flagStr := "none"
-			switch {
-			case m.flags&wayland.OutputModeCurrent != 0 && m.flags&wayland.OutputModePreferred != 0:
-				flagStr = "current | preferred"
-			case m.flags&wayland.OutputModeCurrent != 0:
-				flagStr = "current"
-			case m.flags&wayland.OutputModePreferred != 0:
-				flagStr = "preferred"
-			}
 			fmt.Printf("\t\t%dx%d @ %.3f Hz, flags: %s\n",
-				m.width, m.height, float64(m.refresh)/1000.0, flagStr)
+				m.width, m.height, float64(m.refresh)/1000.0, modeFlags(m.flags))
 		}
 	}
 
@@ -104,17 +95,27 @@ func main() {
 		fmt.Printf("global removed: name %d\n", ev.Name)
 	})
 
-	// Monitor for 5 seconds, then exit (matching the original behavior).
 	monitorCtx, monitorCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer monitorCancel()
 	errCh := shared.DispatchLoop(monitorCtx, dpy)
 	select {
 	case err := <-errCh:
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			os.Exit(1)
-		}
+		return err
 	case <-monitorCtx.Done():
 	}
 	fmt.Println("monitoring finished.")
+	return nil
+}
+
+// modeFlags describes the current/preferred flags of an output mode.
+func modeFlags(f wayland.OutputMode) string {
+	switch {
+	case f&wayland.OutputModeCurrent != 0 && f&wayland.OutputModePreferred != 0:
+		return "current | preferred"
+	case f&wayland.OutputModeCurrent != 0:
+		return "current"
+	case f&wayland.OutputModePreferred != 0:
+		return "preferred"
+	}
+	return "none"
 }

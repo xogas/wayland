@@ -13,7 +13,7 @@ wayland core 1.26.0, wayland-protocols 1.49 (vendored in `wayland-protocols/`, n
 | `protocol/` | Generated extension bindings, tiered `stable/` `staging/` `unstable/` `experimental/` |
 | `cmd/wayland-scanner/` | Code generator (`protocol.go`, `naming.go`, `templates.go`, `transform.go`) |
 | `cmd/wayland-info/` | Protocol info tool |
-| `example/` | Runnable examples |
+| `examples/` | Runnable examples |
 | `wayland-protocols/` | Protocol XML sources (vendored) |
 
 ## Golden rule: generated code

@@ -1,7 +1,7 @@
 //go:build linux
 
-// weston-simple-shm style animation with concentric ring patterns, double
-// buffering and frame-driven rendering.
+// weston-simple-shm style animation: concentric rings drawn in a double
+// buffer, paced by wl_surface.frame callbacks.
 package main
 
 import (
@@ -11,46 +11,44 @@ import (
 	"os"
 	"time"
 
-	"github.com/xogas/wayland"
 	"github.com/xogas/wayland/examples/internal/shared"
 )
 
 const (
-	winWidth  = 250
-	winHeight = 250
+	winW = 250
+	winH = 250
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	dpy, reg, globals, err := shared.Connect(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer dpy.Close() //nolint: errcheck
-
-	dpy.SetOnError(func(pe *wayland.ProtocolError) {
-		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n", pe.ObjectID, pe.Code, pe.Message)
-	})
+	defer func() { _ = dpy.Close() }()
 
 	core, err := shared.BindCore(reg, globals)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	toplevel, err := shared.NewToplevel(ctx, dpy, core, "simple-shm", "simpleshm", winWidth, winHeight, nil)
+	toplevel, err := shared.NewToplevel(ctx, dpy, core, "simple-shm", "simpleshm", winW, winH, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	db, err := shared.NewDoubleBuffer(core.Shm, winWidth, winHeight)
+	db, err := shared.NewDoubleBuffer(core.Shm, winW, winH)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer db.Close()
 
@@ -61,47 +59,35 @@ func main() {
 	for {
 		select {
 		case <-toplevel.Closed:
-			printStats(start, frames)
-			return
+			shared.ReportFPS(start, frames)
+			return nil
 		case <-ctx.Done():
-			printStats(start, frames)
-			return
+			shared.ReportFPS(start, frames)
+			return nil
 		case err := <-errCh:
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-			}
-			printStats(start, frames)
-			return
+			return err
 		case idx := <-db.Free():
-			drawFrame(db.Pixels[idx], int(db.Stride), frames)
+			drawRings(db.Pixels[idx], int(db.Stride), frames)
 
-			done := make(chan struct{})
-			cb, err := toplevel.Surface.Frame()
+			// Pace the next frame at the compositor's refresh rate.
+			done, err := shared.Frame(toplevel.Surface)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "frame: %v\n", err)
-				return
+				return fmt.Errorf("frame: %w", err)
 			}
-			cb.OnDone(func(ev wayland.CallbackDoneEvent) {
-				close(done)
-			})
 			_ = toplevel.Surface.Attach(db.IDs[idx], 0, 0)
 			_ = toplevel.Surface.Damage(0, 0, db.W, db.H)
 			_ = toplevel.Surface.Commit()
 
 			select {
-			case <-toplevel.Closed:
-				printStats(start, frames)
-				return
-			case <-ctx.Done():
-				printStats(start, frames)
-				return
-			case err := <-errCh:
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "dispatch: %v\n", err)
-				}
-				printStats(start, frames)
-				return
 			case <-done:
+			case <-toplevel.Closed:
+				shared.ReportFPS(start, frames)
+				return nil
+			case <-ctx.Done():
+				shared.ReportFPS(start, frames)
+				return nil
+			case err := <-errCh:
+				return err
 			}
 			frames++
 			if frames%60 == 0 {
@@ -112,15 +98,16 @@ func main() {
 	}
 }
 
-func drawFrame(data []byte, stride, frame int) {
-	cx := float64(winWidth) * 0.5
-	cy := float64(winHeight) * 0.5
+// drawRings renders concentric sine-shaded rings that rotate over time.
+func drawRings(data []byte, stride, frame int) {
+	cx := float64(winW) * 0.5
+	cy := float64(winH) * 0.5
 	t := float64(frame) * 0.08
 
-	for y := range winHeight {
+	for y := range winH {
 		rowOff := y * stride
 		dy := float64(y) - cy
-		for x := range winWidth {
+		for x := range winW {
 			dx := float64(x) - cx
 			d := math.Sqrt(dx*dx + dy*dy)
 			vr := math.Sin(d*0.12 - t)
@@ -132,12 +119,5 @@ func drawFrame(data []byte, stride, frame int) {
 			data[off+2] = uint8((vr*0.5 + 0.5) * 255)
 			data[off+3] = 0xff
 		}
-	}
-}
-
-func printStats(start time.Time, frames int) {
-	elapsed := time.Since(start).Seconds()
-	if elapsed > 0 {
-		fmt.Printf("%d frames in %.1fs (%.1f fps)\n", frames, elapsed, float64(frames)/elapsed)
 	}
 }

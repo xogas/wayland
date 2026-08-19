@@ -1,6 +1,6 @@
-// Package shared provides small helpers shared by the wayland examples:
-// display connection and global discovery, toplevel window setup with
-// configure serial management, shm double buffering and a dispatch loop.
+// Package shared provides small helpers shared by the Wayland examples:
+// display connection and global discovery, toplevel windows with configure
+// serial handling, shm buffers, frame pacing and drawing utilities.
 // It is not part of the public library API.
 package shared
 
@@ -8,17 +8,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/xogas/wayland"
 	"github.com/xogas/wayland/protocol/stable/xdgshell"
 )
 
-// Globals collects the registry global events of one registry scan.
+// Globals collects the global interfaces announced during one registry scan.
 type Globals struct {
 	events []wayland.RegistryGlobalEvent
 }
 
-// Find returns the first global event advertising the given interface.
+// Find returns the global event advertising iface, if present.
 func (g *Globals) Find(iface string) (wayland.RegistryGlobalEvent, bool) {
 	for _, ev := range g.events {
 		if ev.Interface == iface {
@@ -33,23 +34,28 @@ func (g *Globals) All() []wayland.RegistryGlobalEvent {
 	return g.events
 }
 
-// Version returns the advertised version of the given interface.
+// Version returns the advertised version of iface, if present.
 func (g *Globals) Version(iface string) (uint32, bool) {
 	ev, ok := g.Find(iface)
 	return ev.Version, ok
 }
 
-// Connect connects to the display, binds the registry and collects all
-// globals with one roundtrip.
+// Connect opens the display, binds the registry and collects all globals in
+// one roundtrip. It also installs a protocol-error handler that logs to
+// stderr, so examples do not need to repeat that setup.
 func Connect(ctx context.Context) (*wayland.Display, *wayland.Registry, *Globals, error) {
 	dpy, err := wayland.Connect(ctx)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("connect: %w", err)
 	}
+	dpy.SetOnError(func(pe *wayland.ProtocolError) {
+		fmt.Fprintf(os.Stderr, "protocol error: object=%d code=%d message=%q\n",
+			pe.ObjectID, pe.Code, pe.Message)
+	})
 	reg, err := dpy.GetRegistry()
 	if err != nil {
 		_ = dpy.Close()
-		return nil, nil, nil, fmt.Errorf("get_registry: %w", err)
+		return nil, nil, nil, fmt.Errorf("get registry: %w", err)
 	}
 	g := &Globals{}
 	reg.OnGlobal(func(ev wayland.RegistryGlobalEvent) {
@@ -62,15 +68,16 @@ func Connect(ctx context.Context) (*wayland.Display, *wayland.Registry, *Globals
 	return dpy, reg, g, nil
 }
 
-// Core holds the three globals every toplevel example needs.
+// Core holds the three globals every toplevel example needs: wl_compositor,
+// wl_shm and xdg_wm_base.
 type Core struct {
 	Compositor *wayland.Compositor
 	Shm        *wayland.Shm
 	WmBase     *xdgshell.WmBase
 }
 
-// BindCore binds wl_compositor, wl_shm and xdg_wm_base, and answers
-// xdg_wm_base ping requests.
+// BindCore binds wl_compositor, wl_shm and xdg_wm_base and answers
+// xdg_wm_base ping requests. It fails if any required global is missing.
 func BindCore(reg *wayland.Registry, g *Globals) (*Core, error) {
 	var missing []string
 	compG, ok := g.Find(wayland.InterfaceCompositor)
@@ -107,9 +114,10 @@ func BindCore(reg *wayland.Registry, g *Globals) (*Core, error) {
 	return &Core{Compositor: compositor, Shm: shm, WmBase: wmBase}, nil
 }
 
-// BindSeat binds the first wl_seat global, or returns ErrNoSeat.
+// ErrNoSeat is returned by BindSeat when the compositor has no wl_seat.
 var ErrNoSeat = errors.New("no wl_seat global")
 
+// BindSeat binds the first wl_seat global, or returns ErrNoSeat.
 func BindSeat(reg *wayland.Registry, g *Globals) (*wayland.Seat, error) {
 	seatG, ok := g.Find(wayland.InterfaceSeat)
 	if !ok {

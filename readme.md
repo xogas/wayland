@@ -53,7 +53,7 @@ func main() {
 }
 ```
 
-More runnable examples in [example/](./example/readme.md).
+More runnable examples in [examples/](./examples/readme.md).
 
 ## Design notes
 
