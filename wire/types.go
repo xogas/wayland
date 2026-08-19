@@ -5,7 +5,7 @@ import "math"
 // Fixed is a 24.8 signed fixed-point number.
 type Fixed int32
 
-// Float64 returns the floating-point representation of f.
+// Float64 returns f as a float64.
 func (f Fixed) Float64() float64 {
 	return float64(f) / 256.0
 }
@@ -15,12 +15,12 @@ func (f Fixed) Int() int32 {
 	return int32(f) / 256
 }
 
-// FixedFromFloat64 converts a float64 to a 24.8 fixed-point number.
+// FixedFromFloat64 converts v to a Fixed, rounding to the nearest integer.
 func FixedFromFloat64(v float64) Fixed {
 	return Fixed(int32(math.Round(v * 256.0)))
 }
 
-// FixedFromInt converts an int32 to a 24.8 fixed-point number.
+// FixedFromInt converts v to a Fixed.
 func FixedFromInt(v int32) Fixed {
 	return Fixed(v << 8)
 }

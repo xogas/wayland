@@ -14,12 +14,12 @@ type Reader struct {
 	fdIdx int
 }
 
-// NewReader creates a new Reader.
+// NewReader returns a Reader over buf and the fd queue fds.
 func NewReader(buf []byte, fds []int) *Reader {
 	return &Reader{buf: buf, fds: fds}
 }
 
-// SetFDs assigns file descriptors to this Reader.
+// SetFDs replaces the fd queue and resets the read position.
 func (r *Reader) SetFDs(fds []int) {
 	r.fds = fds
 	r.fdIdx = 0
@@ -30,8 +30,7 @@ func (r *Reader) UnconsumedFDs() []int {
 	return r.fds[r.fdIdx:]
 }
 
-// Clone returns a copy of the Reader with independent read position.
-// The returned Reader shares the same underlying buffer and fd list.
+// Clone returns a Reader with an independent position over the same buffer and fds.
 func (r *Reader) Clone() *Reader {
 	return &Reader{
 		buf:   r.buf,
@@ -41,7 +40,7 @@ func (r *Reader) Clone() *Reader {
 	}
 }
 
-// Int32 reads a signed 32-bit integer in host byte order.
+// Int32 reads a 32-bit integer in host byte order.
 func (r *Reader) Int32() (int32, error) {
 	v, err := r.Uint32()
 	if err != nil {
@@ -50,7 +49,7 @@ func (r *Reader) Int32() (int32, error) {
 	return int32(v), nil
 }
 
-// Uint32 reads an unsigned 32-bit integer in host byte order.
+// Uint32 reads a 32-bit integer in host byte order.
 func (r *Reader) Uint32() (uint32, error) {
 	if err := r.check(4); err != nil {
 		return 0, err
@@ -69,35 +68,26 @@ func (r *Reader) Fixed() (Fixed, error) {
 	return Fixed(v), nil
 }
 
-// String reads a length-prefixed string.
-// The length field includes the NUL terminator. A length of 0 means an empty string.
+// String reads a string whose length includes the NUL terminator; a length
+// of 0 decodes to an empty string.
 func (r *Reader) String() (string, error) {
-	length, err := r.Uint32()
+	s, err := r.readStringPtr()
 	if err != nil {
 		return "", err
 	}
-	if length == 0 {
+	if s == nil {
 		return "", nil
 	}
-	byteLen := int(length) - 1
-	if err := r.check(byteLen + 1); err != nil {
-		return "", fmt.Errorf("wire: string data truncated (need %d): %w", byteLen+1, err)
-	}
-	s := string(r.buf[r.pos : r.pos+byteLen])
-	r.pos += byteLen
-	if r.buf[r.pos] != 0 {
-		return "", fmt.Errorf("wire: missing NUL terminator in string")
-	}
-	r.pos++
-	if err = r.skipPad(int(length)); err != nil {
-		return "", err
-	}
-	return s, nil
+	return *s, nil
 }
 
-// StringNullable reads a length-prefixed string for an allow-null argument.
-// A length of 0 decodes to nil; anything else decodes like String.
+// StringNullable reads a string; a length of 0 decodes to nil.
 func (r *Reader) StringNullable() (*string, error) {
+	return r.readStringPtr()
+}
+
+// readStringPtr reads a length-prefixed string; a length of 0 returns nil.
+func (r *Reader) readStringPtr() (*string, error) {
 	length, err := r.Uint32()
 	if err != nil {
 		return nil, err

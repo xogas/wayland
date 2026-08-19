@@ -21,7 +21,7 @@ type Conn struct {
 	sendBuf []byte // scratch buffer for outgoing messages, reused across calls
 }
 
-// NewConn creates a new Conn wrapping a UnixConn.
+// NewConn returns a Conn wrapping conn.
 func NewConn(conn *net.UnixConn) *Conn {
 	return &Conn{conn: conn}
 }

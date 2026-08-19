@@ -32,7 +32,7 @@ wayland core 1.26.0, wayland-protocols 1.49 (vendored in `wayland-protocols/`, n
 - Requests written immediately, no send buffering, `Flush` is a no-op; `SendRequest` is goroutine-safe, dispatch is single-goroutine
 - Detect protocol errors with `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` is a pre-close hook
 
-## Naming (naming.go)
+## Naming
 
 - XML snake_case -> PascalCase, `id` -> `ID`; interface names drop `wl_` / `zwp_` prefixes
 - Requests `XxxRequest`, events `XxxEvent`, interfaces `Surface`, `Registry`, ...
@@ -56,6 +56,6 @@ make vet        # go vet ./...
 ## Principles
 
 - Zero third-party deps, stdlib only
-- No behavioral compatibility promise within 1.x: API shape (call sites keep compiling) is stable; behavior (error values, edge cases, timing) may change with bug fixes
+- No compatibility promise within 1.x: both API shape (call sites may need updating) and behavior (error values, edge cases, timing) may change with bug fixes
 - Protocol support only grows; new interfaces/requests/events as wayland-protocols evolves
 - Conventional commits: `feat:` `fix:` `chore:` `refactor:` `test:` `docs:` `style:`

@@ -1,6 +1,6 @@
 # wayland
 
-A Wayland client protocol library in pure Go. Zero dependencies beyond the standard library.
+A Wayland client protocol library in pure Go. Zero dependencies beyond the stdlib.
 
 - wayland version: 1.26.0
 - wayland-protocols version: 1.49
@@ -58,53 +58,42 @@ More runnable examples in [example/](./example/readme.md).
 ## Design notes
 
 - **Event model**: a dedicated reader goroutine reads the socket; `Dispatch`
-  and `DispatchPending` run your event handlers on the calling goroutine.
-  Call `Dispatch` from a single goroutine (typically your main loop), and do
-  not call `Dispatch` or `Roundtrip` from inside an event handler.
-- **Failures are fatal**: a `wl_display.error` event, an event that cannot be
-  decoded from the wire, or a stream-level violation (an event for an object
-  that never existed, or an opcode the bound interface does not define)
-  terminates the connection. `Dispatch` returns the error — a
-  `*ProtocolError` for compositor-reported errors — and every subsequent
-  call fails fast with the same sticky error. Detect protocol errors with
-  `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` is an optional
-  notification hook that fires before the connection closes. Unknown-opcode
-  and unknown-object events are fatal because their fd count is unknowable:
-  skipping them could desynchronize the connection-level fd queue.
-- **Destroy race**: events already in flight for a client-destroyed object are
-  dropped (any fds they carry are drained and closed). This is normal
-  protocol operation, not an error.
-- **No send buffering**: each request is written to the socket immediately, so
-  `Flush` is a no-op. Requests are serialized internally, so `SendRequest` is
-  safe from multiple goroutines; dispatch itself is single-goroutine.
+  and `DispatchPending` run event handlers on the calling goroutine. Dispatch
+  from a single goroutine (usually your main loop) and never from inside an
+  event handler.
+- **Failures are fatal**: a `wl_display.error`, an undecodable event, or a
+  stream violation (an event for a never-created object, or an opcode the
+  bound interface lacks) kills the connection. `Dispatch` returns the error
+  (a `*ProtocolError` for compositor-reported ones), and every later call
+  fails fast with the same sticky error. Check with
+  `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` fires before close.
+  Unknown-opcode/object events are fatal because their fd count is unknowable:
+  skipping them would desync the fd queue.
+- **Destroy race**: events in flight for a client-destroyed object are dropped
+  (their fds drained and closed). Normal, not an error.
+- **No send buffering**: requests are written to the socket immediately, so
+  `Flush` is a no-op. `SendRequest` is goroutine-safe; dispatch is
+  single-goroutine.
 
 ## Code generation
 
-`*_gen.go` files are produced by `wayland-scanner`. Do not edit them by hand:
+`*_gen.go` files are produced by `wayland-scanner`; do not edit them by hand:
 
 ```sh
 make gen
 ```
 
-Deprecated protocol elements are generated and handled identically to
-current ones, so no code changes are needed to keep using them. Their generated
-identifiers carry standard `// Deprecated:` Go annotations (with the since-version
-note), so tooling like staticcheck flags their use; consult the protocol XML for
-the deprecation semantics.
+Deprecated elements are generated and handled like current ones, so no code
+changes are needed to keep using them; their identifiers carry standard
+`// Deprecated:` annotations (with the since-version) so staticcheck flags
+their use. Consult the protocol XML for the deprecation semantics.
 
 ## Stability
 
-Within the 1.x line, the API shape is stable: existing call sites keep
-compiling, and protocol support only grows — new interfaces, requests, and
-events are added as wayland-protocols evolves, and regenerating with
-`make gen` is deterministic (byte-identical output for the same XML inputs).
-
-Behavior is explicitly not part of the guarantee: bug fixes may change error
-values, edge-case handling, or timing between releases, so treat observed
-runtime behavior in any 1.x release as an implementation detail.
-
-Releases before v1.0.0 (the 0.0.x tags) are snapshots of the API as it
-matures and carry no compatibility guarantee.
+No API or behavioral compatibility promise within 1.x: call sites may need
+updating, and bug fixes may change error values, edge cases, or timing.
+Protocol support only grows; `make gen` output is deterministic (byte-identical
+for the same XML inputs).
 
 ## License
 

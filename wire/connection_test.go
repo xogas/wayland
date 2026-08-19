@@ -1,6 +1,8 @@
 package wire
 
 import (
+	"bytes"
+	"errors"
 	"net"
 	"os"
 	"syscall"
@@ -512,5 +514,82 @@ func TestTakeFDs(t *testing.T) {
 	remaining := conn2.TakeAllFDs()
 	if len(remaining) != 0 {
 		t.Fatalf("second TakeAllFDs: expected empty, got %v", remaining)
+	}
+}
+
+func TestSendReceivePartialRead(t *testing.T) {
+	c1, c2 := socketPair(t)
+	defer c1.Close() //nolint: errcheck
+	defer c2.Close() //nolint: errcheck
+
+	conn1 := NewConn(c1)
+	conn2 := NewConn(c2)
+
+	// 65520 bytes of content -> 8 + 65524 = 65532 total, just under the
+	// 16-bit length field limit. Far larger than the 4096-byte read buffer,
+	// so ReceiveMessage must loop over many partial reads.
+	payload := bytes.Repeat([]byte{0xAB}, 65520)
+
+	w := &Writer{}
+	if err := w.Array(payload); err != nil {
+		t.Fatalf("Array: %v", err)
+	}
+	if err := conn1.SendMessage(1, 0, w); err != nil {
+		t.Fatalf("SendMessage: %v", err)
+	}
+
+	obj, opcode, r, err := conn2.ReceiveMessage()
+	if err != nil {
+		t.Fatalf("ReceiveMessage: %v", err)
+	}
+	if obj != 1 || opcode != 0 {
+		t.Fatalf("header: obj=%d opcode=%d", obj, opcode)
+	}
+	got, err := r.Array()
+	if err != nil {
+		t.Fatalf("Array: %v", err)
+	}
+	if !bytes.Equal(got, payload) {
+		t.Fatalf("payload mismatch: got %d bytes, want %d", len(got), len(payload))
+	}
+
+	// The stream must still be framed correctly: a follow-up small message
+	// proves no bytes were lost or over-consumed by the partial reads.
+	w2 := &Writer{}
+	_ = w2.Uint32(42)
+	if err := conn1.SendMessage(2, 1, w2); err != nil {
+		t.Fatalf("SendMessage follow-up: %v", err)
+	}
+	obj2, opcode2, r2, err := conn2.ReceiveMessage()
+	if err != nil {
+		t.Fatalf("ReceiveMessage follow-up: %v", err)
+	}
+	if obj2 != 2 || opcode2 != 1 {
+		t.Fatalf("follow-up header: obj=%d opcode=%d", obj2, opcode2)
+	}
+	v, err := r2.Uint32()
+	if err != nil {
+		t.Fatalf("follow-up Uint32: %v", err)
+	}
+	if v != 42 {
+		t.Errorf("follow-up payload: got %d, want 42", v)
+	}
+}
+
+func TestSendMessageTooLarge(t *testing.T) {
+	c1, c2 := socketPair(t)
+	defer c1.Close() //nolint: errcheck
+	defer c2.Close() //nolint: errcheck
+
+	conn1 := NewConn(c1)
+
+	// 65524 bytes of content -> 8 + 65528 = 65536, one byte over the
+	// 16-bit length field limit.
+	w := &Writer{}
+	if err := w.Array(bytes.Repeat([]byte{0xAB}, 65524)); err != nil {
+		t.Fatalf("Array: %v", err)
+	}
+	if err := conn1.SendMessage(1, 0, w); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("SendMessage: got %v, want ErrMessageTooLarge", err)
 	}
 }
