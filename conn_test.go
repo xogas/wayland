@@ -42,11 +42,9 @@ type mockMarshaler struct{}
 
 func (m mockMarshaler) Marshal(w *wire.Writer) error { return nil }
 
-// waitForReadCh blocks until the reader goroutine has buffered at least one
-// message in readCh, i.e. consumed it from the socket. Polling the actual
-// condition keeps tests deterministic without fixed sleeps; the deadline only
-// guards against a broken reader. startReader is idempotent, so this works
-// both before and after the first Dispatch.
+// waitForReadCh blocks until the reader buffered a message in readCh, so
+// DispatchPending has something to drain. Polling beats fixed sleeps; the
+// deadline guards a broken reader. startReader is idempotent.
 func waitForReadCh(t *testing.T, conn *Conn) {
 	t.Helper()
 	conn.startReader()
@@ -56,12 +54,6 @@ func waitForReadCh(t *testing.T, conn *Conn) {
 			t.Fatal("timeout waiting for reader to buffer a message")
 		}
 		runtime.Gosched()
-	}
-}
-
-func TestDisplayID(t *testing.T) {
-	if displayID != 1 {
-		t.Fatalf("displayID = %d, want 1", displayID)
 	}
 }
 
@@ -434,9 +426,8 @@ func TestProtocolErrorFatal(t *testing.T) {
 	}
 }
 
-// TestEventDecodeFailureFatal verifies that an event that cannot be decoded
-// is fatal: the stream is corrupt, so the connection is terminated and
-// Dispatch returns the decode error.
+// TestEventDecodeFailureFatal: an undecodable event corrupts the stream, so
+// the connection is terminated and Dispatch returns the decode error.
 func TestEventDecodeFailureFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -486,9 +477,8 @@ func TestEventDecodeFailureFatal(t *testing.T) {
 }
 
 // TestUnknownObjectEventFatal: an event for an object the client never
-// created is a stream-level violation. Its fd count is unknowable, so
-// skipping it could desynchronize the connection-level fd queue; the
-// connection must terminate with a sticky error.
+// created has an unknowable fd count, so skipping it would desync the fd
+// queue; the connection must terminate with a sticky error.
 func TestUnknownObjectEventFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -523,10 +513,9 @@ func TestUnknownObjectEventFatal(t *testing.T) {
 	}
 }
 
-// TestDestroyedObjectEventDropped: after a client-side destroy, events already
-// in flight for the destroyed object are dropped without touching the
-// connection. Zombies with a nil event table (raw proxies, event-less
-// interfaces) cannot determine fd counts, so they are skipped leniently.
+// TestDestroyedObjectEventDropped: events in flight for a client-destroyed
+// object are dropped without touching the connection. Zombies with a nil
+// event table cannot determine fd counts, so they are skipped leniently.
 func TestDestroyedObjectEventDropped(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -559,10 +548,9 @@ func TestDestroyedObjectEventDropped(t *testing.T) {
 	}
 }
 
-// TestDestroyedObjectKnownEventDropped: with a generated wrapper, the zombie
-// keeps the full event table, so known events (with or without fds) for a
-// destroyed object are drained or dropped leniently, while unknown opcodes
-// remain fatal.
+// TestDestroyedObjectKnownEventDropped: with a generated wrapper the zombie
+// keeps the full event table, so known events are dropped while unknown
+// opcodes remain fatal.
 func TestDestroyedObjectKnownEventDropped(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -606,9 +594,8 @@ func TestDestroyedObjectKnownEventDropped(t *testing.T) {
 	}
 }
 
-// TestUnknownOpcodeEventFatal: a live object receiving an opcode its interface
-// does not define is a stream violation (the server sent an event beyond the
-// bound version). The connection must terminate.
+// TestUnknownOpcodeEventFatal: a live object receiving an opcode its
+// interface does not define is a stream violation. The connection dies.
 func TestUnknownOpcodeEventFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -967,9 +954,8 @@ func TestFDEventNoHandler(t *testing.T) {
 }
 
 // TestZombieFDClose: after a client-side destroy, an fd-carrying event still
-// in flight is drained through the zombie entry: the fd is consumed and
-// closed, the connection survives, and the zombie is cleaned up when the
-// server confirms the destruction with delete_id.
+// in flight is drained through the zombie: the fd is closed, the connection
+// survives, and delete_id cleans up the zombie for good.
 func TestZombieFDClose(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -1000,6 +986,9 @@ func TestZombieFDClose(t *testing.T) {
 	sendFD := int(tmp.Fd())
 
 	conn.UnregisterProxy(proxyID) // client-side destroy; fd event may still be in flight
+	if _, ok := conn.zombies[proxyID]; !ok {
+		t.Fatal("expected zombie entry after client-side destroy")
+	}
 
 	wFD := &wire.Writer{}
 	_ = wFD.Uint32(99)
@@ -1032,12 +1021,14 @@ func TestZombieFDClose(t *testing.T) {
 	if _, isZombie := conn.zombies[proxyID]; isZombie {
 		t.Fatal("zombie entry should be cleaned up after delete_id")
 	}
+	if !p.Deleted() {
+		t.Fatal("proxy should stay deleted")
+	}
 }
 
-// TestEventAfterDeleteIDFatal: an event for an object whose destruction the
-// server already confirmed with delete_id is a stream violation: the protocol
-// guarantees no further events reference it, and the event's fd count is
-// unknowable. The connection must terminate.
+// TestEventAfterDeleteIDFatal: the protocol guarantees no events follow
+// delete_id, so one arriving is a stream violation with an unknowable fd
+// count; the connection must terminate.
 func TestEventAfterDeleteIDFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer clientUC.Close() //nolint: errcheck
@@ -1377,113 +1368,4 @@ func TestStickyReadError(t *testing.T) {
 	if err := conn.SendRequest(displayID, DisplayRequestSync, mockMarshaler{}); err != err1 {
 		t.Fatalf("SendRequest: got %v, want sticky %v", err, err1)
 	}
-}
-
-func TestZombieLifecycle(t *testing.T) {
-	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
-
-	wc := wire.NewConn(clientUC)
-	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
-	swc := wire.NewConn(serverUC)
-
-	dpyProxy := NewProxyWithID(conn, displayID)
-	conn.RegisterProxy(dpyProxy)
-	dpy := NewDisplay(dpyProxy)
-	wireDisplayEvents(dpy, conn)
-
-	p := NewProxy(conn)
-	p.SetEventFDCounts(map[uint16]int{0: 1})
-	conn.RegisterProxy(p)
-	proxyID := p.ID()
-
-	tmp, err := os.CreateTemp("", "wayland-test-fd-*")
-	if err != nil {
-		t.Fatalf("CreateTemp: %v", err)
-	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
-
-	// Client destroys the object (destructor request path).
-	conn.UnregisterProxy(proxyID)
-	if _, ok := conn.zombies[proxyID]; !ok {
-		t.Fatal("expected zombie entry after client-side destroy")
-	}
-
-	// An fd-carrying event already in flight arrives, then delete_id.
-	wFD := &wire.Writer{}
-	_ = wFD.Uint32(1)
-	_ = wFD.Fd(int(tmp.Fd()))
-	if err := swc.SendMessage(wire.ObjectID(proxyID), 0, wFD); err != nil {
-		t.Fatalf("SendMessage fd event: %v", err)
-	}
-	wDel := &wire.Writer{}
-	_ = wDel.Uint32(proxyID)
-	if err := swc.SendMessage(wire.ObjectID(displayID), DisplayEventDeleteID, wDel); err != nil {
-		t.Fatalf("SendMessage delete_id: %v", err)
-	}
-
-	if err := conn.Dispatch(t.Context()); err != nil {
-		t.Fatalf("Dispatch zombie event: %v", err)
-	}
-	if err := conn.Dispatch(t.Context()); err != nil {
-		t.Fatalf("Dispatch delete_id: %v", err)
-	}
-
-	// The zombie fd must have been drained and closed, not left in the queue.
-	if fds := conn.wc.TakeAllFDs(); len(fds) != 0 {
-		for _, fd := range fds {
-			_ = syscall.Close(fd)
-		}
-		t.Fatalf("expected empty fd queue, got %d fds", len(fds))
-	}
-	// delete_id removes the zombie entry for good.
-	if _, ok := conn.zombies[proxyID]; ok {
-		t.Fatal("zombie entry should be removed after delete_id")
-	}
-	if !p.Deleted() {
-		t.Fatal("proxy should stay deleted")
-	}
-}
-
-func TestConnDrainAfterClose(t *testing.T) {
-	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
-
-	wc := wire.NewConn(clientUC)
-	conn := newConn(clientUC, wc)
-
-	dpyProxy := NewProxyWithID(conn, displayID)
-	conn.RegisterProxy(dpyProxy)
-
-	var (
-		mu       sync.Mutex
-		gotClose bool
-	)
-	swc2 := wire.NewConn(serverUC)
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		_, _, _, _ = swc2.ReceiveMessage()
-		mu.Lock()
-		gotClose = true
-		mu.Unlock()
-	}()
-
-	_ = conn.Close()
-
-	select {
-	case <-done:
-	case <-time.After(500 * time.Millisecond):
-	}
-
-	mu.Lock()
-	if !gotClose {
-		t.Log("server may not have detected close immediately")
-	}
-	mu.Unlock()
 }

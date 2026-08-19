@@ -131,11 +131,8 @@ func (p *Proxy) dispatchEvent(opcode uint16, r *wire.Reader) {
 	for _, h := range handlers {
 		cr := r.Clone()
 		h(cr)
-		if totalFDs > 0 {
-			consumed := totalFDs - len(cr.UnconsumedFDs())
-			if consumed > maxConsumed {
-				maxConsumed = consumed
-			}
+		if consumed := totalFDs - len(cr.UnconsumedFDs()); consumed > maxConsumed {
+			maxConsumed = consumed
 		}
 	}
 	for _, fd := range r.UnconsumedFDs()[maxConsumed:] {

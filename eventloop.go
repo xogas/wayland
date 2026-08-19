@@ -59,23 +59,7 @@ func (c *Conn) Dispatch(ctx context.Context) error {
 	case <-c.done:
 		return ErrConnClosed
 	case res := <-c.readCh:
-		if c.closed.Load() {
-			// Buffered before Close: the object table is gone, so dispatching
-			// it would misreport a stream violation. Report the close instead.
-			return ErrConnClosed
-		}
-		if res.err != nil {
-			c.setReadErr(res.err)
-			return c.stickyErr()
-		}
-		c.dispatch(uint32(res.obj), res.opcode, res.r)
-		// A handler may have turned the connection fatal (wl_display.error or
-		// an event decode failure): surface it instead of dispatching more
-		// events from a dead stream.
-		if err := c.stickyErr(); err != nil {
-			return err
-		}
-		return nil
+		return c.handleResult(res)
 	}
 }
 
@@ -87,21 +71,33 @@ func (c *Conn) DispatchPending() error {
 	for {
 		select {
 		case res := <-c.readCh:
-			if c.closed.Load() {
-				return ErrConnClosed
-			}
-			if res.err != nil {
-				c.setReadErr(res.err)
-				return c.stickyErr()
-			}
-			c.dispatch(uint32(res.obj), res.opcode, res.r)
-			if err := c.stickyErr(); err != nil {
+			if err := c.handleResult(res); err != nil {
 				return err
 			}
 		default:
 			return c.stickyErr()
 		}
 	}
+}
+
+// handleResult processes one buffered message and reports whether the
+// connection went fatal: closed, a reader error, or a handler-triggered
+// protocol error.
+func (c *Conn) handleResult(res readResult) error {
+	// Buffered before Close: the object table is gone, so dispatching it
+	// would misreport a stream violation. Report the close instead.
+	if c.closed.Load() {
+		return ErrConnClosed
+	}
+	if res.err != nil {
+		c.setReadErr(res.err)
+		return c.stickyErr()
+	}
+	c.dispatch(uint32(res.obj), res.opcode, res.r)
+	// A handler may have turned the connection fatal (wl_display.error or an
+	// event decode failure); surface it instead of dispatching more events
+	// from a dead stream.
+	return c.stickyErr()
 }
 
 func (c *Conn) Flush() error {

@@ -125,7 +125,6 @@ func TestIntegrationCreateDestroyCycles(t *testing.T) {
 				if waitCtx.Err() != nil {
 					break
 				}
-				cancel()
 				t.Fatalf("Dispatch waiting for configure: %v", err)
 			}
 			select {

@@ -38,14 +38,7 @@ func ConnectPath(ctx context.Context, path string) (*Display, error) {
 		_ = uc.Close()
 		return nil, fmt.Errorf("wayland: expected *net.UnixConn, got %T", uc)
 	}
-	wc := wire.NewConn(unixConn)
-	conn := newConn(unixConn, wc)
-	proxy := NewProxyWithID(conn, displayID)
-	proxy.SetVersion(VersionDisplay)
-	conn.RegisterProxy(proxy)
-	dpy := NewDisplay(proxy)
-	wireDisplayEvents(dpy, conn)
-	return dpy, nil
+	return newDisplay(unixConn), nil
 }
 
 // ConnectFd uses an already-opened file descriptor to create the display connection.
@@ -66,14 +59,19 @@ func ConnectFd(ctx context.Context, fd int, path string) (*Display, error) {
 		return nil, fmt.Errorf("wayland: expected *net.UnixConn from fd, got %T", uc)
 	}
 	_ = os.Unsetenv("WAYLAND_SOCKET")
-	wc := wire.NewConn(unixConn)
-	conn := newConn(unixConn, wc)
+	return newDisplay(unixConn), nil
+}
+
+// newDisplay creates a display proxy over a unix connection.
+func newDisplay(uc *net.UnixConn) *Display {
+	wc := wire.NewConn(uc)
+	conn := newConn(uc, wc)
 	proxy := NewProxyWithID(conn, displayID)
 	proxy.SetVersion(VersionDisplay)
 	conn.RegisterProxy(proxy)
 	dpy := NewDisplay(proxy)
 	wireDisplayEvents(dpy, conn)
-	return dpy, nil
+	return dpy
 }
 
 func wireDisplayEvents(dpy *Display, conn *Conn) {
@@ -83,9 +81,8 @@ func wireDisplayEvents(dpy *Display, conn *Conn) {
 			Code:     ev.Code,
 			Message:  ev.Message,
 		}
-		// A protocol error means the compositor declared the protocol state
-		// invalid; per the spec the client must terminate. Record it as the
-		// connection's fatal error, close, then notify via SetOnError.
+		// The compositor declared the protocol state invalid, so the client
+		// must terminate: record the fatal error, close, then notify.
 		conn.setProtoErr(pe)
 		_ = conn.Close()
 		conn.connMu.Lock()

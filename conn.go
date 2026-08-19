@@ -141,12 +141,9 @@ func (c *Conn) setReadErr(err error) {
 	c.errMu.Unlock()
 }
 
-// setProtoErr records the first protocol-level failure: a wl_display.error
-// event or an event that could not be decoded from the wire. Once set, the
-// connection is treated as dead: the compositor has declared the protocol
-// state invalid (or the stream is corrupt), so continuing would only dispatch
-// garbage. It is sticky and takes priority over ErrConnClosed so a protocol
-// error is never masked by the auto-close that follows it.
+// setProtoErr records the first protocol-level failure (wl_display.error or
+// an undecodable event). It is sticky and outranks ErrConnClosed so the
+// protocol error is never masked by the auto-close that follows it.
 func (c *Conn) setProtoErr(err error) {
 	c.errMu.Lock()
 	if c.protoErr == nil {
