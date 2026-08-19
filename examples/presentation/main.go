@@ -14,7 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/example/internal/shared"
+	"github.com/xogas/wayland/examples/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/presentationtime"
 	"github.com/xogas/wayland/wire"
 )

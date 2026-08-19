@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/example/internal/shared"
+	"github.com/xogas/wayland/examples/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/xdgshell"
 	"github.com/xogas/wayland/protocol/unstable/xdgdecorationunstable"
 	"github.com/xogas/wayland/wire"

@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/example/internal/shared"
+	"github.com/xogas/wayland/examples/internal/shared"
 	"github.com/xogas/wayland/protocol/stable/viewporter"
 	"github.com/xogas/wayland/protocol/staging/fractionalscale"
 	"github.com/xogas/wayland/wire"

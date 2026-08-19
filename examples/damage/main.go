@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/xogas/wayland"
-	"github.com/xogas/wayland/example/internal/shared"
+	"github.com/xogas/wayland/examples/internal/shared"
 )
 
 const (
