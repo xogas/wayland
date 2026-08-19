@@ -90,7 +90,7 @@ func TestIntegrationCreateDestroyCycles(t *testing.T) {
 
 	beforeFDs := openFDs(t)
 	const cycles = 20
-	for i := 0; i < cycles; i++ {
+	for i := range cycles {
 		surface, err := comp.CreateSurface()
 		if err != nil {
 			t.Fatalf("create_surface: %v", err)

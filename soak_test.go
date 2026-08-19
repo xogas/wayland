@@ -23,11 +23,6 @@ func countOpenFDs(t *testing.T) int {
 	return len(ents)
 }
 
-// quietConn silences the per-event warn logs emitted by the zombie path.
-func quietConn(conn *Conn) {
-	conn.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
-}
-
 // TestSoakCreateDestroyCycles exercises repeated create/destroy with
 // in-flight events and delete_id confirmations, asserting no fd growth and
 // no buildup in the objects or zombies maps. This is the destroy race under
@@ -40,7 +35,7 @@ func TestSoakCreateDestroyCycles(t *testing.T) {
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
 	defer conn.Close() //nolint: errcheck
-	quietConn(conn)
+	conn.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -129,7 +124,7 @@ func TestSoakFDThroughput(t *testing.T) {
 
 	before := countOpenFDs(t)
 	const n = 200
-	for i := 0; i < n; i++ {
+	for range n {
 		w := &wire.Writer{}
 		_ = w.Uint32(1)
 		_ = w.Fd(sendFD)
@@ -189,7 +184,7 @@ func TestSoakRoundtrip(t *testing.T) {
 	}()
 
 	start := time.Now()
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		if err := dpy.Roundtrip(t.Context()); err != nil {
 			t.Fatalf("Roundtrip %d: %v", i, err)
 		}
