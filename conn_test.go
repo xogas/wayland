@@ -23,8 +23,10 @@ func socketPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
 	}
 	f0 := os.NewFile(uintptr(fds[0]), "sock0")
 	f1 := os.NewFile(uintptr(fds[1]), "sock1")
-	defer f0.Close() //nolint: errcheck
-	defer f1.Close() //nolint: errcheck
+	defer func() {
+		_ = f0.Close()
+		_ = f1.Close()
+	}()
 
 	c0, err := net.FileConn(f0)
 	if err != nil {
@@ -59,12 +61,14 @@ func waitForReadCh(t *testing.T, conn *Conn) {
 
 func TestIDAllocation(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	id1 := conn.allocID()
 	if id1 != 2 {
@@ -78,12 +82,14 @@ func TestIDAllocation(t *testing.T) {
 
 func TestRegisterLookupUnregister(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	p := NewProxy(conn)
 	if p.ID() < 2 {
@@ -110,12 +116,14 @@ func TestRegisterLookupUnregister(t *testing.T) {
 
 func TestSendRequest(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxyWithID(conn, displayID)
@@ -143,15 +151,17 @@ func TestSendRequest(t *testing.T) {
 
 func TestSendRequestAfterClose(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
 
 	p := NewProxyWithID(conn, displayID)
 	conn.RegisterProxy(p)
-	conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	err := conn.SendRequest(p.ID(), 0, mockMarshaler{})
 	if err != ErrConnClosed {
@@ -161,12 +171,14 @@ func TestSendRequestAfterClose(t *testing.T) {
 
 func TestSendRequestDeletedProxy(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	p := NewProxy(conn)
 	conn.RegisterProxy(p)
@@ -180,8 +192,10 @@ func TestSendRequestDeletedProxy(t *testing.T) {
 
 func TestCloseIdempotent(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
@@ -199,8 +213,10 @@ func TestCloseIdempotent(t *testing.T) {
 
 func TestCloseWithoutReader(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
@@ -212,12 +228,14 @@ func TestCloseWithoutReader(t *testing.T) {
 
 func TestGlobalEventDispatch(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxyWithID(conn, displayID)
@@ -231,7 +249,7 @@ func TestGlobalEventDispatch(t *testing.T) {
 	}
 	regID := reg.Proxy().ID()
 
-	swc.ReceiveMessage() //nolint: errcheck
+	_, _, _, _ = swc.ReceiveMessage()
 
 	var (
 		gotName    uint32
@@ -284,12 +302,14 @@ func TestGlobalEventDispatch(t *testing.T) {
 
 func TestDeleteIDUnregister(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -321,12 +341,14 @@ func TestDeleteIDUnregister(t *testing.T) {
 
 func TestErrorEventDispatch(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -380,8 +402,10 @@ func TestErrorEventDispatch(t *testing.T) {
 // Dispatch and SendRequest fails fast with the same error.
 func TestProtocolErrorFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
@@ -430,12 +454,14 @@ func TestProtocolErrorFatal(t *testing.T) {
 // the connection is terminated and Dispatch returns the decode error.
 func TestEventDecodeFailureFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxyWithID(conn, displayID)
@@ -481,12 +507,14 @@ func TestEventDecodeFailureFatal(t *testing.T) {
 // queue; the connection must terminate with a sticky error.
 func TestUnknownObjectEventFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	// Register nothing: the object id never existed.
@@ -518,12 +546,14 @@ func TestUnknownObjectEventFatal(t *testing.T) {
 // event table cannot determine fd counts, so they are skipped leniently.
 func TestDestroyedObjectEventDropped(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
@@ -553,12 +583,14 @@ func TestDestroyedObjectEventDropped(t *testing.T) {
 // opcodes remain fatal.
 func TestDestroyedObjectKnownEventDropped(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	ptr := NewPointer(NewProxyWithID(conn, 42))
@@ -598,12 +630,14 @@ func TestDestroyedObjectKnownEventDropped(t *testing.T) {
 // interface does not define is a stream violation. The connection dies.
 func TestUnknownOpcodeEventFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	ptr := NewPointer(NewProxyWithID(conn, 42))
@@ -629,12 +663,14 @@ func TestUnknownOpcodeEventFatal(t *testing.T) {
 
 func TestRoundtrip(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -676,12 +712,14 @@ func TestRoundtrip(t *testing.T) {
 
 func TestRoundtripCancel(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -690,7 +728,7 @@ func TestRoundtripCancel(t *testing.T) {
 	wireDisplayEvents(dpy, conn)
 
 	go func() {
-		swc.ReceiveMessage() //nolint: errcheck
+		_, _, _, _ = swc.ReceiveMessage()
 	}()
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -704,12 +742,12 @@ func TestRoundtripCancel(t *testing.T) {
 
 func TestDispatchPending(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() { _ = clientUC.Close() }()
+	defer func() { _ = serverUC.Close() }()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxyWithID(conn, displayID)
@@ -723,7 +761,7 @@ func TestDispatchPending(t *testing.T) {
 	}
 	regID := reg.Proxy().ID()
 
-	swc.ReceiveMessage() //nolint: errcheck
+	_, _, _, _ = swc.ReceiveMessage()
 
 	globalDone := make(chan struct{})
 	reg.OnGlobal(func(ev RegistryGlobalEvent) {
@@ -772,12 +810,12 @@ func TestDispatchPending(t *testing.T) {
 
 func TestConcurrentSendAndDispatch(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() { _ = clientUC.Close() }()
+	defer func() { _ = serverUC.Close() }()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxyWithID(conn, displayID)
@@ -849,12 +887,14 @@ func TestConcurrentSendAndDispatch(t *testing.T) {
 
 func TestFDEventDispatch(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
@@ -866,9 +906,10 @@ func TestFDEventDispatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
-
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 	var sentStat syscall.Stat_t
 	if err := syscall.Fstat(int(tmp.Fd()), &sentStat); err != nil {
 		t.Fatalf("fstat: %v", err)
@@ -916,12 +957,14 @@ func TestFDEventDispatch(t *testing.T) {
 
 func TestFDEventNoHandler(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
@@ -933,8 +976,10 @@ func TestFDEventNoHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 
 	w := &wire.Writer{}
 	_ = w.Uint32(42)
@@ -958,12 +1003,14 @@ func TestFDEventNoHandler(t *testing.T) {
 // survives, and delete_id cleans up the zombie for good.
 func TestZombieFDClose(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -980,8 +1027,10 @@ func TestZombieFDClose(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 
 	sendFD := int(tmp.Fd())
 
@@ -1031,12 +1080,14 @@ func TestZombieFDClose(t *testing.T) {
 // count; the connection must terminate.
 func TestEventAfterDeleteIDFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -1073,12 +1124,14 @@ func TestEventAfterDeleteIDFatal(t *testing.T) {
 
 func TestMultiHandlerDispatch(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
@@ -1140,12 +1193,14 @@ func TestMultiHandlerDispatch(t *testing.T) {
 
 func TestMultiHandlerWithFD(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
@@ -1155,10 +1210,12 @@ func TestMultiHandlerWithFD(t *testing.T) {
 
 	tmp1, _ := os.CreateTemp("", "wayland-test-*")
 	tmp2, _ := os.CreateTemp("", "wayland-test-*")
-	defer os.Remove(tmp1.Name()) //nolint: errcheck
-	defer os.Remove(tmp2.Name()) //nolint: errcheck
-	defer tmp1.Close()           //nolint: errcheck
-	defer tmp2.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp1.Close()
+		_ = os.Remove(tmp1.Name())
+		_ = tmp2.Close()
+		_ = os.Remove(tmp2.Name())
+	}()
 
 	var (
 		mu         sync.Mutex
@@ -1221,12 +1278,14 @@ func TestMultiHandlerWithFD(t *testing.T) {
 
 func TestDispatchContextCancel(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
@@ -1239,8 +1298,10 @@ func TestDispatchContextCancel(t *testing.T) {
 
 func TestDispatchAfterClose(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
@@ -1260,12 +1321,14 @@ func TestDispatchAfterClose(t *testing.T) {
 
 func TestConcurrentSetOnError(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)
@@ -1307,8 +1370,10 @@ func TestConcurrentSetOnError(t *testing.T) {
 
 func TestCloseDrainsReadCh(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
@@ -1334,11 +1399,11 @@ func TestCloseDrainsReadCh(t *testing.T) {
 
 func TestStickyReadError(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
+	defer func() { _ = clientUC.Close() }()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	p := NewProxyWithID(conn, displayID)
 	conn.RegisterProxy(p)

@@ -48,7 +48,7 @@ func ConnectPath(ctx context.Context, path string) (*Display, error) {
 // duplicate that is closed by Display.Close.
 func ConnectFd(ctx context.Context, fd int, path string) (*Display, error) {
 	f := os.NewFile(uintptr(fd), path)
-	defer f.Close() //nolint: errcheck
+	defer func() { _ = f.Close() }()
 	uc, err := net.FileConn(f)
 	if err != nil {
 		return nil, fmt.Errorf("wayland: FileConn from fd %d: %w", fd, err)

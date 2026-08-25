@@ -29,12 +29,13 @@ func countOpenFDs(t *testing.T) int {
 // load.
 func TestSoakCreateDestroyCycles(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
-
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	conn.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	swc := wire.NewConn(serverUC)
 
@@ -46,7 +47,7 @@ func TestSoakCreateDestroyCycles(t *testing.T) {
 	const cycles = 2000
 	before := countOpenFDs(t)
 
-	for i := 0; i < cycles; i++ {
+	for range cycles {
 		p := NewProxy(conn)
 		id := p.ID()
 		conn.RegisterProxy(p)
@@ -97,12 +98,14 @@ func TestSoakCreateDestroyCycles(t *testing.T) {
 // accumulate in the process.
 func TestSoakFDThroughput(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	kb := NewKeyboard(NewProxyWithID(conn, 6))
@@ -118,8 +121,10 @@ func TestSoakFDThroughput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 	sendFD := int(tmp.Fd())
 
 	before := countOpenFDs(t)
@@ -149,12 +154,14 @@ func TestSoakFDThroughput(t *testing.T) {
 // verifies the connection stays healthy.
 func TestSoakRoundtrip(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 	swc := wire.NewConn(serverUC)
 
 	dpyProxy := NewProxyWithID(conn, displayID)

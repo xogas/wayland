@@ -17,8 +17,10 @@ func socketPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
 	}
 	f1 := os.NewFile(uintptr(fds[0]), "sock1")
 	f2 := os.NewFile(uintptr(fds[1]), "sock2")
-	defer f1.Close() //nolint: errcheck
-	defer f2.Close() //nolint: errcheck
+	defer func() {
+		_ = f1.Close()
+		_ = f2.Close()
+	}()
 
 	c1, err := net.FileConn(f1)
 	if err != nil {
@@ -33,8 +35,10 @@ func socketPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
 
 func TestSendReceiveEmpty(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -61,8 +65,10 @@ func TestSendReceiveEmpty(t *testing.T) {
 
 func TestSendReceivePayload(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -101,8 +107,10 @@ func TestSendReceivePayload(t *testing.T) {
 
 func TestSendReceiveFd(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -111,8 +119,10 @@ func TestSendReceiveFd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 
 	var stat1 syscall.Stat_t
 	if err := syscall.Fstat(int(tmp.Fd()), &stat1); err != nil {
@@ -157,18 +167,22 @@ func TestSendReceiveFd(t *testing.T) {
 
 func TestSendReceiveMultipleFds(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
 
 	f1, _ := os.CreateTemp("", "wire-test-*")
 	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer os.Remove(f1.Name()) //nolint: errcheck
-	defer os.Remove(f2.Name()) //nolint: errcheck
-	defer f1.Close()           //nolint: errcheck
-	defer f2.Close()           //nolint: errcheck
+	defer func() {
+		_ = f1.Close()
+		_ = os.Remove(f1.Name())
+		_ = f2.Close()
+		_ = os.Remove(f2.Name())
+	}()
 
 	var s1, s2 syscall.Stat_t
 	_ = syscall.Fstat(int(f1.Fd()), &s1)
@@ -217,8 +231,10 @@ func TestSendReceiveMultipleFds(t *testing.T) {
 
 func TestSendReceiveString(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -247,8 +263,10 @@ func TestSendReceiveString(t *testing.T) {
 
 func TestSendReceivePadding(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -280,8 +298,10 @@ func TestSendReceivePadding(t *testing.T) {
 
 func TestSendReceiveMultipleMessages(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -328,7 +348,10 @@ func TestSendReceiveMultipleMessages(t *testing.T) {
 
 func TestConnClose(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	if err := conn1.Close(); err != nil {
@@ -343,18 +366,22 @@ func TestConnClose(t *testing.T) {
 
 func TestTakeFDsPerMessageIsolation(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
 
 	f1, _ := os.CreateTemp("", "wire-test-*")
 	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer os.Remove(f1.Name()) //nolint: errcheck
-	defer os.Remove(f2.Name()) //nolint: errcheck
-	defer f1.Close()           //nolint: errcheck
-	defer f2.Close()           //nolint: errcheck
+	defer func() {
+		_ = f1.Close()
+		_ = os.Remove(f1.Name())
+		_ = f2.Close()
+		_ = os.Remove(f2.Name())
+	}()
 
 	var s1, s2 syscall.Stat_t
 	_ = syscall.Fstat(int(f1.Fd()), &s1)
@@ -423,18 +450,22 @@ func TestTakeFDsPerMessageIsolation(t *testing.T) {
 
 func TestUnconsumedFDs(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
 
 	f1, _ := os.CreateTemp("", "wire-test-*")
 	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer os.Remove(f1.Name()) //nolint: errcheck
-	defer os.Remove(f2.Name()) //nolint: errcheck
-	defer f1.Close()           //nolint: errcheck
-	defer f2.Close()           //nolint: errcheck
+	defer func() {
+		_ = f1.Close()
+		_ = os.Remove(f1.Name())
+		_ = f2.Close()
+		_ = os.Remove(f2.Name())
+	}()
 
 	w := &Writer{}
 	_ = w.Fd(int(f1.Fd()))
@@ -467,8 +498,10 @@ func TestUnconsumedFDs(t *testing.T) {
 
 func TestTakeFDs(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -494,8 +527,10 @@ func TestTakeFDs(t *testing.T) {
 
 	// TakeAllFDs + empty after
 	f1, _ := os.CreateTemp("", "wire-test-*")
-	defer os.Remove(f1.Name()) //nolint: errcheck
-	defer f1.Close()           //nolint: errcheck
+	defer func() {
+		_ = f1.Close()
+		_ = os.Remove(f1.Name())
+	}()
 
 	w2 := &Writer{}
 	_ = w2.Fd(int(f1.Fd()))
@@ -519,8 +554,10 @@ func TestTakeFDs(t *testing.T) {
 
 func TestSendReceivePartialRead(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 	conn2 := NewConn(c2)
@@ -578,8 +615,10 @@ func TestSendReceivePartialRead(t *testing.T) {
 
 func TestSendMessageTooLarge(t *testing.T) {
 	c1, c2 := socketPair(t)
-	defer c1.Close() //nolint: errcheck
-	defer c2.Close() //nolint: errcheck
+	defer func() {
+		_ = c1.Close()
+		_ = c2.Close()
+	}()
 
 	conn1 := NewConn(c1)
 

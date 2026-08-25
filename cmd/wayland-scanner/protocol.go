@@ -141,7 +141,7 @@ func Parse(xmlPath string) (*Protocol, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close() //nolint: errcheck
+	defer func() { _ = f.Close() }()
 
 	var proto Protocol
 	dec := xml.NewDecoder(f)

@@ -156,7 +156,7 @@ func readFd(fd, size int) []byte {
 	if err != nil {
 		return nil
 	}
-	defer syscall.Munmap(data) //nolint: errcheck
+	defer func() { _ = syscall.Munmap(data) }()
 	b := make([]byte, size)
 	copy(b, data)
 	return b

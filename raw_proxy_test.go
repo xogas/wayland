@@ -19,12 +19,14 @@ func swcSend(uc *net.UnixConn, id uint32, op uint16, w *wire.Writer) error {
 // subsequent fd-carrying message.
 func TestRawProxyFDSkew(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() {
+		_ = serverUC.Close()
+		_ = clientUC.Close()
+	}()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	// Simulate a protocol interface with an fd-carrying event at opcode 0.
 	// Generated code registers such tables from init; raw bindings rely on
@@ -40,8 +42,10 @@ func TestRawProxyFDSkew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(tmp.Name()) //nolint: errcheck
-	defer tmp.Close()           //nolint: errcheck
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
+	}()
 	sendFD := int(tmp.Fd())
 
 	gotFD := -1
@@ -103,12 +107,12 @@ func TestRawProxyFDSkew(t *testing.T) {
 // proxies, instead of silently misreading the stream.
 func TestRawProxyUnknownOpcodeFatal(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
-	defer clientUC.Close() //nolint: errcheck
-	defer serverUC.Close() //nolint: errcheck
+	defer func() { _ = clientUC.Close() }()
+	defer func() { _ = serverUC.Close() }()
 
 	wc := wire.NewConn(clientUC)
 	conn := newConn(clientUC, wc)
-	defer conn.Close() //nolint: errcheck
+	defer func() { _ = conn.Close() }()
 
 	RegisterInterfaceFDCounts("test_iface2", map[uint16]int{0: 0})
 	p := NewProxy(conn)

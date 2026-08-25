@@ -115,7 +115,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "wayland-info:", err)
 		os.Exit(1)
 	}
-	defer s.display.Close() //nolint: errcheck
+	defer func() { _ = s.display.Close() }()
 
 	fmt.Print(s.report(*iface))
 }
