@@ -161,7 +161,7 @@ func TestSendRequestAfterClose(t *testing.T) {
 
 	p := NewProxyWithID(conn, displayID)
 	conn.RegisterProxy(p)
-	defer func() { _ = conn.Close() }()
+	_ = conn.Close()
 
 	err := conn.SendRequest(p.ID(), 0, mockMarshaler{})
 	if err != ErrConnClosed {
