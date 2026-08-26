@@ -17,7 +17,7 @@
 
 - Linux 系统, 运行中的 Wayland compositor (KDE/KWin, GNOME/Mutter, Sway, Weston 等)
 - XDG_RUNTIME_DIR 环境变量已设置
-- Go 1.26+
+- Go 1.27+
 
 ## 基础示例
 

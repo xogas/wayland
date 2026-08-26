@@ -8,7 +8,7 @@ A Wayland client protocol library in pure Go. Zero dependencies beyond the stdli
 ## Requirements
 
 - Linux
-- Go 1.26+
+- Go 1.27+
 - A running Wayland compositor (KWin, Mutter, Sway, Weston, etc.)
 
 ## Install
