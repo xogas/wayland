@@ -20,7 +20,7 @@ func ParseStates(data []byte) []xdgshell.ToplevelState {
 	}
 	n := len(data) / 4
 	out := make([]xdgshell.ToplevelState, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out = append(out, xdgshell.ToplevelState(binary.LittleEndian.Uint32(data[i*4:(i+1)*4])))
 	}
 	return out
