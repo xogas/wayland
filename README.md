@@ -97,4 +97,4 @@ for the same XML inputs).
 
 ## License
 
-MIT - see [license](./license) for details.
+MIT - see [License](./License) for details.
