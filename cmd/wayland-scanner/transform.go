@@ -248,7 +248,7 @@ func docComment(name, summary, text string, deprecatedSince int) string {
 	}
 	if t := dedent(text); t != "" {
 		lines = append(lines, "//")
-		for _, ln := range strings.Split(t, "\n") {
+		for ln := range strings.SplitSeq(t, "\n") {
 			ln = strings.TrimRight(ln, " 	")
 			if ln == "" {
 				lines = append(lines, "//")

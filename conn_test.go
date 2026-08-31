@@ -372,8 +372,7 @@ func TestErrorEventDispatch(t *testing.T) {
 	}
 
 	err := conn.Dispatch(t.Context())
-	var pe2 *ProtocolError
-	if !errors.As(err, &pe2) {
+	if _, ok := errors.AsType[*ProtocolError](err); !ok {
 		t.Fatalf("Dispatch: got %v, want *ProtocolError", err)
 	}
 
@@ -1344,13 +1343,13 @@ func TestConcurrentSetOnError(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			dpy.SetOnError(func(pe *ProtocolError) {})
 		}
 	})
 
 	wg.Go(func() {
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			conn.connMu.Lock()
 			_ = conn.onError
 			conn.connMu.Unlock()

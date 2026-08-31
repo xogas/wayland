@@ -91,7 +91,7 @@ func run() error {
 	// Each slot remembers where its square is drawn so the previous position
 	// can be erased and damaged before drawing the new one.
 	var prevX, prevY [2]int32
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		prevX[i], prevY[i] = -sqSz, -sqSz
 		shared.FillRect(db.Pixels[i], int(db.Stride), winW, winH, 0, 0, winW, winH, 0x40, 0x30, 0x30)
 	}
