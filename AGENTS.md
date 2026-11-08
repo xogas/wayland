@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Pure-Go Wayland client protocol library. Zero dependencies, stdlib only.
-wayland core 1.26.0, wayland-protocols 1.49 (vendored in `wayland-protocols/`, not a submodule), Go 1.27+.
+wayland core 1.26.0, wayland-protocols 1.50 (vendored in `wayland-protocols/`, not a submodule), Go 1.27+.
 
 ## Layout
 
