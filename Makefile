@@ -1,7 +1,12 @@
-.PHONY: gen build test test-soak vet clean
+.PHONY: gen regen clean-gen build test test-soak vet clean
 
-gen:
+clean-gen:
+	@rm -rf protocol
+	@for f in *_gen.go; do if [ -e "$$f" ]; then rm -f -- "$$f"; fi; done
+
+gen: clean-gen
 	go run ./cmd/wayland-scanner
+
 
 build:
 	go build -o bin/wayland-scanner ./cmd/wayland-scanner

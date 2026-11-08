@@ -1,53 +1,51 @@
+// Command wayland-scanner generates Go bindings from Wayland protocol XML.
 package main
 
 import (
-	"bytes"
-	"errors"
 	"flag"
 	"fmt"
-	"go/format"
+	"io"
+	"maps"
 	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
+	"slices"
 	"strings"
 )
 
-// corePkg is the Go package name used for the wayland core protocol.
-const corePkg = "wayland"
-
-// tiers lists the wayland-protocols tiers, in generation order.
-var tiers = []string{"stable", "staging", "unstable", "experimental"}
-
 func main() {
 	outBase := flag.String("o", ".", "output directory")
+	rootDir := flag.String("i", "wayland-protocols", "directory holding the protocol XML")
 	flag.Parse()
 
-	if err := run("wayland-protocols", *outBase); err != nil {
+	if err := run(os.Stdout, *rootDir, *outBase); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-// run generates the wayland core protocol and every extension protocol into
-// outBase. Protocols are discovered under rootDir, tier by tier; each
-// extension protocol lands in protocol/<tier>/<package>/.
-func run(rootDir, outBase string) error {
-	if err := generateCore(filepath.Join(rootDir, "wayland.xml"), outBase); err != nil {
-		return err
+// The core protocol lands in outBase, each extension in protocol/<tier>/<pkg>/.
+func run(w io.Writer, rootDir, outBase string) error {
+	coreXML := filepath.Join(rootDir, "wayland.xml")
+	if _, err := os.Stat(coreXML); err == nil {
+		fmt.Fprintln(w, "=== wayland core ===")
+		if err := generateProtocol(coreXML, outBase, corePkg, "wl_"); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("stat %s: %w", coreXML, err)
 	}
 
-	usedPkgs := map[string]bool{}
+	used := make(map[string]string) // package -> XML file that claimed it
 	for _, tier := range tiers {
-		fmt.Printf("=== %s ===\n", tier)
-		sources, err := planTier(filepath.Join(rootDir, tier), usedPkgs)
+		fmt.Fprintf(w, "=== %s ===\n", tier)
+		sources, err := planTier(filepath.Join(rootDir, tier), used)
 		if err != nil {
 			return err
 		}
 		for _, src := range sources {
 			outDir := filepath.Join(outBase, "protocol", tier, src.pkg)
-			fmt.Printf("  %s -> protocol/%s/%s/\n", filepath.Base(src.xmlPath), tier, src.pkg)
-			if err := generateXML(src.xmlPath, outDir, src.pkg, ""); err != nil {
+			fmt.Fprintf(w, "  %s -> protocol/%s/%s/\n", filepath.Base(src.xmlPath), tier, src.pkg)
+			if err := generateProtocol(src.xmlPath, outDir, src.pkg, ""); err != nil {
 				return err
 			}
 		}
@@ -55,157 +53,76 @@ func run(rootDir, outBase string) error {
 	return nil
 }
 
-// generateCore generates the wayland core protocol, when present.
-func generateCore(coreXML, outBase string) error {
-	if _, err := os.Stat(coreXML); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return fmt.Errorf("stat %s: %w", coreXML, err)
-	}
-	fmt.Println("=== wayland core ===")
-	return generateXML(coreXML, outBase, corePkg, "wl_")
-}
-
-// protocolSource pairs a protocol XML file with the Go package name its
-// generated code uses.
-type protocolSource struct {
+type source struct {
 	xmlPath string
 	pkg     string
 }
 
-// reVerSuffix matches a trailing version suffix in a protocol file name,
-// e.g. the "v1" in xdg-activation-v1.xml.
-var reVerSuffix = regexp.MustCompile(`-v\d+$`)
-
-// planTier assigns a Go package name to every protocol XML file under
-// tierDir. Names already claimed (by this tier or an earlier one, tracked
-// in usedPkgs) get the file's version suffix appended; a collision that
-// cannot be resolved is an error.
-func planTier(tierDir string, usedPkgs map[string]bool) ([]protocolSource, error) {
-	var xmlFiles []string
-	ents, err := os.ReadDir(tierDir)
+// A collision is an error: silently dropping a file would ship a protocol with
+// no bindings.
+func planTier(tierDir string, used map[string]string) ([]source, error) {
+	files, err := xmlFiles(tierDir)
 	if err != nil {
-		return nil, fmt.Errorf("read dir %s: %w", tierDir, err)
+		return nil, err
 	}
-	for _, ent := range ents {
+
+	claimed := make(map[string]string, len(files))
+	for _, path := range files {
+		pkg, verSuffix := pkgNameFromFile(path)
+		if _, taken := claimed[pkg]; taken || used[pkg] != "" {
+			pkg += verSuffix
+		}
+		if prev, taken := claimed[pkg]; taken {
+			return nil, fmt.Errorf("package %q claimed by both %s and %s", pkg, prev, path)
+		}
+		if prev := used[pkg]; prev != "" {
+			return nil, fmt.Errorf("package %q claimed by both %s and %s", pkg, prev, path)
+		}
+		claimed[pkg] = path
+	}
+
+	out := make([]source, 0, len(claimed))
+	for _, pkg := range slices.Sorted(maps.Keys(claimed)) {
+		used[pkg] = claimed[pkg]
+		out = append(out, source{xmlPath: claimed[pkg], pkg: pkg})
+	}
+	return out, nil
+}
+
+func xmlFiles(tierDir string) ([]string, error) {
+	entries, err := os.ReadDir(tierDir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", tierDir, err)
+	}
+
+	var files []string
+	for _, ent := range entries {
 		if !ent.IsDir() {
 			continue
 		}
-		files, err := filepath.Glob(filepath.Join(tierDir, ent.Name(), "*.xml"))
+		matched, err := filepath.Glob(filepath.Join(tierDir, ent.Name(), "*.xml"))
 		if err != nil {
 			return nil, fmt.Errorf("glob %s: %w", ent.Name(), err)
 		}
-		xmlFiles = append(xmlFiles, files...)
+		files = append(files, matched...)
 	}
-	if len(xmlFiles) == 0 {
-		return nil, nil
-	}
-
-	// Claim a package name per file, appending the version suffix on conflict.
-	claimed := make(map[string]string, len(xmlFiles))
-	for _, xmlPath := range xmlFiles {
-		pkg, verSuffix := pkgNameFromFile(xmlPath)
-		if _, dup := claimed[pkg]; dup || usedPkgs[pkg] {
-			pkg += verSuffix
-		}
-		claimed[pkg] = xmlPath
-	}
-
-	pkgs := make([]string, 0, len(claimed))
-	for pkg := range claimed {
-		pkgs = append(pkgs, pkg)
-	}
-	sort.Strings(pkgs)
-
-	sources := make([]protocolSource, 0, len(pkgs))
-	for _, pkg := range pkgs {
-		if usedPkgs[pkg] {
-			return nil, fmt.Errorf("package name collision: %q used by multiple protocols in %s", pkg, filepath.Base(tierDir))
-		}
-		usedPkgs[pkg] = true
-		sources = append(sources, protocolSource{xmlPath: claimed[pkg], pkg: pkg})
-	}
-	return sources, nil
+	slices.Sort(files)
+	return files, nil
 }
 
-// pkgNameFromFile derives the Go package name from a protocol file name,
-// lower-casing and dropping hyphens, e.g. xdg-activation-v1.xml ->
-// ("xdgactivation", "v1"). An empty name falls back to "protocol".
+// xdg-shell.xml -> ("xdgshell", "v1").
 func pkgNameFromFile(xmlPath string) (pkg, verSuffix string) {
-	fname := strings.TrimSuffix(filepath.Base(xmlPath), ".xml")
-	if m := reVerSuffix.FindString(fname); m != "" {
+	name := strings.TrimSuffix(filepath.Base(xmlPath), ".xml")
+	if m := reVerSuffix.FindString(name); m != "" {
 		verSuffix = m[1:]
-		fname = fname[:len(fname)-len(m)]
+		name = name[:len(name)-len(m)]
 	}
-	pkg = strings.ToLower(strings.ReplaceAll(fname, "-", ""))
+	pkg = strings.ToLower(strings.ReplaceAll(name, "-", ""))
 	if pkg == "" {
 		pkg = "protocol"
 	}
 	return pkg, verSuffix
-}
-
-// generateXML parses xmlPath and generates the protocol into outDir. prefix
-// is stripped from interface names to form Go type names, or derived from
-// the protocol's interfaces when empty.
-func generateXML(xmlPath, outDir, pkg, prefix string) error {
-	proto, err := Parse(xmlPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", filepath.Base(xmlPath), err)
-	}
-	if prefix == "" {
-		prefix = autoPrefix(proto.Interfaces)
-	}
-	return Generate(proto, outDir, pkg, prefix)
-}
-
-// Generate renders one _gen.go file per interface in proto into outDir.
-// pkg names the Go package of the generated files; prefix is stripped from
-// interface names to form the Go type name.
-func Generate(proto *Protocol, outDir, pkg, prefix string) error {
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		return fmt.Errorf("mkdir %s: %w", outDir, err)
-	}
-
-	knownIface := make(map[string]bool, len(proto.Interfaces))
-	for i := range proto.Interfaces {
-		knownIface[proto.Interfaces[i].Name] = true
-	}
-	em := buildEnumMap(proto.Interfaces, prefix)
-
-	for i := range proto.Interfaces {
-		iface := &proto.Interfaces[i]
-		g, err := convertInterface(iface, pkg, prefix, knownIface, em)
-		if err != nil {
-			return err
-		}
-		if err := writeInterface(outDir, g); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// writeInterface renders, gofmt-formats, and writes the _gen.go file of one
-// interface. On a format error the raw output is kept next to the target
-// path with a .debug suffix to aid diagnosis.
-func writeInterface(outDir string, g GoInterface) error {
-	var buf bytes.Buffer
-	for _, tmpl := range fileTemplates {
-		if err := tmpl.Execute(&buf, g); err != nil {
-			return fmt.Errorf("%s: render %s: %w", g.TypeName, tmpl.Name(), err)
-		}
-	}
-
-	path := filepath.Join(outDir, snakeCase(g.TypeName)+"_gen.go")
-	formatted, err := format.Source(buf.Bytes())
-	if err != nil {
-		debugPath := path + ".debug"
-		_ = os.WriteFile(debugPath, buf.Bytes(), 0o644)
-		return fmt.Errorf("format %s (raw output at %s): %w", path, debugPath, err)
-	}
-	if err := os.WriteFile(path, formatted, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", path, err)
-	}
-	return nil
 }

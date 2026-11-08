@@ -1,25 +1,21 @@
 package main
 
-// This file converts the parsed protocol model (protocol.go) into the
-// Go-specific view that templates.go renders. The conversion is pure:
-// it reads the Protocol model and produces template data, touching no
-// filesystem.
-
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
 
-// wireType describes how a Wayland wire type maps to Go.
+// Turns the protocol tree into the data templates render.
+
 type wireType struct {
-	goType string // field type in message structs
-	read   string // call on wire.Reader
-	write  string // method on wire.Writer
+	goType string // struct field type
+	read   string // wire.Reader call
+	write  string // wire.Writer method
 }
 
-// wireTypes maps every Wayland wire type to its Go representation.
 var wireTypes = map[string]wireType{
 	"int":    {"int32", "r.Int32()", "Int32"},
 	"uint":   {"uint32", "r.Uint32()", "Uint32"},
@@ -31,69 +27,57 @@ var wireTypes = map[string]wireType{
 	"fd":     {"int", "r.Fd()", "Fd"},
 }
 
-// GoInterface is the Go-specific view of one protocol Interface.
-type GoInterface struct {
+const (
+	wirePkgPath = "github.com/xogas/wayland/wire"
+	corePkgPath = "github.com/xogas/wayland"
+)
+
+type goInterface struct {
 	Package  string
-	TypeName string // PascalCase Go type name, e.g. "Display"
-	IfName   string // protocol interface name, e.g. "wl_display"
+	TypeName string // Go type name, e.g. "Display"
+	IfName   string // protocol name, e.g. "wl_display"
 	Version  int
-	Imports  []string // packages imported by the generated file
-	Doc      string   // rendered doc comment, "" if none
+	Frozen   bool
+	Imports  []string
+	Doc      string
 
-	Enums    []GoEnum
-	Requests []GoRequest
-	Events   []GoEvent
+	Enums    []goEnum
+	Requests []goRequest
+	Events   []goEvent
 
-	EventFDCounts map[uint16]int // opcode -> fd count (0 = no fds)
-	WaylandPkg    string         // "wayland." for sub-packages, "" for the core package
+	EventFDCounts map[uint16]int
+	WaylandPkg    string // "wayland." outside the core package, else ""
 }
 
-// HasEvents reports whether the interface has events.
-func (g GoInterface) HasEvents() bool { return len(g.Events) > 0 }
+func (g goInterface) HasEvents() bool { return len(g.Events) > 0 }
 
-// LowerTypeName is TypeName in all lowercase, for unexported generated identifiers.
-func (g GoInterface) LowerTypeName() string { return strings.ToLower(g.TypeName) }
+func (g goInterface) LowerTypeName() string { return strings.ToLower(g.TypeName) }
 
-// GoRequest is the Go-specific view of a protocol Request.
-type GoRequest struct {
-	TypeName        string // Go type name of the owning interface
-	Name            string
-	Opcode          int
-	Since           int
-	DeprecatedSince int // 0 means not deprecated
-	StructDoc       string
-	MethodDoc       string
-	Args            []GoArg
+type goRequest struct {
+	TypeName  string
+	Name      string
+	Opcode    int
+	Since     int
+	StructDoc string
+	MethodDoc string
+	Args      []goArg
 
-	// NewIDType is the type of the object this request creates; "" when
-	// there is no new_id or its interface is not part of this protocol.
-	NewIDType string
+	NewIDType    string // interface created by this request, "" if none
+	CrossNewID   bool   // new_id from another protocol: returns *Proxy
+	SynthVersion bool   // no interface attr (wl_registry.bind): caller supplies it
 
-	// CrossNewID marks a new_id for an interface outside this protocol;
-	// the method returns *Proxy instead of a concrete type.
-	CrossNewID bool
-
-	// SynthVersion marks a new_id without an interface attribute
-	// (e.g. wl_registry.bind); the method takes synthetic interface
-	// and version parameters.
-	SynthVersion bool
-
-	// Destructor marks a destroy request.
 	Destructor bool
 }
 
-// OpName is the name of the opcode constant.
-func (r GoRequest) OpName() string { return r.TypeName + "Request" + r.Name }
+func (r goRequest) OpName() string     { return r.TypeName + "Request" + r.Name }
+func (r goRequest) StructName() string { return r.TypeName + r.Name + "Request" }
 
-// StructName is the name of the request message struct.
-func (r GoRequest) StructName() string { return r.TypeName + r.Name + "Request" }
+// new_id arguments are created inside the method, so they are not parameters.
+func (r goRequest) MethodParams() string {
+	var parts []string
+	var group []string
+	groupType := ""
 
-// MethodParams renders the method parameter list. new_id arguments are
-// created inside the method and never appear as parameters; adjacent
-// parameters of the same type are merged, e.g. "x, y int32".
-func (r GoRequest) MethodParams() string {
-	var parts, group []string
-	var groupType string
 	flush := func() {
 		if len(group) > 0 {
 			parts = append(parts, strings.Join(group, ", ")+" "+groupType)
@@ -104,9 +88,9 @@ func (r GoRequest) MethodParams() string {
 		if a.IsNewID() {
 			continue
 		}
-		if t := a.Type(); t != groupType {
+		if a.Type() != groupType {
 			flush()
-			groupType = t
+			groupType = a.Type()
 		}
 		group = append(group, a.ParamName)
 	}
@@ -114,153 +98,362 @@ func (r GoRequest) MethodParams() string {
 	return strings.Join(parts, ", ")
 }
 
-// GoEvent is the Go-specific view of a protocol Event.
-type GoEvent struct {
-	TypeName        string
-	Name            string
-	Opcode          int
-	Since           int
-	DeprecatedSince int // 0 means not deprecated
-	StructDoc       string
-	Args            []GoArg
+type goEvent struct {
+	TypeName  string
+	Name      string
+	Opcode    int
+	Since     int
+	StructDoc string
+	Args      []goArg
 }
 
-// OpName is the name of the opcode constant.
-func (ev GoEvent) OpName() string { return ev.TypeName + "Event" + ev.Name }
+func (ev goEvent) OpName() string     { return ev.TypeName + "Event" + ev.Name }
+func (ev goEvent) StructName() string { return ev.TypeName + ev.Name + "Event" }
+func (ev goEvent) FuncName() string   { return ev.TypeName + ev.Name + "Func" }
 
-// StructName is the name of the event message struct.
-func (ev GoEvent) StructName() string { return ev.TypeName + ev.Name + "Event" }
-
-// FuncName is the name of the event callback type.
-func (ev GoEvent) FuncName() string { return ev.TypeName + ev.Name + "Func" }
-
-// HasNewID reports whether the event carries a new_id argument with a
-// resolvable interface.
-func (ev GoEvent) HasNewID() bool {
-	for _, a := range ev.Args {
-		if a.NewIDType != "" {
-			return true
-		}
-	}
-	return false
+// Such an event cannot call Unmarshal: building the child needs the Conn.
+func (ev goEvent) HasNewID() bool {
+	return slices.ContainsFunc(ev.Args, func(a goArg) bool { return a.NewIDType != "" })
 }
 
-// GoArg is the Go-specific view of one argument.
-type GoArg struct {
-	GoName    string // struct field name
-	ParamName string // method parameter name
-	Wire      string // Wayland wire type, e.g. "uint" or "new_id"
-	EnumType  string // Go enum type when the argument references a known enum
-	NewIDType string // Go interface type for a resolvable new_id
+type goArg struct {
+	GoName    string // struct field
+	ParamName string // method parameter
+	Wire      string // Wayland wire type
+	EnumType  string // Go enum type, when it references a known enum
+	NewIDType string // Go wrapper type for a resolvable new_id
 	AllowNull bool
-	Doc       string // field doc comment, "" if none
+	Doc       string
 }
 
-// wt returns the wire mapping for the argument, handling the nullable
-// string variant.
-func (a GoArg) wt() wireType {
+func (a goArg) wire() wireType {
+	// Nullable string is the only type whose Go form depends on an attribute.
 	if a.Wire == "string" && a.AllowNull {
 		return wireType{"*string", "r.StringNullable()", "StringNullable"}
 	}
 	return wireTypes[a.Wire]
 }
 
-// GoType is the wire Go type used in message structs.
-func (a GoArg) GoType() string { return a.wt().goType }
-
-// Type is the effective Go type: a pointer to the interface type for a
-// resolvable new_id, the enum type, or the wire type.
-func (a GoArg) Type() string {
-	if a.NewIDType != "" {
+func (a goArg) Type() string {
+	switch {
+	case a.NewIDType != "":
 		return "*" + a.NewIDType
-	}
-	if a.EnumType != "" {
+	case a.EnumType != "":
 		return a.EnumType
 	}
-	return a.GoType()
+	return a.wire().goType
 }
 
-// Read is the wire.Reader call that decodes the argument.
-func (a GoArg) Read() string { return a.wt().read }
+func (a goArg) Read() string  { return a.wire().read }
+func (a goArg) Write() string { return a.wire().write }
+func (a goArg) IsNewID() bool { return a.Wire == "new_id" }
 
-// Write is the wire.Writer method that encodes the argument.
-func (a GoArg) Write() string { return a.wt().write }
-
-// IsNewID reports whether the argument is a new_id.
-func (a GoArg) IsNewID() bool { return a.Wire == "new_id" }
-
-// EnumCast wraps expr in a conversion to the enum type, or returns expr
-// unchanged when the argument is not enum-typed.
-func (a GoArg) EnumCast(expr string) string {
+func (a goArg) EnumCast(expr string) string {
 	if a.EnumType == "" {
 		return expr
 	}
 	return a.EnumType + "(" + expr + ")"
 }
 
-// MarshalExpr renders the value expression passed to the wire writer,
-// converting enum-typed arguments back to their wire type.
-func (a GoArg) MarshalExpr() string {
+func (a goArg) MarshalExpr() string {
 	if a.EnumType == "" {
 		return "r." + a.GoName
 	}
-	return a.GoType() + "(r." + a.GoName + ")"
+	return a.wire().goType + "(r." + a.GoName + ")"
 }
 
-// GoEnum is the Go-specific view of an enum.
-type GoEnum struct {
+type goEnum struct {
 	Type       string
 	IsBitField bool
+	Since      int
 	Doc        string
-	Entries    []GoEnumEntry
+	Entries    []goEnumEntry
 }
 
-// GoEnumEntry is the Go-specific view of an enum entry.
-type GoEnumEntry struct {
+type goEnumEntry struct {
 	Const string
 	Val   string
+	Since int
 	Doc   string
 }
 
-// enumMap maps enum references to Go type names. Keys are short names
-// ("format") for same-interface enums or qualified names ("wl_shm.format")
-// for cross-interface enums.
-type enumMap map[string]string
+type gen struct {
+	pkg    string
+	prefix string
+	known  map[string]bool   // interfaces declared in this file
+	enums  map[string]string // short and qualified name -> Go type
+}
 
-// docComment renders a Go doc comment for an exported identifier: name,
-// lower-cased summary, an optional "Deprecated:" note, then the dedented
-// description body. Returns "" when there is nothing to document.
-func docComment(name, summary, text string, deprecatedSince int) string {
-	if strings.TrimSpace(summary) == "" && strings.TrimSpace(text) == "" && deprecatedSince == 0 {
+func buildProtocol(p *Protocol, pkg, prefix string) []goInterface {
+	g := &gen{
+		pkg:    pkg,
+		prefix: prefix,
+		known:  make(map[string]bool, len(p.Interfaces)),
+		enums:  make(map[string]string),
+	}
+	for i := range p.Interfaces {
+		in := &p.Interfaces[i]
+		g.known[in.Name] = true
+		tn := typeName(in.Name, prefix)
+		for j := range in.Enums {
+			// Short name for same-interface refs, qualified for cross.
+			g.enums[in.Enums[j].Name] = tn + pascal(in.Enums[j].Name)
+			g.enums[in.Name+"."+in.Enums[j].Name] = tn + pascal(in.Enums[j].Name)
+		}
+	}
+
+	out := make([]goInterface, 0, len(p.Interfaces))
+	for i := range p.Interfaces {
+		out = append(out, g.interfaceView(&p.Interfaces[i]))
+	}
+	return out
+}
+
+func (g *gen) interfaceView(in *Interface) goInterface {
+	tn := typeName(in.Name, g.prefix)
+	v := goInterface{
+		Package:  g.pkg,
+		TypeName: tn,
+		IfName:   in.Name,
+		Version:  in.Version,
+		Frozen:   in.Frozen,
+		Doc:      docComment(tn, in.Description, 0),
+		Enums:    g.enumsOf(in, tn),
+	}
+	if g.pkg != corePkg {
+		v.WaylandPkg = "wayland."
+	}
+
+	v.Requests = g.requestsOf(in, tn)
+	v.Events, v.EventFDCounts = g.eventsOf(in, tn)
+	if len(v.Requests)+len(v.Events) > 0 {
+		v.Imports = append(v.Imports, wirePkgPath)
+	}
+	if g.pkg != corePkg {
+		v.Imports = append(v.Imports, corePkgPath)
+	}
+	return v
+}
+
+func (g *gen) enumsOf(in *Interface, tn string) []goEnum {
+	out := make([]goEnum, 0, len(in.Enums))
+	for i := range in.Enums {
+		e := &in.Enums[i]
+		en := goEnum{
+			Type:       tn + pascal(e.Name),
+			IsBitField: e.BitField,
+			Since:      max(e.Since, 1),
+			Doc:        docComment(tn+pascal(e.Name), e.Description, 0),
+		}
+		for j := range e.Entries {
+			entry := &e.Entries[j]
+			en.Entries = append(en.Entries, goEnumEntry{
+				Const: en.Type + pascal(entry.Name),
+				Val:   fmt.Sprintf("%d", entry.Value),
+				Since: max(entry.Since, 1),
+				Doc:   docComment(en.Type+pascal(entry.Name), Description{Summary: entry.Summary, Text: entry.Description.Text}, entry.DeprecatedSince),
+			})
+		}
+		out = append(out, en)
+	}
+	return out
+}
+
+func (g *gen) requestsOf(in *Interface, tn string) []goRequest {
+	out := make([]goRequest, 0, len(in.Requests))
+	for opcode := range in.Requests {
+		m := &in.Requests[opcode]
+		name := pascal(m.Name)
+		r := goRequest{
+			TypeName:   tn,
+			Name:       name,
+			Opcode:     opcode,
+			Since:      max(m.Since, 1),
+			StructDoc:  docComment(tn+name+"Request", m.Description, m.DeprecatedSince),
+			MethodDoc:  docComment(name, m.Description, m.DeprecatedSince),
+			Destructor: m.Type == "destructor",
+		}
+		for j := range m.Args {
+			a := &m.Args[j]
+			ga := g.argView(a)
+			if ga.IsNewID() && a.Interface == "" {
+				r.SynthVersion = true
+				r.Args = append(r.Args,
+					goArg{GoName: "Interface", ParamName: "interface_", Wire: "string"},
+					goArg{GoName: "Version", ParamName: "version", Wire: "uint"},
+				)
+			}
+			r.Args = append(r.Args, ga)
+			if !ga.IsNewID() {
+				continue
+			}
+			if g.known[a.Interface] {
+				r.NewIDType = typeName(a.Interface, g.prefix)
+			} else {
+				r.CrossNewID = true
+			}
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func (g *gen) eventsOf(in *Interface, tn string) ([]goEvent, map[uint16]int) {
+	events := make([]goEvent, 0, len(in.Events))
+	fdCounts := make(map[uint16]int, len(in.Events))
+	for opcode := range in.Events {
+		m := &in.Events[opcode]
+		name := pascal(m.Name)
+		ev := goEvent{
+			TypeName:  tn,
+			Name:      name,
+			Opcode:    opcode,
+			Since:     max(m.Since, 1),
+			StructDoc: docComment(tn+name+"Event", m.Description, m.DeprecatedSince),
+		}
+		fds := 0
+		for j := range m.Args {
+			a := &m.Args[j]
+			ga := g.argView(a)
+			if ga.IsNewID() && g.known[a.Interface] {
+				ga.NewIDType = typeName(a.Interface, g.prefix)
+			}
+			ev.Args = append(ev.Args, ga)
+			if a.Type == "fd" {
+				fds++
+			}
+		}
+		fdCounts[uint16(opcode)] = fds
+		events = append(events, ev)
+	}
+	return events, fdCounts
+}
+
+func (g *gen) argView(a *Arg) goArg {
+	ga := goArg{
+		GoName:    pascal(a.Name),
+		ParamName: camel(a.Name),
+		Wire:      a.Type,
+		AllowNull: a.AllowNull,
+		Doc:       fieldComment(pascal(a.Name), a.Summary),
+	}
+	// Wayland enums are uint32; an int-typed arg carrying one stays int32.
+	if a.Enum != "" && wireTypes[a.Type].goType == "uint32" {
+		ga.EnumType = g.enums[a.Enum]
+	}
+	return ga
+}
+
+func pascal(s string) string {
+	parts := strings.Split(s, "_")
+	for i, p := range parts {
+		if p == "" {
+			continue
+		}
+		if p == "id" {
+			parts[i] = "ID"
+			continue
+		}
+		r, n := utf8.DecodeRuneInString(p)
+		parts[i] = string(unicode.ToUpper(r)) + p[n:]
+	}
+	return strings.Join(parts, "")
+}
+
+func camel(s string) string {
+	p := pascal(s)
+	if p == "" {
+		return p
+	}
+	var result string
+	isID := strings.HasPrefix(p, "ID") && (len(p) == 2 || (p[2] >= 'A' && p[2] <= 'Z'))
+	if isID {
+		result = "id" + p[2:]
+	} else {
+		r, n := utf8.DecodeRuneInString(p)
+		result = string(unicode.ToLower(r)) + p[n:]
+	}
+	if goKeywords[result] {
+		return result + "_"
+	}
+	return result
+}
+
+func snakeCase(s string) string {
+	var b strings.Builder
+	for i, r := range s {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				b.WriteByte('_')
+			}
+			b.WriteRune(unicode.ToLower(r))
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func typeName(xmlName, prefix string) string {
+	return pascal(strings.TrimPrefix(xmlName, prefix))
+}
+
+func autoPrefix(interfaces []Interface) string {
+	if len(interfaces) == 0 {
 		return ""
 	}
+	common := interfaces[0].Name
+	for _, in := range interfaces[1:] {
+		n := min(len(common), len(in.Name))
+		i := 0
+		for i < n && common[i] == in.Name[i] {
+			i++
+		}
+		if common = common[:i]; i == 0 {
+			return ""
+		}
+	}
+	if idx := strings.IndexByte(common, '_'); idx >= 0 {
+		return common[:idx+1]
+	}
+	return ""
+}
+
+// Keywords and predeclared identifiers that must not become parameter names.
+var goKeywords = map[string]bool{
+	"break": true, "default": true, "func": true, "interface": true, "select": true,
+	"case": true, "defer": true, "go": true, "map": true, "struct": true,
+	"chan": true, "else": true, "goto": true, "package": true, "switch": true,
+	"const": true, "fallthrough": true, "if": true, "range": true, "type": true,
+	"continue": true, "for": true, "import": true, "return": true, "var": true,
+	"error": true, "len": true, "cap": true, "string": true, "nil": true,
+}
+
+// Returns "" when there is nothing to say.
+func docComment(name string, d Description, deprecatedSince int) string {
+	body := dedent(d.Text)
+	if strings.TrimSpace(d.Summary) == "" && body == "" && deprecatedSince == 0 {
+		return ""
+	}
+
 	first := name
-	if s := strings.Join(strings.Fields(summary), " "); s != "" {
+	if s := strings.Join(strings.Fields(d.Summary), " "); s != "" {
 		first += " " + lowerFirst(s)
 	}
-	first = strings.TrimRight(first, ". 	") + "."
+	lines := []string{"// " + strings.TrimRight(first, ". \t") + "."}
 
-	var lines []string
-	lines = append(lines, "// "+first)
 	if deprecatedSince > 0 {
-		lines = append(lines, "//")
-		lines = append(lines, fmt.Sprintf("// Deprecated: since version %d.", deprecatedSince))
+		lines = append(lines, "//", fmt.Sprintf("// Deprecated: since version %d.", deprecatedSince))
 	}
-	if t := dedent(text); t != "" {
+	if body != "" {
 		lines = append(lines, "//")
-		for ln := range strings.SplitSeq(t, "\n") {
-			ln = strings.TrimRight(ln, " 	")
-			if ln == "" {
-				lines = append(lines, "//")
-			} else {
-				lines = append(lines, "// "+ln)
-			}
+		for ln := range strings.SplitSeq(body, "\n") {
+			lines = append(lines, strings.TrimRight("// "+ln, " \t"))
 		}
 	}
 	return strings.Join(lines, "\n") + "\n"
 }
 
-// fieldComment renders a single-line doc comment for a struct field.
 func fieldComment(name, summary string) string {
 	s := strings.Join(strings.Fields(summary), " ")
 	if s == "" {
@@ -269,7 +462,6 @@ func fieldComment(name, summary string) string {
 	return "// " + name + " " + lowerFirst(s) + ".\n"
 }
 
-// lowerFirst lower-cases the first rune of s.
 func lowerFirst(s string) string {
 	if s == "" {
 		return s
@@ -278,28 +470,27 @@ func lowerFirst(s string) string {
 	return string(unicode.ToLower(r)) + s[n:]
 }
 
-// dedent strips the common leading indentation and leading/trailing blank
-// lines. XML description bodies are uniformly indented, so the stripped
-// comment text stays flush left (gofmt would mangle indented comments).
 func dedent(s string) string {
 	lines := strings.Split(s, "\n")
-	minIndent := -1
+
+	indent := -1
 	for _, ln := range lines {
 		if strings.TrimSpace(ln) == "" {
 			continue
 		}
-		n := len(ln) - len(strings.TrimLeft(ln, " 	"))
-		if minIndent == -1 || n < minIndent {
-			minIndent = n
+		n := len(ln) - len(strings.TrimLeft(ln, " \t"))
+		if indent < 0 || n < indent {
+			indent = n
 		}
 	}
-	if minIndent > 0 {
+	if indent > 0 {
 		for i, ln := range lines {
-			if len(ln) >= minIndent {
-				lines[i] = ln[minIndent:]
+			if len(ln) >= indent {
+				lines[i] = ln[indent:]
 			}
 		}
 	}
+
 	for len(lines) > 0 && strings.TrimSpace(lines[0]) == "" {
 		lines = lines[1:]
 	}
@@ -307,191 +498,4 @@ func dedent(s string) string {
 		lines = lines[:len(lines)-1]
 	}
 	return strings.Join(lines, "\n")
-}
-
-// buildEnumMap builds the protocol-wide enum reference to Go type mapping.
-func buildEnumMap(ifaces []Interface, prefix string) enumMap {
-	m := make(enumMap)
-	for i := range ifaces {
-		iface := &ifaces[i]
-		tn := typeName(iface.Name, prefix)
-		for j := range iface.Enums {
-			e := &iface.Enums[j]
-			goType := tn + pascal(e.Name)
-			m[e.Name] = goType
-			m[iface.Name+"."+e.Name] = goType
-		}
-	}
-	return m
-}
-
-// convertInterface converts one Interface into its Go-specific view.
-func convertInterface(iface *Interface, pkg, prefix string, knownIface map[string]bool, em enumMap) (GoInterface, error) {
-	tn := typeName(iface.Name, prefix)
-
-	isRoot := pkg == corePkg
-	g := GoInterface{
-		Package:  pkg,
-		TypeName: tn,
-		IfName:   iface.Name,
-		Version:  iface.Version,
-		Doc:      docComment(tn, iface.Description.Summary, iface.Description.Text, 0),
-	}
-	if !isRoot {
-		g.WaylandPkg = "wayland."
-	}
-
-	g.Enums = buildEnums(iface, tn)
-	var err error
-	g.Requests, err = buildRequests(iface, tn, prefix, knownIface, em)
-	if err != nil {
-		return GoInterface{}, fmt.Errorf("interface %s: %w", iface.Name, err)
-	}
-	g.Events, g.EventFDCounts, err = buildEvents(iface, tn, prefix, knownIface, em)
-	if err != nil {
-		return GoInterface{}, fmt.Errorf("interface %s: %w", iface.Name, err)
-	}
-	g.Imports = buildImports(len(g.Requests)+len(g.Events) > 0, isRoot)
-
-	return g, nil
-}
-
-// buildEnums converts Interface enums to GoEnums.
-func buildEnums(iface *Interface, tn string) []GoEnum {
-	var out []GoEnum
-	for i := range iface.Enums {
-		e := &iface.Enums[i]
-		en := GoEnum{
-			Type:       tn + pascal(e.Name),
-			IsBitField: e.BitField,
-			Doc:        docComment(tn+pascal(e.Name), e.Description.Summary, e.Description.Text, 0),
-		}
-		for j := range e.Entries {
-			entry := &e.Entries[j]
-			en.Entries = append(en.Entries, GoEnumEntry{
-				Const: en.Type + pascal(entry.Name),
-				Val:   fmt.Sprintf("%d", entry.Value),
-				Doc:   docComment(en.Type+pascal(entry.Name), entry.Summary, entry.Description.Text, entry.DeprecatedSince),
-			})
-		}
-		out = append(out, en)
-	}
-	return out
-}
-
-// buildRequests converts Interface requests to GoRequests.
-func buildRequests(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) ([]GoRequest, error) {
-	var out []GoRequest
-	for opcode := range iface.Requests {
-		r := &iface.Requests[opcode]
-		name := pascal(r.Name)
-		rd := GoRequest{
-			TypeName:        tn,
-			Name:            name,
-			Opcode:          opcode,
-			Since:           max(r.Since, 1),
-			DeprecatedSince: r.DeprecatedSince,
-			StructDoc:       docComment(tn+name+"Request", r.Description.Summary, r.Description.Text, r.DeprecatedSince),
-			MethodDoc:       docComment(name, r.Description.Summary, r.Description.Text, r.DeprecatedSince),
-			Destructor:      r.Type == "destructor",
-		}
-
-		for j := range r.Args {
-			ga, err := buildArg(&r.Args[j], em)
-			if err != nil {
-				return nil, fmt.Errorf("request %s: %w", r.Name, err)
-			}
-			// A new_id without an interface attribute needs synthetic
-			// interface and version arguments injected.
-			if ga.IsNewID() && r.Args[j].Interface == "" {
-				rd.SynthVersion = true
-				rd.Args = append(rd.Args,
-					GoArg{GoName: "Interface", ParamName: "interface_", Wire: "string"},
-					GoArg{GoName: "Version", ParamName: "version", Wire: "uint"},
-				)
-			}
-			rd.Args = append(rd.Args, ga)
-
-			if !ga.IsNewID() {
-				continue
-			}
-			if ifn := r.Args[j].Interface; ifn != "" && knownIface[ifn] {
-				rd.NewIDType = typeName(ifn, prefix)
-			} else {
-				rd.CrossNewID = true
-			}
-		}
-		out = append(out, rd)
-	}
-	return out, nil
-}
-
-// buildEvents converts Interface events to GoEvents and the opcode -> fd
-// count table (0 for events without fds).
-func buildEvents(iface *Interface, tn, prefix string, knownIface map[string]bool, em enumMap) ([]GoEvent, map[uint16]int, error) {
-	var events []GoEvent
-	fdCounts := make(map[uint16]int, len(iface.Events))
-	for opcode := range iface.Events {
-		e := &iface.Events[opcode]
-		name := pascal(e.Name)
-		ed := GoEvent{
-			TypeName:        tn,
-			Name:            name,
-			Opcode:          opcode,
-			Since:           max(e.Since, 1),
-			DeprecatedSince: e.DeprecatedSince,
-			StructDoc:       docComment(tn+name+"Event", e.Description.Summary, e.Description.Text, e.DeprecatedSince),
-		}
-		fdCount := 0
-		for j := range e.Args {
-			ga, err := buildArg(&e.Args[j], em)
-			if err != nil {
-				return nil, nil, fmt.Errorf("event %s: %w", e.Name, err)
-			}
-			if ga.IsNewID() && e.Args[j].Interface != "" && knownIface[e.Args[j].Interface] {
-				ga.NewIDType = typeName(e.Args[j].Interface, prefix)
-			}
-			ed.Args = append(ed.Args, ga)
-			if e.Args[j].Type == "fd" {
-				fdCount++
-			}
-		}
-		fdCounts[uint16(opcode)] = fdCount
-		events = append(events, ed)
-	}
-	return events, fdCounts, nil
-}
-
-// buildArg maps a parsed Arg to its Go-specific view.
-func buildArg(a *Arg, em enumMap) (GoArg, error) {
-	if _, ok := wireTypes[a.Type]; !ok {
-		return GoArg{}, fmt.Errorf("unknown arg type %q", a.Type)
-	}
-	ad := GoArg{
-		GoName:    pascal(a.Name),
-		ParamName: camel(a.Name),
-		Wire:      a.Type,
-		AllowNull: a.AllowNull,
-		Doc:       fieldComment(pascal(a.Name), a.Summary),
-	}
-	// Enums only apply to uint32 arguments; int32-based enums would need a
-	// matching enum base type.
-	if a.Enum != "" && wireTypes[a.Type].goType == "uint32" {
-		ad.EnumType = em[a.Enum]
-	}
-	return ad, nil
-}
-
-// buildImports lists the packages a generated file imports: the wire codec
-// when the interface has requests or events, and the core wayland package
-// for extension protocols.
-func buildImports(hasWire, isRoot bool) []string {
-	var imps []string
-	if hasWire {
-		imps = append(imps, "github.com/xogas/wayland/wire")
-	}
-	if !isRoot {
-		imps = append(imps, "github.com/xogas/wayland")
-	}
-	return imps
 }
