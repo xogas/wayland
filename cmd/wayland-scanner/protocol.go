@@ -17,10 +17,6 @@ type Protocol struct {
 	Interfaces  []Interface `xml:"interface"`
 }
 
-type Description struct {
-	Summary string `xml:"summary,attr"`
-	Text    string `xml:",chardata"`
-}
 type Interface struct {
 	Name        string      `xml:"name,attr"`
 	Version     int         `xml:"version,attr"`
@@ -57,6 +53,15 @@ type Enum struct {
 	Entries     []Entry     `xml:"entry"`
 }
 
+type Entry struct {
+	Name            string      `xml:"name,attr"`
+	Value           IntValue    `xml:"value,attr"`
+	Summary         string      `xml:"summary,attr"`
+	Since           int         `xml:"since,attr"`
+	DeprecatedSince int         `xml:"deprecated-since,attr"`
+	Description     Description `xml:"description"`
+}
+
 type Arg struct {
 	Name        string      `xml:"name,attr"`
 	Type        string      `xml:"type,attr"`
@@ -67,13 +72,9 @@ type Arg struct {
 	Description Description `xml:"description"`
 }
 
-type Entry struct {
-	Name            string      `xml:"name,attr"`
-	Value           IntValue    `xml:"value,attr"`
-	Summary         string      `xml:"summary,attr"`
-	Since           int         `xml:"since,attr"`
-	DeprecatedSince int         `xml:"deprecated-since,attr"`
-	Description     Description `xml:"description"`
+type Description struct {
+	Summary string `xml:"summary,attr"`
+	Text    string `xml:",chardata"`
 }
 
 // CDATA in the DTD; holds decimal or 0x-hex.
