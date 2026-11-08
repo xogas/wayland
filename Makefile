@@ -7,7 +7,6 @@ clean-gen:
 gen: clean-gen
 	go run ./cmd/wayland-scanner
 
-
 build:
 	go build -o bin/wayland-scanner ./cmd/wayland-scanner
 	go build -o bin/wayland-info ./cmd/wayland-info
