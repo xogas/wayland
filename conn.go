@@ -25,7 +25,7 @@ type Conn struct {
 	errMu      sync.Mutex
 	readErr    error
 	protoErr   error
-	connMu     sync.Mutex
+	connMu     sync.RWMutex
 	logger     *slog.Logger
 	onError    func(*ProtocolError)
 	readerOnce sync.Once
@@ -54,9 +54,9 @@ func (c *Conn) SetLogger(l *slog.Logger) {
 }
 
 func (c *Conn) Logger() *slog.Logger {
-	c.connMu.Lock()
+	c.connMu.RLock()
 	l := c.logger
-	c.connMu.Unlock()
+	c.connMu.RUnlock()
 	return l
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/xogas/wayland/wire"
 )
@@ -168,9 +169,12 @@ func (d *Display) Roundtrip(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer d.Conn().UnregisterProxy(cb.Proxy().ID())
+
+	var once sync.Once
 	done := make(chan struct{})
 	cb.OnDone(func(ev CallbackDoneEvent) {
-		close(done)
+		once.Do(func() { close(done) })
 	})
 	for {
 		if err := d.Dispatch(ctx); err != nil {

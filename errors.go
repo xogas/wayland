@@ -5,9 +5,11 @@ import (
 	"fmt"
 )
 
-var ErrConnClosed = errors.New("wayland: connection closed")
-var ErrObjectDeleted = errors.New("wayland: object deleted")
-var ErrVersionMismatch = errors.New("wayland: version mismatch")
+var (
+	ErrConnClosed      = errors.New("wayland: connection closed")
+	ErrObjectDeleted   = errors.New("wayland: object deleted")
+	ErrVersionMismatch = errors.New("wayland: version mismatch")
+)
 
 type ProtocolError struct {
 	ObjectID uint32
