@@ -58,7 +58,7 @@ For example code point 1: apply equations 11-13, 38-40 and either 23-25 or 29-31
 (depending on the ``VideoFullRangeFlag``) to arrive at the YCbCr encoding. An
 RGB encoding cannot be inferred from the applicable equations.
 
-Therefore code point 1 is is compatible only with pixel formats which contain
+Therefore code point 1 is compatible only with pixel formats which contain
 the YCbCr color channels.
 
 MatrixCoefficients usage
