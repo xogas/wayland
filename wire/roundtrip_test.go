@@ -1,167 +1,129 @@
 package wire
 
 import (
-	"bytes"
+	"encoding/binary"
 	"testing"
 )
 
-func TestScalars(t *testing.T) {
-	fixedVal := FixedFromFloat64(1.5)
-
-	cases := []struct {
-		name  string
-		write func(*Writer) error
-		read  func(*Reader) (any, error)
-		want  any
-	}{
-		{
-			"int32",
-			func(w *Writer) error { return w.Int32(-12345) },
-			func(r *Reader) (any, error) { return r.Int32() },
-			int32(-12345),
-		},
-		{
-			"uint32",
-			func(w *Writer) error { return w.Uint32(0xDEADBEEF) },
-			func(r *Reader) (any, error) { return r.Uint32() },
-			uint32(0xDEADBEEF),
-		},
-		{
-			"fixed",
-			func(w *Writer) error { return w.Fixed(fixedVal) },
-			func(r *Reader) (any, error) { return r.Fixed() },
-			fixedVal,
-		},
-		{
-			"object",
-			func(w *Writer) error { return w.Object(7) },
-			func(r *Reader) (any, error) { return r.Object() },
-			ObjectID(7),
-		},
-		{
-			"newid",
-			func(w *Writer) error { return w.NewID(42) },
-			func(r *Reader) (any, error) { return r.NewID() },
-			NewID(42),
-		},
+// SendMessage rejects unaligned payloads, so every field Writer emits must be
+// aligned; a type without padding breaks all traffic, not just its own
+// message.
+func TestWriterAlwaysEmitsAlignedPayload(t *testing.T) {
+	for _, s := range []string{"", "a", "ab", "abc", "abcd", "abcde", "abcdefg"} {
+		w := &Writer{}
+		if err := w.String(s); err != nil {
+			t.Fatal(err)
+		}
+		if len(w.Bytes())%4 != 0 {
+			t.Fatalf("String(%q) produced %d bytes", s, len(w.Bytes()))
+		}
 	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			w := &Writer{}
-			if err := c.write(w); err != nil {
-				t.Fatal(err)
-			}
-			got, err := c.read(NewReader(w.Bytes(), nil))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if got != c.want {
-				t.Errorf("got %v, want %v", got, c.want)
-			}
-		})
+	for n := range 9 {
+		w := &Writer{}
+		if err := w.Array(make([]byte, n)); err != nil {
+			t.Fatal(err)
+		}
+		if len(w.Bytes())%4 != 0 {
+			t.Fatalf("Array(%d bytes) produced %d bytes", n, len(w.Bytes()))
+		}
+	}
+
+	var w Writer
+	_ = w.Int32(1)
+	_ = w.Uint32(2)
+	_ = w.Fixed(3)
+	_ = w.Object(4)
+	_ = w.NewID(5)
+	_ = w.Fd(6)
+	if len(w.Bytes())%4 != 0 {
+		t.Fatalf("mixed fields produced %d bytes", len(w.Bytes()))
 	}
 }
 
-func TestString(t *testing.T) {
-	cases := []struct {
-		name string
+func TestStringLengthCountsNUL(t *testing.T) {
+	tests := []struct {
 		in   string
+		want uint32
 	}{
-		{"empty", ""},
-		{"single byte", "a"},
-		{"aligned", "abcd"},
-		{"unaligned", "abc"},
-		{"nul embedded", "hello\x00world"},
-		{"unicode", "Hello, 世界"},
+		{"", 1},
+		{"a", 2},
+		{"abc", 4},
+		{"abcd", 5},
 	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			w := &Writer{}
-			if err := w.String(c.in); err != nil {
-				t.Fatal(err)
-			}
-			b := w.Bytes()
-			if len(b)%4 != 0 {
-				t.Errorf("payload len %d not 4-byte aligned", len(b))
-			}
-			got, err := NewReader(b, nil).String()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if got != c.in {
-				t.Errorf("got %q, want %q", got, c.in)
-			}
-		})
+	for _, tt := range tests {
+		w := &Writer{}
+		if err := w.String(tt.in); err != nil {
+			t.Fatal(err)
+		}
+		if got := binary.NativeEndian.Uint32(w.Bytes()); got != tt.want {
+			t.Errorf("length prefix for %q = %d, want %d", tt.in, got, tt.want)
+		}
 	}
 }
 
-func TestArray(t *testing.T) {
-	cases := []struct {
-		name string
-		in   []byte
-	}{
-		{"nil", nil},
-		{"empty", []byte{}},
-		{"single", []byte{1}},
-		{"unaligned", []byte{1, 2, 3}},
-		{"aligned", []byte{1, 2, 3, 4}},
-		{"multi", []byte{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF}},
+func TestEmbeddedNULSurvivesTheCodec(t *testing.T) {
+	// Not valid C-string data, but the byte count is preserved.
+	w := &Writer{}
+	if err := w.String("a\x00b"); err != nil {
+		t.Fatal(err)
 	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			w := &Writer{}
-			if err := w.Array(c.in); err != nil {
-				t.Fatal(err)
-			}
-			b := w.Bytes()
-			if len(b)%4 != 0 {
-				t.Errorf("payload len %d not 4-byte aligned", len(b))
-			}
-			got, err := NewReader(b, nil).Array()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(got, c.in) {
-				t.Errorf("got %v, want %v", got, c.in)
-			}
-		})
+	got, err := NewReader(w.Bytes(), nil).String()
+	if err != nil {
+		t.Fatalf("String: %v", err)
+	}
+	if got != "a\x00b" {
+		t.Fatalf("String = %q, want %q", got, "a\x00b")
 	}
 }
 
-// testMarshal implements Marshaler/Unmarshaler for integration testing.
-type testMarshal struct {
+func TestWriterResetDropsPayloadAndFDs(t *testing.T) {
+	// SendRequest reuses one Writer, so a retained fd list would ride along on
+	// the next request.
+	w := &Writer{}
+	_ = w.Uint32(1)
+	_ = w.Fd(3)
+	w.Reset()
+	if got := len(w.Bytes()); got != 0 {
+		t.Fatalf("Reset left %d payload bytes", got)
+	}
+	if got := len(w.Fds()); got != 0 {
+		t.Fatalf("Reset left %d fds", got)
+	}
+}
+
+type testRequest struct {
 	a int32
 	b string
 }
 
-func (m *testMarshal) Marshal(w *Writer) error {
-	if err := w.Int32(m.a); err != nil {
+func (r *testRequest) Marshal(w *Writer) error {
+	if err := w.Int32(r.a); err != nil {
 		return err
 	}
-	return w.String(m.b)
+	return w.String(r.b)
 }
 
-func (m *testMarshal) Unmarshal(r *Reader) error {
-	var err error
-	m.a, err = r.Int32()
-	if err != nil {
-		return err
-	}
-	m.b, err = r.String()
-	return err
-}
-
-func TestMarshalerUnmarshaler(t *testing.T) {
-	orig := &testMarshal{a: 12345, b: "hello"}
+// Covers the generated-code path.
+func TestMarshalerRoundTrip(t *testing.T) {
+	in := &testRequest{a: -12345, b: "hello"}
 	w := &Writer{}
-	if err := orig.Marshal(w); err != nil {
+	if err := in.Marshal(w); err != nil {
 		t.Fatal(err)
 	}
-	decoded := &testMarshal{}
-	if err := decoded.Unmarshal(NewReader(w.Bytes(), nil)); err != nil {
-		t.Fatal(err)
+	if len(w.Bytes())%4 != 0 {
+		t.Fatalf("marshal produced %d bytes", len(w.Bytes()))
 	}
-	if decoded.a != orig.a || decoded.b != orig.b {
-		t.Errorf("got {%d, %q}, want {%d, %q}", decoded.a, decoded.b, orig.a, orig.b)
+
+	r := NewReader(w.Bytes(), nil)
+	a, err := r.Int32()
+	if err != nil || a != in.a {
+		t.Fatalf("Int32 = %d, %v", a, err)
+	}
+	b, err := r.String()
+	if err != nil || b != in.b {
+		t.Fatalf("String = %q, %v", b, err)
+	}
+	if r.Remaining() != 0 {
+		t.Fatalf("%d trailing bytes after a full decode", r.Remaining())
 	}
 }

@@ -2,49 +2,80 @@ package wire
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"slices"
 	"sync"
 	"syscall"
 )
 
-// Conn wraps a Unix domain socket connection for sending and receiving Wayland messages.
+const (
+	// Alignment pulls the real ceiling down to 65532.
+	maxMessage = 0xFFFF
+	maxPayload = maxMessage - 8
+
+	// Only sets the syscall count per frame: partial frames are buffered.
+	readChunk = 4096
+
+	// More than this in one receive sets MSG_CTRUNC and is fatal; no Wayland
+	// message declares that many.
+	maxFDsPerRead = 32
+)
+
+// ErrMessageTooLarge means the frame will not fit 16 bits; Wayland has no
+// fragmentation.
+var ErrMessageTooLarge = errors.New("wire: message exceeds 65535 bytes")
+
+// Conn is one end of a Wayland socket. SendMessage is safe for concurrent use.
+// ReceiveMessage must be called from a single goroutine, which owns buf,
+// readBuf and oobBuf. fdsMu guards the descriptor queue shared with the
+// dispatcher. The zero value is not usable; call NewConn.
 type Conn struct {
-	conn    *net.UnixConn
-	buf     []byte // byte-stream buffer holding incomplete messages
-	fdsMu   sync.Mutex
-	fds     []int
-	readBuf []byte // scratch buffer for ReadMsgUnix, reused across calls
-	oobBuf  []byte // scratch buffer for SCM_RIGHTS control data, reused across calls
+	conn *net.UnixConn
+
 	sendMu  sync.Mutex
-	sendBuf []byte // scratch buffer for outgoing messages, reused across calls
+	sendBuf []byte
+
+	// Shared with the dispatcher goroutine.
+	fdsMu  sync.Mutex
+	fds    []int
+	closed bool
+
+	// Owned by the ReceiveMessage goroutine.
+	buf     []byte
+	readBuf []byte
+	oobBuf  []byte
 }
 
-// NewConn returns a Conn wrapping conn.
 func NewConn(conn *net.UnixConn) *Conn {
-	return &Conn{conn: conn}
+	return &Conn{
+		conn:    conn,
+		readBuf: make([]byte, readChunk),
+		oobBuf:  make([]byte, syscall.CmsgSpace(4*maxFDsPerRead)),
+	}
 }
 
-// TakeFDs removes and returns up to n file descriptors from the front of the
-// connection-level fd queue. Returns fewer than n if the queue is exhausted.
-// Safe for concurrent use with ReceiveMessage, TakeFDs, and TakeAllFDs.
+// n is the count the interface declares for the opcode. A short queue is
+// clamped here and surfaces later as ErrNoFD.
 func (c *Conn) TakeFDs(n int) []int {
 	if n <= 0 {
 		return nil
 	}
 	c.fdsMu.Lock()
 	defer c.fdsMu.Unlock()
-	if n > len(c.fds) {
-		n = len(c.fds)
+	n = min(n, len(c.fds))
+	if n == 0 {
+		return nil
 	}
-	taken := c.fds[:n]
-	c.fds = c.fds[n:]
+	// Copy out: the reader goroutine keeps appending.
+	taken := slices.Clone(c.fds[:n])
+	c.fds = slices.Delete(c.fds, 0, n)
 	return taken
 }
 
-// TakeAllFDs removes and returns all remaining file descriptors from the queue.
-// Safe for concurrent use with ReceiveMessage, TakeFDs, and TakeAllFDs.
+// TakeAllFDs drains the queue; the caller owns what comes back.
 func (c *Conn) TakeAllFDs() []int {
 	c.fdsMu.Lock()
 	defer c.fdsMu.Unlock()
@@ -53,114 +84,185 @@ func (c *Conn) TakeAllFDs() []int {
 	return fds
 }
 
-// Close closes the underlying connection.
+// Close drains the queue and closes the socket. Received SCM_RIGHTS fds have no
+// finalizers, so anything left behind leaks. closed is set under fdsMu so a
+// racing receive cannot append after the drain.
 func (c *Conn) Close() error {
+	c.fdsMu.Lock()
+	if c.closed {
+		c.fdsMu.Unlock()
+		return nil
+	}
+	c.closed = true
+	fds := c.fds
+	c.fds = nil
+	c.fdsMu.Unlock()
+
+	closeFDs(fds)
 	return c.conn.Close()
 }
 
-var ErrMessageTooLarge = fmt.Errorf("wire: message size exceeds 65535 bytes")
+func (c *Conn) isClosed() bool {
+	c.fdsMu.Lock()
+	defer c.fdsMu.Unlock()
+	return c.closed
+}
 
-// SendMessage sends a Wayland message.
-// Frame: [object_id:uint32][length<<16|opcode:uint32][payload...].
-// FDs from w.Fds() are sent as SCM_RIGHTS ancillary data.
-// Safe for concurrent use.
+// SendMessage writes one frame with its fds in the same call, so they cannot
+// drift to another message. Any error is fatal for the stream: a partial write
+// cannot be undone.
 func (c *Conn) SendMessage(obj ObjectID, opcode uint16, w *Writer) error {
 	c.sendMu.Lock()
 	defer c.sendMu.Unlock()
 
 	payload := w.Bytes()
+	// Unaligned payloads have no valid length field.
+	if len(payload)%4 != 0 {
+		return fmt.Errorf("wire: unaligned payload of %d bytes", len(payload))
+	}
 	length := 8 + len(payload)
-	if length > 0xFFFF {
+	if length > maxMessage {
 		return ErrMessageTooLarge
 	}
-	pad := (4 - len(payload)%4) % 4
 
-	need := 8 + len(payload) + pad
-	if cap(c.sendBuf) < need {
-		c.sendBuf = make([]byte, need)
+	if cap(c.sendBuf) < length {
+		c.sendBuf = make([]byte, length)
 	}
-	buf := c.sendBuf[:need]
+	buf := c.sendBuf[:length]
 	binary.NativeEndian.PutUint32(buf[0:4], uint32(obj))
 	binary.NativeEndian.PutUint32(buf[4:8], uint32(length)<<16|uint32(opcode))
 	copy(buf[8:], payload)
 
-	if len(w.Fds()) == 0 {
-		_, err := c.conn.Write(buf)
-		return err
+	fds := w.Fds()
+	if len(fds) == 0 {
+		if _, err := c.conn.Write(buf); err != nil {
+			return fmt.Errorf("wire: sending to object %d: %w", obj, err)
+		}
+		return nil
 	}
 
-	rights := syscall.UnixRights(w.Fds()...)
+	rights := syscall.UnixRights(fds...)
 	n, _, err := c.conn.WriteMsgUnix(buf, rights, nil)
-	if err == nil && n != len(buf) {
-		err = io.ErrShortWrite
+	if err != nil {
+		return fmt.Errorf("wire: sending to object %d: %w", obj, err)
 	}
-	return err
+	if n != len(buf) {
+		return fmt.Errorf("wire: short write to object %d: %w", obj, io.ErrShortWrite)
+	}
+	return nil
 }
 
-// ReceiveMessage reads the next complete Wayland message.
-// Received FDs are queued at the connection level (matching libwayland);
-// callers must use TakeFDs + Reader.SetFDs to assign them to a message.
-// Must be called from a single goroutine.
+// ReceiveMessage returns the next complete frame. Descriptors received with it
+// stay queued until the dispatcher calls TakeFDs. Errors are fatal: a byte
+// stream cannot recover after an invalid header.
 func (c *Conn) ReceiveMessage() (ObjectID, uint16, *Reader, error) {
 	for {
-		if len(c.buf) >= 8 {
-			obj := ObjectID(binary.NativeEndian.Uint32(c.buf[0:4]))
-			word2 := binary.NativeEndian.Uint32(c.buf[4:8])
-			length := int(word2 >> 16)
-			opcode := uint16(word2 & 0xFFFF)
-
-			if length < 8 {
-				return 0, 0, nil, fmt.Errorf("wire: invalid message length %d", length)
-			}
-
-			if len(c.buf) >= length {
-				payload := make([]byte, length-8)
-				copy(payload, c.buf[8:length])
-				c.buf = c.buf[length:]
-
-				r := NewReader(payload, nil)
-
-				return obj, opcode, r, nil
-			}
+		// Checked before every return: Close drains the fd queue, so a frame
+		// handed out afterwards would decode without its descriptors.
+		if c.isClosed() {
+			return 0, 0, nil, net.ErrClosed
 		}
 
-		// Reuse the scratch buffers across reads: ReceiveMessage is only
-		// called from the connection's reader goroutine, so this is safe and
-		// avoids two allocations per read syscall.
-		if c.readBuf == nil {
-			c.readBuf = make([]byte, 4096)
-			c.oobBuf = make([]byte, syscall.CmsgSpace(4*32))
+		if len(c.buf) >= 8 {
+			f, rest, ok, err := splitFrame(c.buf)
+			if err != nil {
+				return 0, 0, nil, err
+			}
+			if ok {
+				c.buf = rest
+				return f.obj, f.opcode, NewReader(f.payload, nil), nil
+			}
 		}
 
 		n, oobn, flags, _, err := c.conn.ReadMsgUnix(c.readBuf, c.oobBuf)
 		if err != nil {
 			return 0, 0, nil, err
 		}
-		if flags&syscall.MSG_CTRUNC != 0 {
-			return 0, 0, nil, fmt.Errorf("wire: control message truncated (OOB buffer too small)")
+		if n == 0 {
+			// A zero-length read without an error would loop forever.
+			return 0, 0, nil, io.ErrNoProgress
 		}
 
-		var newFds []int
-		if oobn > 0 {
-			scms, err := syscall.ParseSocketControlMessage(c.oobBuf[:oobn])
-			if err != nil {
-				return 0, 0, nil, fmt.Errorf("wire: parsing control message: %w", err)
+		newFds, err := parseFDs(c.oobBuf[:oobn], flags)
+		if err != nil {
+			return 0, 0, nil, err
+		}
+		if len(newFds) > 0 {
+			c.fdsMu.Lock()
+			if c.closed {
+				c.fdsMu.Unlock()
+				closeFDs(newFds)
+				return 0, 0, nil, net.ErrClosed
 			}
-			for _, scm := range scms {
-				parsedFds, err := syscall.ParseUnixRights(&scm)
-				if err != nil {
-					return 0, 0, nil, fmt.Errorf("wire: parsing unix rights: %w", err)
-				}
-				for _, fd := range parsedFds {
-					syscall.CloseOnExec(fd)
-				}
-				newFds = append(newFds, parsedFds...)
-			}
+			c.fds = append(c.fds, newFds...)
+			c.fdsMu.Unlock()
 		}
 
-		c.fdsMu.Lock()
-		c.fds = append(c.fds, newFds...)
-		c.fdsMu.Unlock()
 		c.buf = append(c.buf, c.readBuf[:n]...)
+	}
+}
+
+// frame does not alias buf.
+type frame struct {
+	obj     ObjectID
+	opcode  uint16
+	payload []byte
+}
+
+// length is the format's only delimiter. A non-multiple-of-4 length cannot come
+// from a correct peer and would shift every later header.
+func splitFrame(buf []byte) (f frame, rest []byte, ok bool, err error) {
+	if len(buf) < 8 {
+		return frame{}, buf, false, nil
+	}
+	obj := ObjectID(binary.NativeEndian.Uint32(buf[0:4]))
+	word2 := binary.NativeEndian.Uint32(buf[4:8])
+	length := int(word2 >> 16)
+	opcode := uint16(word2)
+	if length < 8 || length%4 != 0 {
+		return frame{}, nil, false, fmt.Errorf("wire: invalid message length %d", length)
+	}
+	if len(buf) < length {
+		return frame{}, buf, false, nil
+	}
+	payload := make([]byte, length-8)
+	copy(payload, buf[8:length])
+	return frame{obj: obj, opcode: opcode, payload: payload}, buf[length:], true, nil
+}
+
+// parseFDs must close whatever it already parsed: the kernel installs the
+// descriptors before this runs, so a failure cannot un-install them.
+func parseFDs(oob []byte, flags int) ([]int, error) {
+	var fds []int
+	if len(oob) > 0 {
+		scms, err := syscall.ParseSocketControlMessage(oob)
+		if err != nil {
+			// Descriptor numbers inside a control buffer that cannot be
+			// parsed are lost.
+			return nil, fmt.Errorf("wire: parsing control message: %w", err)
+		}
+		for _, scm := range scms {
+			got, err := syscall.ParseUnixRights(&scm)
+			if err != nil {
+				closeFDs(fds)
+				return nil, fmt.Errorf("wire: parsing unix rights: %w", err)
+			}
+			for _, fd := range got {
+				syscall.CloseOnExec(fd)
+			}
+			fds = append(fds, got...)
+		}
+	}
+	if flags&syscall.MSG_CTRUNC != 0 {
+		// The kernel closed the descriptors that did not fit.
+		closeFDs(fds)
+		return nil, fmt.Errorf("wire: control message truncated: peer packed more than %d fds into one receive call", maxFDsPerRead)
+	}
+	return fds, nil
+}
+
+func closeFDs(fds []int) {
+	for _, fd := range fds {
+		_ = syscall.Close(fd)
 	}
 }

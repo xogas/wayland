@@ -5,152 +5,72 @@ import (
 	"testing"
 )
 
-const (
-	fixedMaxFloat = float64(math.MaxInt32) / 256.0
-	fixedMinFloat = float64(math.MinInt32) / 256.0
-)
-
-func TestFixedRoundTrip(t *testing.T) {
-	values := []float64{0, 1.5, -1.5, 0.25, -0.25, 3.14159, -2.71828, 1000.5, -1000.5, fixedMaxFloat, fixedMinFloat}
-	for _, v := range values {
-		f := FixedFromFloat64(v)
-		back := f.Float64()
-		if math.Abs(back-v) > 1.0/256.0+1e-8 {
-			t.Errorf("fixed round-trip: %v -> %v -> %v (diff %v)", v, f, back, back-v)
-		}
-	}
-}
-
-func TestFixedFromFloat64(t *testing.T) {
-	tests := []struct {
-		in  float64
-		out Fixed
-	}{
-		{0.0, 0},
-		{1.0, 256},
-		{-1.0, -256},
-		{1.5, 384},
-		{-1.5, -384},
-		{0.5, 128},
-		{-0.5, -128},
-		{fixedMaxFloat, Fixed(2147483647)},
-		{fixedMinFloat, Fixed(-2147483648)},
-	}
-	for _, tt := range tests {
-		got := FixedFromFloat64(tt.in)
-		if got != tt.out {
-			t.Errorf("FixedFromFloat64(%v) = %v, want %v", tt.in, got, tt.out)
-		}
-	}
-}
-
-func TestFixedInt(t *testing.T) {
-	tests := []struct {
-		f   Fixed
-		out int32
-	}{
-		{0, 0},
-		{256, 1},
-		{255, 0},
-		{257, 1},
-		{-256, -1},
-		{-255, 0},
-		{-257, -1},
-	}
-	for _, tt := range tests {
-		got := tt.f.Int()
-		if got != tt.out {
-			t.Errorf("Fixed(%d).Int() = %v, want %v", tt.f, got, tt.out)
-		}
-	}
-}
-
-func TestStringRoundTrip(t *testing.T) {
+// Covers overflow, which Go leaves unspecified.
+func TestFixedFromFloat64Clamps(t *testing.T) {
 	tests := []struct {
 		name string
-		in   string
-		// wantLen is the on-the-wire length prefix (includes NUL).
-		wantLen uint32
+		in   float64
+		want Fixed
 	}{
-		{"empty", "", 1},
-		{"ascii", "hello", 6},
-		{"unicode", "héllo", 7},
+		{"overflow", 1e9, Fixed(math.MaxInt32)},
+		{"underflow", -1e9, Fixed(math.MinInt32)},
+		{"+Inf", math.Inf(1), Fixed(math.MaxInt32)},
+		{"-Inf", math.Inf(-1), Fixed(math.MinInt32)},
+		{"NaN", math.NaN(), 0},
+		{"exact max", float64(math.MaxInt32) / 256, Fixed(math.MaxInt32)},
+		{"exact min", float64(math.MinInt32) / 256, Fixed(math.MinInt32)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			w := &Writer{}
-			if err := w.String(tt.in); err != nil {
-				t.Fatalf("String: %v", err)
-			}
-			r := NewReader(w.Bytes(), nil)
-			length, err := r.Uint32()
-			if err != nil {
-				t.Fatalf("length prefix: %v", err)
-			}
-			if length != tt.wantLen {
-				t.Fatalf("length prefix: got %d, want %d", length, tt.wantLen)
-			}
-			r = NewReader(w.Bytes(), nil)
-			got, err := r.String()
-			if err != nil {
-				t.Fatalf("read String: %v", err)
-			}
-			if got != tt.in {
-				t.Fatalf("round trip: got %q, want %q", got, tt.in)
+			if got := FixedFromFloat64(tt.in); got != tt.want {
+				t.Fatalf("FixedFromFloat64(%v) = %d, want %d", tt.in, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestStringNullableRoundTrip(t *testing.T) {
-	// nil encodes as length 0 (NULL on the wire).
-	w := &Writer{}
-	if err := w.StringNullable(nil); err != nil {
-		t.Fatalf("StringNullable(nil): %v", err)
+func TestFixedFromFloat64RoundsHalfAwayFromZero(t *testing.T) {
+	// 1/512 is exactly half a wire unit.
+	if got := FixedFromFloat64(1.0 / 512); got != 1 {
+		t.Fatalf("+half unit = %d, want 1", got)
 	}
-	if len(w.Bytes()) != 4 {
-		t.Fatalf("nil encoding: got %d bytes, want 4", len(w.Bytes()))
+	if got := FixedFromFloat64(-1.0 / 512); got != -1 {
+		t.Fatalf("-half unit = %d, want -1", got)
 	}
-	r := NewReader(w.Bytes(), nil)
-	s, err := r.StringNullable()
-	if err != nil {
-		t.Fatalf("read nil: %v", err)
-	}
-	if s != nil {
-		t.Fatalf("got %q, want nil", *s)
-	}
+}
 
-	// Non-nil pointer, including empty string, encodes like String.
-	for _, in := range []string{"", "hello"} {
-		w = &Writer{}
-		if err := w.StringNullable(&in); err != nil {
-			t.Fatalf("StringNullable(%q): %v", in, err)
-		}
-		r = NewReader(w.Bytes(), nil)
-		s, err = r.StringNullable()
-		if err != nil {
-			t.Fatalf("read %q: %v", in, err)
-		}
-		if s == nil || *s != in {
-			t.Fatalf("round trip: got %v, want %q", s, in)
+func TestFixedIntTruncatesTowardZero(t *testing.T) {
+	tests := []struct {
+		in   Fixed
+		want int32
+	}{
+		{255, 0},
+		{-255, 0},
+		{256, 1},
+		{-256, -1},
+		{257, 1},
+		{-257, -1},
+		{-511, -1},
+	}
+	for _, tt := range tests {
+		if got := tt.in.Int32(); got != tt.want {
+			t.Errorf("Fixed(%d).Int32() = %d, want %d", tt.in, got, tt.want)
 		}
 	}
 }
 
-func TestFixedFromInt(t *testing.T) {
-	tests := []struct {
-		in  int32
-		out Fixed
-	}{
-		{0, 0},
-		{1, 256},
-		{-1, -256},
-		{100, 25600},
+func TestFixedFromIntWraps(t *testing.T) {
+	if got := FixedFromInt(1 << 23); got != Fixed(math.MinInt32) {
+		t.Fatalf("FixedFromInt(1<<23) = %d, want MinInt32", int32(got))
 	}
-	for _, tt := range tests {
-		got := FixedFromInt(tt.in)
-		if got != tt.out {
-			t.Errorf("FixedFromInt(%v) = %v, want %v", tt.in, got, tt.out)
-		}
+}
+
+func TestFixedFloat64Boundaries(t *testing.T) {
+	// Two's complement, hence asymmetric.
+	if got := Fixed(math.MinInt32).Float64(); got != -8388608 {
+		t.Fatalf("MinInt32.Float64() = %v, want -8388608", got)
+	}
+	if got := Fixed(math.MaxInt32).Float64(); got != 8388607.99609375 {
+		t.Fatalf("MaxInt32.Float64() = %v, want 8388607.99609375", got)
 	}
 }

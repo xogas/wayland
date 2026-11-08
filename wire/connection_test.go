@@ -1,634 +1,439 @@
 package wire
 
 import (
-	"bytes"
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"net"
 	"os"
+	"sync"
 	"syscall"
 	"testing"
 )
 
-func socketPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
+func socketPair(t *testing.T) (a, b *net.UnixConn) {
 	t.Helper()
 	fds, err := syscall.Socketpair(syscall.AF_UNIX, syscall.SOCK_STREAM, 0)
 	if err != nil {
 		t.Fatalf("socketpair: %v", err)
 	}
-	f1 := os.NewFile(uintptr(fds[0]), "sock1")
-	f2 := os.NewFile(uintptr(fds[1]), "sock2")
-	defer func() {
-		_ = f1.Close()
-		_ = f2.Close()
-	}()
-
-	c1, err := net.FileConn(f1)
-	if err != nil {
-		t.Fatalf("FileConn f1: %v", err)
-	}
-	c2, err := net.FileConn(f2)
-	if err != nil {
-		t.Fatalf("FileConn f2: %v", err)
-	}
-	return c1.(*net.UnixConn), c2.(*net.UnixConn)
+	a = fileConn(t, fds[0])
+	b = fileConn(t, fds[1])
+	t.Cleanup(func() {
+		_ = a.Close()
+		_ = b.Close()
+	})
+	return a, b
 }
 
-func TestSendReceiveEmpty(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	w := &Writer{}
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	obj, opcode, r, err := conn2.ReceiveMessage()
+func fileConn(t *testing.T, fd int) *net.UnixConn {
+	t.Helper()
+	f := os.NewFile(uintptr(fd), "wire-test")
+	defer func() { _ = f.Close() }() // FileConn duplicates the fd
+	c, err := net.FileConn(f)
 	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
+		t.Fatalf("FileConn: %v", err)
 	}
-	if obj != 1 {
-		t.Errorf("obj: got %d, want 1", obj)
-	}
-	if opcode != 0 {
-		t.Errorf("opcode: got %d, want 0", opcode)
-	}
-	if len(r.buf) != 0 {
-		t.Errorf("payload: got len=%d, want 0", len(r.buf))
-	}
+	return c.(*net.UnixConn)
 }
 
-func TestSendReceivePayload(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	w := &Writer{}
-	_ = w.Uint32(0xCAFEBABE)
-	_ = w.Int32(-1)
-	_ = w.Fixed(FixedFromFloat64(3.5))
-	if err := conn1.SendMessage(7, 3, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	obj, opcode, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	if obj != 7 {
-		t.Errorf("obj: got %d, want 7", obj)
-	}
-	if opcode != 3 {
-		t.Errorf("opcode: got %d, want 3", opcode)
-	}
-	v1, _ := r.Uint32()
-	if v1 != 0xCAFEBABE {
-		t.Errorf("uint32: got %#x", v1)
-	}
-	v2, _ := r.Int32()
-	if v2 != -1 {
-		t.Errorf("int32: got %d", v2)
-	}
-	v3, _ := r.Fixed()
-	if v3.Float64() != 3.5 {
-		t.Errorf("fixed: got %v", v3.Float64())
-	}
+func connPair(t *testing.T) (client, server *Conn) {
+	t.Helper()
+	a, b := socketPair(t)
+	return NewConn(a), NewConn(b)
 }
 
-func TestSendReceiveFd(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	tmp, err := os.CreateTemp("", "wire-test-*")
+func tempFile(t *testing.T) *os.File {
+	t.Helper()
+	f, err := os.CreateTemp(t.TempDir(), "wire-*")
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer func() {
-		_ = tmp.Close()
-		_ = os.Remove(tmp.Name())
-	}()
+	t.Cleanup(func() { _ = f.Close() })
+	return f
+}
 
-	var stat1 syscall.Stat_t
-	if err := syscall.Fstat(int(tmp.Fd()), &stat1); err != nil {
-		t.Fatalf("fstat: %v", err)
+func openFDCount(t *testing.T) int {
+	t.Helper()
+	entries, err := os.ReadDir("/proc/self/fd")
+	if err != nil {
+		t.Skipf("cannot count open fds: %v", err)
 	}
+	return len(entries)
+}
+
+// rawFrame writes a header with an arbitrary length field, bypassing
+// SendMessage's validation to simulate a malformed peer.
+func rawFrame(t *testing.T, conn *net.UnixConn, obj uint32, length, opcode uint16, payload []byte) {
+	t.Helper()
+	buf := make([]byte, 8+len(payload))
+	binary.NativeEndian.PutUint32(buf[0:4], obj)
+	binary.NativeEndian.PutUint32(buf[4:8], uint32(length)<<16|uint32(opcode))
+	copy(buf[8:], payload)
+	if _, err := conn.Write(buf); err != nil {
+		t.Fatalf("raw write: %v", err)
+	}
+}
+
+// A correct peer cannot produce these. Accepting one shifts every following
+// header by 0-3 bytes with no immediate error.
+func TestReceiveRejectsImpossibleLengths(t *testing.T) {
+	tests := []struct {
+		name   string
+		length uint16
+	}{
+		{"below header", 4},
+		{"unaligned", 9},
+		{"max but unaligned", 0xFFFF},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client, server := socketPair(t)
+			rawFrame(t, client, 1, tt.length, 0, make([]byte, 8))
+			if _, _, _, err := NewConn(server).ReceiveMessage(); err == nil {
+				t.Fatalf("accepted a length of %d", tt.length)
+			}
+		})
+	}
+}
+
+func TestSplitFrameWaitsForPartialFrame(t *testing.T) {
+	buf := make([]byte, 12)
+	binary.NativeEndian.PutUint32(buf[0:4], 1)
+	binary.NativeEndian.PutUint32(buf[4:8], 20<<16)
+	_, rest, ok, err := splitFrame(buf)
+	if ok || err != nil {
+		t.Fatalf("partial frame: ok=%v err=%v", ok, err)
+	}
+	if len(rest) != len(buf) {
+		t.Fatalf("partial frame consumed %d bytes", len(buf)-len(rest))
+	}
+}
+
+// Both ends of the 16-bit length field.
+func TestMessageSizeCeiling(t *testing.T) {
+	client, server := connPair(t)
 
 	w := &Writer{}
-	_ = w.Fd(int(tmp.Fd()))
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
+	if err := w.Array(make([]byte, 65520)); err != nil {
+		t.Fatal(err)
 	}
-
-	obj, _, r, err := conn2.ReceiveMessage()
+	if got := len(w.Bytes()); got != 65524 {
+		t.Fatalf("payload = %d bytes, want 65524", got)
+	}
+	if err := client.SendMessage(1, 0, w); err != nil {
+		t.Fatalf("65532-byte frame rejected: %v", err)
+	}
+	obj, opcode, r, err := server.ReceiveMessage()
 	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
+		t.Fatalf("receiving the max frame: %v", err)
 	}
-	if obj != 1 {
-		t.Errorf("obj: got %d, want 1", obj)
-	}
-
-	fds := conn2.TakeFDs(1)
-	if len(fds) != 1 {
-		t.Fatalf("TakeFDs: expected 1 fd, got %d", len(fds))
-	}
-	r.SetFDs(fds)
-
-	fd, err := r.Fd()
-	if err != nil {
-		t.Fatalf("Fd: %v", err)
+	if obj != 1 || opcode != 0 || r.Remaining() != 65524 {
+		t.Fatalf("max frame: obj=%d opcode=%d remaining=%d", obj, opcode, r.Remaining())
 	}
 
-	var stat2 syscall.Stat_t
-	if err := syscall.Fstat(fd, &stat2); err != nil {
-		t.Fatalf("fstat received fd: %v", err)
+	big := &Writer{}
+	if err := big.Array(make([]byte, 65524)); err != nil {
+		t.Fatal(err)
 	}
-	_ = syscall.Close(fd)
+	if err := client.SendMessage(2, 0, big); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("oversized send = %v, want ErrMessageTooLarge", err)
+	}
 
-	if stat1.Ino != stat2.Ino {
-		t.Errorf("fd inode mismatch: sent %d, got %d", stat1.Ino, stat2.Ino)
+	small := &Writer{}
+	_ = small.Uint32(7)
+	if err := client.SendMessage(3, 1, small); err != nil {
+		t.Fatalf("follow-up send: %v", err)
+	}
+	if obj, opcode, _, err = server.ReceiveMessage(); err != nil || obj != 3 || opcode != 1 {
+		t.Fatalf("follow-up frame: obj=%d opcode=%d err=%v", obj, opcode, err)
 	}
 }
 
-func TestSendReceiveMultipleFds(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
+func TestPartialReadKeepsFraming(t *testing.T) {
+	client, server := connPair(t)
 
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	f1, _ := os.CreateTemp("", "wire-test-*")
-	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer func() {
-		_ = f1.Close()
-		_ = os.Remove(f1.Name())
-		_ = f2.Close()
-		_ = os.Remove(f2.Name())
-	}()
-
-	var s1, s2 syscall.Stat_t
-	_ = syscall.Fstat(int(f1.Fd()), &s1)
-	_ = syscall.Fstat(int(f2.Fd()), &s2)
-
-	w := &Writer{}
-	_ = w.Fd(int(f1.Fd()))
-	_ = w.Fd(int(f2.Fd()))
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
+	payload := make([]byte, 20000)
+	for i := range payload {
+		payload[i] = byte(i)
 	}
-
-	_, _, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-
-	fds := conn2.TakeFDs(2)
-	if len(fds) != 2 {
-		t.Fatalf("TakeFDs: expected 2 fds, got %d", len(fds))
-	}
-	r.SetFDs(fds)
-
-	fd1, err := r.Fd()
-	if err != nil {
-		t.Fatalf("Fd 1: %v", err)
-	}
-	fd2, err := r.Fd()
-	if err != nil {
-		t.Fatalf("Fd 2: %v", err)
-	}
-
-	var rs1, rs2 syscall.Stat_t
-	_ = syscall.Fstat(fd1, &rs1)
-	_ = syscall.Fstat(fd2, &rs2)
-	_ = syscall.Close(fd1)
-	_ = syscall.Close(fd2)
-
-	if s1.Ino != rs1.Ino {
-		t.Errorf("fd1 inode mismatch: sent %d, got %d", s1.Ino, rs1.Ino)
-	}
-	if s2.Ino != rs2.Ino {
-		t.Errorf("fd2 inode mismatch: sent %d, got %d", s2.Ino, rs2.Ino)
-	}
-}
-
-func TestSendReceiveString(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	w := &Writer{}
-	_ = w.String("wl_display")
-	if err := conn1.SendMessage(8, 2, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	obj, opcode, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	if obj != 8 || opcode != 2 {
-		t.Errorf("header: obj=%d opcode=%d", obj, opcode)
-	}
-	s, err := r.String()
-	if err != nil {
-		t.Fatalf("String: %v", err)
-	}
-	if s != "wl_display" {
-		t.Errorf("string: got %q, want %q", s, "wl_display")
-	}
-}
-
-func TestSendReceivePadding(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	// Payload that is not 4-byte aligned (3 bytes)
-	w := &Writer{}
-	_ = w.Uint32(42)
-	_ = w.String("ab") // 4B len + "ab" + NUL + 0 pad = 4 + 3 + 1 = 8
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	obj, opcode, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	if obj != 1 || opcode != 0 {
-		t.Errorf("header: obj=%d opcode=%d", obj, opcode)
-	}
-	v, _ := r.Uint32()
-	if v != 42 {
-		t.Errorf("uint32: got %d", v)
-	}
-	s, _ := r.String()
-	if s != "ab" {
-		t.Errorf("string: got %q", s)
-	}
-}
-
-func TestSendReceiveMultipleMessages(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	// Send two messages back-to-back
-	w1 := &Writer{}
-	_ = w1.Uint32(100)
-	if err := conn1.SendMessage(1, 0, w1); err != nil {
-		t.Fatalf("SendMessage 1: %v", err)
-	}
-
-	w2 := &Writer{}
-	_ = w2.Uint32(200)
-	if err := conn1.SendMessage(2, 1, w2); err != nil {
-		t.Fatalf("SendMessage 2: %v", err)
-	}
-
-	// Receive first message
-	obj1, opcode1, r1, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage 1: %v", err)
-	}
-	if obj1 != 1 || opcode1 != 0 {
-		t.Errorf("msg1 header: obj=%d opcode=%d", obj1, opcode1)
-	}
-	v1, _ := r1.Uint32()
-	if v1 != 100 {
-		t.Errorf("msg1 uint32: got %d", v1)
-	}
-
-	// Receive second message
-	obj2, opcode2, r2, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage 2: %v", err)
-	}
-	if obj2 != 2 || opcode2 != 1 {
-		t.Errorf("msg2 header: obj=%d opcode=%d", obj2, opcode2)
-	}
-	v2, _ := r2.Uint32()
-	if v2 != 200 {
-		t.Errorf("msg2 uint32: got %d", v2)
-	}
-}
-
-func TestConnClose(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	if err := conn1.Close(); err != nil {
-		t.Fatalf("Close: %v", err)
-	}
-	// Attempting read on closed socket should error
-	_, _, _, err := NewConn(c2).ReceiveMessage()
-	if err == nil {
-		t.Errorf("expected error reading from closed connection")
-	}
-}
-
-func TestTakeFDsPerMessageIsolation(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	f1, _ := os.CreateTemp("", "wire-test-*")
-	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer func() {
-		_ = f1.Close()
-		_ = os.Remove(f1.Name())
-		_ = f2.Close()
-		_ = os.Remove(f2.Name())
-	}()
-
-	var s1, s2 syscall.Stat_t
-	_ = syscall.Fstat(int(f1.Fd()), &s1)
-	_ = syscall.Fstat(int(f2.Fd()), &s2)
-
-	w1 := &Writer{}
-	_ = w1.Fd(int(f1.Fd()))
-	if err := conn1.SendMessage(1, 0, w1); err != nil {
-		t.Fatalf("SendMessage 1: %v", err)
-	}
-
-	w2 := &Writer{}
-	_ = w2.Fd(int(f2.Fd()))
-	if err := conn1.SendMessage(2, 1, w2); err != nil {
-		t.Fatalf("SendMessage 2: %v", err)
-	}
-
-	obj1, _, r1, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage 1: %v", err)
-	}
-	if obj1 != 1 {
-		t.Fatalf("expected obj 1, got %d", obj1)
-	}
-	// Do NOT consume fds for message 1 - fds stay in queue
-
-	obj2, _, r2, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage 2: %v", err)
-	}
-	if obj2 != 2 {
-		t.Fatalf("expected obj 2, got %d", obj2)
-	}
-
-	// Message 1's fd should still be in the queue, taken by explicit TakeFDs
-	fdsForMsg1 := conn2.TakeFDs(1)
-	if len(fdsForMsg1) != 1 {
-		t.Fatalf("TakeFDs for msg1: expected 1 fd, got %d", len(fdsForMsg1))
-	}
-
-	// Message 2's fd should be next
-	fdsForMsg2 := conn2.TakeFDs(1)
-	if len(fdsForMsg2) != 1 {
-		t.Fatalf("TakeFDs for msg2: expected 1 fd, got %d", len(fdsForMsg2))
-	}
-	r2.SetFDs(fdsForMsg2)
-
-	fd2, err := r2.Fd()
-	if err != nil {
-		t.Fatalf("Fd from msg2: %v", err)
-	}
-	var rs2 syscall.Stat_t
-	_ = syscall.Fstat(fd2, &rs2)
-	_ = syscall.Close(fd2)
-	_ = syscall.Close(fdsForMsg1[0])
-
-	if s1.Ino == s2.Ino {
-		t.Skip("temp files share inodes on this filesystem")
-	}
-	if rs2.Ino != s2.Ino {
-		t.Errorf("msg2 fd inode mismatch: expected %d, got %d", s2.Ino, rs2.Ino)
-	}
-
-	_ = r1
-}
-
-func TestUnconsumedFDs(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	f1, _ := os.CreateTemp("", "wire-test-*")
-	f2, _ := os.CreateTemp("", "wire-test-*")
-	defer func() {
-		_ = f1.Close()
-		_ = os.Remove(f1.Name())
-		_ = f2.Close()
-		_ = os.Remove(f2.Name())
-	}()
-
-	w := &Writer{}
-	_ = w.Fd(int(f1.Fd()))
-	_ = w.Fd(int(f2.Fd()))
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-
-	_, _, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-
-	fds := conn2.TakeFDs(2)
-	r.SetFDs(fds)
-
-	// Consume only the first fd
-	fd1, err := r.Fd()
-	if err != nil {
-		t.Fatalf("Fd: %v", err)
-	}
-	_ = syscall.Close(fd1)
-
-	unconsumed := r.UnconsumedFDs()
-	if len(unconsumed) != 1 {
-		t.Fatalf("UnconsumedFDs: expected 1, got %d", len(unconsumed))
-	}
-	_ = syscall.Close(unconsumed[0])
-}
-
-func TestTakeFDs(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	// TakeFDs(0)
-	w := &Writer{}
-	_ = w.Uint32(42)
-	if err := conn1.SendMessage(1, 0, w); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-	_, _, r, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	fds := conn2.TakeFDs(0)
-	if len(fds) != 0 {
-		t.Fatalf("TakeFDs(0): expected nil, got %v", fds)
-	}
-	v, _ := r.Uint32()
-	if v != 42 {
-		t.Errorf("payload: got %d, want 42", v)
-	}
-
-	// TakeAllFDs + empty after
-	f1, _ := os.CreateTemp("", "wire-test-*")
-	defer func() {
-		_ = f1.Close()
-		_ = os.Remove(f1.Name())
-	}()
-
-	w2 := &Writer{}
-	_ = w2.Fd(int(f1.Fd()))
-	if err := conn1.SendMessage(1, 0, w2); err != nil {
-		t.Fatalf("SendMessage: %v", err)
-	}
-	_, _, _, err = conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	allFds := conn2.TakeAllFDs()
-	if len(allFds) != 1 {
-		t.Fatalf("TakeAllFDs: expected 1, got %d", len(allFds))
-	}
-	_ = syscall.Close(allFds[0])
-	remaining := conn2.TakeAllFDs()
-	if len(remaining) != 0 {
-		t.Fatalf("second TakeAllFDs: expected empty, got %v", remaining)
-	}
-}
-
-func TestSendReceivePartialRead(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
-	}()
-
-	conn1 := NewConn(c1)
-	conn2 := NewConn(c2)
-
-	// 65520 bytes of content -> 8 + 65524 = 65532 total, just under the
-	// 16-bit length field limit. Far larger than the 4096-byte read buffer,
-	// so ReceiveMessage must loop over many partial reads.
-	payload := bytes.Repeat([]byte{0xAB}, 65520)
-
 	w := &Writer{}
 	if err := w.Array(payload); err != nil {
-		t.Fatalf("Array: %v", err)
+		t.Fatal(err)
 	}
-	if err := conn1.SendMessage(1, 0, w); err != nil {
+	if err := client.SendMessage(1, 0, w); err != nil {
 		t.Fatalf("SendMessage: %v", err)
 	}
 
-	obj, opcode, r, err := conn2.ReceiveMessage()
+	_, _, r, err := server.ReceiveMessage()
 	if err != nil {
 		t.Fatalf("ReceiveMessage: %v", err)
-	}
-	if obj != 1 || opcode != 0 {
-		t.Fatalf("header: obj=%d opcode=%d", obj, opcode)
 	}
 	got, err := r.Array()
 	if err != nil {
 		t.Fatalf("Array: %v", err)
 	}
-	if !bytes.Equal(got, payload) {
-		t.Fatalf("payload mismatch: got %d bytes, want %d", len(got), len(payload))
+	if len(got) != len(payload) || got[len(got)-1] != payload[len(payload)-1] {
+		t.Fatalf("payload mismatch: got %d bytes", len(got))
 	}
 
-	// The stream must still be framed correctly: a follow-up small message
-	// proves no bytes were lost or over-consumed by the partial reads.
 	w2 := &Writer{}
 	_ = w2.Uint32(42)
-	if err := conn1.SendMessage(2, 1, w2); err != nil {
-		t.Fatalf("SendMessage follow-up: %v", err)
+	if err := client.SendMessage(2, 1, w2); err != nil {
+		t.Fatalf("follow-up send: %v", err)
 	}
-	obj2, opcode2, r2, err := conn2.ReceiveMessage()
-	if err != nil {
-		t.Fatalf("ReceiveMessage follow-up: %v", err)
-	}
-	if obj2 != 2 || opcode2 != 1 {
-		t.Fatalf("follow-up header: obj=%d opcode=%d", obj2, opcode2)
-	}
-	v, err := r2.Uint32()
-	if err != nil {
-		t.Fatalf("follow-up Uint32: %v", err)
-	}
-	if v != 42 {
-		t.Errorf("follow-up payload: got %d, want 42", v)
+	if obj, opcode, r2, err := server.ReceiveMessage(); err != nil || obj != 2 || opcode != 1 {
+		t.Fatalf("follow-up frame: obj=%d opcode=%d err=%v", obj, opcode, err)
+	} else if v, err := r2.Uint32(); err != nil || v != 42 {
+		t.Fatalf("follow-up payload = %d, %v", v, err)
 	}
 }
 
-func TestSendMessageTooLarge(t *testing.T) {
-	c1, c2 := socketPair(t)
-	defer func() {
-		_ = c1.Close()
-		_ = c2.Close()
+// Descriptors are not tagged with a message: queue order plus a dispatcher
+// claiming exactly the declared count is all that keeps them paired.
+func TestFDQueueAssignsInSendOrder(t *testing.T) {
+	client, server := connPair(t)
+	f1, f2 := tempFile(t), tempFile(t)
+
+	w1 := &Writer{}
+	_ = w1.Fd(int(f1.Fd()))
+	if err := client.SendMessage(1, 0, w1); err != nil {
+		t.Fatalf("send 1: %v", err)
+	}
+	w2 := &Writer{}
+	_ = w2.Fd(int(f2.Fd()))
+	if err := client.SendMessage(2, 1, w2); err != nil {
+		t.Fatalf("send 2: %v", err)
+	}
+
+	_, _, r1, err := server.ReceiveMessage()
+	if err != nil {
+		t.Fatalf("receive 1: %v", err)
+	}
+	_, _, r2, err := server.ReceiveMessage()
+	if err != nil {
+		t.Fatalf("receive 2: %v", err)
+	}
+
+	fd1 := server.TakeFDs(1)
+	fd2 := server.TakeFDs(1)
+	if len(fd1) != 1 || len(fd2) != 1 {
+		t.Fatalf("TakeFDs = %v, %v", fd1, fd2)
+	}
+	r1.SetFDs(fd1)
+	r2.SetFDs(fd2)
+
+	fdA, err := r1.Fd()
+	if err != nil {
+		t.Fatalf("Fd from message 1: %v", err)
+	}
+	fdB, err := r2.Fd()
+	if err != nil {
+		t.Fatalf("Fd from message 2: %v", err)
+	}
+	assertInode(t, fdA, int(f1.Fd()))
+	assertInode(t, fdB, int(f2.Fd()))
+	_ = syscall.Close(fdA)
+	_ = syscall.Close(fdB)
+}
+
+func assertInode(t *testing.T, gotFD, wantFD int) {
+	t.Helper()
+	var got, want syscall.Stat_t
+	if err := syscall.Fstat(gotFD, &got); err != nil {
+		t.Fatalf("fstat received fd: %v", err)
+	}
+	if err := syscall.Fstat(wantFD, &want); err != nil {
+		t.Fatalf("fstat sent fd: %v", err)
+	}
+	if got.Ino != want.Ino {
+		t.Fatalf("fd mix-up: got inode %d, want %d", got.Ino, want.Ino)
+	}
+}
+
+// oobBuf holds maxFDsPerRead. The kernel closes what does not fit and installs
+// the rest, which must be closed here.
+func TestControlMessageTruncationClosesReceivedFDs(t *testing.T) {
+	client, server := socketPair(t)
+	conn := NewConn(server)
+
+	const count = 40
+	files := make([]*os.File, count)
+	sent := make([]int, count)
+	for i := range files {
+		f, err := os.Open(os.DevNull)
+		if err != nil {
+			t.Fatalf("open %s: %v", os.DevNull, err)
+		}
+		files[i] = f
+		sent[i] = int(f.Fd())
+	}
+	t.Cleanup(func() {
+		for _, f := range files {
+			_ = f.Close()
+		}
+	})
+
+	hdr := make([]byte, 8)
+	binary.NativeEndian.PutUint32(hdr[0:4], 1)
+	binary.NativeEndian.PutUint32(hdr[4:8], 8<<16)
+	if _, _, err := client.WriteMsgUnix(hdr, syscall.UnixRights(sent...), nil); err != nil {
+		t.Fatalf("WriteMsgUnix: %v", err)
+	}
+	for _, f := range files {
+		_ = f.Close()
+	}
+
+	before := openFDCount(t)
+	if _, _, _, err := conn.ReceiveMessage(); err == nil {
+		t.Fatal("accepted a truncated control message")
+	}
+	if after := openFDCount(t); after != before {
+		t.Fatalf("received descriptors leaked: %d open before, %d after", before, after)
+	}
+}
+
+// An SCM_RIGHTS descriptor has no finalizers, so a Conn closed without
+// dispatching leaks it until process exit.
+func TestCloseClosesQueuedFDs(t *testing.T) {
+	client, server := connPair(t)
+	f := tempFile(t)
+
+	w := &Writer{}
+	_ = w.Fd(int(f.Fd()))
+	if err := client.SendMessage(1, 0, w); err != nil {
+		t.Fatalf("SendMessage: %v", err)
+	}
+	if _, _, _, err := server.ReceiveMessage(); err != nil {
+		t.Fatalf("ReceiveMessage: %v", err)
+	}
+	if len(server.fds) != 1 {
+		t.Fatalf("queued fds = %d, want 1", len(server.fds))
+	}
+	fd := server.fds[0]
+
+	if err := server.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	var st syscall.Stat_t
+	if err := syscall.Fstat(fd, &st); err == nil {
+		t.Fatalf("queued fd %d survived Close", fd)
+	}
+}
+
+func TestTakeFDsClampsAndDrains(t *testing.T) {
+	c := &Conn{fds: []int{10, 20}}
+	if got := c.TakeFDs(5); len(got) != 2 || got[0] != 10 || got[1] != 20 {
+		t.Fatalf("TakeFDs(5) = %v, want [10 20]", got)
+	}
+	if got := c.TakeAllFDs(); len(got) != 0 {
+		t.Fatalf("TakeAllFDs on a drained queue = %v, want empty", got)
+	}
+	if got := c.TakeFDs(1); len(got) != 0 {
+		t.Fatalf("TakeFDs on a drained queue = %v, want empty", got)
+	}
+}
+
+func TestCloseIsIdempotentAndStopsIO(t *testing.T) {
+	client, server := connPair(t)
+	if err := server.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if err := server.Close(); err != nil {
+		t.Fatalf("second Close: %v", err)
+	}
+	if _, _, _, err := server.ReceiveMessage(); err == nil {
+		t.Fatal("ReceiveMessage succeeded after Close")
+	}
+
+	if err := client.Close(); err != nil {
+		t.Fatalf("client Close: %v", err)
+	}
+	w := &Writer{}
+	_ = w.Uint32(1)
+	if err := client.SendMessage(1, 0, w); err == nil {
+		t.Fatal("SendMessage succeeded after Close")
+	}
+}
+
+func TestCloseDropsBufferedFrames(t *testing.T) {
+	_, server := socketPair(t)
+	conn := NewConn(server)
+
+	// Close drains the descriptor queue, so returning this buffered frame
+	// afterwards would decode it without descriptors.
+	buf := make([]byte, 12)
+	binary.NativeEndian.PutUint32(buf[0:4], 1)
+	binary.NativeEndian.PutUint32(buf[4:8], 12<<16)
+	conn.buf = buf
+
+	if err := conn.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if _, _, _, err := conn.ReceiveMessage(); !errors.Is(err, net.ErrClosed) {
+		t.Fatalf("ReceiveMessage after Close = %v, want net.ErrClosed", err)
+	}
+}
+
+// SendMessage serializes whole frames; interleaved writes would produce
+// invalid headers and split payloads.
+func TestSendMessageConcurrentKeepsFraming(t *testing.T) {
+	client, server := connPair(t)
+	const writers, perWriter = 8, 64
+
+	// Must run concurrently: a few hundred queued headers fill the send buffer
+	// and deadlock the writers.
+	received := make(chan error, 1)
+	go func() {
+		defer func() { _ = client.Close() }() // unblock writers if the stream breaks
+		for range writers * perWriter {
+			obj, opcode, r, err := server.ReceiveMessage()
+			if err != nil {
+				received <- err
+				return
+			}
+			if obj != 1 || opcode != 0 {
+				received <- fmt.Errorf("header: obj=%d opcode=%d", obj, opcode)
+				return
+			}
+			if _, err := r.Uint32(); err != nil {
+				received <- err
+				return
+			}
+			if r.Remaining() != 0 {
+				received <- fmt.Errorf("interleaved write: %d trailing bytes", r.Remaining())
+				return
+			}
+		}
+		received <- nil
 	}()
 
-	conn1 := NewConn(c1)
-
-	// 65524 bytes of content -> 8 + 65528 = 65536, one byte over the
-	// 16-bit length field limit.
-	w := &Writer{}
-	if err := w.Array(bytes.Repeat([]byte{0xAB}, 65524)); err != nil {
-		t.Fatalf("Array: %v", err)
+	var wg sync.WaitGroup
+	for id := range writers {
+		wg.Go(func() {
+			for seq := range perWriter {
+				w := &Writer{}
+				_ = w.Uint32(uint32(id<<16) | uint32(seq))
+				if err := client.SendMessage(1, 0, w); err != nil {
+					t.Errorf("SendMessage: %v", err)
+					return
+				}
+			}
+		})
 	}
-	if err := conn1.SendMessage(1, 0, w); !errors.Is(err, ErrMessageTooLarge) {
-		t.Fatalf("SendMessage: got %v, want ErrMessageTooLarge", err)
+	wg.Wait()
+	if err := <-received; err != nil {
+		t.Fatalf("receiver: %v", err)
+	}
+}
+
+// Reachable only if a field writer omits its padding.
+func TestSendMessageRejectsUnalignedPayload(t *testing.T) {
+	client, _ := connPair(t)
+	w := &Writer{}
+	_ = w.Uint32(1)
+	_, _ = w.buf.WriteString("x") // bypass the aligned Writer API
+	if err := client.SendMessage(1, 0, w); err == nil {
+		t.Fatal("accepted an unaligned payload")
 	}
 }
