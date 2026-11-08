@@ -99,8 +99,8 @@ func run() error {
 	var ps popupState
 
 	pointer.OnEnter(func(ev wayland.PointerEnterEvent) {
-		cursorX = ev.SurfaceX.Int()
-		cursorY = ev.SurfaceY.Int()
+		cursorX = ev.SurfaceX.Int32()
+		cursorY = ev.SurfaceY.Int32()
 		if ps.active && ev.Surface == ps.surfaceID {
 			ptrOnPopup = true
 			popupCursorY = cursorY
@@ -112,8 +112,8 @@ func run() error {
 		}
 	})
 	pointer.OnMotion(func(ev wayland.PointerMotionEvent) {
-		cursorX = ev.SurfaceX.Int()
-		cursorY = ev.SurfaceY.Int()
+		cursorX = ev.SurfaceX.Int32()
+		cursorY = ev.SurfaceY.Int32()
 		if ps.active && ptrOnPopup {
 			popupCursorY = cursorY
 		}

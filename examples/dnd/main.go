@@ -198,16 +198,16 @@ func run() error {
 	})
 
 	ptr.OnEnter(func(ev wayland.PointerEnterEvent) {
-		ptrX = ev.SurfaceX.Int()
-		ptrY = ev.SurfaceY.Int()
+		ptrX = ev.SurfaceX.Int32()
+		ptrY = ev.SurfaceY.Int32()
 		fmt.Printf("pointer: enter serial=%d x=%d y=%d\n", ev.Serial, ptrX, ptrY)
 	})
 	ptr.OnLeave(func(ev wayland.PointerLeaveEvent) {
 		fmt.Printf("pointer: leave serial=%d\n", ev.Serial)
 	})
 	ptr.OnMotion(func(ev wayland.PointerMotionEvent) {
-		ptrX = ev.SurfaceX.Int()
-		ptrY = ev.SurfaceY.Int()
+		ptrX = ev.SurfaceX.Int32()
+		ptrY = ev.SurfaceY.Int32()
 	})
 	ptr.OnButton(func(ev wayland.PointerButtonEvent) {
 		st := "release"

@@ -192,8 +192,8 @@ func run() error {
 				if p, err := seat.GetPointer(); err == nil {
 					ptr = p
 					p.OnMotion(func(ev wayland.PointerMotionEvent) {
-						ap.ptrX = ev.SurfaceX.Int()
-						ap.ptrY = ev.SurfaceY.Int()
+						ap.ptrX = ev.SurfaceX.Int32()
+						ap.ptrY = ev.SurfaceY.Int32()
 					})
 					p.OnButton(func(ev wayland.PointerButtonEvent) {
 						if ev.Button == btnLeft && ev.State == wayland.PointerButtonStatePressed {
