@@ -377,6 +377,11 @@ type LinuxDmabufFeedbackV1TrancheFlagsFunc func(ev LinuxDmabufFeedbackV1TrancheF
 //
 // With version 6 and above, the compositor must always advertise at least
 // one tranche with the sampling flag set.
+//
+// The compositor sends a format_table event at least once for each dmabuf
+// parameters feedback object, before any tranche events. Unless the format
+// table contents change later, the compositor is free not to send another
+// format_table event for the same dmabuf parameters feedback object.
 type LinuxDmabufFeedbackV1 struct {
 	proxy *wayland.Proxy
 }

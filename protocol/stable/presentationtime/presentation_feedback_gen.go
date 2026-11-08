@@ -8,7 +8,7 @@ import (
 )
 
 const InterfacePresentationFeedback = "wp_presentation_feedback"
-const VersionPresentationFeedback = 2
+const VersionPresentationFeedback = 3
 
 const (
 	PresentationFeedbackEventSyncOutput uint16 = 0
@@ -74,6 +74,29 @@ const (
 	// Possible zero-copy cases include direct scanout of a
 	// fullscreen surface and a surface on a hardware overlay.
 	PresentationFeedbackKindZeroCopy PresentationFeedbackKind = 8
+
+	// PresentationFeedbackKindFixedRate.
+	//
+	// The display hardware is operating at a fixed refresh rate.
+	// The presentation was aligned to a multiple of this event's
+	// 'refresh' argument.
+	// If this is set, the refresh argument must not be 0.
+	PresentationFeedbackKindFixedRate PresentationFeedbackKind = 16
+
+	// PresentationFeedbackKindVariableRate.
+	//
+	// The display hardware is operating at a variable refresh rate, with
+	// updates to this surface consistently determining the display refresh
+	// timing. The definition of 'consistent' is compositor policy.
+	//
+	// The content update was displayed as soon as possible after it became
+	// ready, but no sooner than 'refresh' nanoseconds after the previous
+	// presentation on this surface. In other words, the presentation time
+	// was determined by when this surface's content became ready, not by
+	// a periodic display refresh or by updates to other surfaces.
+	//
+	// If this is set, the refresh argument must not be 0.
+	PresentationFeedbackKindVariableRate PresentationFeedbackKind = 32
 )
 
 // PresentationFeedbackSyncOutputEvent presentation synchronized to this output.
@@ -139,6 +162,11 @@ func (e *PresentationFeedbackSyncOutputEvent) Since() uint32 { return 1 }
 // compositor (e.g. fastest rate), or 0 if no such rate exists.
 // For version 1, if the output does not have a constant refresh rate,
 // the refresh argument must be zero.
+//
+// If the 'fixed_rate' flag is set, then the refresh argument is
+// the output's constant refresh rate. If the 'variable_rate' flag
+// is set, then the refresh argument is the output's fastest refresh
+// rate.
 //
 // The 64-bit value combined from seq_hi and seq_lo is the value
 // of the output's vertical retrace counter when the content

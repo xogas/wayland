@@ -84,7 +84,7 @@ const (
 	// ToplevelV6StateMaximized the surface is maximized.
 	//
 	// The surface is maximized. The window geometry specified in the configure
-	// event must be obeyed by the client. If the window geometry is not obyed,
+	// event must be obeyed by the client. If the window geometry is not obeyed,
 	//        the zxdg_shell_v6.invalid_surface_state error is raised.
 	ToplevelV6StateMaximized ToplevelV6State = 1
 

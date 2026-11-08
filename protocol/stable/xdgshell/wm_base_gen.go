@@ -104,7 +104,7 @@ func (r *WmBaseCreatePositionerRequest) Since() uint32 { return 1 }
 // While xdg_surface itself is not a role, the corresponding surface may
 // only be assigned a role extending xdg_surface, such as xdg_toplevel or
 // xdg_popup. It is illegal to create an xdg_surface for a wl_surface which
-// already has anassigned role and this will result in a role error.
+// already has an assigned role and this will result in a role error.
 //
 // See the documentation of xdg_surface for more details about what an
 // xdg_surface is and how it is used.
@@ -267,7 +267,7 @@ func (o *WmBase) CreatePositioner() (*Positioner, error) {
 // While xdg_surface itself is not a role, the corresponding surface may
 // only be assigned a role extending xdg_surface, such as xdg_toplevel or
 // xdg_popup. It is illegal to create an xdg_surface for a wl_surface which
-// already has anassigned role and this will result in a role error.
+// already has an assigned role and this will result in a role error.
 //
 // See the documentation of xdg_surface for more details about what an
 // xdg_surface is and how it is used.

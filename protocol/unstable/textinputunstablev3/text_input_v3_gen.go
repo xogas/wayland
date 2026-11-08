@@ -57,7 +57,7 @@ func init() {
 
 // TextInputV3ChangeCause text change reason.
 //
-// Reason for the change of surrounding text or cursor posision.
+// Reason for the change of surrounding text or cursor position.
 type TextInputV3ChangeCause uint32
 
 const (
@@ -358,7 +358,7 @@ func (r *TextInputV3SetSurroundingTextRequest) Since() uint32 { return 1 }
 // Tells the compositor why the text surrounding the cursor changed.
 //
 // Whenever the client detects an external change in text, cursor, or
-// anchor posision, it must issue this request to the compositor. This
+// anchor position, it must issue this request to the compositor. This
 // request is intended to give the input method a chance to update the
 // preedit text in an appropriate way, e.g. by removing it when the user
 // starts typing with a keyboard.
@@ -1201,7 +1201,7 @@ func (o *TextInputV3) SetSurroundingText(text string, cursor, anchor int32) erro
 // Tells the compositor why the text surrounding the cursor changed.
 //
 // Whenever the client detects an external change in text, cursor, or
-// anchor posision, it must issue this request to the compositor. This
+// anchor position, it must issue this request to the compositor. This
 // request is intended to give the input method a chance to update the
 // preedit text in an appropriate way, e.g. by removing it when the user
 // starts typing with a keyboard.

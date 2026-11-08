@@ -352,7 +352,7 @@ func (r *LinuxBufferParamsV1SetSamplingDeviceRequest) Since() uint32 { return 6 
 // Upon receiving this event, the client should destroy the
 // zwp_linux_buffer_params_v1 object.
 type LinuxBufferParamsV1CreatedEvent struct {
-	// Buffer id for the the newly created wl_buffer.
+	// Buffer id for the newly created wl_buffer.
 	Buffer wire.NewID
 }
 

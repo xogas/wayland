@@ -73,7 +73,7 @@ func (r *SessionManagerV1DestroyRequest) Since() uint32 { return 1 }
 // use".
 //
 // If a identifier string represents a session that is currently actively
-// in use by the the same client, an 'in_use' error is raised. If some
+// in use by the same client, an 'in_use' error is raised. If some
 // other client is currently using the same session, the new session will
 // replace managing the associated state.
 //
@@ -153,7 +153,7 @@ func (o *SessionManagerV1) Destroy() error {
 // use".
 //
 // If a identifier string represents a session that is currently actively
-// in use by the the same client, an 'in_use' error is raised. If some
+// in use by the same client, an 'in_use' error is raised. If some
 // other client is currently using the same session, the new session will
 // replace managing the associated state.
 //

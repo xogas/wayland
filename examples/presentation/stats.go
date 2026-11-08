@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -74,25 +75,32 @@ func (s *latencyStats) report() {
 	fmt.Println()
 }
 
+// kindNames lists the presentation feedback kind flags in bit order. Adding a
+// flag to the protocol means adding one line here.
+var kindNames = []struct {
+	flag presentationtime.PresentationFeedbackKind
+	name string
+}{
+	{presentationtime.PresentationFeedbackKindVsync, "vsync"},
+	{presentationtime.PresentationFeedbackKindHwClock, "hw_clock"},
+	{presentationtime.PresentationFeedbackKindHwCompletion, "hw_completion"},
+	{presentationtime.PresentationFeedbackKindZeroCopy, "zero_copy"},
+	{presentationtime.PresentationFeedbackKindFixedRate, "fixed_rate"},
+	{presentationtime.PresentationFeedbackKindVariableRate, "variable_rate"},
+}
+
 // flagsString renders the presentation feedback kind flags as a list.
 func flagsString(f presentationtime.PresentationFeedbackKind) string {
-	s := ""
-	if f&presentationtime.PresentationFeedbackKindVsync != 0 {
-		s += "vsync "
+	var parts []string
+	for _, k := range kindNames {
+		if f&k.flag != 0 {
+			parts = append(parts, k.name)
+		}
 	}
-	if f&presentationtime.PresentationFeedbackKindHwClock != 0 {
-		s += "hw_clock "
-	}
-	if f&presentationtime.PresentationFeedbackKindHwCompletion != 0 {
-		s += "hw_completion "
-	}
-	if f&presentationtime.PresentationFeedbackKindZeroCopy != 0 {
-		s += "zero_copy "
-	}
-	if s == "" {
+	if len(parts) == 0 {
 		return "none"
 	}
-	return s[:len(s)-1]
+	return strings.Join(parts, " ")
 }
 
 // monotonicNow reads the compositor's presentation clock (CLOCK_MONOTONIC by

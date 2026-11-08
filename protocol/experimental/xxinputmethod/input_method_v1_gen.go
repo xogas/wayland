@@ -246,7 +246,7 @@ func (r *InputMethodV1DeleteSurroundingTextRequest) Since() uint32 { return 1 }
 // The cursor and anchor arguments can also take the following special values:
 // BEGINNING := 0x8000_0000 = i32::MIN
 // END := 0x7fff_ffff = i32::MAX
-// meaning, respectively, the beginning and the end of of all text in the input field.
+// meaning, respectively, the beginning and the end of all text in the input field.
 //
 // Values set with this event are double-buffered. They must be applied
 // and reset to initial on the next commit request.
@@ -999,7 +999,7 @@ func (o *InputMethodV1) DeleteSurroundingText(beforeLength, afterLength uint32) 
 // The cursor and anchor arguments can also take the following special values:
 // BEGINNING := 0x8000_0000 = i32::MIN
 // END := 0x7fff_ffff = i32::MAX
-// meaning, respectively, the beginning and the end of of all text in the input field.
+// meaning, respectively, the beginning and the end of all text in the input field.
 //
 // Values set with this event are double-buffered. They must be applied
 // and reset to initial on the next commit request.

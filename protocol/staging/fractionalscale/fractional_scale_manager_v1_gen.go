@@ -41,7 +41,7 @@ func (r *FractionalScaleManagerV1DestroyRequest) Since() uint32 { return 1 }
 
 // FractionalScaleManagerV1GetFractionalScaleRequest extend surface interface for scale information.
 //
-// Create an add-on object for the the wl_surface to let the compositor
+// Create an add-on object for the wl_surface to let the compositor
 // request fractional scales. If the given wl_surface already has a
 // wp_fractional_scale_v1 object associated, the fractional_scale_exists
 // protocol error is raised.
@@ -103,7 +103,7 @@ func (o *FractionalScaleManagerV1) Destroy() error {
 
 // GetFractionalScale extend surface interface for scale information.
 //
-// Create an add-on object for the the wl_surface to let the compositor
+// Create an add-on object for the wl_surface to let the compositor
 // request fractional scales. If the given wl_surface already has a
 // wp_fractional_scale_v1 object associated, the fractional_scale_exists
 // protocol error is raised.

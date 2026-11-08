@@ -8,7 +8,7 @@ import (
 )
 
 const InterfacePresentation = "wp_presentation"
-const VersionPresentation = 2
+const VersionPresentation = 3
 
 const (
 	PresentationRequestDestroy  uint16 = 0
