@@ -11,6 +11,8 @@ var (
 	ErrVersionMismatch = errors.New("wayland: version mismatch")
 )
 
+// ProtocolError is reported by wl_display.error. Detect it with
+// `var pe *ProtocolError; errors.As(err, &pe)`.
 type ProtocolError struct {
 	ObjectID uint32
 	Code     uint32

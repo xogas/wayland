@@ -541,8 +541,9 @@ func TestUnknownObjectEventFatal(t *testing.T) {
 }
 
 // TestDestroyedObjectEventDropped: events in flight for a client-destroyed
-// object are dropped without touching the connection. Zombies with a nil
-// event table cannot determine fd counts, so they are skipped leniently.
+// object are dropped without killing the connection. The zombie keeps the
+// interface's fd-count table so in-flight fds can be drained and closed; a
+// zombie without a table is fatal instead (see dispatch).
 func TestDestroyedObjectEventDropped(t *testing.T) {
 	clientUC, serverUC := socketPair(t)
 	defer func() {
@@ -556,9 +557,10 @@ func TestDestroyedObjectEventDropped(t *testing.T) {
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
+	p.SetEventFDCounts(map[uint16]int{0: 0})
 	conn.RegisterProxy(p)
 	proxyID := p.ID()
-	conn.UnregisterProxy(proxyID) // client-side destroy; raw proxy -> zombie with nil table
+	conn.UnregisterProxy(proxyID) // client-side destroy; zombie with table
 
 	w := &wire.Writer{}
 	_ = w.Uint32(9)
@@ -1134,6 +1136,7 @@ func TestMultiHandlerDispatch(t *testing.T) {
 	swc := wire.NewConn(serverUC)
 
 	p := NewProxy(conn)
+	p.SetEventFDCounts(map[uint16]int{0: 0})
 	conn.RegisterProxy(p)
 	proxyID := p.ID()
 

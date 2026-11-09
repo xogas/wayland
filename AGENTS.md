@@ -11,7 +11,7 @@ wayland core 1.26.0, wayland-protocols 1.50 (vendored in `wayland-protocols/`, n
 | `*_gen.go` (root) | Generated wayland core bindings, DO NOT EDIT |
 | `wire/` | Message codec, SCM_RIGHTS fd queue |
 | `protocol/` | Generated extension bindings, tiered `stable/` `staging/` `unstable/` `experimental/` |
-| `cmd/wayland-scanner/` | Code generator (`protocol.go`, `naming.go`, `templates.go`, `transform.go`) |
+| `cmd/wayland-scanner/` | Code generator (`main.go`, `generate.go`, `protocol.go`, `transform.go`, `templates.go`) |
 | `cmd/wayland-info/` | Protocol info tool |
 | `examples/` | Runnable examples |
 | `wayland-protocols/` | Protocol XML sources (vendored) |
@@ -30,7 +30,7 @@ wayland core 1.26.0, wayland-protocols 1.50 (vendored in `wayland-protocols/`, n
 - Unknown-opcode/object events are fatal because their fd count is unknowable; skipping would throw the fd queue out of sync
 - Events for client-destroyed objects are dropped (fds drained and closed); normal, not an error
 - Requests written immediately, no send buffering, `Flush` is a no-op; `SendRequest` is goroutine-safe, dispatch is single-goroutine
-- Detect protocol errors with `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` is a pre-close hook
+- Detect protocol errors with `var pe *wayland.ProtocolError; errors.As(err, &pe)`; `SetOnError` fires after the connection is closed
 
 ## Naming
 

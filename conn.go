@@ -70,7 +70,13 @@ func (c *Conn) SendRequest(objID uint32, opcode uint16, m wire.Marshaler) error 
 	if err := m.Marshal(&c.writer); err != nil {
 		return err
 	}
-	return c.wc.SendMessage(wire.ObjectID(objID), opcode, &c.writer)
+	if err := c.wc.SendMessage(wire.ObjectID(objID), opcode, &c.writer); err != nil {
+		// A partial write tears the frame; the stream is untrustworthy.
+		c.setReadErr(fmt.Errorf("wayland: send to object %d opcode %d: %w", objID, opcode, err))
+		_ = c.Close()
+		return c.stickyErr()
+	}
+	return nil
 }
 
 func (c *Conn) RegisterProxy(p *Proxy) {

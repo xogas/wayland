@@ -130,22 +130,27 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 				return
 			}
 			if n > 0 {
-				for _, fd := range c.wc.TakeFDs(n) {
+				fds := c.wc.TakeFDs(n)
+				if len(fds) < n {
+					for _, fd := range fds {
+						_ = syscall.Close(fd)
+					}
+					c.failStream("fd queue short on event for destroyed object", objID, opcode)
+					return
+				}
+				for _, fd := range fds {
 					_ = syscall.Close(fd)
 				}
 			}
 			c.Logger().Warn("receiving event for destroyed object", "id", objID, "opcode", opcode)
+		} else {
+			c.failStream("event for destroyed object without fd counts", objID, opcode)
 		}
 		return
 	}
 	counts := p.FDCounts()
 	if counts == nil {
-		// No registered fd table (raw proxy for a custom protocol): fd counts
-		// are unknown, so hand the event to any registered handler leniently.
-		// RegisterInterfaceFDCounts restores strict fd accounting.
-		if p.hasEvent(opcode) {
-			p.dispatchEvent(opcode, r)
-		}
+		c.failStream("event for object without fd counts", objID, opcode)
 		return
 	}
 	n, known := counts[opcode]
@@ -158,6 +163,13 @@ func (c *Conn) dispatch(objID uint32, opcode uint16, r *wire.Reader) {
 	}
 	if n > 0 {
 		fds := c.wc.TakeFDs(n)
+		if len(fds) < n {
+			for _, fd := range fds {
+				_ = syscall.Close(fd)
+			}
+			c.failStream("fd queue short on event", objID, opcode)
+			return
+		}
 		r.SetFDs(fds)
 		if !p.hasEvent(opcode) {
 			for _, fd := range fds {

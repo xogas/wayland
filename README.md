@@ -53,7 +53,7 @@ func main() {
 }
 ```
 
-More runnable examples in [examples/](./examples/readme.md).
+More runnable examples in [examples/](./examples/README.md).
 
 ## Design notes
 
@@ -66,7 +66,8 @@ More runnable examples in [examples/](./examples/readme.md).
   bound interface lacks) kills the connection. `Dispatch` returns the error
   (a `*ProtocolError` for compositor-reported ones), and every later call
   fails fast with the same sticky error. Check with
-  `errors.As(err, &wayland.ProtocolError{})`; `SetOnError` fires before close.
+  `var pe *wayland.ProtocolError; errors.As(err, &pe)`; `SetOnError` fires
+  after the connection has been closed.
   Unknown-opcode/object events are fatal because their fd count is unknowable:
   skipping them would desync the fd queue.
 - **Destroy race**: events in flight for a client-destroyed object are dropped
