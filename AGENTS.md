@@ -4,7 +4,7 @@
 
 纯 Go 的 Wayland 客户端库, 外加一个从仓库内协议 XML 生成 Go 绑定的 cmd; 给库作者在 Linux 桌面 (sway) 写截图, 启动器一类小工具用; 只跑 linux/amd64. 本文件是硬约束, 不是说明书; 理由和背景在 `docs/`.
 
-当前阶段: 意图已冻结; 立项已冻结; 规格已冻结; 契约与设计尚未开始.
+当前阶段: 意图已冻结; 立项已冻结; 规格已冻结; 设计已冻结; 实现未开始.
 
 ## 不可违反 (违反即回退)
 
@@ -22,9 +22,10 @@
 - 文档: `docs/intent.md` v1.0 Frozen 是意图基线; 改语义必须升版本并重新过门禁. `docs/` 归库作者; 改 spec/契约/ADR/charter 前先问.
 - 范围: `docs/charter.md` 的 In/Out 是唯一判定依据; 清单外默认 Out; 引用条目拒绝, 不讨论实现方式, 不写代码; 新需求回 L1.
 - 规格: `docs/spec.md` v1.0 Frozen 是验收基线; 规格未覆盖之处必须先问, 不得自行决定.
+- 契约: `docs/contracts.md` v1.0 Frozen 是 API 基线; 改签名 / 字段 / 错误标识必须先问, 并写新 ADR, 重过 G3.
 - 依赖: 当前约束是第三方 Go 依赖为 0; 任何新增依赖 (含 `go get`) 都必须先问, 并先改意图与重新过门禁; 不许自行改 `go.mod` / `go.sum`.
-- 设计: 接口只在消费方定义, 单实现不抽接口; 禁止按层命名 (`domain`/`service`/`repository`/`controller`) 与 `utils`/`helpers`/`common` 杂物包; 库包不许 import `cmd/` 或 `examples/`; 根包与 `protocols/` 的跨包方向在契约冻结前必须问.
-- 禁改: `wayland-protocols/` 的 XML/DTD, 手改生成代码, `docs/intent.md`, `docs/charter.md`, `docs/spec.md`, `go.mod`, `go.sum`, `AGENTS.md`, `Makefile`; 需要对应用户批准.
+- 设计: 接口只在消费方定义, 单实现不抽接口; 禁止按层命名 (`domain`/`service`/`repository`/`controller`) 与 `utils`/`helpers`/`common` 杂物包; 库包不许 import `cmd/` 或 `examples/`; 根包与 `protocols/` 的跨包方向以 `docs/design/modules.md` 为准; `scripts/check-dep.sh` 必须退出 0.
+- 禁改: `wayland-protocols/` 的 XML/DTD, 手改生成代码, `docs/intent.md`, `docs/charter.md`, `docs/spec.md`, `docs/contracts.md`, `docs/design/modules.md`, `docs/design/failure.md`, `go.mod`, `go.sum`, `AGENTS.md`, `Makefile`; 需要对应用户批准.
 - 不确定时: 停下来问; 不许假定后继续, 不许"先写一版看看", 不许把"我假设..."留到收工.
 - 冲突时: 当次指令 > 子目录 `AGENTS.md` > 本文件 > 用户全局; 具体化只能收紧, 不能放宽; 任何覆盖必须在收工写明"破了哪条 + 为什么 + 何时补".
 
@@ -54,8 +55,10 @@
 - 意图: `docs/intent.md` (v1.0 Frozen)
 - 立项单: `docs/charter.md` (v1.0)
 - 规格与 AC: `docs/spec.md` (v1.0 Frozen)
-- 接口契约: `docs/contracts.md` (未创建)
-- 架构决策: `docs/adr/` (未创建)
+- 契约: `docs/contracts.md` (v1.0 Frozen)
+- 模块与依赖: `docs/design/modules.md` (Frozen); 检查: `scripts/check-dep.sh`
+- 失败策略: `docs/design/failure.md` (Frozen)
+- 架构决策: `docs/adr/` (ADR-001 到 ADR-005, Accepted)
 - 协议源: `wayland-protocols/`; 生成器: `cmd/` (待创建); 非核心生成代码: `protocols/` (待创建); 示例: `examples/` (待创建)
 - 未覆盖之处: 按 "不确定时" 处理, 问.
 
