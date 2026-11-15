@@ -36,6 +36,7 @@ func TestObjectIDAllocation(t *testing.T) {
 	if p3.ID() != 2 {
 		t.Fatalf("p3 id = %d, want reused 2", p3.ID())
 	}
+	p2.state = stateDestroyPending
 	if err := c.deleteID(p2.ID()); err != nil {
 		t.Fatalf("delete p2: %v", err)
 	}

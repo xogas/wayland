@@ -32,6 +32,9 @@ type Proxy struct {
 	state       objectState
 	serverOwned bool
 	sent        bool
+	// tombstone marks a canceled Roundtrip callback. Its events are consumed
+	// and discarded until the server sends delete_id.
+	tombstone bool
 }
 
 // ID returns the wire object ID.
@@ -48,6 +51,8 @@ func (p *Proxy) SetSink(sink EventSink) error {
 	if sink == nil {
 		return fmt.Errorf("set sink: %w", ErrInvalidArgument)
 	}
+	p.conn.mu.Lock()
+	defer p.conn.mu.Unlock()
 	if p.sink != nil {
 		return fmt.Errorf("set sink: %w", ErrInvalidOperation)
 	}
@@ -76,7 +81,11 @@ func (p *Proxy) newObjectWithVersion(iface *Interface, version uint32) (*Proxy, 
 	return p.conn.newObject(iface, version, false)
 }
 
-func (p *Proxy) markServerOwned() { p.serverOwned = true }
+func (p *Proxy) markServerOwned() {
+	p.conn.mu.Lock()
+	p.serverOwned = true
+	p.conn.mu.Unlock()
+}
 
 // Release frees an object that was allocated but never sent.
 func (p *Proxy) Release() error {

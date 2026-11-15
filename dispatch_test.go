@@ -85,6 +85,7 @@ func TestDispatchDeleteID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new registry: %v", err)
 	}
+	p.state = stateDestroyPending
 	body := appendU32(nil, p.ID())
 	writeFrame(t, b, 1, 1, body)
 	if err := d.Dispatch(); err != nil {
