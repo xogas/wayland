@@ -31,7 +31,7 @@ func (h handler) GlobalRemove(name uint32) {
 func run() error {
 	d, err := wayland.Connect()
 	if err != nil {
-		return err
+		return fmt.Errorf("connect: set WAYLAND_DISPLAY (with XDG_RUNTIME_DIR) or WAYLAND_SOCKET: %w", err)
 	}
 	defer func() {
 		if err := d.Close(); err != nil {
@@ -49,6 +49,9 @@ func run() error {
 		return err
 	}
 
+	if len(globals) == 0 {
+		return fmt.Errorf("no globals advertised: zero globals received")
+	}
 	sort.Slice(globals, func(i, j int) bool {
 		if globals[i].Interface != globals[j].Interface {
 			return globals[i].Interface < globals[j].Interface
