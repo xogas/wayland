@@ -43,6 +43,16 @@ type conn struct {
 	// oobLen overrides the ancillary buffer size; zero uses the default.
 	// It exists so tests can exercise MSG_CTRUNC without exhausting fds.
 	oobLen int
+	// skipUnknownServer is set only by the test-only raw bind path. Unknown
+	// interfaces may create child objects whose IDs cannot be resolved without
+	// a generated signature; while this marker is set, events and delete_id
+	// messages for unregistered server-range IDs are skipped by length instead
+	// of treated as protocol errors. It stays false for all public runtime
+	// paths, so AC-O03 behavior is unchanged.
+	skipUnknownServer bool
+	// unknownServerSkips counts events and delete_id messages consumed by the
+	// test-only broad skip path.
+	unknownServerSkips int
 }
 
 // Connect opens a Wayland connection using WAYLAND_SOCKET, WAYLAND_DISPLAY
@@ -249,6 +259,10 @@ func (c *conn) deleteID(id uint32) error {
 	defer c.mu.Unlock()
 	p, ok := c.objects[id]
 	if !ok {
+		if c.skipUnknownServer && id >= 0xFF000000 {
+			c.unknownServerSkips++
+			return nil
+		}
 		return fmt.Errorf("delete_id %d: %w", id, ErrProtocolViolation)
 	}
 	if !p.serverOwned && p.state != stateDestroyPending {

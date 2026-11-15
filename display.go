@@ -147,8 +147,37 @@ func (d *Display) dispatchOne() error {
 	}
 	p := c.lookup(objectID)
 	if p == nil {
+		c.mu.Lock()
+		skip := c.skipUnknownServer && objectID >= 0xFF000000
+		if skip {
+			c.unknownServerSkips++
+		}
+		c.mu.Unlock()
+		if skip {
+			// A child object created by a raw-bound unknown interface. Its
+			// interface signature is unavailable, so the already-consumed
+			// frame is skipped by length. This test-only path is enabled by
+			// bindUnknownRaw; public dispatch still reports E-07.
+			return nil
+		}
 		_ = c.close()
 		return fmt.Errorf("event object %d: %w", objectID, ErrProtocolViolation)
+	}
+	c.mu.Lock()
+	rawName := p.rawName
+	c.mu.Unlock()
+	if rawName != "" {
+		// Test-only raw bind: there is no generated signature for this
+		// interface, so the event body cannot be decoded. The frame was
+		// already consumed by readFrame, which makes skipping by message
+		// length safe for the connection. Descriptors carried by such an
+		// event cannot be identified without a signature; the runtime
+		// documents this limitation and tests avoid fd events on raw
+		// objects.
+		c.mu.Lock()
+		p.skippedEvents++
+		c.mu.Unlock()
+		return nil
 	}
 	if p.iface == nil {
 		_ = c.close()
