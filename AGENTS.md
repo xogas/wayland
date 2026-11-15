@@ -58,7 +58,7 @@
 - 契约: `docs/contracts.md` (v1.0 Frozen)
 - 模块与依赖: `docs/design/modules.md` (Frozen); 检查: `scripts/check-dep.sh`
 - 失败策略: `docs/design/failure.md` (Frozen)
-- 架构决策: `docs/adr/` (ADR-001 到 ADR-005, Accepted)
+- 架构决策: `docs/adr/` (ADR-001 到 ADR-006, Accepted)
 - 协议源: `wayland-protocols/`; 生成器: `cmd/` (待创建); 非核心生成代码: `protocols/` (待创建); 示例: `examples/` (待创建)
 - 未覆盖之处: 按 "不确定时" 处理, 问.
 

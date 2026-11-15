@@ -6,12 +6,15 @@ var interfaceDisplay = &Interface{
 	Name:    "wl_display",
 	Version: 1,
 	Requests: []Message{
-		{Name: "sync", Since: 1, Args: []ArgSpec{{Name: "callback", Type: ArgNewID, Interface: "wl_callback", Enum: "", AllowNull: false}}},
-		{Name: "get_registry", Since: 1, Args: []ArgSpec{{Name: "registry", Type: ArgNewID, Interface: "wl_registry", Enum: "", AllowNull: false}}},
+		{Name: "sync", Since: 1, Args: []ArgSpec{{Name: "callback", Type: ArgNewID, Interface: "wl_callback"}}},
+		{Name: "get_registry", Since: 1, Args: []ArgSpec{{Name: "registry", Type: ArgNewID, Interface: "wl_registry"}}},
 	},
 	Events: []Message{
-		{Name: "error", Since: 1, Args: []ArgSpec{{Name: "object_id", Type: ArgObject, Interface: "", Enum: "", AllowNull: false}, {Name: "code", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}, {Name: "message", Type: ArgString, Interface: "", Enum: "", AllowNull: false}}},
-		{Name: "delete_id", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}}},
+		{Name: "error", Since: 1, Args: []ArgSpec{{Name: "object_id", Type: ArgObject}, {Name: "code", Type: ArgUint}, {Name: "message", Type: ArgString}}},
+		{Name: "delete_id", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_object", Value: 0x0, Since: 1}, {Name: "invalid_method", Value: 0x1, Since: 1}, {Name: "no_memory", Value: 0x2, Since: 1}, {Name: "implementation", Value: 0x3, Since: 1}}},
 	},
 }
 
@@ -19,25 +22,3576 @@ var interfaceRegistry = &Interface{
 	Name:    "wl_registry",
 	Version: 1,
 	Requests: []Message{
-		{Name: "bind", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}, {Name: "id", Type: ArgNewID, Interface: "", Enum: "", AllowNull: false}}},
+		{Name: "bind", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint}, {Name: "id", Type: ArgNewID}}},
 	},
 	Events: []Message{
-		{Name: "global", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}, {Name: "interface", Type: ArgString, Interface: "", Enum: "", AllowNull: false}, {Name: "version", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}}},
-		{Name: "global_remove", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}}},
+		{Name: "global", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint}, {Name: "interface", Type: ArgString}, {Name: "version", Type: ArgUint}}},
+		{Name: "global_remove", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgUint}}},
 	},
 }
 
 var interfaceCallback = &Interface{
-	Name:     "wl_callback",
-	Version:  1,
-	Requests: []Message{},
+	Name:    "wl_callback",
+	Version: 1,
+	Frozen:  true,
 	Events: []Message{
-		{Name: "done", Since: 1, Args: []ArgSpec{{Name: "callback_data", Type: ArgUint, Interface: "", Enum: "", AllowNull: false}}},
+		{Name: "done", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "callback_data", Type: ArgUint}}},
+	},
+}
+
+var interfaceCompositor = &Interface{
+	Name:    "wl_compositor",
+	Version: 7,
+	Requests: []Message{
+		{Name: "create_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_surface"}}},
+		{Name: "create_region", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_region"}}},
+		{Name: "release", Since: 7, Destructor: true},
+	},
+}
+
+var interfaceShmPool = &Interface{
+	Name:    "wl_shm_pool",
+	Version: 3,
+	Requests: []Message{
+		{Name: "create_buffer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_buffer"}, {Name: "offset", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "stride", Type: ArgInt}, {Name: "format", Type: ArgUint, Enum: "wl_shm.format"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "resize", Since: 1, Args: []ArgSpec{{Name: "size", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 3, Entries: []EnumEntry{{Name: "invalid_format", Value: 0x0, Since: 1}, {Name: "invalid_stride", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceShm = &Interface{
+	Name:    "wl_shm",
+	Version: 3,
+	Requests: []Message{
+		{Name: "create_pool", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_shm_pool"}, {Name: "fd", Type: ArgFD}, {Name: "size", Type: ArgInt}}},
+		{Name: "release", Since: 2, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "format", Since: 1, Args: []ArgSpec{{Name: "format", Type: ArgUint, Enum: "format"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 3, Entries: []EnumEntry{{Name: "invalid_format", Value: 0x0, Since: 1, DeprecatedSince: 3}, {Name: "invalid_stride", Value: 0x1, Since: 1}, {Name: "invalid_fd", Value: 0x2, Since: 1}}},
+		{Name: "format", Since: 1, Entries: []EnumEntry{{Name: "argb8888", Value: 0x0, Since: 1}, {Name: "xrgb8888", Value: 0x1, Since: 1}, {Name: "c8", Value: 0x20203843, Since: 1}, {Name: "rgb332", Value: 0x38424752, Since: 1}, {Name: "bgr233", Value: 0x38524742, Since: 1}, {Name: "xrgb4444", Value: 0x32315258, Since: 1}, {Name: "xbgr4444", Value: 0x32314258, Since: 1}, {Name: "rgbx4444", Value: 0x32315852, Since: 1}, {Name: "bgrx4444", Value: 0x32315842, Since: 1}, {Name: "argb4444", Value: 0x32315241, Since: 1}, {Name: "abgr4444", Value: 0x32314241, Since: 1}, {Name: "rgba4444", Value: 0x32314152, Since: 1}, {Name: "bgra4444", Value: 0x32314142, Since: 1}, {Name: "xrgb1555", Value: 0x35315258, Since: 1}, {Name: "xbgr1555", Value: 0x35314258, Since: 1}, {Name: "rgbx5551", Value: 0x35315852, Since: 1}, {Name: "bgrx5551", Value: 0x35315842, Since: 1}, {Name: "argb1555", Value: 0x35315241, Since: 1}, {Name: "abgr1555", Value: 0x35314241, Since: 1}, {Name: "rgba5551", Value: 0x35314152, Since: 1}, {Name: "bgra5551", Value: 0x35314142, Since: 1}, {Name: "rgb565", Value: 0x36314752, Since: 1}, {Name: "bgr565", Value: 0x36314742, Since: 1}, {Name: "rgb888", Value: 0x34324752, Since: 1}, {Name: "bgr888", Value: 0x34324742, Since: 1}, {Name: "xbgr8888", Value: 0x34324258, Since: 1}, {Name: "rgbx8888", Value: 0x34325852, Since: 1}, {Name: "bgrx8888", Value: 0x34325842, Since: 1}, {Name: "abgr8888", Value: 0x34324241, Since: 1}, {Name: "rgba8888", Value: 0x34324152, Since: 1}, {Name: "bgra8888", Value: 0x34324142, Since: 1}, {Name: "xrgb2101010", Value: 0x30335258, Since: 1}, {Name: "xbgr2101010", Value: 0x30334258, Since: 1}, {Name: "rgbx1010102", Value: 0x30335852, Since: 1}, {Name: "bgrx1010102", Value: 0x30335842, Since: 1}, {Name: "argb2101010", Value: 0x30335241, Since: 1}, {Name: "abgr2101010", Value: 0x30334241, Since: 1}, {Name: "rgba1010102", Value: 0x30334152, Since: 1}, {Name: "bgra1010102", Value: 0x30334142, Since: 1}, {Name: "yuyv", Value: 0x56595559, Since: 1}, {Name: "yvyu", Value: 0x55595659, Since: 1}, {Name: "uyvy", Value: 0x59565955, Since: 1}, {Name: "vyuy", Value: 0x59555956, Since: 1}, {Name: "ayuv", Value: 0x56555941, Since: 1}, {Name: "nv12", Value: 0x3231564e, Since: 1}, {Name: "nv21", Value: 0x3132564e, Since: 1}, {Name: "nv16", Value: 0x3631564e, Since: 1}, {Name: "nv61", Value: 0x3136564e, Since: 1}, {Name: "yuv410", Value: 0x39565559, Since: 1}, {Name: "yvu410", Value: 0x39555659, Since: 1}, {Name: "yuv411", Value: 0x31315559, Since: 1}, {Name: "yvu411", Value: 0x31315659, Since: 1}, {Name: "yuv420", Value: 0x32315559, Since: 1}, {Name: "yvu420", Value: 0x32315659, Since: 1}, {Name: "yuv422", Value: 0x36315559, Since: 1}, {Name: "yvu422", Value: 0x36315659, Since: 1}, {Name: "yuv444", Value: 0x34325559, Since: 1}, {Name: "yvu444", Value: 0x34325659, Since: 1}, {Name: "r8", Value: 0x20203852, Since: 1}, {Name: "r16", Value: 0x20363152, Since: 1}, {Name: "rg88", Value: 0x38384752, Since: 1}, {Name: "gr88", Value: 0x38385247, Since: 1}, {Name: "rg1616", Value: 0x32334752, Since: 1}, {Name: "gr1616", Value: 0x32335247, Since: 1}, {Name: "xrgb16161616f", Value: 0x48345258, Since: 1}, {Name: "xbgr16161616f", Value: 0x48344258, Since: 1}, {Name: "argb16161616f", Value: 0x48345241, Since: 1}, {Name: "abgr16161616f", Value: 0x48344241, Since: 1}, {Name: "xyuv8888", Value: 0x56555958, Since: 1}, {Name: "vuy888", Value: 0x34325556, Since: 1}, {Name: "vuy101010", Value: 0x30335556, Since: 1}, {Name: "y210", Value: 0x30313259, Since: 1}, {Name: "y212", Value: 0x32313259, Since: 1}, {Name: "y216", Value: 0x36313259, Since: 1}, {Name: "y410", Value: 0x30313459, Since: 1}, {Name: "y412", Value: 0x32313459, Since: 1}, {Name: "y416", Value: 0x36313459, Since: 1}, {Name: "xvyu2101010", Value: 0x30335658, Since: 1}, {Name: "xvyu12_16161616", Value: 0x36335658, Since: 1}, {Name: "xvyu16161616", Value: 0x38345658, Since: 1}, {Name: "y0l0", Value: 0x304c3059, Since: 1}, {Name: "x0l0", Value: 0x304c3058, Since: 1}, {Name: "y0l2", Value: 0x324c3059, Since: 1}, {Name: "x0l2", Value: 0x324c3058, Since: 1}, {Name: "yuv420_8bit", Value: 0x38305559, Since: 1}, {Name: "yuv420_10bit", Value: 0x30315559, Since: 1}, {Name: "xrgb8888_a8", Value: 0x38415258, Since: 1}, {Name: "xbgr8888_a8", Value: 0x38414258, Since: 1}, {Name: "rgbx8888_a8", Value: 0x38415852, Since: 1}, {Name: "bgrx8888_a8", Value: 0x38415842, Since: 1}, {Name: "rgb888_a8", Value: 0x38413852, Since: 1}, {Name: "bgr888_a8", Value: 0x38413842, Since: 1}, {Name: "rgb565_a8", Value: 0x38413552, Since: 1}, {Name: "bgr565_a8", Value: 0x38413542, Since: 1}, {Name: "nv24", Value: 0x3432564e, Since: 1}, {Name: "nv42", Value: 0x3234564e, Since: 1}, {Name: "p210", Value: 0x30313250, Since: 1}, {Name: "p010", Value: 0x30313050, Since: 1}, {Name: "p012", Value: 0x32313050, Since: 1}, {Name: "p016", Value: 0x36313050, Since: 1}, {Name: "axbxgxrx106106106106", Value: 0x30314241, Since: 1}, {Name: "nv15", Value: 0x3531564e, Since: 1}, {Name: "q410", Value: 0x30313451, Since: 1}, {Name: "q401", Value: 0x31303451, Since: 1}, {Name: "xrgb16161616", Value: 0x38345258, Since: 1}, {Name: "xbgr16161616", Value: 0x38344258, Since: 1}, {Name: "argb16161616", Value: 0x38345241, Since: 1}, {Name: "abgr16161616", Value: 0x38344241, Since: 1}, {Name: "c1", Value: 0x20203143, Since: 1}, {Name: "c2", Value: 0x20203243, Since: 1}, {Name: "c4", Value: 0x20203443, Since: 1}, {Name: "d1", Value: 0x20203144, Since: 1}, {Name: "d2", Value: 0x20203244, Since: 1}, {Name: "d4", Value: 0x20203444, Since: 1}, {Name: "d8", Value: 0x20203844, Since: 1}, {Name: "r1", Value: 0x20203152, Since: 1}, {Name: "r2", Value: 0x20203252, Since: 1}, {Name: "r4", Value: 0x20203452, Since: 1}, {Name: "r10", Value: 0x20303152, Since: 1}, {Name: "r12", Value: 0x20323152, Since: 1}, {Name: "avuy8888", Value: 0x59555641, Since: 1}, {Name: "xvuy8888", Value: 0x59555658, Since: 1}, {Name: "p030", Value: 0x30333050, Since: 1}, {Name: "rgb161616", Value: 0x38344752, Since: 1}, {Name: "bgr161616", Value: 0x38344742, Since: 1}, {Name: "r16f", Value: 0x48202052, Since: 1}, {Name: "gr1616f", Value: 0x48205247, Since: 1}, {Name: "bgr161616f", Value: 0x48524742, Since: 1}, {Name: "r32f", Value: 0x46202052, Since: 1}, {Name: "gr3232f", Value: 0x46205247, Since: 1}, {Name: "bgr323232f", Value: 0x46524742, Since: 1}, {Name: "abgr32323232f", Value: 0x46384241, Since: 1}, {Name: "nv20", Value: 0x3032564e, Since: 1}, {Name: "nv30", Value: 0x3033564e, Since: 1}, {Name: "s010", Value: 0x30313053, Since: 1}, {Name: "s210", Value: 0x30313253, Since: 1}, {Name: "s410", Value: 0x30313453, Since: 1}, {Name: "s012", Value: 0x32313053, Since: 1}, {Name: "s212", Value: 0x32313253, Since: 1}, {Name: "s412", Value: 0x32313453, Since: 1}, {Name: "s016", Value: 0x36313053, Since: 1}, {Name: "s216", Value: 0x36313253, Since: 1}, {Name: "s416", Value: 0x36313453, Since: 1}, {Name: "xvuy2101010", Value: 0x30335958, Since: 1}, {Name: "p230", Value: 0x30333250, Since: 1}, {Name: "t430", Value: 0x30333454, Since: 1}, {Name: "y8", Value: 0x59455247, Since: 1}, {Name: "xyyy2101010", Value: 0x34415059, Since: 1}}},
+	},
+}
+
+var interfaceBuffer = &Interface{
+	Name:    "wl_buffer",
+	Version: 1,
+	Frozen:  true,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "release", Since: 1},
+	},
+}
+
+var interfaceDataOffer = &Interface{
+	Name:    "wl_data_offer",
+	Version: 4,
+	Requests: []Message{
+		{Name: "accept", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "mime_type", Type: ArgString, AllowNull: true}}},
+		{Name: "receive", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "finish", Since: 3},
+		{Name: "set_actions", Since: 3, Args: []ArgSpec{{Name: "dnd_actions", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}, {Name: "preferred_action", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}}},
+	},
+	Events: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+		{Name: "source_actions", Since: 3, Args: []ArgSpec{{Name: "source_actions", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}}},
+		{Name: "action", Since: 3, Args: []ArgSpec{{Name: "dnd_action", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_finish", Value: 0x0, Since: 1}, {Name: "invalid_action_mask", Value: 0x1, Since: 1}, {Name: "invalid_action", Value: 0x2, Since: 1}, {Name: "invalid_offer", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceDataSource = &Interface{
+	Name:    "wl_data_source",
+	Version: 4,
+	Requests: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_actions", Since: 3, Args: []ArgSpec{{Name: "dnd_actions", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}}},
+	},
+	Events: []Message{
+		{Name: "target", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString, AllowNull: true}}},
+		{Name: "send", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "cancelled", Since: 1},
+		{Name: "dnd_drop_performed", Since: 3},
+		{Name: "dnd_finished", Since: 3},
+		{Name: "action", Since: 3, Args: []ArgSpec{{Name: "dnd_action", Type: ArgUint, Enum: "wl_data_device_manager.dnd_action"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_action_mask", Value: 0x0, Since: 1}, {Name: "invalid_source", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceDataDevice = &Interface{
+	Name:    "wl_data_device",
+	Version: 4,
+	Requests: []Message{
+		{Name: "start_drag", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgObject, Interface: "wl_data_source", AllowNull: true}, {Name: "origin", Type: ArgObject, Interface: "wl_surface"}, {Name: "icon", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "serial", Type: ArgUint}}},
+		{Name: "set_selection", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgObject, Interface: "wl_data_source", AllowNull: true}, {Name: "serial", Type: ArgUint}}},
+		{Name: "release", Since: 2, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "data_offer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_data_offer"}}},
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}, {Name: "id", Type: ArgObject, Interface: "wl_data_offer", AllowNull: true}}},
+		{Name: "leave", Since: 1},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "drop", Since: 1},
+		{Name: "selection", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgObject, Interface: "wl_data_offer", AllowNull: true}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}, {Name: "used_source", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceDataDeviceManager = &Interface{
+	Name:    "wl_data_device_manager",
+	Version: 4,
+	Requests: []Message{
+		{Name: "create_data_source", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_data_source"}}},
+		{Name: "get_data_device", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_data_device"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "release", Since: 4, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "dnd_action", Since: 3, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "copy", Value: 0x1, Since: 1}, {Name: "move", Value: 0x2, Since: 1}, {Name: "ask", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceShell = &Interface{
+	Name:    "wl_shell",
+	Version: 1,
+	Requests: []Message{
+		{Name: "get_shell_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_shell_surface"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceShellSurface = &Interface{
+	Name:    "wl_shell_surface",
+	Version: 1,
+	Requests: []Message{
+		{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "move", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "resize", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "edges", Type: ArgUint, Enum: "resize"}}},
+		{Name: "set_toplevel", Since: 1},
+		{Name: "set_transient", Since: 1, Args: []ArgSpec{{Name: "parent", Type: ArgObject, Interface: "wl_surface"}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "flags", Type: ArgUint, Enum: "transient"}}},
+		{Name: "set_fullscreen", Since: 1, Args: []ArgSpec{{Name: "method", Type: ArgUint, Enum: "fullscreen_method"}, {Name: "framerate", Type: ArgUint}, {Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "set_popup", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "parent", Type: ArgObject, Interface: "wl_surface"}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "flags", Type: ArgUint, Enum: "transient"}}},
+		{Name: "set_maximized", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "set_title", Since: 1, Args: []ArgSpec{{Name: "title", Type: ArgString}}},
+		{Name: "set_class", Since: 1, Args: []ArgSpec{{Name: "class_", Type: ArgString}}},
+	},
+	Events: []Message{
+		{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "edges", Type: ArgUint, Enum: "resize"}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "popup_done", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "resize", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "right", Value: 0x8, Since: 1}, {Name: "top_right", Value: 0x9, Since: 1}, {Name: "bottom_right", Value: 0xa, Since: 1}}},
+		{Name: "transient", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "inactive", Value: 0x1, Since: 1}}},
+		{Name: "fullscreen_method", Since: 1, Entries: []EnumEntry{{Name: "default", Value: 0x0, Since: 1}, {Name: "scale", Value: 0x1, Since: 1}, {Name: "driver", Value: 0x2, Since: 1}, {Name: "fill", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceSurface = &Interface{
+	Name:    "wl_surface",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "attach", Since: 1, Args: []ArgSpec{{Name: "buffer", Type: ArgObject, Interface: "wl_buffer", AllowNull: true}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "damage", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "callback", Type: ArgNewID, Interface: "wl_callback"}}},
+		{Name: "set_opaque_region", Since: 1, Args: []ArgSpec{{Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}}},
+		{Name: "set_input_region", Since: 1, Args: []ArgSpec{{Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}}},
+		{Name: "commit", Since: 1},
+		{Name: "set_buffer_transform", Since: 2, Args: []ArgSpec{{Name: "transform", Type: ArgInt, Enum: "wl_output.transform"}}},
+		{Name: "set_buffer_scale", Since: 3, Args: []ArgSpec{{Name: "scale", Type: ArgInt}}},
+		{Name: "damage_buffer", Since: 4, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "offset", Since: 5, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "get_release", Since: 7, Args: []ArgSpec{{Name: "callback", Type: ArgNewID, Interface: "wl_callback"}}},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "preferred_buffer_scale", Since: 6, Args: []ArgSpec{{Name: "factor", Type: ArgInt}}},
+		{Name: "preferred_buffer_transform", Since: 6, Args: []ArgSpec{{Name: "transform", Type: ArgUint, Enum: "wl_output.transform"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_scale", Value: 0x0, Since: 1}, {Name: "invalid_transform", Value: 0x1, Since: 1}, {Name: "invalid_size", Value: 0x2, Since: 1}, {Name: "invalid_offset", Value: 0x3, Since: 1}, {Name: "defunct_role_object", Value: 0x4, Since: 1}, {Name: "no_buffer", Value: 0x5, Since: 1}}},
+	},
+}
+
+var interfaceSeat = &Interface{
+	Name:    "wl_seat",
+	Version: 11,
+	Requests: []Message{
+		{Name: "get_pointer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_pointer"}}},
+		{Name: "get_keyboard", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_keyboard"}}},
+		{Name: "get_touch", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_touch"}}},
+		{Name: "release", Since: 5, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "capabilities", Since: 1, Args: []ArgSpec{{Name: "capabilities", Type: ArgUint, Enum: "capability"}}},
+		{Name: "name", Since: 2, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+	},
+	Enums: []Enum{
+		{Name: "capability", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "pointer", Value: 0x1, Since: 1}, {Name: "keyboard", Value: 0x2, Since: 1}, {Name: "touch", Value: 0x4, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "missing_capability", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfacePointer = &Interface{
+	Name:    "wl_pointer",
+	Version: 11,
+	Requests: []Message{
+		{Name: "set_cursor", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "hotspot_x", Type: ArgInt}, {Name: "hotspot_y", Type: ArgInt}}},
+		{Name: "release", Since: 3, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "surface_x", Type: ArgFixed}, {Name: "surface_y", Type: ArgFixed}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "surface_x", Type: ArgFixed}, {Name: "surface_y", Type: ArgFixed}}},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "axis", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "axis", Type: ArgUint, Enum: "axis"}, {Name: "value", Type: ArgFixed}}},
+		{Name: "frame", Since: 5},
+		{Name: "axis_source", Since: 5, Args: []ArgSpec{{Name: "axis_source", Type: ArgUint, Enum: "axis_source"}}},
+		{Name: "axis_stop", Since: 5, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "axis", Type: ArgUint, Enum: "axis"}}},
+		{Name: "axis_discrete", Since: 5, DeprecatedSince: 8, Args: []ArgSpec{{Name: "axis", Type: ArgUint, Enum: "axis"}, {Name: "discrete", Type: ArgInt}}},
+		{Name: "axis_value120", Since: 8, Args: []ArgSpec{{Name: "axis", Type: ArgUint, Enum: "axis"}, {Name: "value120", Type: ArgInt}}},
+		{Name: "axis_relative_direction", Since: 9, Args: []ArgSpec{{Name: "axis", Type: ArgUint, Enum: "axis"}, {Name: "direction", Type: ArgUint, Enum: "axis_relative_direction"}}},
+		{Name: "warp", Since: 11, Args: []ArgSpec{{Name: "surface_x", Type: ArgFixed}, {Name: "surface_y", Type: ArgFixed}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+		{Name: "axis", Since: 1, Entries: []EnumEntry{{Name: "vertical_scroll", Value: 0x0, Since: 1}, {Name: "horizontal_scroll", Value: 0x1, Since: 1}}},
+		{Name: "axis_source", Since: 1, Entries: []EnumEntry{{Name: "wheel", Value: 0x0, Since: 1}, {Name: "finger", Value: 0x1, Since: 1}, {Name: "continuous", Value: 0x2, Since: 1}, {Name: "wheel_tilt", Value: 0x3, Since: 6}}},
+		{Name: "axis_relative_direction", Since: 1, Entries: []EnumEntry{{Name: "identical", Value: 0x0, Since: 1}, {Name: "inverted", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceKeyboard = &Interface{
+	Name:    "wl_keyboard",
+	Version: 11,
+	Requests: []Message{
+		{Name: "release", Since: 3, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "keymap", Since: 1, Args: []ArgSpec{{Name: "format", Type: ArgUint, Enum: "keymap_format"}, {Name: "fd", Type: ArgFD}, {Name: "size", Type: ArgUint}}},
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "keys", Type: ArgArray}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "key", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "key", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "key_state"}}},
+		{Name: "modifiers", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "mods_depressed", Type: ArgUint}, {Name: "mods_latched", Type: ArgUint}, {Name: "mods_locked", Type: ArgUint}, {Name: "group", Type: ArgUint}}},
+		{Name: "repeat_info", Since: 4, Args: []ArgSpec{{Name: "rate", Type: ArgInt}, {Name: "delay", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "keymap_format", Since: 1, Entries: []EnumEntry{{Name: "no_keymap", Value: 0x0, Since: 1}, {Name: "xkb_v1", Value: 0x1, Since: 1}}},
+		{Name: "key_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}, {Name: "repeated", Value: 0x2, Since: 10}}},
+	},
+}
+
+var interfaceTouch = &Interface{
+	Name:    "wl_touch",
+	Version: 11,
+	Requests: []Message{
+		{Name: "release", Since: 3, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "down", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "id", Type: ArgInt}, {Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "up", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "id", Type: ArgInt}}},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "id", Type: ArgInt}, {Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "frame", Since: 1},
+		{Name: "cancel", Since: 1},
+		{Name: "shape", Since: 6, Args: []ArgSpec{{Name: "id", Type: ArgInt}, {Name: "major", Type: ArgFixed}, {Name: "minor", Type: ArgFixed}}},
+		{Name: "orientation", Since: 6, Args: []ArgSpec{{Name: "id", Type: ArgInt}, {Name: "orientation", Type: ArgFixed}}},
+	},
+}
+
+var interfaceOutput = &Interface{
+	Name:    "wl_output",
+	Version: 4,
+	Requests: []Message{
+		{Name: "release", Since: 3, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "geometry", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "physical_width", Type: ArgInt}, {Name: "physical_height", Type: ArgInt}, {Name: "subpixel", Type: ArgInt, Enum: "subpixel"}, {Name: "make", Type: ArgString}, {Name: "model", Type: ArgString}, {Name: "transform", Type: ArgInt, Enum: "transform"}}},
+		{Name: "mode", Since: 1, Args: []ArgSpec{{Name: "flags", Type: ArgUint, Enum: "mode"}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "refresh", Type: ArgInt}}},
+		{Name: "done", Since: 2},
+		{Name: "scale", Since: 2, Args: []ArgSpec{{Name: "factor", Type: ArgInt}}},
+		{Name: "name", Since: 4, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "description", Since: 4, Args: []ArgSpec{{Name: "description", Type: ArgString}}},
+	},
+	Enums: []Enum{
+		{Name: "subpixel", Since: 1, Entries: []EnumEntry{{Name: "unknown", Value: 0x0, Since: 1}, {Name: "none", Value: 0x1, Since: 1}, {Name: "horizontal_rgb", Value: 0x2, Since: 1}, {Name: "horizontal_bgr", Value: 0x3, Since: 1}, {Name: "vertical_rgb", Value: 0x4, Since: 1}, {Name: "vertical_bgr", Value: 0x5, Since: 1}}},
+		{Name: "transform", Since: 1, Entries: []EnumEntry{{Name: "normal", Value: 0x0, Since: 1}, {Name: "90", Value: 0x1, Since: 1}, {Name: "180", Value: 0x2, Since: 1}, {Name: "270", Value: 0x3, Since: 1}, {Name: "flipped", Value: 0x4, Since: 1}, {Name: "flipped_90", Value: 0x5, Since: 1}, {Name: "flipped_180", Value: 0x6, Since: 1}, {Name: "flipped_270", Value: 0x7, Since: 1}}},
+		{Name: "mode", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "current", Value: 0x1, Since: 1}, {Name: "preferred", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceRegion = &Interface{
+	Name:    "wl_region",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "add", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "subtract", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+	},
+}
+
+var interfaceSubcompositor = &Interface{
+	Name:    "wl_subcompositor",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_subsurface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_subsurface"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "parent", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "bad_surface", Value: 0x0, Since: 1}, {Name: "bad_parent", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceSubsurface = &Interface{
+	Name:    "wl_subsurface",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_position", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "place_above", Since: 1, Args: []ArgSpec{{Name: "sibling", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "place_below", Since: 1, Args: []ArgSpec{{Name: "sibling", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "set_sync", Since: 1},
+		{Name: "set_desync", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "bad_surface", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceFixes = &Interface{
+	Name:    "wl_fixes",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "destroy_registry", Since: 1, Args: []ArgSpec{{Name: "registry", Type: ArgObject, Interface: "wl_registry"}}},
+		{Name: "ack_global_remove", Since: 2, Args: []ArgSpec{{Name: "registry", Type: ArgObject, Interface: "wl_registry"}, {Name: "name", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_ack_remove", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxcutoutsManagerV1 = &Interface{
+	Name:    "xx_cutouts_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_cutouts", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_cutouts_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_role", Value: 0x0, Since: 1}, {Name: "defunct_cutouts_object", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxcutoutsV1 = &Interface{
+	Name:    "xx_cutouts_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_unhandled", Since: 1, Args: []ArgSpec{{Name: "unhandled", Type: ArgArray}}},
+	},
+	Events: []Message{
+		{Name: "cutout_box", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "type", Type: ArgUint, Enum: "type"}, {Name: "id", Type: ArgUint}}},
+		{Name: "cutout_corner", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgUint, Enum: "corner_position"}, {Name: "radius", Type: ArgUint}, {Name: "id", Type: ArgUint}}},
+		{Name: "configure", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "type", Since: 1, Entries: []EnumEntry{{Name: "cutout", Value: 0x0, Since: 1}, {Name: "notch", Value: 0x1, Since: 1}, {Name: "waterfall", Value: 0x2, Since: 1}}},
+		{Name: "corner_position", Since: 1, Entries: []EnumEntry{{Name: "top_left", Value: 0x0, Since: 1}, {Name: "top_right", Value: 0x1, Since: 1}, {Name: "bottom_right", Value: 0x2, Since: 1}, {Name: "bottom_left", Value: 0x3, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_element_id", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxfractionalscaleManagerV2 = &Interface{
+	Name:    "xx_fractional_scale_manager_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_fractional_scale", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_fractional_scale_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "fractional_scale_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxfractionalscaleV2 = &Interface{
+	Name:    "xx_fractional_scale_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_scale_factor", Since: 1, Args: []ArgSpec{{Name: "scale_8_24", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "scale_factor", Since: 1, Args: []ArgSpec{{Name: "scale_8_24", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_scale", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxhotkeyManagerV1 = &Interface{
+	Name:    "xx_hotkey_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "create_hotkey", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_hotkey_v1"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_app_id", Value: 0x0, Since: 1}}},
+		{Name: "modifiers", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "shift", Value: 0x1, Since: 1}, {Name: "ctrl", Value: 0x2, Since: 1}, {Name: "alt", Value: 0x4, Since: 1}, {Name: "super", Value: 0x8, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxhotkeyV1 = &Interface{
+	Name:    "xx_hotkey_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_description", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}}},
+		{Name: "set_seat", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat", AllowNull: true}}},
+		{Name: "set_key_trigger", Since: 1, Args: []ArgSpec{{Name: "keysym", Type: ArgUint}, {Name: "modifiers", Type: ArgUint, Enum: "xx_hotkey_manager_v1.modifiers"}}},
+		{Name: "set_button_trigger", Since: 1, Args: []ArgSpec{{Name: "button", Type: ArgUint}, {Name: "modifiers", Type: ArgUint, Enum: "xx_hotkey_manager_v1.modifiers"}}},
+		{Name: "commit", Since: 1},
+	},
+	Events: []Message{
+		{Name: "bound", Since: 1},
+		{Name: "denied", Since: 1, Args: []ArgSpec{{Name: "reason", Type: ArgUint, Enum: "deny_reason"}, {Name: "message", Type: ArgString}}},
+		{Name: "revoked", Since: 1, Args: []ArgSpec{{Name: "message", Type: ArgString}}},
+		{Name: "triggered", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}}},
+		{Name: "released", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_trigger", Value: 0x0, Since: 1}, {Name: "no_trigger", Value: 0x1, Since: 1}}},
+		{Name: "deny_reason", Since: 1, Entries: []EnumEntry{{Name: "already_bound", Value: 0x0, Since: 1}, {Name: "not_permitted", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXximagecapturecolormanagementColorManagerV1 = &Interface{
+	Name:    "xx_image_capture_color_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_capture_source_colors", Since: 1, Args: []ArgSpec{{Name: "colors", Type: ArgNewID, Interface: "xx_image_capture_source_colors_v1"}, {Name: "source", Type: ArgObject, Interface: "ext_image_capture_source_v1"}}},
+		{Name: "set_frame_image_description", Since: 1, Args: []ArgSpec{{Name: "frame", Type: ArgObject, Interface: "ext_image_copy_capture_frame_v1"}, {Name: "image_description", Type: ArgObject, Interface: "wp_image_description_v1"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "image_description_not_ready", Value: 0x1, Since: 1}, {Name: "already_captured", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXximagecapturecolormanagementSourceColorsV1 = &Interface{
+	Name:    "xx_image_capture_source_colors_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_preferred", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_image_description_reference_v1"}}},
+	},
+	Events: []Message{
+		{Name: "preferred_changed", Since: 1, Args: []ArgSpec{{Name: "identity_hi", Type: ArgUint}, {Name: "identity_lo", Type: ArgUint}}},
+	},
+}
+
+var interfaceExperimentalXxinputmethodMethodV1 = &Interface{
+	Name:    "xx_input_method_v1",
+	Version: 4,
+	Requests: []Message{
+		{Name: "perform_action", Since: 3, Args: []ArgSpec{{Name: "action", Type: ArgUint, Enum: "xx_text_input_v3.action"}}},
+		{Name: "commit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}}},
+		{Name: "set_preedit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor_begin", Type: ArgInt}, {Name: "cursor_end", Type: ArgInt}}},
+		{Name: "delete_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "before_length", Type: ArgUint}, {Name: "after_length", Type: ArgUint}}},
+		{Name: "move_cursor", Since: 3, Args: []ArgSpec{{Name: "cursor", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "commit", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "get_input_popup_surface", Since: 2, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_input_popup_surface_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "positioner", Type: ArgObject, Interface: "xx_input_popup_positioner_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "activate", Since: 1},
+		{Name: "deactivate", Since: 1},
+		{Name: "surrounding_text", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor", Type: ArgUint}, {Name: "anchor", Type: ArgUint}}},
+		{Name: "text_change_cause", Since: 1, Args: []ArgSpec{{Name: "cause", Type: ArgUint, Enum: "xx_text_input_v3.change_cause"}}},
+		{Name: "content_type", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint, Enum: "xx_text_input_v3.content_hint"}, {Name: "purpose", Type: ArgUint, Enum: "xx_text_input_v3.content_purpose"}}},
+		{Name: "set_available_actions", Since: 3, Args: []ArgSpec{{Name: "available_actions", Type: ArgArray}}},
+		{Name: "announce_supported_features", Since: 3, Args: []ArgSpec{{Name: "features", Type: ArgUint, Enum: "xx_text_input_v3.supported_features"}}},
+		{Name: "announce_protocol_compat", Since: 3, Args: []ArgSpec{{Name: "compat_level", Type: ArgUint, Enum: "protocol_compat"}}},
+		{Name: "done", Since: 1},
+		{Name: "unavailable", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "surface_has_role", Value: 0x0, Since: 1}, {Name: "inactive", Value: 0x1, Since: 1}}},
+		{Name: "protocol_compat", Since: 4, Entries: []EnumEntry{{Name: "text_input_v3", Value: 0x0, Since: 1}, {Name: "xx_text_input", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxinputmethodPopupSurfaceV2 = &Interface{
+	Name:    "xx_input_popup_surface_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "ack_configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "reposition", Since: 1, Args: []ArgSpec{{Name: "positioner", Type: ArgObject, Interface: "xx_input_popup_positioner_v1"}, {Name: "token", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "start_configure", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgUint}, {Name: "height", Type: ArgUint}, {Name: "anchor_x", Type: ArgInt}, {Name: "anchor_y", Type: ArgInt}, {Name: "anchor_width", Type: ArgUint}, {Name: "anchor_height", Type: ArgUint}, {Name: "serial", Type: ArgUint}}},
+		{Name: "repositioned", Since: 1, Args: []ArgSpec{{Name: "token", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_serial", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxinputmethodPopupPositionerV1 = &Interface{
+	Name:    "xx_input_popup_positioner_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgUint}, {Name: "height", Type: ArgUint}}},
+		{Name: "set_anchor", Since: 1, Args: []ArgSpec{{Name: "anchor", Type: ArgUint, Enum: "anchor"}}},
+		{Name: "set_gravity", Since: 1, Args: []ArgSpec{{Name: "gravity", Type: ArgUint, Enum: "gravity"}}},
+		{Name: "set_constraint_adjustment", Since: 1, Args: []ArgSpec{{Name: "constraint_adjustment", Type: ArgUint, Enum: "constraint_adjustment"}}},
+		{Name: "set_offset", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "set_reactive", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_input", Value: 0x0, Since: 1}}},
+		{Name: "anchor", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x3, Since: 1}, {Name: "right", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "top_right", Value: 0x7, Since: 1}, {Name: "bottom_right", Value: 0x8, Since: 1}}},
+		{Name: "gravity", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x3, Since: 1}, {Name: "right", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "top_right", Value: 0x7, Since: 1}, {Name: "bottom_right", Value: 0x8, Since: 1}}},
+		{Name: "constraint_adjustment", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "slide_x", Value: 0x1, Since: 1}, {Name: "slide_y", Value: 0x2, Since: 1}, {Name: "flip_x", Value: 0x4, Since: 1}, {Name: "flip_y", Value: 0x8, Since: 1}, {Name: "resize_x", Value: 0x10, Since: 1}, {Name: "resize_y", Value: 0x20, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxinputmethodMethodManagerV2 = &Interface{
+	Name:    "xx_input_method_manager_v2",
+	Version: 4,
+	Requests: []Message{
+		{Name: "get_input_method", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "input_method", Type: ArgNewID, Interface: "xx_input_method_v1"}}},
+		{Name: "get_positioner", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_input_popup_positioner_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceExperimentalXxkeyboardfilterV1 = &Interface{
+	Name:    "xx_keyboard_filter_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "unbind", Since: 1},
+		{Name: "filter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "action", Type: ArgUint, Enum: "filter_action"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_serial", Value: 0x1, Since: 1}}},
+		{Name: "filter_action", Since: 1, Entries: []EnumEntry{{Name: "consume", Value: 0x0, Since: 1}, {Name: "passthrough", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxkeyboardfilterManagerV1 = &Interface{
+	Name:    "xx_keyboard_filter_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "bind_to_input_method", Since: 1, Args: []ArgSpec{{Name: "keyboard", Type: ArgObject, Interface: "wl_keyboard"}, {Name: "input_method", Type: ArgObject, Interface: "xx_input_method_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "extensions", Type: ArgNewID, Interface: "xx_keyboard_filter_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_bound", Value: 0x1, Since: 1}, {Name: "wrong_seat", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxsessionmanagementSessionManagerV1 = &Interface{
+	Name:    "xx_session_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_session", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_session_v1"}, {Name: "reason", Type: ArgUint, Enum: "reason"}, {Name: "session", Type: ArgString, AllowNull: true}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "in_use", Value: 0x1, Since: 1}}},
+		{Name: "reason", Since: 1, Entries: []EnumEntry{{Name: "launch", Value: 0x1, Since: 1}, {Name: "recover", Value: 0x2, Since: 1}, {Name: "session_restore", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxsessionmanagementSessionV1 = &Interface{
+	Name:    "xx_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "remove", Since: 1, Destructor: true},
+		{Name: "add_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_toplevel_session_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "name", Type: ArgString}}},
+		{Name: "restore_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_toplevel_session_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "name", Type: ArgString}}},
+	},
+	Events: []Message{
+		{Name: "created", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgString}}},
+		{Name: "restored", Since: 1},
+		{Name: "replaced", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_restore", Value: 0x1, Since: 1}, {Name: "name_in_use", Value: 0x2, Since: 1}, {Name: "already_mapped", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxsessionmanagementToplevelSessionV1 = &Interface{
+	Name:    "xx_toplevel_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "remove", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "restored", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "xdg_toplevel"}}},
+	},
+}
+
+var interfaceExperimentalXxtextinputV3 = &Interface{
+	Name:    "xx_text_input_v3",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "enable", Since: 1},
+		{Name: "disable", Since: 1},
+		{Name: "set_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "set_text_change_cause", Since: 1, Args: []ArgSpec{{Name: "cause", Type: ArgUint, Enum: "change_cause"}}},
+		{Name: "set_content_type", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint, Enum: "content_hint"}, {Name: "purpose", Type: ArgUint, Enum: "content_purpose"}}},
+		{Name: "set_cursor_rectangle", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "commit", Since: 1},
+		{Name: "set_available_actions", Since: 2, Args: []ArgSpec{{Name: "available_actions", Type: ArgArray}}},
+		{Name: "announce_supported_features", Since: 2, Args: []ArgSpec{{Name: "features", Type: ArgUint, Enum: "xx_text_input_v3.supported_features"}}},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "preedit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString, AllowNull: true}, {Name: "cursor_begin", Type: ArgInt}, {Name: "cursor_end", Type: ArgInt}}},
+		{Name: "commit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString, AllowNull: true}}},
+		{Name: "delete_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "before_length", Type: ArgUint}, {Name: "after_length", Type: ArgUint}}},
+		{Name: "move_cursor", Since: 2, Args: []ArgSpec{{Name: "cursor", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "done", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "perform_action", Since: 2, Args: []ArgSpec{{Name: "action", Type: ArgUint, Enum: "action"}}},
+	},
+	Enums: []Enum{
+		{Name: "change_cause", Since: 1, Entries: []EnumEntry{{Name: "input_method", Value: 0x0, Since: 1}, {Name: "other", Value: 0x1, Since: 1}}},
+		{Name: "content_hint", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "completion", Value: 0x1, Since: 1}, {Name: "spellcheck", Value: 0x2, Since: 1}, {Name: "auto_capitalization", Value: 0x4, Since: 1}, {Name: "lowercase", Value: 0x8, Since: 1}, {Name: "uppercase", Value: 0x10, Since: 1}, {Name: "titlecase", Value: 0x20, Since: 1}, {Name: "hidden_text", Value: 0x40, Since: 1}, {Name: "sensitive_data", Value: 0x80, Since: 1}, {Name: "latin", Value: 0x100, Since: 1}, {Name: "multiline", Value: 0x200, Since: 1}}},
+		{Name: "content_purpose", Since: 1, Entries: []EnumEntry{{Name: "normal", Value: 0x0, Since: 1}, {Name: "alpha", Value: 0x1, Since: 1}, {Name: "digits", Value: 0x2, Since: 1}, {Name: "number", Value: 0x3, Since: 1}, {Name: "phone", Value: 0x4, Since: 1}, {Name: "url", Value: 0x5, Since: 1}, {Name: "email", Value: 0x6, Since: 1}, {Name: "name", Value: 0x7, Since: 1}, {Name: "password", Value: 0x8, Since: 1}, {Name: "pin", Value: 0x9, Since: 1}, {Name: "date", Value: 0xa, Since: 1}, {Name: "time", Value: 0xb, Since: 1}, {Name: "datetime", Value: 0xc, Since: 1}, {Name: "terminal", Value: 0xd, Since: 1}}},
+		{Name: "action", Since: 2, Entries: []EnumEntry{{Name: "none", Value: 0x1, Since: 1}, {Name: "finish", Value: 0x0, Since: 1}}},
+		{Name: "supported_features", Since: 2, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "move_cursor", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceExperimentalXxtextinputManagerV3 = &Interface{
+	Name:    "xx_text_input_manager_v3",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_text_input", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_text_input_v3"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+	},
+}
+
+var interfaceExperimentalXxzonesManagerV1 = &Interface{
+	Name:    "xx_zone_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_zone_item", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_zone_item_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}}},
+		{Name: "get_zone", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_zone_v1"}, {Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "get_zone_from_handle", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xx_zone_v1"}, {Name: "handle", Type: ArgString}}},
+	},
+}
+
+var interfaceExperimentalXxzonesItemV1 = &Interface{
+	Name:    "xx_zone_item_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_position", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+	},
+	Events: []Message{
+		{Name: "frame_extents", Since: 1, Args: []ArgSpec{{Name: "top", Type: ArgInt}, {Name: "bottom", Type: ArgInt}, {Name: "left", Type: ArgInt}, {Name: "right", Type: ArgInt}}},
+		{Name: "position", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "position_failed", Since: 1},
+		{Name: "closed", Since: 1},
+	},
+}
+
+var interfaceExperimentalXxzonesV1 = &Interface{
+	Name:    "xx_zone_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "add_item", Since: 1, Args: []ArgSpec{{Name: "item", Type: ArgObject, Interface: "xx_zone_item_v1"}}},
+		{Name: "remove_item", Since: 1, Args: []ArgSpec{{Name: "item", Type: ArgObject, Interface: "xx_zone_item_v1"}}},
+	},
+	Events: []Message{
+		{Name: "size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "handle", Since: 1, Args: []ArgSpec{{Name: "handle", Type: ArgString}}},
+		{Name: "done", Since: 1},
+		{Name: "item_blocked", Since: 1, Args: []ArgSpec{{Name: "item", Type: ArgObject, Interface: "xx_zone_item_v1"}}},
+		{Name: "item_entered", Since: 1, Args: []ArgSpec{{Name: "item", Type: ArgObject, Interface: "xx_zone_item_v1"}}},
+		{Name: "item_left", Since: 1, Args: []ArgSpec{{Name: "item", Type: ArgObject, Interface: "xx_zone_item_v1"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStableLinuxdmabufDmabufV1 = &Interface{
+	Name:    "zwp_linux_dmabuf_v1",
+	Version: 6,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_params", Since: 1, Args: []ArgSpec{{Name: "params_id", Type: ArgNewID, Interface: "zwp_linux_buffer_params_v1"}}},
+		{Name: "get_default_feedback", Since: 4, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_linux_dmabuf_feedback_v1"}}},
+		{Name: "get_surface_feedback", Since: 4, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_linux_dmabuf_feedback_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "format", Since: 1, DeprecatedSince: 4, Args: []ArgSpec{{Name: "format", Type: ArgUint}}},
+		{Name: "modifier", Since: 3, DeprecatedSince: 4, Args: []ArgSpec{{Name: "format", Type: ArgUint}, {Name: "modifier_hi", Type: ArgUint}, {Name: "modifier_lo", Type: ArgUint}}},
+	},
+}
+
+var interfaceStableLinuxdmabufBufferParamsV1 = &Interface{
+	Name:    "zwp_linux_buffer_params_v1",
+	Version: 6,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "add", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}, {Name: "plane_idx", Type: ArgUint}, {Name: "offset", Type: ArgUint}, {Name: "stride", Type: ArgUint}, {Name: "modifier_hi", Type: ArgUint}, {Name: "modifier_lo", Type: ArgUint}}},
+		{Name: "create", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "format", Type: ArgUint}, {Name: "flags", Type: ArgUint, Enum: "flags"}}},
+		{Name: "create_immed", Since: 2, Args: []ArgSpec{{Name: "buffer_id", Type: ArgNewID, Interface: "wl_buffer"}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "format", Type: ArgUint}, {Name: "flags", Type: ArgUint, Enum: "flags"}}},
+		{Name: "set_sampling_device", Since: 6, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+	},
+	Events: []Message{
+		{Name: "created", Since: 1, Args: []ArgSpec{{Name: "buffer", Type: ArgNewID, Interface: "wl_buffer"}}},
+		{Name: "failed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_used", Value: 0x0, Since: 1}, {Name: "plane_idx", Value: 0x1, Since: 1}, {Name: "plane_set", Value: 0x2, Since: 1}, {Name: "incomplete", Value: 0x3, Since: 1}, {Name: "invalid_format", Value: 0x4, Since: 1}, {Name: "invalid_dimensions", Value: 0x5, Since: 1}, {Name: "out_of_bounds", Value: 0x6, Since: 1}, {Name: "invalid_wl_buffer", Value: 0x7, Since: 1}, {Name: "invalid_dev_t_size", Value: 0x8, Since: 1}}},
+		{Name: "flags", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "y_invert", Value: 0x1, Since: 1}, {Name: "interlaced", Value: 0x2, Since: 1}, {Name: "bottom_first", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceStableLinuxdmabufDmabufFeedbackV1 = &Interface{
+	Name:    "zwp_linux_dmabuf_feedback_v1",
+	Version: 6,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "done", Since: 1},
+		{Name: "format_table", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}, {Name: "size", Type: ArgUint}}},
+		{Name: "main_device", Since: 1, DeprecatedSince: 6, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+		{Name: "tranche_done", Since: 1},
+		{Name: "tranche_target_device", Since: 1, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+		{Name: "tranche_formats", Since: 1, Args: []ArgSpec{{Name: "indices", Type: ArgArray}}},
+		{Name: "tranche_flags", Since: 1, Args: []ArgSpec{{Name: "flags", Type: ArgUint, Enum: "tranche_flags"}}},
+	},
+	Enums: []Enum{
+		{Name: "tranche_flags", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "scanout", Value: 0x1, Since: 4}, {Name: "sampling", Value: 0x2, Since: 6}}},
+	},
+}
+
+var interfaceStablePresentationtimePresentation = &Interface{
+	Name:    "wp_presentation",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "feedback", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "callback", Type: ArgNewID, Interface: "wp_presentation_feedback"}}},
+	},
+	Events: []Message{
+		{Name: "clock_id", Since: 1, Args: []ArgSpec{{Name: "clk_id", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_timestamp", Value: 0x0, Since: 1}, {Name: "invalid_flag", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStablePresentationtimePresentationFeedback = &Interface{
+	Name:    "wp_presentation_feedback",
+	Version: 3,
+	Events: []Message{
+		{Name: "sync_output", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "presented", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "tv_sec_hi", Type: ArgUint}, {Name: "tv_sec_lo", Type: ArgUint}, {Name: "tv_nsec", Type: ArgUint}, {Name: "refresh", Type: ArgUint}, {Name: "seq_hi", Type: ArgUint}, {Name: "seq_lo", Type: ArgUint}, {Name: "flags", Type: ArgUint, Enum: "kind"}}},
+		{Name: "discarded", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "kind", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "vsync", Value: 0x1, Since: 1}, {Name: "hw_clock", Value: 0x2, Since: 1}, {Name: "hw_completion", Value: 0x4, Since: 1}, {Name: "zero_copy", Value: 0x8, Since: 1}, {Name: "fixed_rate", Value: 0x10, Since: 3}, {Name: "variable_rate", Value: 0x20, Since: 3}}},
+	},
+}
+
+var interfaceStableTabletManagerV2 = &Interface{
+	Name:    "zwp_tablet_manager_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "get_tablet_seat", Since: 1, Args: []ArgSpec{{Name: "tablet_seat", Type: ArgNewID, Interface: "zwp_tablet_seat_v2"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStableTabletSeatV2 = &Interface{
+	Name:    "zwp_tablet_seat_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "tablet_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_v2"}}},
+		{Name: "tool_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_tool_v2"}}},
+		{Name: "pad_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_pad_v2"}}},
+	},
+}
+
+var interfaceStableTabletToolV2 = &Interface{
+	Name:    "zwp_tablet_tool_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "set_cursor", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "hotspot_x", Type: ArgInt}, {Name: "hotspot_y", Type: ArgInt}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "type", Since: 1, Args: []ArgSpec{{Name: "tool_type", Type: ArgUint, Enum: "type"}}},
+		{Name: "hardware_serial", Since: 1, Args: []ArgSpec{{Name: "hardware_serial_hi", Type: ArgUint}, {Name: "hardware_serial_lo", Type: ArgUint}}},
+		{Name: "hardware_id_wacom", Since: 1, Args: []ArgSpec{{Name: "hardware_id_hi", Type: ArgUint}, {Name: "hardware_id_lo", Type: ArgUint}}},
+		{Name: "capability", Since: 1, Args: []ArgSpec{{Name: "capability", Type: ArgUint, Enum: "capability"}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+		{Name: "proximity_in", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "tablet", Type: ArgObject, Interface: "zwp_tablet_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "proximity_out", Since: 1},
+		{Name: "down", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "up", Since: 1},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "pressure", Since: 1, Args: []ArgSpec{{Name: "pressure", Type: ArgUint}}},
+		{Name: "distance", Since: 1, Args: []ArgSpec{{Name: "distance", Type: ArgUint}}},
+		{Name: "tilt", Since: 1, Args: []ArgSpec{{Name: "tilt_x", Type: ArgFixed}, {Name: "tilt_y", Type: ArgFixed}}},
+		{Name: "rotation", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}}},
+		{Name: "slider", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgInt}}},
+		{Name: "wheel", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}, {Name: "clicks", Type: ArgInt}}},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "type", Since: 1, Entries: []EnumEntry{{Name: "pen", Value: 0x140, Since: 1}, {Name: "eraser", Value: 0x141, Since: 1}, {Name: "brush", Value: 0x142, Since: 1}, {Name: "pencil", Value: 0x143, Since: 1}, {Name: "airbrush", Value: 0x144, Since: 1}, {Name: "finger", Value: 0x145, Since: 1}, {Name: "mouse", Value: 0x146, Since: 1}, {Name: "lens", Value: 0x147, Since: 1}}},
+		{Name: "capability", Since: 1, Entries: []EnumEntry{{Name: "tilt", Value: 0x1, Since: 1}, {Name: "pressure", Value: 0x2, Since: 1}, {Name: "distance", Value: 0x3, Since: 1}, {Name: "rotation", Value: 0x4, Since: 1}, {Name: "slider", Value: 0x5, Since: 1}, {Name: "wheel", Value: 0x6, Since: 1}}},
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStableTabletV2 = &Interface{
+	Name:    "zwp_tablet_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "name", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "id", Since: 1, Args: []ArgSpec{{Name: "vid", Type: ArgUint}, {Name: "pid", Type: ArgUint}}},
+		{Name: "path", Since: 1, Args: []ArgSpec{{Name: "path", Type: ArgString}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+		{Name: "bustype", Since: 2, Args: []ArgSpec{{Name: "bustype", Type: ArgUint, Enum: "bustype"}}},
+	},
+	Enums: []Enum{
+		{Name: "bustype", Since: 2, Entries: []EnumEntry{{Name: "usb", Value: 0x3, Since: 1}, {Name: "bluetooth", Value: 0x5, Since: 1}, {Name: "virtual", Value: 0x6, Since: 1}, {Name: "serial", Value: 0x11, Since: 1}, {Name: "i2c", Value: 0x18, Since: 1}}},
+	},
+}
+
+var interfaceStableTabletPadRingV2 = &Interface{
+	Name:    "zwp_tablet_pad_ring_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgUint, Enum: "source"}}},
+		{Name: "angle", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}}},
+		{Name: "stop", Since: 1},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "source", Since: 1, Entries: []EnumEntry{{Name: "finger", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStableTabletPadStripV2 = &Interface{
+	Name:    "zwp_tablet_pad_strip_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgUint, Enum: "source"}}},
+		{Name: "position", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgUint}}},
+		{Name: "stop", Since: 1},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "source", Since: 1, Entries: []EnumEntry{{Name: "finger", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStableTabletPadGroupV2 = &Interface{
+	Name:    "zwp_tablet_pad_group_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "buttons", Since: 1, Args: []ArgSpec{{Name: "buttons", Type: ArgArray}}},
+		{Name: "ring", Since: 1, Args: []ArgSpec{{Name: "ring", Type: ArgNewID, Interface: "zwp_tablet_pad_ring_v2"}}},
+		{Name: "strip", Since: 1, Args: []ArgSpec{{Name: "strip", Type: ArgNewID, Interface: "zwp_tablet_pad_strip_v2"}}},
+		{Name: "modes", Since: 1, Args: []ArgSpec{{Name: "modes", Type: ArgUint}}},
+		{Name: "done", Since: 1},
+		{Name: "mode_switch", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "serial", Type: ArgUint}, {Name: "mode", Type: ArgUint}}},
+		{Name: "dial", Since: 2, Args: []ArgSpec{{Name: "dial", Type: ArgNewID, Interface: "zwp_tablet_pad_dial_v2"}}},
+	},
+}
+
+var interfaceStableTabletPadV2 = &Interface{
+	Name:    "zwp_tablet_pad_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "button", Type: ArgUint}, {Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "group", Since: 1, Args: []ArgSpec{{Name: "pad_group", Type: ArgNewID, Interface: "zwp_tablet_pad_group_v2"}}},
+		{Name: "path", Since: 1, Args: []ArgSpec{{Name: "path", Type: ArgString}}},
+		{Name: "buttons", Since: 1, Args: []ArgSpec{{Name: "buttons", Type: ArgUint}}},
+		{Name: "done", Since: 1},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "tablet", Type: ArgObject, Interface: "zwp_tablet_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "removed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStableTabletPadDialV2 = &Interface{
+	Name:    "zwp_tablet_pad_dial_v2",
+	Version: 2,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "delta", Since: 1, Args: []ArgSpec{{Name: "value120", Type: ArgInt}}},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+}
+
+var interfaceStableViewporterViewporter = &Interface{
+	Name:    "wp_viewporter",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_viewport", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_viewport"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "viewport_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStableViewporterViewport = &Interface{
+	Name:    "wp_viewport",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_source", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}, {Name: "width", Type: ArgFixed}, {Name: "height", Type: ArgFixed}}},
+		{Name: "set_destination", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "bad_value", Value: 0x0, Since: 1}, {Name: "bad_size", Value: 0x1, Since: 1}, {Name: "out_of_buffer", Value: 0x2, Since: 1}, {Name: "no_surface", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStableXdgshellWmBase = &Interface{
+	Name:    "xdg_wm_base",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_positioner", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_positioner"}}},
+		{Name: "get_xdg_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_surface"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}, {Name: "defunct_surfaces", Value: 0x1, Since: 1}, {Name: "not_the_topmost_popup", Value: 0x2, Since: 1}, {Name: "invalid_popup_parent", Value: 0x3, Since: 1}, {Name: "invalid_surface_state", Value: 0x4, Since: 1}, {Name: "invalid_positioner", Value: 0x5, Since: 1}, {Name: "unresponsive", Value: 0x6, Since: 1}}},
+	},
+}
+
+var interfaceStableXdgshellPositioner = &Interface{
+	Name:    "xdg_positioner",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_anchor_rect", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_anchor", Since: 1, Args: []ArgSpec{{Name: "anchor", Type: ArgUint, Enum: "anchor"}}},
+		{Name: "set_gravity", Since: 1, Args: []ArgSpec{{Name: "gravity", Type: ArgUint, Enum: "gravity"}}},
+		{Name: "set_constraint_adjustment", Since: 1, Args: []ArgSpec{{Name: "constraint_adjustment", Type: ArgUint, Enum: "constraint_adjustment"}}},
+		{Name: "set_offset", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "set_reactive", Since: 3},
+		{Name: "set_parent_size", Since: 3, Args: []ArgSpec{{Name: "parent_width", Type: ArgInt}, {Name: "parent_height", Type: ArgInt}}},
+		{Name: "set_parent_configure", Since: 3, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_input", Value: 0x0, Since: 1}}},
+		{Name: "anchor", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x3, Since: 1}, {Name: "right", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "top_right", Value: 0x7, Since: 1}, {Name: "bottom_right", Value: 0x8, Since: 1}}},
+		{Name: "gravity", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x3, Since: 1}, {Name: "right", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "top_right", Value: 0x7, Since: 1}, {Name: "bottom_right", Value: 0x8, Since: 1}}},
+		{Name: "constraint_adjustment", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "slide_x", Value: 0x1, Since: 1}, {Name: "slide_y", Value: 0x2, Since: 1}, {Name: "flip_x", Value: 0x4, Since: 1}, {Name: "flip_y", Value: 0x8, Since: 1}, {Name: "resize_x", Value: 0x10, Since: 1}, {Name: "resize_y", Value: 0x20, Since: 1}}},
+	},
+}
+
+var interfaceStableXdgshellSurface = &Interface{
+	Name:    "xdg_surface",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_toplevel"}}},
+		{Name: "get_popup", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_popup"}, {Name: "parent", Type: ArgObject, Interface: "xdg_surface", AllowNull: true}, {Name: "positioner", Type: ArgObject, Interface: "xdg_positioner"}}},
+		{Name: "set_window_geometry", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "ack_configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "not_constructed", Value: 0x1, Since: 1}, {Name: "already_constructed", Value: 0x2, Since: 1}, {Name: "unconfigured_buffer", Value: 0x3, Since: 1}, {Name: "invalid_serial", Value: 0x4, Since: 1}, {Name: "invalid_size", Value: 0x5, Since: 1}, {Name: "defunct_role_object", Value: 0x6, Since: 1}}},
+	},
+}
+
+var interfaceStableXdgshellToplevel = &Interface{
+	Name:    "xdg_toplevel",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_parent", Since: 1, Args: []ArgSpec{{Name: "parent", Type: ArgObject, Interface: "xdg_toplevel", AllowNull: true}}},
+		{Name: "set_title", Since: 1, Args: []ArgSpec{{Name: "title", Type: ArgString}}},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "show_window_menu", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "move", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "resize", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "edges", Type: ArgUint, Enum: "resize_edge"}}},
+		{Name: "set_max_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_min_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_maximized", Since: 1},
+		{Name: "unset_maximized", Since: 1},
+		{Name: "set_fullscreen", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "unset_fullscreen", Since: 1},
+		{Name: "set_minimized", Since: 1},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "states", Type: ArgArray}}},
+		{Name: "close", Since: 1},
+		{Name: "configure_bounds", Since: 4, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "wm_capabilities", Since: 5, Args: []ArgSpec{{Name: "capabilities", Type: ArgArray}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_resize_edge", Value: 0x0, Since: 1}, {Name: "invalid_parent", Value: 0x1, Since: 1}, {Name: "invalid_size", Value: 0x2, Since: 1}}},
+		{Name: "resize_edge", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "right", Value: 0x8, Since: 1}, {Name: "top_right", Value: 0x9, Since: 1}, {Name: "bottom_right", Value: 0xa, Since: 1}}},
+		{Name: "state", Since: 1, Entries: []EnumEntry{{Name: "maximized", Value: 0x1, Since: 1}, {Name: "fullscreen", Value: 0x2, Since: 1}, {Name: "resizing", Value: 0x3, Since: 1}, {Name: "activated", Value: 0x4, Since: 1}, {Name: "tiled_left", Value: 0x5, Since: 2}, {Name: "tiled_right", Value: 0x6, Since: 2}, {Name: "tiled_top", Value: 0x7, Since: 2}, {Name: "tiled_bottom", Value: 0x8, Since: 2}, {Name: "suspended", Value: 0x9, Since: 6}, {Name: "constrained_left", Value: 0xa, Since: 7}, {Name: "constrained_right", Value: 0xb, Since: 7}, {Name: "constrained_top", Value: 0xc, Since: 7}, {Name: "constrained_bottom", Value: 0xd, Since: 7}}},
+		{Name: "wm_capabilities", Since: 5, Entries: []EnumEntry{{Name: "window_menu", Value: 0x1, Since: 1}, {Name: "maximize", Value: 0x2, Since: 1}, {Name: "fullscreen", Value: 0x3, Since: 1}, {Name: "minimize", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceStableXdgshellPopup = &Interface{
+	Name:    "xdg_popup",
+	Version: 7,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "grab", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "reposition", Since: 3, Args: []ArgSpec{{Name: "positioner", Type: ArgObject, Interface: "xdg_positioner"}, {Name: "token", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "popup_done", Since: 1},
+		{Name: "repositioned", Since: 3, Args: []ArgSpec{{Name: "token", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_grab", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingAlphamodifierV1 = &Interface{
+	Name:    "wp_alpha_modifier_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_alpha_modifier_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_constructed", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingAlphamodifierSurfaceV1 = &Interface{
+	Name:    "wp_alpha_modifier_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_multiplier", Since: 1, Args: []ArgSpec{{Name: "factor", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "no_surface", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementColorManagerV1 = &Interface{
+	Name:    "wp_color_manager_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_output", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_color_management_output_v1"}, {Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "get_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_color_management_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "get_surface_feedback", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_color_management_surface_feedback_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "create_icc_creator", Since: 1, Args: []ArgSpec{{Name: "obj", Type: ArgNewID, Interface: "wp_image_description_creator_icc_v1"}}},
+		{Name: "create_parametric_creator", Since: 1, Args: []ArgSpec{{Name: "obj", Type: ArgNewID, Interface: "wp_image_description_creator_params_v1"}}},
+		{Name: "create_windows_scrgb", Since: 1, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+		{Name: "get_image_description", Since: 2, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}, {Name: "reference", Type: ArgObject, Interface: "wp_image_description_reference_v1"}}},
+		{Name: "create_windows_bt2100", Since: 3, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+	},
+	Events: []Message{
+		{Name: "supported_intent", Since: 1, Args: []ArgSpec{{Name: "render_intent", Type: ArgUint, Enum: "render_intent"}}},
+		{Name: "supported_feature", Since: 1, Args: []ArgSpec{{Name: "feature", Type: ArgUint, Enum: "feature"}}},
+		{Name: "supported_tf_named", Since: 1, Args: []ArgSpec{{Name: "tf", Type: ArgUint, Enum: "transfer_function"}}},
+		{Name: "supported_primaries_named", Since: 1, Args: []ArgSpec{{Name: "primaries", Type: ArgUint, Enum: "primaries"}}},
+		{Name: "done", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "unsupported_feature", Value: 0x0, Since: 1}, {Name: "surface_exists", Value: 0x1, Since: 1}}},
+		{Name: "render_intent", Since: 1, Entries: []EnumEntry{{Name: "perceptual", Value: 0x0, Since: 1}, {Name: "relative", Value: 0x1, Since: 1}, {Name: "saturation", Value: 0x2, Since: 1}, {Name: "absolute", Value: 0x3, Since: 1}, {Name: "relative_bpc", Value: 0x4, Since: 1}, {Name: "absolute_no_adaptation", Value: 0x5, Since: 2}}},
+		{Name: "feature", Since: 1, Entries: []EnumEntry{{Name: "icc_v2_v4", Value: 0x0, Since: 1}, {Name: "parametric", Value: 0x1, Since: 1}, {Name: "set_primaries", Value: 0x2, Since: 1}, {Name: "set_tf_power", Value: 0x3, Since: 1}, {Name: "set_luminances", Value: 0x4, Since: 1}, {Name: "set_mastering_display_primaries", Value: 0x5, Since: 1}, {Name: "extended_target_volume", Value: 0x6, Since: 1}, {Name: "windows_scrgb", Value: 0x7, Since: 1}, {Name: "windows_bt2100", Value: 0x8, Since: 1}}},
+		{Name: "primaries", Since: 1, Entries: []EnumEntry{{Name: "srgb", Value: 0x1, Since: 1}, {Name: "pal_m", Value: 0x2, Since: 1}, {Name: "pal", Value: 0x3, Since: 1}, {Name: "ntsc", Value: 0x4, Since: 1}, {Name: "generic_film", Value: 0x5, Since: 1}, {Name: "bt2020", Value: 0x6, Since: 1}, {Name: "cie1931_xyz", Value: 0x7, Since: 1}, {Name: "dci_p3", Value: 0x8, Since: 1}, {Name: "display_p3", Value: 0x9, Since: 1}, {Name: "adobe_rgb", Value: 0xa, Since: 1}}},
+		{Name: "transfer_function", Since: 1, Entries: []EnumEntry{{Name: "bt1886", Value: 0x1, Since: 1}, {Name: "gamma22", Value: 0x2, Since: 1}, {Name: "gamma28", Value: 0x3, Since: 1}, {Name: "st240", Value: 0x4, Since: 1}, {Name: "ext_linear", Value: 0x5, Since: 1}, {Name: "log_100", Value: 0x6, Since: 1}, {Name: "log_316", Value: 0x7, Since: 1}, {Name: "xvycc", Value: 0x8, Since: 1}, {Name: "srgb", Value: 0x9, Since: 1, DeprecatedSince: 2}, {Name: "ext_srgb", Value: 0xa, Since: 1, DeprecatedSince: 2}, {Name: "st2084_pq", Value: 0xb, Since: 1}, {Name: "st428", Value: 0xc, Since: 1}, {Name: "hlg", Value: 0xd, Since: 1}, {Name: "compound_power_2_4", Value: 0xe, Since: 2}}},
+	},
+}
+
+var interfaceStagingColormanagementColorManagementOutputV1 = &Interface{
+	Name:    "wp_color_management_output_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_image_description", Since: 1, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+	},
+	Events: []Message{
+		{Name: "image_description_changed", Since: 1},
+	},
+}
+
+var interfaceStagingColormanagementColorManagementSurfaceV1 = &Interface{
+	Name:    "wp_color_management_surface_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_image_description", Since: 1, Args: []ArgSpec{{Name: "image_description", Type: ArgObject, Interface: "wp_image_description_v1"}, {Name: "render_intent", Type: ArgUint, Enum: "wp_color_manager_v1.render_intent"}}},
+		{Name: "unset_image_description", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "render_intent", Value: 0x0, Since: 1}, {Name: "image_description", Value: 0x1, Since: 1}, {Name: "inert", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementColorManagementSurfaceFeedbackV1 = &Interface{
+	Name:    "wp_color_management_surface_feedback_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_preferred", Since: 1, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+		{Name: "get_preferred_parametric", Since: 1, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+	},
+	Events: []Message{
+		{Name: "preferred_changed", Since: 1, DeprecatedSince: 2, Args: []ArgSpec{{Name: "identity", Type: ArgUint}}},
+		{Name: "preferred_changed2", Since: 2, Args: []ArgSpec{{Name: "identity_hi", Type: ArgUint}, {Name: "identity_lo", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "inert", Value: 0x0, Since: 1}, {Name: "unsupported_feature", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementImageDescriptionCreatorIccV1 = &Interface{
+	Name:    "wp_image_description_creator_icc_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "create", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+		{Name: "set_icc_file", Since: 1, Args: []ArgSpec{{Name: "icc_profile", Type: ArgFD}, {Name: "offset", Type: ArgUint}, {Name: "length", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "incomplete_set", Value: 0x0, Since: 1}, {Name: "already_set", Value: 0x1, Since: 1}, {Name: "bad_fd", Value: 0x2, Since: 1}, {Name: "bad_size", Value: 0x3, Since: 1}, {Name: "out_of_file", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementImageDescriptionCreatorParamsV1 = &Interface{
+	Name:    "wp_image_description_creator_params_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "create", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "image_description", Type: ArgNewID, Interface: "wp_image_description_v1"}}},
+		{Name: "set_tf_named", Since: 1, Args: []ArgSpec{{Name: "tf", Type: ArgUint, Enum: "wp_color_manager_v1.transfer_function"}}},
+		{Name: "set_tf_power", Since: 1, Args: []ArgSpec{{Name: "eexp", Type: ArgUint}}},
+		{Name: "set_primaries_named", Since: 1, Args: []ArgSpec{{Name: "primaries", Type: ArgUint, Enum: "wp_color_manager_v1.primaries"}}},
+		{Name: "set_primaries", Since: 1, Args: []ArgSpec{{Name: "r_x", Type: ArgInt}, {Name: "r_y", Type: ArgInt}, {Name: "g_x", Type: ArgInt}, {Name: "g_y", Type: ArgInt}, {Name: "b_x", Type: ArgInt}, {Name: "b_y", Type: ArgInt}, {Name: "w_x", Type: ArgInt}, {Name: "w_y", Type: ArgInt}}},
+		{Name: "set_luminances", Since: 1, Args: []ArgSpec{{Name: "min_lum", Type: ArgUint}, {Name: "max_lum", Type: ArgUint}, {Name: "reference_lum", Type: ArgUint}}},
+		{Name: "set_mastering_display_primaries", Since: 1, Args: []ArgSpec{{Name: "r_x", Type: ArgInt}, {Name: "r_y", Type: ArgInt}, {Name: "g_x", Type: ArgInt}, {Name: "g_y", Type: ArgInt}, {Name: "b_x", Type: ArgInt}, {Name: "b_y", Type: ArgInt}, {Name: "w_x", Type: ArgInt}, {Name: "w_y", Type: ArgInt}}},
+		{Name: "set_mastering_luminance", Since: 1, Args: []ArgSpec{{Name: "min_lum", Type: ArgUint}, {Name: "max_lum", Type: ArgUint}}},
+		{Name: "set_max_cll", Since: 1, Args: []ArgSpec{{Name: "max_cll", Type: ArgUint}}},
+		{Name: "set_max_fall", Since: 1, Args: []ArgSpec{{Name: "max_fall", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "incomplete_set", Value: 0x0, Since: 1}, {Name: "already_set", Value: 0x1, Since: 1}, {Name: "unsupported_feature", Value: 0x2, Since: 1}, {Name: "invalid_tf", Value: 0x3, Since: 1}, {Name: "invalid_primaries_named", Value: 0x4, Since: 1}, {Name: "invalid_luminance", Value: 0x5, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementImageDescriptionV1 = &Interface{
+	Name:    "wp_image_description_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_information", Since: 1, Args: []ArgSpec{{Name: "information", Type: ArgNewID, Interface: "wp_image_description_info_v1"}}},
+	},
+	Events: []Message{
+		{Name: "failed", Since: 1, Args: []ArgSpec{{Name: "cause", Type: ArgUint, Enum: "cause"}, {Name: "msg", Type: ArgString}}},
+		{Name: "ready", Since: 1, DeprecatedSince: 2, Args: []ArgSpec{{Name: "identity", Type: ArgUint}}},
+		{Name: "ready2", Since: 2, Args: []ArgSpec{{Name: "identity_hi", Type: ArgUint}, {Name: "identity_lo", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "not_ready", Value: 0x0, Since: 1}, {Name: "no_information", Value: 0x1, Since: 1}}},
+		{Name: "cause", Since: 1, Entries: []EnumEntry{{Name: "low_version", Value: 0x0, Since: 1}, {Name: "unsupported", Value: 0x1, Since: 1}, {Name: "operating_system", Value: 0x2, Since: 1}, {Name: "no_output", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingColormanagementImageDescriptionInfoV1 = &Interface{
+	Name:    "wp_image_description_info_v1",
+	Version: 3,
+	Events: []Message{
+		{Name: "done", Since: 1, Destructor: true},
+		{Name: "icc_file", Since: 1, Args: []ArgSpec{{Name: "icc", Type: ArgFD}, {Name: "icc_size", Type: ArgUint}}},
+		{Name: "primaries", Since: 1, Args: []ArgSpec{{Name: "r_x", Type: ArgInt}, {Name: "r_y", Type: ArgInt}, {Name: "g_x", Type: ArgInt}, {Name: "g_y", Type: ArgInt}, {Name: "b_x", Type: ArgInt}, {Name: "b_y", Type: ArgInt}, {Name: "w_x", Type: ArgInt}, {Name: "w_y", Type: ArgInt}}},
+		{Name: "primaries_named", Since: 1, Args: []ArgSpec{{Name: "primaries", Type: ArgUint, Enum: "wp_color_manager_v1.primaries"}}},
+		{Name: "tf_power", Since: 1, Args: []ArgSpec{{Name: "eexp", Type: ArgUint}}},
+		{Name: "tf_named", Since: 1, Args: []ArgSpec{{Name: "tf", Type: ArgUint, Enum: "wp_color_manager_v1.transfer_function"}}},
+		{Name: "luminances", Since: 1, Args: []ArgSpec{{Name: "min_lum", Type: ArgUint}, {Name: "max_lum", Type: ArgUint}, {Name: "reference_lum", Type: ArgUint}}},
+		{Name: "target_primaries", Since: 1, Args: []ArgSpec{{Name: "r_x", Type: ArgInt}, {Name: "r_y", Type: ArgInt}, {Name: "g_x", Type: ArgInt}, {Name: "g_y", Type: ArgInt}, {Name: "b_x", Type: ArgInt}, {Name: "b_y", Type: ArgInt}, {Name: "w_x", Type: ArgInt}, {Name: "w_y", Type: ArgInt}}},
+		{Name: "target_luminance", Since: 1, Args: []ArgSpec{{Name: "min_lum", Type: ArgUint}, {Name: "max_lum", Type: ArgUint}}},
+		{Name: "target_max_cll", Since: 1, Args: []ArgSpec{{Name: "max_cll", Type: ArgUint}}},
+		{Name: "target_max_fall", Since: 1, Args: []ArgSpec{{Name: "max_fall", Type: ArgUint}}},
+	},
+}
+
+var interfaceStagingColormanagementImageDescriptionReferenceV1 = &Interface{
+	Name:    "wp_image_description_reference_v1",
+	Version: 1,
+	Frozen:  true,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingColorrepresentationManagerV1 = &Interface{
+	Name:    "wp_color_representation_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_color_representation_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "supported_alpha_mode", Since: 1, Args: []ArgSpec{{Name: "alpha_mode", Type: ArgUint, Enum: "wp_color_representation_surface_v1.alpha_mode"}}},
+		{Name: "supported_coefficients_and_ranges", Since: 1, Args: []ArgSpec{{Name: "coefficients", Type: ArgUint, Enum: "wp_color_representation_surface_v1.coefficients"}, {Name: "range", Type: ArgUint, Enum: "wp_color_representation_surface_v1.range"}}},
+		{Name: "done", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "surface_exists", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingColorrepresentationSurfaceV1 = &Interface{
+	Name:    "wp_color_representation_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_alpha_mode", Since: 1, Args: []ArgSpec{{Name: "alpha_mode", Type: ArgUint, Enum: "alpha_mode"}}},
+		{Name: "set_coefficients_and_range", Since: 1, Args: []ArgSpec{{Name: "coefficients", Type: ArgUint, Enum: "coefficients"}, {Name: "range", Type: ArgUint, Enum: "range"}}},
+		{Name: "set_chroma_location", Since: 1, Args: []ArgSpec{{Name: "chroma_location", Type: ArgUint, Enum: "chroma_location"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "alpha_mode", Value: 0x1, Since: 1}, {Name: "coefficients", Value: 0x2, Since: 1}, {Name: "pixel_format", Value: 0x3, Since: 1}, {Name: "inert", Value: 0x4, Since: 1}, {Name: "chroma_location", Value: 0x5, Since: 1}}},
+		{Name: "alpha_mode", Since: 1, Entries: []EnumEntry{{Name: "premultiplied_electrical", Value: 0x0, Since: 1}, {Name: "premultiplied_optical", Value: 0x1, Since: 1}, {Name: "straight", Value: 0x2, Since: 1}}},
+		{Name: "coefficients", Since: 1, Entries: []EnumEntry{{Name: "identity", Value: 0x1, Since: 1}, {Name: "bt709", Value: 0x2, Since: 1}, {Name: "fcc", Value: 0x3, Since: 1}, {Name: "bt601", Value: 0x4, Since: 1}, {Name: "smpte240", Value: 0x5, Since: 1}, {Name: "bt2020", Value: 0x6, Since: 1}, {Name: "bt2020_cl", Value: 0x7, Since: 1}, {Name: "ictcp", Value: 0x8, Since: 1}}},
+		{Name: "range", Since: 1, Entries: []EnumEntry{{Name: "full", Value: 0x1, Since: 1}, {Name: "limited", Value: 0x2, Since: 1}}},
+		{Name: "chroma_location", Since: 1, Entries: []EnumEntry{{Name: "type_0", Value: 0x1, Since: 1}, {Name: "type_1", Value: 0x2, Since: 1}, {Name: "type_2", Value: 0x3, Since: 1}, {Name: "type_3", Value: 0x4, Since: 1}, {Name: "type_4", Value: 0x5, Since: 1}, {Name: "type_5", Value: 0x6, Since: 1}}},
+	},
+}
+
+var interfaceStagingCommittimingTimingManagerV1 = &Interface{
+	Name:    "wp_commit_timing_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_timer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_commit_timer_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "commit_timer_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingCommittimingTimerV1 = &Interface{
+	Name:    "wp_commit_timer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_timestamp", Since: 1, Args: []ArgSpec{{Name: "tv_sec_hi", Type: ArgUint}, {Name: "tv_sec_lo", Type: ArgUint}, {Name: "tv_nsec", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_timestamp", Value: 0x0, Since: 1}, {Name: "timestamp_exists", Value: 0x1, Since: 1}, {Name: "surface_destroyed", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceStagingContenttypeManagerV1 = &Interface{
+	Name:    "wp_content_type_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_surface_content_type", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_content_type_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_constructed", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingContenttypeV1 = &Interface{
+	Name:    "wp_content_type_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_content_type", Since: 1, Args: []ArgSpec{{Name: "content_type", Type: ArgUint, Enum: "type"}}},
+	},
+	Enums: []Enum{
+		{Name: "type", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "photo", Value: 0x1, Since: 1}, {Name: "video", Value: 0x2, Since: 1}, {Name: "game", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingCursorshapeManagerV1 = &Interface{
+	Name:    "wp_cursor_shape_manager_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_pointer", Since: 1, Args: []ArgSpec{{Name: "cursor_shape_device", Type: ArgNewID, Interface: "wp_cursor_shape_device_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+		{Name: "get_tablet_tool_v2", Since: 1, Args: []ArgSpec{{Name: "cursor_shape_device", Type: ArgNewID, Interface: "wp_cursor_shape_device_v1"}, {Name: "tablet_tool", Type: ArgObject, Interface: "zwp_tablet_tool_v2"}}},
+	},
+}
+
+var interfaceStagingCursorshapeDeviceV1 = &Interface{
+	Name:    "wp_cursor_shape_device_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_shape", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "shape", Type: ArgUint, Enum: "shape"}}},
+	},
+	Enums: []Enum{
+		{Name: "shape", Since: 1, Entries: []EnumEntry{{Name: "default", Value: 0x1, Since: 1}, {Name: "context_menu", Value: 0x2, Since: 1}, {Name: "help", Value: 0x3, Since: 1}, {Name: "pointer", Value: 0x4, Since: 1}, {Name: "progress", Value: 0x5, Since: 1}, {Name: "wait", Value: 0x6, Since: 1}, {Name: "cell", Value: 0x7, Since: 1}, {Name: "crosshair", Value: 0x8, Since: 1}, {Name: "text", Value: 0x9, Since: 1}, {Name: "vertical_text", Value: 0xa, Since: 1}, {Name: "alias", Value: 0xb, Since: 1}, {Name: "copy", Value: 0xc, Since: 1}, {Name: "move", Value: 0xd, Since: 1}, {Name: "no_drop", Value: 0xe, Since: 1}, {Name: "not_allowed", Value: 0xf, Since: 1}, {Name: "grab", Value: 0x10, Since: 1}, {Name: "grabbing", Value: 0x11, Since: 1}, {Name: "e_resize", Value: 0x12, Since: 1}, {Name: "n_resize", Value: 0x13, Since: 1}, {Name: "ne_resize", Value: 0x14, Since: 1}, {Name: "nw_resize", Value: 0x15, Since: 1}, {Name: "s_resize", Value: 0x16, Since: 1}, {Name: "se_resize", Value: 0x17, Since: 1}, {Name: "sw_resize", Value: 0x18, Since: 1}, {Name: "w_resize", Value: 0x19, Since: 1}, {Name: "ew_resize", Value: 0x1a, Since: 1}, {Name: "ns_resize", Value: 0x1b, Since: 1}, {Name: "nesw_resize", Value: 0x1c, Since: 1}, {Name: "nwse_resize", Value: 0x1d, Since: 1}, {Name: "col_resize", Value: 0x1e, Since: 1}, {Name: "row_resize", Value: 0x1f, Since: 1}, {Name: "all_scroll", Value: 0x20, Since: 1}, {Name: "zoom_in", Value: 0x21, Since: 1}, {Name: "zoom_out", Value: 0x22, Since: 1}, {Name: "dnd_ask", Value: 0x23, Since: 2}, {Name: "all_resize", Value: 0x24, Since: 2}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_shape", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingDrmleaseDeviceV1 = &Interface{
+	Name:    "wp_drm_lease_device_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_lease_request", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_drm_lease_request_v1"}}},
+		{Name: "release", Since: 1},
+	},
+	Events: []Message{
+		{Name: "drm_fd", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}},
+		{Name: "connector", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_drm_lease_connector_v1"}}},
+		{Name: "done", Since: 1},
+		{Name: "released", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingDrmleaseConnectorV1 = &Interface{
+	Name:    "wp_drm_lease_connector_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "name", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "description", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}}},
+		{Name: "connector_id", Since: 1, Args: []ArgSpec{{Name: "connector_id", Type: ArgUint}}},
+		{Name: "done", Since: 1},
+		{Name: "withdrawn", Since: 1},
+	},
+}
+
+var interfaceStagingDrmleaseRequestV1 = &Interface{
+	Name:    "wp_drm_lease_request_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "request_connector", Since: 1, Args: []ArgSpec{{Name: "connector", Type: ArgObject, Interface: "wp_drm_lease_connector_v1"}}},
+		{Name: "submit", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_drm_lease_v1"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "wrong_device", Value: 0x0, Since: 1}, {Name: "duplicate_connector", Value: 0x1, Since: 1}, {Name: "empty_lease", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceStagingDrmleaseV1 = &Interface{
+	Name:    "wp_drm_lease_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "lease_fd", Since: 1, Args: []ArgSpec{{Name: "leased_fd", Type: ArgFD}}},
+		{Name: "finished", Since: 1},
+	},
+}
+
+var interfaceStagingExtbackgroundeffectManagerV1 = &Interface{
+	Name:    "ext_background_effect_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_background_effect", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_background_effect_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "capabilities", Since: 1, Args: []ArgSpec{{Name: "flags", Type: ArgUint, Enum: "capability"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "background_effect_exists", Value: 0x0, Since: 1}}},
+		{Name: "capability", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "blur", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtbackgroundeffectSurfaceV1 = &Interface{
+	Name:    "ext_background_effect_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_blur_region", Since: 1, Args: []ArgSpec{{Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "surface_destroyed", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtdatacontrolManagerV1 = &Interface{
+	Name:    "ext_data_control_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_data_source", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_data_control_source_v1"}}},
+		{Name: "get_data_device", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_data_control_device_v1"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExtdatacontrolDeviceV1 = &Interface{
+	Name:    "ext_data_control_device_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_selection", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgObject, Interface: "ext_data_control_source_v1", AllowNull: true}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_primary_selection", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgObject, Interface: "ext_data_control_source_v1", AllowNull: true}}},
+	},
+	Events: []Message{
+		{Name: "data_offer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_data_control_offer_v1"}}},
+		{Name: "selection", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgObject, Interface: "ext_data_control_offer_v1", AllowNull: true}}},
+		{Name: "finished", Since: 1},
+		{Name: "primary_selection", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgObject, Interface: "ext_data_control_offer_v1", AllowNull: true}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "used_source", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtdatacontrolSourceV1 = &Interface{
+	Name:    "ext_data_control_source_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "send", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "cancelled", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_offer", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtdatacontrolOfferV1 = &Interface{
+	Name:    "ext_data_control_offer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "receive", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+	},
+}
+
+var interfaceStagingExtforeigntoplevellistListV1 = &Interface{
+	Name:    "ext_foreign_toplevel_list_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "stop", Since: 1},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "toplevel", Since: 1, Args: []ArgSpec{{Name: "toplevel", Type: ArgNewID, Interface: "ext_foreign_toplevel_handle_v1"}}},
+		{Name: "finished", Since: 1},
+	},
+}
+
+var interfaceStagingExtforeigntoplevellistHandleV1 = &Interface{
+	Name:    "ext_foreign_toplevel_handle_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "closed", Since: 1},
+		{Name: "done", Since: 1},
+		{Name: "title", Since: 1, Args: []ArgSpec{{Name: "title", Type: ArgString}}},
+		{Name: "app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "identifier", Since: 1, Args: []ArgSpec{{Name: "identifier", Type: ArgString}}},
+	},
+}
+
+var interfaceStagingExtidlenotifyNotifierV1 = &Interface{
+	Name:    "ext_idle_notifier_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_idle_notification", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_idle_notification_v1"}, {Name: "timeout", Type: ArgUint}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "get_input_idle_notification", Since: 2, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_idle_notification_v1"}, {Name: "timeout", Type: ArgUint}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+	},
+}
+
+var interfaceStagingExtidlenotifyNotificationV1 = &Interface{
+	Name:    "ext_idle_notification_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "idled", Since: 1},
+		{Name: "resumed", Since: 1},
+	},
+}
+
+var interfaceStagingExtimagecapturesourceImageCaptureSourceV1 = &Interface{
+	Name:    "ext_image_capture_source_v1",
+	Version: 1,
+	Frozen:  true,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExtimagecapturesourceOutputImageCaptureSourceManagerV1 = &Interface{
+	Name:    "ext_output_image_capture_source_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgNewID, Interface: "ext_image_capture_source_v1"}, {Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExtimagecapturesourceForeignToplevelImageCaptureSourceManagerV1 = &Interface{
+	Name:    "ext_foreign_toplevel_image_capture_source_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgNewID, Interface: "ext_image_capture_source_v1"}, {Name: "toplevel_handle", Type: ArgObject, Interface: "ext_foreign_toplevel_handle_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExtimagecopycaptureManagerV1 = &Interface{
+	Name:    "ext_image_copy_capture_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_session", Since: 1, Args: []ArgSpec{{Name: "session", Type: ArgNewID, Interface: "ext_image_copy_capture_session_v1"}, {Name: "source", Type: ArgObject, Interface: "ext_image_capture_source_v1"}, {Name: "options", Type: ArgUint, Enum: "options"}}},
+		{Name: "create_pointer_cursor_session", Since: 1, Args: []ArgSpec{{Name: "session", Type: ArgNewID, Interface: "ext_image_copy_capture_cursor_session_v1"}, {Name: "source", Type: ArgObject, Interface: "ext_image_capture_source_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_option", Value: 0x1, Since: 1}}},
+		{Name: "options", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "paint_cursors", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtimagecopycaptureSessionV1 = &Interface{
+	Name:    "ext_image_copy_capture_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_frame", Since: 1, Args: []ArgSpec{{Name: "frame", Type: ArgNewID, Interface: "ext_image_copy_capture_frame_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "buffer_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgUint}, {Name: "height", Type: ArgUint}}},
+		{Name: "shm_format", Since: 1, Args: []ArgSpec{{Name: "format", Type: ArgUint, Enum: "wl_shm.format"}}},
+		{Name: "dmabuf_device", Since: 1, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+		{Name: "dmabuf_format", Since: 1, Args: []ArgSpec{{Name: "format", Type: ArgUint}, {Name: "modifiers", Type: ArgArray}}},
+		{Name: "done", Since: 1},
+		{Name: "stopped", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "duplicate_frame", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtimagecopycaptureFrameV1 = &Interface{
+	Name:    "ext_image_copy_capture_frame_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "attach_buffer", Since: 1, Args: []ArgSpec{{Name: "buffer", Type: ArgObject, Interface: "wl_buffer"}}},
+		{Name: "damage_buffer", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "capture", Since: 1},
+	},
+	Events: []Message{
+		{Name: "transform", Since: 1, Args: []ArgSpec{{Name: "transform", Type: ArgUint, Enum: "wl_output.transform"}}},
+		{Name: "damage", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "presentation_time", Since: 1, Args: []ArgSpec{{Name: "tv_sec_hi", Type: ArgUint}, {Name: "tv_sec_lo", Type: ArgUint}, {Name: "tv_nsec", Type: ArgUint}}},
+		{Name: "ready", Since: 1},
+		{Name: "failed", Since: 1, Args: []ArgSpec{{Name: "reason", Type: ArgUint, Enum: "failure_reason"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "no_buffer", Value: 0x1, Since: 1}, {Name: "invalid_buffer_damage", Value: 0x2, Since: 1}, {Name: "already_captured", Value: 0x3, Since: 1}}},
+		{Name: "failure_reason", Since: 1, Entries: []EnumEntry{{Name: "unknown", Value: 0x0, Since: 1}, {Name: "buffer_constraints", Value: 0x1, Since: 1}, {Name: "stopped", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtimagecopycaptureCursorSessionV1 = &Interface{
+	Name:    "ext_image_copy_capture_cursor_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_capture_session", Since: 1, Args: []ArgSpec{{Name: "session", Type: ArgNewID, Interface: "ext_image_copy_capture_session_v1"}}},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1},
+		{Name: "leave", Since: 1},
+		{Name: "position", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "hotspot", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "duplicate_session", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtsessionlockManagerV1 = &Interface{
+	Name:    "ext_session_lock_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "lock", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_session_lock_v1"}}},
+	},
+}
+
+var interfaceStagingExtsessionlockV1 = &Interface{
+	Name:    "ext_session_lock_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_lock_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "ext_session_lock_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "unlock_and_destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "locked", Since: 1},
+		{Name: "finished", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_destroy", Value: 0x0, Since: 1}, {Name: "invalid_unlock", Value: 0x1, Since: 1}, {Name: "role", Value: 0x2, Since: 1}, {Name: "duplicate_output", Value: 0x3, Since: 1}, {Name: "already_constructed", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtsessionlockSurfaceV1 = &Interface{
+	Name:    "ext_session_lock_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "ack_configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "width", Type: ArgUint}, {Name: "height", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "commit_before_first_ack", Value: 0x0, Since: 1}, {Name: "null_buffer", Value: 0x1, Since: 1}, {Name: "dimensions_mismatch", Value: 0x2, Since: 1}, {Name: "invalid_serial", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingExttransientseatManagerV1 = &Interface{
+	Name:    "ext_transient_seat_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgNewID, Interface: "ext_transient_seat_v1"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExttransientseatV1 = &Interface{
+	Name:    "ext_transient_seat_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "ready", Since: 1, Args: []ArgSpec{{Name: "global_name", Type: ArgUint}}},
+		{Name: "denied", Since: 1},
+	},
+}
+
+var interfaceStagingExtworkspaceManagerV1 = &Interface{
+	Name:    "ext_workspace_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "commit", Since: 1},
+		{Name: "stop", Since: 1},
+	},
+	Events: []Message{
+		{Name: "workspace_group", Since: 1, Args: []ArgSpec{{Name: "workspace_group", Type: ArgNewID, Interface: "ext_workspace_group_handle_v1"}}},
+		{Name: "workspace", Since: 1, Args: []ArgSpec{{Name: "workspace", Type: ArgNewID, Interface: "ext_workspace_handle_v1"}}},
+		{Name: "done", Since: 1},
+		{Name: "finished", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingExtworkspaceGroupHandleV1 = &Interface{
+	Name:    "ext_workspace_group_handle_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_workspace", Since: 1, Args: []ArgSpec{{Name: "workspace", Type: ArgString}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "capabilities", Since: 1, Args: []ArgSpec{{Name: "capabilities", Type: ArgUint, Enum: "group_capabilities"}}},
+		{Name: "output_enter", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "output_leave", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+		{Name: "workspace_enter", Since: 1, Args: []ArgSpec{{Name: "workspace", Type: ArgObject, Interface: "ext_workspace_handle_v1"}}},
+		{Name: "workspace_leave", Since: 1, Args: []ArgSpec{{Name: "workspace", Type: ArgObject, Interface: "ext_workspace_handle_v1"}}},
+		{Name: "removed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "group_capabilities", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "create_workspace", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingExtworkspaceHandleV1 = &Interface{
+	Name:    "ext_workspace_handle_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "activate", Since: 1},
+		{Name: "deactivate", Since: 1},
+		{Name: "assign", Since: 1, Args: []ArgSpec{{Name: "workspace_group", Type: ArgObject, Interface: "ext_workspace_group_handle_v1"}}},
+		{Name: "remove", Since: 1},
+	},
+	Events: []Message{
+		{Name: "id", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgString}}},
+		{Name: "name", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "coordinates", Since: 1, Args: []ArgSpec{{Name: "coordinates", Type: ArgArray}}},
+		{Name: "state", Since: 1, Args: []ArgSpec{{Name: "state", Type: ArgUint, Enum: "state"}}},
+		{Name: "capabilities", Since: 1, Args: []ArgSpec{{Name: "capabilities", Type: ArgUint, Enum: "workspace_capabilities"}}},
+		{Name: "removed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "state", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "active", Value: 0x1, Since: 1}, {Name: "urgent", Value: 0x2, Since: 1}, {Name: "hidden", Value: 0x4, Since: 1}}},
+		{Name: "workspace_capabilities", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "activate", Value: 0x1, Since: 1}, {Name: "deactivate", Value: 0x2, Since: 1}, {Name: "remove", Value: 0x4, Since: 1}, {Name: "assign", Value: 0x8, Since: 1}}},
+	},
+}
+
+var interfaceStagingFifoManagerV1 = &Interface{
+	Name:    "wp_fifo_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_fifo", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_fifo_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingFifoV1 = &Interface{
+	Name:    "wp_fifo_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_barrier", Since: 1},
+		{Name: "wait_barrier", Since: 1},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "surface_destroyed", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingFractionalscaleManagerV1 = &Interface{
+	Name:    "wp_fractional_scale_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_fractional_scale", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_fractional_scale_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "fractional_scale_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingFractionalscaleV1 = &Interface{
+	Name:    "wp_fractional_scale_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "preferred_scale", Since: 1, Args: []ArgSpec{{Name: "scale", Type: ArgUint}}},
+	},
+}
+
+var interfaceStagingLinuxdrmsyncobjManagerV1 = &Interface{
+	Name:    "wp_linux_drm_syncobj_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_linux_drm_syncobj_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "import_timeline", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_linux_drm_syncobj_timeline_v1"}, {Name: "fd", Type: ArgFD}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "surface_exists", Value: 0x0, Since: 1}, {Name: "invalid_timeline", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingLinuxdrmsyncobjTimelineV1 = &Interface{
+	Name:    "wp_linux_drm_syncobj_timeline_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceStagingLinuxdrmsyncobjSurfaceV1 = &Interface{
+	Name:    "wp_linux_drm_syncobj_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_acquire_point", Since: 1, Args: []ArgSpec{{Name: "timeline", Type: ArgObject, Interface: "wp_linux_drm_syncobj_timeline_v1"}, {Name: "point_hi", Type: ArgUint}, {Name: "point_lo", Type: ArgUint}}},
+		{Name: "set_release_point", Since: 1, Args: []ArgSpec{{Name: "timeline", Type: ArgObject, Interface: "wp_linux_drm_syncobj_timeline_v1"}, {Name: "point_hi", Type: ArgUint}, {Name: "point_lo", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "no_surface", Value: 0x1, Since: 1}, {Name: "unsupported_buffer", Value: 0x2, Since: 1}, {Name: "no_buffer", Value: 0x3, Since: 1}, {Name: "no_acquire_point", Value: 0x4, Since: 1}, {Name: "no_release_point", Value: 0x5, Since: 1}, {Name: "conflicting_points", Value: 0x6, Since: 1}}},
+	},
+}
+
+var interfaceStagingPointerwarpWpPointerWarpV1 = &Interface{
+	Name:    "wp_pointer_warp_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "warp_pointer", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}, {Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}, {Name: "serial", Type: ArgUint}}},
+	},
+}
+
+var interfaceStagingSecuritycontextManagerV1 = &Interface{
+	Name:    "wp_security_context_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_listener", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_security_context_v1"}, {Name: "listen_fd", Type: ArgFD}, {Name: "close_fd", Type: ArgFD}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_listen_fd", Value: 0x1, Since: 1}, {Name: "nested", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceStagingSecuritycontextV1 = &Interface{
+	Name:    "wp_security_context_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_sandbox_engine", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "set_instance_id", Since: 1, Args: []ArgSpec{{Name: "instance_id", Type: ArgString}}},
+		{Name: "commit", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_used", Value: 0x1, Since: 1}, {Name: "already_set", Value: 0x2, Since: 1}, {Name: "invalid_metadata", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingSinglepixelbufferWpSinglePixelBufferManagerV1 = &Interface{
+	Name:    "wp_single_pixel_buffer_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_u32_rgba_buffer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wl_buffer"}, {Name: "r", Type: ArgUint}, {Name: "g", Type: ArgUint}, {Name: "b", Type: ArgUint}, {Name: "a", Type: ArgUint}}},
+	},
+}
+
+var interfaceStagingTearingcontrolManagerV1 = &Interface{
+	Name:    "wp_tearing_control_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_tearing_control", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "wp_tearing_control_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "tearing_control_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingTearingcontrolV1 = &Interface{
+	Name:    "wp_tearing_control_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_presentation_hint", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint, Enum: "presentation_hint"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "presentation_hint", Since: 1, Entries: []EnumEntry{{Name: "vsync", Value: 0x0, Since: 1}, {Name: "async", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgactivationV1 = &Interface{
+	Name:    "xdg_activation_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_activation_token", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_activation_token_v1"}}},
+		{Name: "activate", Since: 1, Args: []ArgSpec{{Name: "token", Type: ArgString}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+}
+
+var interfaceStagingXdgactivationTokenV1 = &Interface{
+	Name:    "xdg_activation_token_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_serial", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "set_surface", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "commit", Since: 1},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "done", Since: 1, Args: []ArgSpec{{Name: "token", Type: ArgString}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_used", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgdialogWmDialogV1 = &Interface{
+	Name:    "xdg_wm_dialog_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_xdg_dialog", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_dialog_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_used", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgdialogDialogV1 = &Interface{
+	Name:    "xdg_dialog_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_modal", Since: 1},
+		{Name: "unset_modal", Since: 1},
+	},
+}
+
+var interfaceStagingXdgsessionmanagementSessionManagerV1 = &Interface{
+	Name:    "xdg_session_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_session", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_session_v1"}, {Name: "reason", Type: ArgUint, Enum: "reason"}, {Name: "session_id", Type: ArgString, AllowNull: true}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "in_use", Value: 0x1, Since: 1}, {Name: "invalid_session_id", Value: 0x2, Since: 1}, {Name: "invalid_reason", Value: 0x3, Since: 1}}},
+		{Name: "reason", Since: 1, Entries: []EnumEntry{{Name: "launch", Value: 0x1, Since: 1}, {Name: "recover", Value: 0x2, Since: 1}, {Name: "session_restore", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgsessionmanagementSessionV1 = &Interface{
+	Name:    "xdg_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "remove", Since: 1, Destructor: true},
+		{Name: "add_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_toplevel_session_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "name", Type: ArgString}}},
+		{Name: "restore_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_toplevel_session_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "name", Type: ArgString}}},
+		{Name: "remove_toplevel", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+	},
+	Events: []Message{
+		{Name: "created", Since: 1, Args: []ArgSpec{{Name: "session_id", Type: ArgString}}},
+		{Name: "restored", Since: 1},
+		{Name: "replaced", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "name_in_use", Value: 0x1, Since: 1}, {Name: "already_mapped", Value: 0x2, Since: 1}, {Name: "invalid_name", Value: 0x3, Since: 1}, {Name: "already_added", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgsessionmanagementToplevelSessionV1 = &Interface{
+	Name:    "xdg_toplevel_session_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "rename", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+	},
+	Events: []Message{
+		{Name: "restored", Since: 1},
+	},
+}
+
+var interfaceStagingXdgsystembellXdgSystemBellV1 = &Interface{
+	Name:    "xdg_system_bell_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "ring", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}}},
+	},
+}
+
+var interfaceStagingXdgtopleveldragManagerV1 = &Interface{
+	Name:    "xdg_toplevel_drag_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_xdg_toplevel_drag", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_toplevel_drag_v1"}, {Name: "data_source", Type: ArgObject, Interface: "wl_data_source"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_source", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgtopleveldragV1 = &Interface{
+	Name:    "xdg_toplevel_drag_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "attach", Since: 1, Args: []ArgSpec{{Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "x_offset", Type: ArgInt}, {Name: "y_offset", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "toplevel_attached", Value: 0x0, Since: 1}, {Name: "ongoing_drag", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgtopleveliconManagerV1 = &Interface{
+	Name:    "xdg_toplevel_icon_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_icon", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_toplevel_icon_v1"}}},
+		{Name: "set_icon", Since: 1, Args: []ArgSpec{{Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "icon", Type: ArgObject, Interface: "xdg_toplevel_icon_v1", AllowNull: true}}},
+	},
+	Events: []Message{
+		{Name: "icon_size", Since: 1, Args: []ArgSpec{{Name: "size", Type: ArgInt}}},
+		{Name: "done", Since: 1},
+	},
+}
+
+var interfaceStagingXdgtopleveliconV1 = &Interface{
+	Name:    "xdg_toplevel_icon_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_name", Since: 1, Args: []ArgSpec{{Name: "icon_name", Type: ArgString}}},
+		{Name: "add_buffer", Since: 1, Args: []ArgSpec{{Name: "buffer", Type: ArgObject, Interface: "wl_buffer"}, {Name: "scale", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_buffer", Value: 0x1, Since: 1}, {Name: "immutable", Value: 0x2, Since: 1}, {Name: "no_buffer", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceStagingXdgtopleveltagXdgToplevelTagManagerV1 = &Interface{
+	Name:    "xdg_toplevel_tag_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_toplevel_tag", Since: 1, Args: []ArgSpec{{Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "tag", Type: ArgString}}},
+		{Name: "set_toplevel_description", Since: 1, Args: []ArgSpec{{Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}, {Name: "description", Type: ArgString}}},
+	},
+}
+
+var interfaceStagingXwaylandshellShellV1 = &Interface{
+	Name:    "xwayland_shell_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_xwayland_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xwayland_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceStagingXwaylandshellSurfaceV1 = &Interface{
+	Name:    "xwayland_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_serial", Since: 1, Args: []ArgSpec{{Name: "serial_lo", Type: ArgUint}, {Name: "serial_hi", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_associated", Value: 0x0, Since: 1}, {Name: "invalid_serial", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableFullscreenshellV1 = &Interface{
+	Name:    "zwp_fullscreen_shell_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "release", Since: 1, Destructor: true},
+		{Name: "present_surface", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "method", Type: ArgUint, Enum: "present_method"}, {Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "present_surface_for_mode", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "output", Type: ArgObject, Interface: "wl_output"}, {Name: "framerate", Type: ArgInt}, {Name: "feedback", Type: ArgNewID, Interface: "zwp_fullscreen_shell_mode_feedback_v1"}}},
+	},
+	Events: []Message{
+		{Name: "capability", Since: 1, Args: []ArgSpec{{Name: "capability", Type: ArgUint, Enum: "capability"}}},
+	},
+	Enums: []Enum{
+		{Name: "capability", Since: 1, Entries: []EnumEntry{{Name: "arbitrary_modes", Value: 0x1, Since: 1}, {Name: "cursor_plane", Value: 0x2, Since: 1}}},
+		{Name: "present_method", Since: 1, Entries: []EnumEntry{{Name: "default", Value: 0x0, Since: 1}, {Name: "center", Value: 0x1, Since: 1}, {Name: "zoom", Value: 0x2, Since: 1}, {Name: "zoom_crop", Value: 0x3, Since: 1}, {Name: "stretch", Value: 0x4, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_method", Value: 0x0, Since: 1}, {Name: "role", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableFullscreenshellModeFeedbackV1 = &Interface{
+	Name:    "zwp_fullscreen_shell_mode_feedback_v1",
+	Version: 1,
+	Events: []Message{
+		{Name: "mode_successful", Since: 1, Destructor: true},
+		{Name: "mode_failed", Since: 1, Destructor: true},
+		{Name: "present_cancelled", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstableIdleinhibitInhibitManagerV1 = &Interface{
+	Name:    "zwp_idle_inhibit_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_inhibitor", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_idle_inhibitor_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+}
+
+var interfaceUnstableIdleinhibitInhibitorV1 = &Interface{
+	Name:    "zwp_idle_inhibitor_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstableInputmethodMethodContextV1 = &Interface{
+	Name:    "zwp_input_method_context_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "commit_string", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "text", Type: ArgString}}},
+		{Name: "preedit_string", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "text", Type: ArgString}, {Name: "commit", Type: ArgString}}},
+		{Name: "preedit_styling", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgUint}, {Name: "length", Type: ArgUint}, {Name: "style", Type: ArgUint}}},
+		{Name: "preedit_cursor", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}}},
+		{Name: "delete_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}, {Name: "length", Type: ArgUint}}},
+		{Name: "cursor_position", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "modifiers_map", Since: 1, Args: []ArgSpec{{Name: "map", Type: ArgArray}}},
+		{Name: "keysym", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "sym", Type: ArgUint}, {Name: "state", Type: ArgUint}, {Name: "modifiers", Type: ArgUint}}},
+		{Name: "grab_keyboard", Since: 1, Args: []ArgSpec{{Name: "keyboard", Type: ArgNewID, Interface: "wl_keyboard"}}},
+		{Name: "key", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "key", Type: ArgUint}, {Name: "state", Type: ArgUint}}},
+		{Name: "modifiers", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "mods_depressed", Type: ArgUint}, {Name: "mods_latched", Type: ArgUint}, {Name: "mods_locked", Type: ArgUint}, {Name: "group", Type: ArgUint}}},
+		{Name: "language", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "language", Type: ArgString}}},
+		{Name: "text_direction", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "direction", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "surrounding_text", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor", Type: ArgUint}, {Name: "anchor", Type: ArgUint}}},
+		{Name: "reset", Since: 1},
+		{Name: "content_type", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint}, {Name: "purpose", Type: ArgUint}}},
+		{Name: "invoke_action", Since: 1, Args: []ArgSpec{{Name: "button", Type: ArgUint}, {Name: "index", Type: ArgUint}}},
+		{Name: "commit_state", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "preferred_language", Since: 1, Args: []ArgSpec{{Name: "language", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableInputmethodMethodV1 = &Interface{
+	Name:    "zwp_input_method_v1",
+	Version: 1,
+	Events: []Message{
+		{Name: "activate", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_input_method_context_v1"}}},
+		{Name: "deactivate", Since: 1, Args: []ArgSpec{{Name: "context", Type: ArgObject, Interface: "zwp_input_method_context_v1"}}},
+	},
+}
+
+var interfaceUnstableInputmethodPanelV1 = &Interface{
+	Name:    "zwp_input_panel_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "get_input_panel_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_input_panel_surface_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+}
+
+var interfaceUnstableInputmethodPanelSurfaceV1 = &Interface{
+	Name:    "zwp_input_panel_surface_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_toplevel", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output"}, {Name: "position", Type: ArgUint}}},
+		{Name: "set_overlay_panel", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "position", Since: 1, Entries: []EnumEntry{{Name: "center_bottom", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableInputtimestampsManagerV1 = &Interface{
+	Name:    "zwp_input_timestamps_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_keyboard_timestamps", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_input_timestamps_v1"}, {Name: "keyboard", Type: ArgObject, Interface: "wl_keyboard"}}},
+		{Name: "get_pointer_timestamps", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_input_timestamps_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+		{Name: "get_touch_timestamps", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_input_timestamps_v1"}, {Name: "touch", Type: ArgObject, Interface: "wl_touch"}}},
+	},
+}
+
+var interfaceUnstableInputtimestampsV1 = &Interface{
+	Name:    "zwp_input_timestamps_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "timestamp", Since: 1, Args: []ArgSpec{{Name: "tv_sec_hi", Type: ArgUint}, {Name: "tv_sec_lo", Type: ArgUint}, {Name: "tv_nsec", Type: ArgUint}}},
+	},
+}
+
+var interfaceUnstableKeyboardshortcutsinhibitInhibitManagerV1 = &Interface{
+	Name:    "zwp_keyboard_shortcuts_inhibit_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "inhibit_shortcuts", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_keyboard_shortcuts_inhibitor_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_inhibited", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableKeyboardshortcutsinhibitInhibitorV1 = &Interface{
+	Name:    "zwp_keyboard_shortcuts_inhibitor_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "active", Since: 1},
+		{Name: "inactive", Since: 1},
+	},
+}
+
+var interfaceUnstableLinuxdmabufDmabufV1 = &Interface{
+	Name:    "zwp_linux_dmabuf_v1",
+	Version: 5,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_params", Since: 1, Args: []ArgSpec{{Name: "params_id", Type: ArgNewID, Interface: "zwp_linux_buffer_params_v1"}}},
+		{Name: "get_default_feedback", Since: 4, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_linux_dmabuf_feedback_v1"}}},
+		{Name: "get_surface_feedback", Since: 4, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_linux_dmabuf_feedback_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "format", Since: 1, Args: []ArgSpec{{Name: "format", Type: ArgUint}}},
+		{Name: "modifier", Since: 3, Args: []ArgSpec{{Name: "format", Type: ArgUint}, {Name: "modifier_hi", Type: ArgUint}, {Name: "modifier_lo", Type: ArgUint}}},
+	},
+}
+
+var interfaceUnstableLinuxdmabufBufferParamsV1 = &Interface{
+	Name:    "zwp_linux_buffer_params_v1",
+	Version: 5,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "add", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}, {Name: "plane_idx", Type: ArgUint}, {Name: "offset", Type: ArgUint}, {Name: "stride", Type: ArgUint}, {Name: "modifier_hi", Type: ArgUint}, {Name: "modifier_lo", Type: ArgUint}}},
+		{Name: "create", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "format", Type: ArgUint}, {Name: "flags", Type: ArgUint, Enum: "flags"}}},
+		{Name: "create_immed", Since: 2, Args: []ArgSpec{{Name: "buffer_id", Type: ArgNewID, Interface: "wl_buffer"}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "format", Type: ArgUint}, {Name: "flags", Type: ArgUint, Enum: "flags"}}},
+	},
+	Events: []Message{
+		{Name: "created", Since: 1, Args: []ArgSpec{{Name: "buffer", Type: ArgNewID, Interface: "wl_buffer"}}},
+		{Name: "failed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_used", Value: 0x0, Since: 1}, {Name: "plane_idx", Value: 0x1, Since: 1}, {Name: "plane_set", Value: 0x2, Since: 1}, {Name: "incomplete", Value: 0x3, Since: 1}, {Name: "invalid_format", Value: 0x4, Since: 1}, {Name: "invalid_dimensions", Value: 0x5, Since: 1}, {Name: "out_of_bounds", Value: 0x6, Since: 1}, {Name: "invalid_wl_buffer", Value: 0x7, Since: 1}}},
+		{Name: "flags", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "y_invert", Value: 0x1, Since: 1}, {Name: "interlaced", Value: 0x2, Since: 1}, {Name: "bottom_first", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceUnstableLinuxdmabufDmabufFeedbackV1 = &Interface{
+	Name:    "zwp_linux_dmabuf_feedback_v1",
+	Version: 5,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "done", Since: 1},
+		{Name: "format_table", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}, {Name: "size", Type: ArgUint}}},
+		{Name: "main_device", Since: 1, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+		{Name: "tranche_done", Since: 1},
+		{Name: "tranche_target_device", Since: 1, Args: []ArgSpec{{Name: "device", Type: ArgArray}}},
+		{Name: "tranche_formats", Since: 1, Args: []ArgSpec{{Name: "indices", Type: ArgArray}}},
+		{Name: "tranche_flags", Since: 1, Args: []ArgSpec{{Name: "flags", Type: ArgUint, Enum: "tranche_flags"}}},
+	},
+	Enums: []Enum{
+		{Name: "tranche_flags", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "scanout", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableLinuxexplicitsynchronizationExplicitSynchronizationV1 = &Interface{
+	Name:    "zwp_linux_explicit_synchronization_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_synchronization", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_linux_surface_synchronization_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "synchronization_exists", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableLinuxexplicitsynchronizationSurfaceSynchronizationV1 = &Interface{
+	Name:    "zwp_linux_surface_synchronization_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_acquire_fence", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}},
+		{Name: "get_release", Since: 1, Args: []ArgSpec{{Name: "release", Type: ArgNewID, Interface: "zwp_linux_buffer_release_v1"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_fence", Value: 0x0, Since: 1}, {Name: "duplicate_fence", Value: 0x1, Since: 1}, {Name: "duplicate_release", Value: 0x2, Since: 1}, {Name: "no_surface", Value: 0x3, Since: 1}, {Name: "unsupported_buffer", Value: 0x4, Since: 1}, {Name: "no_buffer", Value: 0x5, Since: 1}}},
+	},
+}
+
+var interfaceUnstableLinuxexplicitsynchronizationBufferReleaseV1 = &Interface{
+	Name:    "zwp_linux_buffer_release_v1",
+	Version: 1,
+	Events: []Message{
+		{Name: "fenced_release", Since: 1, Destructor: true, Args: []ArgSpec{{Name: "fence", Type: ArgFD}}},
+		{Name: "immediate_release", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstablePointerconstraintsPointerConstraintsV1 = &Interface{
+	Name:    "zwp_pointer_constraints_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "lock_pointer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_locked_pointer_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}, {Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}, {Name: "lifetime", Type: ArgUint, Enum: "lifetime"}}},
+		{Name: "confine_pointer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_confined_pointer_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}, {Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}, {Name: "lifetime", Type: ArgUint, Enum: "lifetime"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "already_constrained", Value: 0x1, Since: 1}}},
+		{Name: "lifetime", Since: 1, Entries: []EnumEntry{{Name: "oneshot", Value: 0x1, Since: 1}, {Name: "persistent", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceUnstablePointerconstraintsLockedPointerV1 = &Interface{
+	Name:    "zwp_locked_pointer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_cursor_position_hint", Since: 1, Args: []ArgSpec{{Name: "surface_x", Type: ArgFixed}, {Name: "surface_y", Type: ArgFixed}}},
+		{Name: "set_region", Since: 1, Args: []ArgSpec{{Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}}},
+	},
+	Events: []Message{
+		{Name: "locked", Since: 1},
+		{Name: "unlocked", Since: 1},
+	},
+}
+
+var interfaceUnstablePointerconstraintsConfinedPointerV1 = &Interface{
+	Name:    "zwp_confined_pointer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_region", Since: 1, Args: []ArgSpec{{Name: "region", Type: ArgObject, Interface: "wl_region", AllowNull: true}}},
+	},
+	Events: []Message{
+		{Name: "confined", Since: 1},
+		{Name: "unconfined", Since: 1},
+	},
+}
+
+var interfaceUnstablePointergesturesGesturesV1 = &Interface{
+	Name:    "zwp_pointer_gestures_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "get_swipe_gesture", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_pointer_gesture_swipe_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+		{Name: "get_pinch_gesture", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_pointer_gesture_pinch_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+		{Name: "release", Since: 2, Destructor: true},
+		{Name: "get_hold_gesture", Since: 3, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_pointer_gesture_hold_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+	},
+}
+
+var interfaceUnstablePointergesturesGestureSwipeV1 = &Interface{
+	Name:    "zwp_pointer_gesture_swipe_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "begin", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "fingers", Type: ArgUint}}},
+		{Name: "update", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "dx", Type: ArgFixed}, {Name: "dy", Type: ArgFixed}}},
+		{Name: "end", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "cancelled", Type: ArgInt}}},
+	},
+}
+
+var interfaceUnstablePointergesturesGesturePinchV1 = &Interface{
+	Name:    "zwp_pointer_gesture_pinch_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "begin", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "fingers", Type: ArgUint}}},
+		{Name: "update", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "dx", Type: ArgFixed}, {Name: "dy", Type: ArgFixed}, {Name: "scale", Type: ArgFixed}, {Name: "rotation", Type: ArgFixed}}},
+		{Name: "end", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "cancelled", Type: ArgInt}}},
+	},
+}
+
+var interfaceUnstablePointergesturesGestureHoldV1 = &Interface{
+	Name:    "zwp_pointer_gesture_hold_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 3, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "begin", Since: 3, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "fingers", Type: ArgUint}}},
+		{Name: "end", Since: 3, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "cancelled", Type: ArgInt}}},
+	},
+}
+
+var interfaceUnstablePrimaryselectionDeviceManagerV1 = &Interface{
+	Name:    "zwp_primary_selection_device_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_source", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_primary_selection_source_v1"}}},
+		{Name: "get_device", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_primary_selection_device_v1"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstablePrimaryselectionDeviceV1 = &Interface{
+	Name:    "zwp_primary_selection_device_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_selection", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgObject, Interface: "zwp_primary_selection_source_v1", AllowNull: true}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "data_offer", Since: 1, Args: []ArgSpec{{Name: "offer", Type: ArgNewID, Interface: "zwp_primary_selection_offer_v1"}}},
+		{Name: "selection", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgObject, Interface: "zwp_primary_selection_offer_v1", AllowNull: true}}},
+	},
+}
+
+var interfaceUnstablePrimaryselectionOfferV1 = &Interface{
+	Name:    "zwp_primary_selection_offer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "receive", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstablePrimaryselectionSourceV1 = &Interface{
+	Name:    "zwp_primary_selection_source_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "offer", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "send", Since: 1, Args: []ArgSpec{{Name: "mime_type", Type: ArgString}, {Name: "fd", Type: ArgFD}}},
+		{Name: "cancelled", Since: 1},
+	},
+}
+
+var interfaceUnstableRelativepointerManagerV1 = &Interface{
+	Name:    "zwp_relative_pointer_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_relative_pointer", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_relative_pointer_v1"}, {Name: "pointer", Type: ArgObject, Interface: "wl_pointer"}}},
+	},
+}
+
+var interfaceUnstableRelativepointerV1 = &Interface{
+	Name:    "zwp_relative_pointer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "relative_motion", Since: 1, Args: []ArgSpec{{Name: "utime_hi", Type: ArgUint}, {Name: "utime_lo", Type: ArgUint}, {Name: "dx", Type: ArgFixed}, {Name: "dy", Type: ArgFixed}, {Name: "dx_unaccel", Type: ArgFixed}, {Name: "dy_unaccel", Type: ArgFixed}}},
+	},
+}
+
+var interfaceUnstableTabletManagerV1 = &Interface{
+	Name:    "zwp_tablet_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "get_tablet_seat", Since: 1, Args: []ArgSpec{{Name: "tablet_seat", Type: ArgNewID, Interface: "zwp_tablet_seat_v1"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstableTabletSeatV1 = &Interface{
+	Name:    "zwp_tablet_seat_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "tablet_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_v1"}}},
+		{Name: "tool_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_tool_v1"}}},
+	},
+}
+
+var interfaceUnstableTabletToolV1 = &Interface{
+	Name:    "zwp_tablet_tool_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_cursor", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "hotspot_x", Type: ArgInt}, {Name: "hotspot_y", Type: ArgInt}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "type", Since: 1, Args: []ArgSpec{{Name: "tool_type", Type: ArgUint, Enum: "type"}}},
+		{Name: "hardware_serial", Since: 1, Args: []ArgSpec{{Name: "hardware_serial_hi", Type: ArgUint}, {Name: "hardware_serial_lo", Type: ArgUint}}},
+		{Name: "hardware_id_wacom", Since: 1, Args: []ArgSpec{{Name: "hardware_id_hi", Type: ArgUint}, {Name: "hardware_id_lo", Type: ArgUint}}},
+		{Name: "capability", Since: 1, Args: []ArgSpec{{Name: "capability", Type: ArgUint, Enum: "capability"}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+		{Name: "proximity_in", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "tablet", Type: ArgObject, Interface: "zwp_tablet_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "proximity_out", Since: 1},
+		{Name: "down", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "up", Since: 1},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "pressure", Since: 1, Args: []ArgSpec{{Name: "pressure", Type: ArgUint}}},
+		{Name: "distance", Since: 1, Args: []ArgSpec{{Name: "distance", Type: ArgUint}}},
+		{Name: "tilt", Since: 1, Args: []ArgSpec{{Name: "tilt_x", Type: ArgInt}, {Name: "tilt_y", Type: ArgInt}}},
+		{Name: "rotation", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgInt}}},
+		{Name: "slider", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgInt}}},
+		{Name: "wheel", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgInt}, {Name: "clicks", Type: ArgInt}}},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "type", Since: 1, Entries: []EnumEntry{{Name: "pen", Value: 0x140, Since: 1}, {Name: "eraser", Value: 0x141, Since: 1}, {Name: "brush", Value: 0x142, Since: 1}, {Name: "pencil", Value: 0x143, Since: 1}, {Name: "airbrush", Value: 0x144, Since: 1}, {Name: "finger", Value: 0x145, Since: 1}, {Name: "mouse", Value: 0x146, Since: 1}, {Name: "lens", Value: 0x147, Since: 1}}},
+		{Name: "capability", Since: 1, Entries: []EnumEntry{{Name: "tilt", Value: 0x1, Since: 1}, {Name: "pressure", Value: 0x2, Since: 1}, {Name: "distance", Value: 0x3, Since: 1}, {Name: "rotation", Value: 0x4, Since: 1}, {Name: "slider", Value: 0x5, Since: 1}, {Name: "wheel", Value: 0x6, Since: 1}}},
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTabletV1 = &Interface{
+	Name:    "zwp_tablet_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "name", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "id", Since: 1, Args: []ArgSpec{{Name: "vid", Type: ArgUint}, {Name: "pid", Type: ArgUint}}},
+		{Name: "path", Since: 1, Args: []ArgSpec{{Name: "path", Type: ArgString}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+	},
+}
+
+var interfaceUnstableTabletManagerV2 = &Interface{
+	Name:    "zwp_tablet_manager_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "get_tablet_seat", Since: 1, Args: []ArgSpec{{Name: "tablet_seat", Type: ArgNewID, Interface: "zwp_tablet_seat_v2"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+}
+
+var interfaceUnstableTabletSeatV2 = &Interface{
+	Name:    "zwp_tablet_seat_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "tablet_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_v2"}}},
+		{Name: "tool_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_tool_v2"}}},
+		{Name: "pad_added", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_tablet_pad_v2"}}},
+	},
+}
+
+var interfaceUnstableTabletToolV2 = &Interface{
+	Name:    "zwp_tablet_tool_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_cursor", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface", AllowNull: true}, {Name: "hotspot_x", Type: ArgInt}, {Name: "hotspot_y", Type: ArgInt}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "type", Since: 1, Args: []ArgSpec{{Name: "tool_type", Type: ArgUint, Enum: "type"}}},
+		{Name: "hardware_serial", Since: 1, Args: []ArgSpec{{Name: "hardware_serial_hi", Type: ArgUint}, {Name: "hardware_serial_lo", Type: ArgUint}}},
+		{Name: "hardware_id_wacom", Since: 1, Args: []ArgSpec{{Name: "hardware_id_hi", Type: ArgUint}, {Name: "hardware_id_lo", Type: ArgUint}}},
+		{Name: "capability", Since: 1, Args: []ArgSpec{{Name: "capability", Type: ArgUint, Enum: "capability"}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+		{Name: "proximity_in", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "tablet", Type: ArgObject, Interface: "zwp_tablet_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "proximity_out", Since: 1},
+		{Name: "down", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "up", Since: 1},
+		{Name: "motion", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgFixed}, {Name: "y", Type: ArgFixed}}},
+		{Name: "pressure", Since: 1, Args: []ArgSpec{{Name: "pressure", Type: ArgUint}}},
+		{Name: "distance", Since: 1, Args: []ArgSpec{{Name: "distance", Type: ArgUint}}},
+		{Name: "tilt", Since: 1, Args: []ArgSpec{{Name: "tilt_x", Type: ArgFixed}, {Name: "tilt_y", Type: ArgFixed}}},
+		{Name: "rotation", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}}},
+		{Name: "slider", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgInt}}},
+		{Name: "wheel", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}, {Name: "clicks", Type: ArgInt}}},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "type", Since: 1, Entries: []EnumEntry{{Name: "pen", Value: 0x140, Since: 1}, {Name: "eraser", Value: 0x141, Since: 1}, {Name: "brush", Value: 0x142, Since: 1}, {Name: "pencil", Value: 0x143, Since: 1}, {Name: "airbrush", Value: 0x144, Since: 1}, {Name: "finger", Value: 0x145, Since: 1}, {Name: "mouse", Value: 0x146, Since: 1}, {Name: "lens", Value: 0x147, Since: 1}}},
+		{Name: "capability", Since: 1, Entries: []EnumEntry{{Name: "tilt", Value: 0x1, Since: 1}, {Name: "pressure", Value: 0x2, Since: 1}, {Name: "distance", Value: 0x3, Since: 1}, {Name: "rotation", Value: 0x4, Since: 1}, {Name: "slider", Value: 0x5, Since: 1}, {Name: "wheel", Value: 0x6, Since: 1}}},
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTabletV2 = &Interface{
+	Name:    "zwp_tablet_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "name", Since: 1, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "id", Since: 1, Args: []ArgSpec{{Name: "vid", Type: ArgUint}, {Name: "pid", Type: ArgUint}}},
+		{Name: "path", Since: 1, Args: []ArgSpec{{Name: "path", Type: ArgString}}},
+		{Name: "done", Since: 1},
+		{Name: "removed", Since: 1},
+	},
+}
+
+var interfaceUnstableTabletPadRingV2 = &Interface{
+	Name:    "zwp_tablet_pad_ring_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgUint, Enum: "source"}}},
+		{Name: "angle", Since: 1, Args: []ArgSpec{{Name: "degrees", Type: ArgFixed}}},
+		{Name: "stop", Since: 1},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "source", Since: 1, Entries: []EnumEntry{{Name: "finger", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTabletPadStripV2 = &Interface{
+	Name:    "zwp_tablet_pad_strip_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "source", Since: 1, Args: []ArgSpec{{Name: "source", Type: ArgUint, Enum: "source"}}},
+		{Name: "position", Since: 1, Args: []ArgSpec{{Name: "position", Type: ArgUint}}},
+		{Name: "stop", Since: 1},
+		{Name: "frame", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "source", Since: 1, Entries: []EnumEntry{{Name: "finger", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTabletPadGroupV2 = &Interface{
+	Name:    "zwp_tablet_pad_group_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "buttons", Since: 1, Args: []ArgSpec{{Name: "buttons", Type: ArgArray}}},
+		{Name: "ring", Since: 1, Args: []ArgSpec{{Name: "ring", Type: ArgNewID, Interface: "zwp_tablet_pad_ring_v2"}}},
+		{Name: "strip", Since: 1, Args: []ArgSpec{{Name: "strip", Type: ArgNewID, Interface: "zwp_tablet_pad_strip_v2"}}},
+		{Name: "modes", Since: 1, Args: []ArgSpec{{Name: "modes", Type: ArgUint}}},
+		{Name: "done", Since: 1},
+		{Name: "mode_switch", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "serial", Type: ArgUint}, {Name: "mode", Type: ArgUint}}},
+	},
+}
+
+var interfaceUnstableTabletPadV2 = &Interface{
+	Name:    "zwp_tablet_pad_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "set_feedback", Since: 1, Args: []ArgSpec{{Name: "button", Type: ArgUint}, {Name: "description", Type: ArgString}, {Name: "serial", Type: ArgUint}}},
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "group", Since: 1, Args: []ArgSpec{{Name: "pad_group", Type: ArgNewID, Interface: "zwp_tablet_pad_group_v2"}}},
+		{Name: "path", Since: 1, Args: []ArgSpec{{Name: "path", Type: ArgString}}},
+		{Name: "buttons", Since: 1, Args: []ArgSpec{{Name: "buttons", Type: ArgUint}}},
+		{Name: "done", Since: 1},
+		{Name: "button", Since: 1, Args: []ArgSpec{{Name: "time", Type: ArgUint}, {Name: "button", Type: ArgUint}, {Name: "state", Type: ArgUint, Enum: "button_state"}}},
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "tablet", Type: ArgObject, Interface: "zwp_tablet_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "removed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "button_state", Since: 1, Entries: []EnumEntry{{Name: "released", Value: 0x0, Since: 1}, {Name: "pressed", Value: 0x1, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTextinputV1 = &Interface{
+	Name:    "zwp_text_input_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "activate", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "deactivate", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+		{Name: "show_input_panel", Since: 1},
+		{Name: "hide_input_panel", Since: 1},
+		{Name: "reset", Since: 1},
+		{Name: "set_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor", Type: ArgUint}, {Name: "anchor", Type: ArgUint}}},
+		{Name: "set_content_type", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint, Enum: "content_hint"}, {Name: "purpose", Type: ArgUint, Enum: "content_purpose"}}},
+		{Name: "set_cursor_rectangle", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_preferred_language", Since: 1, Args: []ArgSpec{{Name: "language", Type: ArgString}}},
+		{Name: "commit_state", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "invoke_action", Since: 1, Args: []ArgSpec{{Name: "button", Type: ArgUint}, {Name: "index", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "leave", Since: 1},
+		{Name: "modifiers_map", Since: 1, Args: []ArgSpec{{Name: "map", Type: ArgArray}}},
+		{Name: "input_panel_state", Since: 1, Args: []ArgSpec{{Name: "state", Type: ArgUint}}},
+		{Name: "preedit_string", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "text", Type: ArgString}, {Name: "commit", Type: ArgString}}},
+		{Name: "preedit_styling", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgUint}, {Name: "length", Type: ArgUint}, {Name: "style", Type: ArgUint, Enum: "preedit_style"}}},
+		{Name: "preedit_cursor", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}}},
+		{Name: "commit_string", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "text", Type: ArgString}}},
+		{Name: "cursor_position", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "delete_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "index", Type: ArgInt}, {Name: "length", Type: ArgUint}}},
+		{Name: "keysym", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "time", Type: ArgUint}, {Name: "sym", Type: ArgUint}, {Name: "state", Type: ArgUint}, {Name: "modifiers", Type: ArgUint}}},
+		{Name: "language", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "language", Type: ArgString}}},
+		{Name: "text_direction", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}, {Name: "direction", Type: ArgUint, Enum: "text_direction"}}},
+	},
+	Enums: []Enum{
+		{Name: "content_hint", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "default", Value: 0x7, Since: 1}, {Name: "password", Value: 0xc0, Since: 1}, {Name: "auto_completion", Value: 0x1, Since: 1}, {Name: "auto_correction", Value: 0x2, Since: 1}, {Name: "auto_capitalization", Value: 0x4, Since: 1}, {Name: "lowercase", Value: 0x8, Since: 1}, {Name: "uppercase", Value: 0x10, Since: 1}, {Name: "titlecase", Value: 0x20, Since: 1}, {Name: "hidden_text", Value: 0x40, Since: 1}, {Name: "sensitive_data", Value: 0x80, Since: 1}, {Name: "latin", Value: 0x100, Since: 1}, {Name: "multiline", Value: 0x200, Since: 1}}},
+		{Name: "content_purpose", Since: 1, Entries: []EnumEntry{{Name: "normal", Value: 0x0, Since: 1}, {Name: "alpha", Value: 0x1, Since: 1}, {Name: "digits", Value: 0x2, Since: 1}, {Name: "number", Value: 0x3, Since: 1}, {Name: "phone", Value: 0x4, Since: 1}, {Name: "url", Value: 0x5, Since: 1}, {Name: "email", Value: 0x6, Since: 1}, {Name: "name", Value: 0x7, Since: 1}, {Name: "password", Value: 0x8, Since: 1}, {Name: "date", Value: 0x9, Since: 1}, {Name: "time", Value: 0xa, Since: 1}, {Name: "datetime", Value: 0xb, Since: 1}, {Name: "terminal", Value: 0xc, Since: 1}}},
+		{Name: "preedit_style", Since: 1, Entries: []EnumEntry{{Name: "default", Value: 0x0, Since: 1}, {Name: "none", Value: 0x1, Since: 1}, {Name: "active", Value: 0x2, Since: 1}, {Name: "inactive", Value: 0x3, Since: 1}, {Name: "highlight", Value: 0x4, Since: 1}, {Name: "underline", Value: 0x5, Since: 1}, {Name: "selection", Value: 0x6, Since: 1}, {Name: "incorrect", Value: 0x7, Since: 1}}},
+		{Name: "text_direction", Since: 1, Entries: []EnumEntry{{Name: "auto", Value: 0x0, Since: 1}, {Name: "ltr", Value: 0x1, Since: 1}, {Name: "rtl", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTextinputManagerV1 = &Interface{
+	Name:    "zwp_text_input_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "create_text_input", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_text_input_v1"}}},
+	},
+}
+
+var interfaceUnstableTextinputV3 = &Interface{
+	Name:    "zwp_text_input_v3",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "enable", Since: 1},
+		{Name: "disable", Since: 1},
+		{Name: "set_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString}, {Name: "cursor", Type: ArgInt}, {Name: "anchor", Type: ArgInt}}},
+		{Name: "set_text_change_cause", Since: 1, Args: []ArgSpec{{Name: "cause", Type: ArgUint, Enum: "change_cause"}}},
+		{Name: "set_content_type", Since: 1, Args: []ArgSpec{{Name: "hint", Type: ArgUint, Enum: "content_hint"}, {Name: "purpose", Type: ArgUint, Enum: "content_purpose"}}},
+		{Name: "set_cursor_rectangle", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "commit", Since: 1},
+		{Name: "set_available_actions", Since: 2, Args: []ArgSpec{{Name: "available_actions", Type: ArgArray}}},
+		{Name: "show_input_panel", Since: 2},
+		{Name: "hide_input_panel", Since: 2},
+	},
+	Events: []Message{
+		{Name: "enter", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "leave", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "preedit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString, AllowNull: true}, {Name: "cursor_begin", Type: ArgInt}, {Name: "cursor_end", Type: ArgInt}}},
+		{Name: "commit_string", Since: 1, Args: []ArgSpec{{Name: "text", Type: ArgString, AllowNull: true}}},
+		{Name: "delete_surrounding_text", Since: 1, Args: []ArgSpec{{Name: "before_length", Type: ArgUint}, {Name: "after_length", Type: ArgUint}}},
+		{Name: "done", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "action", Since: 2, Args: []ArgSpec{{Name: "action", Type: ArgUint, Enum: "action"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "language", Since: 2, Args: []ArgSpec{{Name: "language", Type: ArgString}}},
+		{Name: "preedit_hint", Since: 2, Args: []ArgSpec{{Name: "start", Type: ArgUint}, {Name: "end", Type: ArgUint}, {Name: "hint", Type: ArgUint, Enum: "preedit_hint"}}},
+	},
+	Enums: []Enum{
+		{Name: "change_cause", Since: 1, Entries: []EnumEntry{{Name: "input_method", Value: 0x0, Since: 1}, {Name: "other", Value: 0x1, Since: 1}}},
+		{Name: "content_hint", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "completion", Value: 0x1, Since: 1}, {Name: "spellcheck", Value: 0x2, Since: 1}, {Name: "auto_capitalization", Value: 0x4, Since: 1}, {Name: "lowercase", Value: 0x8, Since: 1}, {Name: "uppercase", Value: 0x10, Since: 1}, {Name: "titlecase", Value: 0x20, Since: 1}, {Name: "hidden_text", Value: 0x40, Since: 1}, {Name: "sensitive_data", Value: 0x80, Since: 1}, {Name: "latin", Value: 0x100, Since: 1}, {Name: "multiline", Value: 0x200, Since: 1}, {Name: "on_screen_input_provided", Value: 0x400, Since: 2}, {Name: "no_emoji", Value: 0x800, Since: 2}, {Name: "preedit_shown", Value: 0x1000, Since: 2}}},
+		{Name: "content_purpose", Since: 1, Entries: []EnumEntry{{Name: "normal", Value: 0x0, Since: 1}, {Name: "alpha", Value: 0x1, Since: 1}, {Name: "digits", Value: 0x2, Since: 1}, {Name: "number", Value: 0x3, Since: 1}, {Name: "phone", Value: 0x4, Since: 1}, {Name: "url", Value: 0x5, Since: 1}, {Name: "email", Value: 0x6, Since: 1}, {Name: "name", Value: 0x7, Since: 1}, {Name: "password", Value: 0x8, Since: 1}, {Name: "pin", Value: 0x9, Since: 1}, {Name: "date", Value: 0xa, Since: 1}, {Name: "time", Value: 0xb, Since: 1}, {Name: "datetime", Value: 0xc, Since: 1}, {Name: "terminal", Value: 0xd, Since: 1}}},
+		{Name: "error", Since: 2, Entries: []EnumEntry{{Name: "invalid_action", Value: 0x0, Since: 1}}},
+		{Name: "action", Since: 2, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "submit", Value: 0x1, Since: 1}}},
+		{Name: "preedit_hint", Since: 1, Entries: []EnumEntry{{Name: "whole", Value: 0x1, Since: 1}, {Name: "selection", Value: 0x2, Since: 1}, {Name: "prediction", Value: 0x3, Since: 1}, {Name: "prefix", Value: 0x4, Since: 1}, {Name: "suffix", Value: 0x5, Since: 1}, {Name: "spelling_error", Value: 0x6, Since: 1}, {Name: "compose_error", Value: 0x7, Since: 1}}},
+	},
+}
+
+var interfaceUnstableTextinputManagerV3 = &Interface{
+	Name:    "zwp_text_input_manager_v3",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_text_input", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_text_input_v3"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+	},
+}
+
+var interfaceUnstableXdgdecorationDecorationManagerV1 = &Interface{
+	Name:    "zxdg_decoration_manager_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_toplevel_decoration", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_toplevel_decoration_v1"}, {Name: "toplevel", Type: ArgObject, Interface: "xdg_toplevel"}}},
+	},
+}
+
+var interfaceUnstableXdgdecorationToplevelDecorationV1 = &Interface{
+	Name:    "zxdg_toplevel_decoration_v1",
+	Version: 2,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_mode", Since: 1, Args: []ArgSpec{{Name: "mode", Type: ArgUint, Enum: "mode"}}},
+		{Name: "unset_mode", Since: 1},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "mode", Type: ArgUint, Enum: "mode"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "unconfigured_buffer", Value: 0x0, Since: 1}, {Name: "already_constructed", Value: 0x1, Since: 1}, {Name: "orphaned", Value: 0x2, Since: 1}, {Name: "invalid_mode", Value: 0x3, Since: 1}}},
+		{Name: "mode", Since: 1, Entries: []EnumEntry{{Name: "client_side", Value: 0x1, Since: 1}, {Name: "server_side", Value: 0x2, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgforeignExporterV1 = &Interface{
+	Name:    "zxdg_exporter_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "export", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_exported_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+}
+
+var interfaceUnstableXdgforeignImporterV1 = &Interface{
+	Name:    "zxdg_importer_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "import", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_imported_v1"}, {Name: "handle", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableXdgforeignExportedV1 = &Interface{
+	Name:    "zxdg_exported_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "handle", Since: 1, Args: []ArgSpec{{Name: "handle", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableXdgforeignImportedV1 = &Interface{
+	Name:    "zxdg_imported_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_parent_of", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "destroyed", Since: 1},
+	},
+}
+
+var interfaceUnstableXdgforeignExporterV2 = &Interface{
+	Name:    "zxdg_exporter_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "export_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_exported_v2"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_surface", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgforeignImporterV2 = &Interface{
+	Name:    "zxdg_importer_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "import_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_imported_v2"}, {Name: "handle", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableXdgforeignExportedV2 = &Interface{
+	Name:    "zxdg_exported_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "handle", Since: 1, Args: []ArgSpec{{Name: "handle", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableXdgforeignImportedV2 = &Interface{
+	Name:    "zxdg_imported_v2",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_parent_of", Since: 1, Args: []ArgSpec{{Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+	},
+	Events: []Message{
+		{Name: "destroyed", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_surface", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgoutputManagerV1 = &Interface{
+	Name:    "zxdg_output_manager_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_xdg_output", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_output_v1"}, {Name: "output", Type: ArgObject, Interface: "wl_output"}}},
+	},
+}
+
+var interfaceUnstableXdgoutputV1 = &Interface{
+	Name:    "zxdg_output_v1",
+	Version: 3,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "logical_position", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "logical_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "done", Since: 1, DeprecatedSince: 3},
+		{Name: "name", Since: 2, Args: []ArgSpec{{Name: "name", Type: ArgString}}},
+		{Name: "description", Since: 2, Args: []ArgSpec{{Name: "description", Type: ArgString}}},
+	},
+}
+
+var interfaceUnstableXdgshellShell = &Interface{
+	Name:    "xdg_shell",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "use_unstable_version", Since: 1, Args: []ArgSpec{{Name: "version", Type: ArgInt}}},
+		{Name: "get_xdg_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_surface"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "get_xdg_popup", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "xdg_popup"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "parent", Type: ArgObject, Interface: "wl_surface"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "version", Since: 1, Entries: []EnumEntry{{Name: "current", Value: 0x5, Since: 1}}},
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}, {Name: "defunct_surfaces", Value: 0x1, Since: 1}, {Name: "not_the_topmost_popup", Value: 0x2, Since: 1}, {Name: "invalid_popup_parent", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellSurface = &Interface{
+	Name:    "xdg_surface",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_parent", Since: 1, Args: []ArgSpec{{Name: "parent", Type: ArgObject, Interface: "xdg_surface", AllowNull: true}}},
+		{Name: "set_title", Since: 1, Args: []ArgSpec{{Name: "title", Type: ArgString}}},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "show_window_menu", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "move", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "resize", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "edges", Type: ArgUint}}},
+		{Name: "ack_configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+		{Name: "set_window_geometry", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_maximized", Since: 1},
+		{Name: "unset_maximized", Since: 1},
+		{Name: "set_fullscreen", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "unset_fullscreen", Since: 1},
+		{Name: "set_minimized", Since: 1},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "states", Type: ArgArray}, {Name: "serial", Type: ArgUint}}},
+		{Name: "close", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "resize_edge", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "right", Value: 0x8, Since: 1}, {Name: "top_right", Value: 0x9, Since: 1}, {Name: "bottom_right", Value: 0xa, Since: 1}}},
+		{Name: "state", Since: 1, Entries: []EnumEntry{{Name: "maximized", Value: 0x1, Since: 1}, {Name: "fullscreen", Value: 0x2, Since: 1}, {Name: "resizing", Value: 0x3, Since: 1}, {Name: "activated", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellPopup = &Interface{
+	Name:    "xdg_popup",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+	},
+	Events: []Message{
+		{Name: "popup_done", Since: 1},
+	},
+}
+
+var interfaceUnstableXdgshellShellV6 = &Interface{
+	Name:    "zxdg_shell_v6",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "create_positioner", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_positioner_v6"}}},
+		{Name: "get_xdg_surface", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_surface_v6"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}}},
+		{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "role", Value: 0x0, Since: 1}, {Name: "defunct_surfaces", Value: 0x1, Since: 1}, {Name: "not_the_topmost_popup", Value: 0x2, Since: 1}, {Name: "invalid_popup_parent", Value: 0x3, Since: 1}, {Name: "invalid_surface_state", Value: 0x4, Since: 1}, {Name: "invalid_positioner", Value: 0x5, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellPositionerV6 = &Interface{
+	Name:    "zxdg_positioner_v6",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_anchor_rect", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_anchor", Since: 1, Args: []ArgSpec{{Name: "anchor", Type: ArgUint, Enum: "anchor"}}},
+		{Name: "set_gravity", Since: 1, Args: []ArgSpec{{Name: "gravity", Type: ArgUint, Enum: "gravity"}}},
+		{Name: "set_constraint_adjustment", Since: 1, Args: []ArgSpec{{Name: "constraint_adjustment", Type: ArgUint}}},
+		{Name: "set_offset", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_input", Value: 0x0, Since: 1}}},
+		{Name: "anchor", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "right", Value: 0x8, Since: 1}}},
+		{Name: "gravity", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "right", Value: 0x8, Since: 1}}},
+		{Name: "constraint_adjustment", Since: 1, Bitfield: true, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "slide_x", Value: 0x1, Since: 1}, {Name: "slide_y", Value: 0x2, Since: 1}, {Name: "flip_x", Value: 0x4, Since: 1}, {Name: "flip_y", Value: 0x8, Since: 1}, {Name: "resize_x", Value: 0x10, Since: 1}, {Name: "resize_y", Value: 0x20, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellSurfaceV6 = &Interface{
+	Name:    "zxdg_surface_v6",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "get_toplevel", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_toplevel_v6"}}},
+		{Name: "get_popup", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zxdg_popup_v6"}, {Name: "parent", Type: ArgObject, Interface: "zxdg_surface_v6"}, {Name: "positioner", Type: ArgObject, Interface: "zxdg_positioner_v6"}}},
+		{Name: "set_window_geometry", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "ack_configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "serial", Type: ArgUint}}},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "not_constructed", Value: 0x1, Since: 1}, {Name: "already_constructed", Value: 0x2, Since: 1}, {Name: "unconfigured_buffer", Value: 0x3, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellToplevelV6 = &Interface{
+	Name:    "zxdg_toplevel_v6",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "set_parent", Since: 1, Args: []ArgSpec{{Name: "parent", Type: ArgObject, Interface: "zxdg_toplevel_v6", AllowNull: true}}},
+		{Name: "set_title", Since: 1, Args: []ArgSpec{{Name: "title", Type: ArgString}}},
+		{Name: "set_app_id", Since: 1, Args: []ArgSpec{{Name: "app_id", Type: ArgString}}},
+		{Name: "show_window_menu", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}}},
+		{Name: "move", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+		{Name: "resize", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}, {Name: "edges", Type: ArgUint}}},
+		{Name: "set_max_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_min_size", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "set_maximized", Since: 1},
+		{Name: "unset_maximized", Since: 1},
+		{Name: "set_fullscreen", Since: 1, Args: []ArgSpec{{Name: "output", Type: ArgObject, Interface: "wl_output", AllowNull: true}}},
+		{Name: "unset_fullscreen", Since: 1},
+		{Name: "set_minimized", Since: 1},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}, {Name: "states", Type: ArgArray}}},
+		{Name: "close", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "resize_edge", Since: 1, Entries: []EnumEntry{{Name: "none", Value: 0x0, Since: 1}, {Name: "top", Value: 0x1, Since: 1}, {Name: "bottom", Value: 0x2, Since: 1}, {Name: "left", Value: 0x4, Since: 1}, {Name: "top_left", Value: 0x5, Since: 1}, {Name: "bottom_left", Value: 0x6, Since: 1}, {Name: "right", Value: 0x8, Since: 1}, {Name: "top_right", Value: 0x9, Since: 1}, {Name: "bottom_right", Value: 0xa, Since: 1}}},
+		{Name: "state", Since: 1, Entries: []EnumEntry{{Name: "maximized", Value: 0x1, Since: 1}, {Name: "fullscreen", Value: 0x2, Since: 1}, {Name: "resizing", Value: 0x3, Since: 1}, {Name: "activated", Value: 0x4, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXdgshellPopupV6 = &Interface{
+	Name:    "zxdg_popup_v6",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "grab", Since: 1, Args: []ArgSpec{{Name: "seat", Type: ArgObject, Interface: "wl_seat"}, {Name: "serial", Type: ArgUint}}},
+	},
+	Events: []Message{
+		{Name: "configure", Since: 1, Args: []ArgSpec{{Name: "x", Type: ArgInt}, {Name: "y", Type: ArgInt}, {Name: "width", Type: ArgInt}, {Name: "height", Type: ArgInt}}},
+		{Name: "popup_done", Since: 1},
+	},
+	Enums: []Enum{
+		{Name: "error", Since: 1, Entries: []EnumEntry{{Name: "invalid_grab", Value: 0x0, Since: 1}}},
+	},
+}
+
+var interfaceUnstableXwaylandkeyboardgrabManagerV1 = &Interface{
+	Name:    "zwp_xwayland_keyboard_grab_manager_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
+		{Name: "grab_keyboard", Since: 1, Args: []ArgSpec{{Name: "id", Type: ArgNewID, Interface: "zwp_xwayland_keyboard_grab_v1"}, {Name: "surface", Type: ArgObject, Interface: "wl_surface"}, {Name: "seat", Type: ArgObject, Interface: "wl_seat"}}},
+	},
+}
+
+var interfaceUnstableXwaylandkeyboardgrabV1 = &Interface{
+	Name:    "zwp_xwayland_keyboard_grab_v1",
+	Version: 1,
+	Requests: []Message{
+		{Name: "destroy", Since: 1, Destructor: true},
 	},
 }
 
 var generatedInterfaces = map[string]*Interface{
-	"wl_display":  interfaceDisplay,
-	"wl_registry": interfaceRegistry,
-	"wl_callback": interfaceCallback,
+	"ext_background_effect_manager_v1":                     interfaceStagingExtbackgroundeffectManagerV1,
+	"ext_background_effect_surface_v1":                     interfaceStagingExtbackgroundeffectSurfaceV1,
+	"ext_data_control_device_v1":                           interfaceStagingExtdatacontrolDeviceV1,
+	"ext_data_control_manager_v1":                          interfaceStagingExtdatacontrolManagerV1,
+	"ext_data_control_offer_v1":                            interfaceStagingExtdatacontrolOfferV1,
+	"ext_data_control_source_v1":                           interfaceStagingExtdatacontrolSourceV1,
+	"ext_foreign_toplevel_handle_v1":                       interfaceStagingExtforeigntoplevellistHandleV1,
+	"ext_foreign_toplevel_image_capture_source_manager_v1": interfaceStagingExtimagecapturesourceForeignToplevelImageCaptureSourceManagerV1,
+	"ext_foreign_toplevel_list_v1":                         interfaceStagingExtforeigntoplevellistListV1,
+	"ext_idle_notification_v1":                             interfaceStagingExtidlenotifyNotificationV1,
+	"ext_idle_notifier_v1":                                 interfaceStagingExtidlenotifyNotifierV1,
+	"ext_image_capture_source_v1":                          interfaceStagingExtimagecapturesourceImageCaptureSourceV1,
+	"ext_image_copy_capture_cursor_session_v1":             interfaceStagingExtimagecopycaptureCursorSessionV1,
+	"ext_image_copy_capture_frame_v1":                      interfaceStagingExtimagecopycaptureFrameV1,
+	"ext_image_copy_capture_manager_v1":                    interfaceStagingExtimagecopycaptureManagerV1,
+	"ext_image_copy_capture_session_v1":                    interfaceStagingExtimagecopycaptureSessionV1,
+	"ext_output_image_capture_source_manager_v1":           interfaceStagingExtimagecapturesourceOutputImageCaptureSourceManagerV1,
+	"ext_session_lock_manager_v1":                          interfaceStagingExtsessionlockManagerV1,
+	"ext_session_lock_surface_v1":                          interfaceStagingExtsessionlockSurfaceV1,
+	"ext_session_lock_v1":                                  interfaceStagingExtsessionlockV1,
+	"ext_transient_seat_manager_v1":                        interfaceStagingExttransientseatManagerV1,
+	"ext_transient_seat_v1":                                interfaceStagingExttransientseatV1,
+	"ext_workspace_group_handle_v1":                        interfaceStagingExtworkspaceGroupHandleV1,
+	"ext_workspace_handle_v1":                              interfaceStagingExtworkspaceHandleV1,
+	"ext_workspace_manager_v1":                             interfaceStagingExtworkspaceManagerV1,
+	"wl_buffer":                                            interfaceBuffer,
+	"wl_callback":                                          interfaceCallback,
+	"wl_compositor":                                        interfaceCompositor,
+	"wl_data_device":                                       interfaceDataDevice,
+	"wl_data_device_manager":                               interfaceDataDeviceManager,
+	"wl_data_offer":                                        interfaceDataOffer,
+	"wl_data_source":                                       interfaceDataSource,
+	"wl_display":                                           interfaceDisplay,
+	"wl_fixes":                                             interfaceFixes,
+	"wl_keyboard":                                          interfaceKeyboard,
+	"wl_output":                                            interfaceOutput,
+	"wl_pointer":                                           interfacePointer,
+	"wl_region":                                            interfaceRegion,
+	"wl_registry":                                          interfaceRegistry,
+	"wl_seat":                                              interfaceSeat,
+	"wl_shell":                                             interfaceShell,
+	"wl_shell_surface":                                     interfaceShellSurface,
+	"wl_shm":                                               interfaceShm,
+	"wl_shm_pool":                                          interfaceShmPool,
+	"wl_subcompositor":                                     interfaceSubcompositor,
+	"wl_subsurface":                                        interfaceSubsurface,
+	"wl_surface":                                           interfaceSurface,
+	"wl_touch":                                             interfaceTouch,
+	"wp_alpha_modifier_surface_v1":                         interfaceStagingAlphamodifierSurfaceV1,
+	"wp_alpha_modifier_v1":                                 interfaceStagingAlphamodifierV1,
+	"wp_color_management_output_v1":                        interfaceStagingColormanagementColorManagementOutputV1,
+	"wp_color_management_surface_feedback_v1":              interfaceStagingColormanagementColorManagementSurfaceFeedbackV1,
+	"wp_color_management_surface_v1":                       interfaceStagingColormanagementColorManagementSurfaceV1,
+	"wp_color_manager_v1":                                  interfaceStagingColormanagementColorManagerV1,
+	"wp_color_representation_manager_v1":                   interfaceStagingColorrepresentationManagerV1,
+	"wp_color_representation_surface_v1":                   interfaceStagingColorrepresentationSurfaceV1,
+	"wp_commit_timer_v1":                                   interfaceStagingCommittimingTimerV1,
+	"wp_commit_timing_manager_v1":                          interfaceStagingCommittimingTimingManagerV1,
+	"wp_content_type_manager_v1":                           interfaceStagingContenttypeManagerV1,
+	"wp_content_type_v1":                                   interfaceStagingContenttypeV1,
+	"wp_cursor_shape_device_v1":                            interfaceStagingCursorshapeDeviceV1,
+	"wp_cursor_shape_manager_v1":                           interfaceStagingCursorshapeManagerV1,
+	"wp_drm_lease_connector_v1":                            interfaceStagingDrmleaseConnectorV1,
+	"wp_drm_lease_device_v1":                               interfaceStagingDrmleaseDeviceV1,
+	"wp_drm_lease_request_v1":                              interfaceStagingDrmleaseRequestV1,
+	"wp_drm_lease_v1":                                      interfaceStagingDrmleaseV1,
+	"wp_fifo_manager_v1":                                   interfaceStagingFifoManagerV1,
+	"wp_fifo_v1":                                           interfaceStagingFifoV1,
+	"wp_fractional_scale_manager_v1":                       interfaceStagingFractionalscaleManagerV1,
+	"wp_fractional_scale_v1":                               interfaceStagingFractionalscaleV1,
+	"wp_image_description_creator_icc_v1":                  interfaceStagingColormanagementImageDescriptionCreatorIccV1,
+	"wp_image_description_creator_params_v1":               interfaceStagingColormanagementImageDescriptionCreatorParamsV1,
+	"wp_image_description_info_v1":                         interfaceStagingColormanagementImageDescriptionInfoV1,
+	"wp_image_description_reference_v1":                    interfaceStagingColormanagementImageDescriptionReferenceV1,
+	"wp_image_description_v1":                              interfaceStagingColormanagementImageDescriptionV1,
+	"wp_linux_drm_syncobj_manager_v1":                      interfaceStagingLinuxdrmsyncobjManagerV1,
+	"wp_linux_drm_syncobj_surface_v1":                      interfaceStagingLinuxdrmsyncobjSurfaceV1,
+	"wp_linux_drm_syncobj_timeline_v1":                     interfaceStagingLinuxdrmsyncobjTimelineV1,
+	"wp_pointer_warp_v1":                                   interfaceStagingPointerwarpWpPointerWarpV1,
+	"wp_presentation":                                      interfaceStablePresentationtimePresentation,
+	"wp_presentation_feedback":                             interfaceStablePresentationtimePresentationFeedback,
+	"wp_security_context_manager_v1":                       interfaceStagingSecuritycontextManagerV1,
+	"wp_security_context_v1":                               interfaceStagingSecuritycontextV1,
+	"wp_single_pixel_buffer_manager_v1":                    interfaceStagingSinglepixelbufferWpSinglePixelBufferManagerV1,
+	"wp_tearing_control_manager_v1":                        interfaceStagingTearingcontrolManagerV1,
+	"wp_tearing_control_v1":                                interfaceStagingTearingcontrolV1,
+	"wp_viewport":                                          interfaceStableViewporterViewport,
+	"wp_viewporter":                                        interfaceStableViewporterViewporter,
+	"xdg_activation_token_v1":                              interfaceStagingXdgactivationTokenV1,
+	"xdg_activation_v1":                                    interfaceStagingXdgactivationV1,
+	"xdg_dialog_v1":                                        interfaceStagingXdgdialogDialogV1,
+	"xdg_popup":                                            interfaceStableXdgshellPopup,
+	"xdg_positioner":                                       interfaceStableXdgshellPositioner,
+	"xdg_session_manager_v1":                               interfaceStagingXdgsessionmanagementSessionManagerV1,
+	"xdg_session_v1":                                       interfaceStagingXdgsessionmanagementSessionV1,
+	"xdg_shell":                                            interfaceUnstableXdgshellShell,
+	"xdg_surface":                                          interfaceStableXdgshellSurface,
+	"xdg_system_bell_v1":                                   interfaceStagingXdgsystembellXdgSystemBellV1,
+	"xdg_toplevel":                                         interfaceStableXdgshellToplevel,
+	"xdg_toplevel_drag_manager_v1":                         interfaceStagingXdgtopleveldragManagerV1,
+	"xdg_toplevel_drag_v1":                                 interfaceStagingXdgtopleveldragV1,
+	"xdg_toplevel_icon_manager_v1":                         interfaceStagingXdgtopleveliconManagerV1,
+	"xdg_toplevel_icon_v1":                                 interfaceStagingXdgtopleveliconV1,
+	"xdg_toplevel_session_v1":                              interfaceStagingXdgsessionmanagementToplevelSessionV1,
+	"xdg_toplevel_tag_manager_v1":                          interfaceStagingXdgtopleveltagXdgToplevelTagManagerV1,
+	"xdg_wm_base":                                          interfaceStableXdgshellWmBase,
+	"xdg_wm_dialog_v1":                                     interfaceStagingXdgdialogWmDialogV1,
+	"xwayland_shell_v1":                                    interfaceStagingXwaylandshellShellV1,
+	"xwayland_surface_v1":                                  interfaceStagingXwaylandshellSurfaceV1,
+	"xx_cutouts_manager_v1":                                interfaceExperimentalXxcutoutsManagerV1,
+	"xx_cutouts_v1":                                        interfaceExperimentalXxcutoutsV1,
+	"xx_fractional_scale_manager_v2":                       interfaceExperimentalXxfractionalscaleManagerV2,
+	"xx_fractional_scale_v2":                               interfaceExperimentalXxfractionalscaleV2,
+	"xx_hotkey_manager_v1":                                 interfaceExperimentalXxhotkeyManagerV1,
+	"xx_hotkey_v1":                                         interfaceExperimentalXxhotkeyV1,
+	"xx_image_capture_color_manager_v1":                    interfaceExperimentalXximagecapturecolormanagementColorManagerV1,
+	"xx_image_capture_source_colors_v1":                    interfaceExperimentalXximagecapturecolormanagementSourceColorsV1,
+	"xx_input_method_manager_v2":                           interfaceExperimentalXxinputmethodMethodManagerV2,
+	"xx_input_method_v1":                                   interfaceExperimentalXxinputmethodMethodV1,
+	"xx_input_popup_positioner_v1":                         interfaceExperimentalXxinputmethodPopupPositionerV1,
+	"xx_input_popup_surface_v2":                            interfaceExperimentalXxinputmethodPopupSurfaceV2,
+	"xx_keyboard_filter_manager_v1":                        interfaceExperimentalXxkeyboardfilterManagerV1,
+	"xx_keyboard_filter_v1":                                interfaceExperimentalXxkeyboardfilterV1,
+	"xx_session_manager_v1":                                interfaceExperimentalXxsessionmanagementSessionManagerV1,
+	"xx_session_v1":                                        interfaceExperimentalXxsessionmanagementSessionV1,
+	"xx_text_input_manager_v3":                             interfaceExperimentalXxtextinputManagerV3,
+	"xx_text_input_v3":                                     interfaceExperimentalXxtextinputV3,
+	"xx_toplevel_session_v1":                               interfaceExperimentalXxsessionmanagementToplevelSessionV1,
+	"xx_zone_item_v1":                                      interfaceExperimentalXxzonesItemV1,
+	"xx_zone_manager_v1":                                   interfaceExperimentalXxzonesManagerV1,
+	"xx_zone_v1":                                           interfaceExperimentalXxzonesV1,
+	"zwp_confined_pointer_v1":                              interfaceUnstablePointerconstraintsConfinedPointerV1,
+	"zwp_fullscreen_shell_mode_feedback_v1":                interfaceUnstableFullscreenshellModeFeedbackV1,
+	"zwp_fullscreen_shell_v1":                              interfaceUnstableFullscreenshellV1,
+	"zwp_idle_inhibit_manager_v1":                          interfaceUnstableIdleinhibitInhibitManagerV1,
+	"zwp_idle_inhibitor_v1":                                interfaceUnstableIdleinhibitInhibitorV1,
+	"zwp_input_method_context_v1":                          interfaceUnstableInputmethodMethodContextV1,
+	"zwp_input_method_v1":                                  interfaceUnstableInputmethodMethodV1,
+	"zwp_input_panel_surface_v1":                           interfaceUnstableInputmethodPanelSurfaceV1,
+	"zwp_input_panel_v1":                                   interfaceUnstableInputmethodPanelV1,
+	"zwp_input_timestamps_manager_v1":                      interfaceUnstableInputtimestampsManagerV1,
+	"zwp_input_timestamps_v1":                              interfaceUnstableInputtimestampsV1,
+	"zwp_keyboard_shortcuts_inhibit_manager_v1":            interfaceUnstableKeyboardshortcutsinhibitInhibitManagerV1,
+	"zwp_keyboard_shortcuts_inhibitor_v1":                  interfaceUnstableKeyboardshortcutsinhibitInhibitorV1,
+	"zwp_linux_buffer_params_v1":                           interfaceStableLinuxdmabufBufferParamsV1,
+	"zwp_linux_buffer_release_v1":                          interfaceUnstableLinuxexplicitsynchronizationBufferReleaseV1,
+	"zwp_linux_dmabuf_feedback_v1":                         interfaceStableLinuxdmabufDmabufFeedbackV1,
+	"zwp_linux_dmabuf_v1":                                  interfaceStableLinuxdmabufDmabufV1,
+	"zwp_linux_explicit_synchronization_v1":                interfaceUnstableLinuxexplicitsynchronizationExplicitSynchronizationV1,
+	"zwp_linux_surface_synchronization_v1":                 interfaceUnstableLinuxexplicitsynchronizationSurfaceSynchronizationV1,
+	"zwp_locked_pointer_v1":                                interfaceUnstablePointerconstraintsLockedPointerV1,
+	"zwp_pointer_constraints_v1":                           interfaceUnstablePointerconstraintsPointerConstraintsV1,
+	"zwp_pointer_gesture_hold_v1":                          interfaceUnstablePointergesturesGestureHoldV1,
+	"zwp_pointer_gesture_pinch_v1":                         interfaceUnstablePointergesturesGesturePinchV1,
+	"zwp_pointer_gesture_swipe_v1":                         interfaceUnstablePointergesturesGestureSwipeV1,
+	"zwp_pointer_gestures_v1":                              interfaceUnstablePointergesturesGesturesV1,
+	"zwp_primary_selection_device_manager_v1":              interfaceUnstablePrimaryselectionDeviceManagerV1,
+	"zwp_primary_selection_device_v1":                      interfaceUnstablePrimaryselectionDeviceV1,
+	"zwp_primary_selection_offer_v1":                       interfaceUnstablePrimaryselectionOfferV1,
+	"zwp_primary_selection_source_v1":                      interfaceUnstablePrimaryselectionSourceV1,
+	"zwp_relative_pointer_manager_v1":                      interfaceUnstableRelativepointerManagerV1,
+	"zwp_relative_pointer_v1":                              interfaceUnstableRelativepointerV1,
+	"zwp_tablet_manager_v1":                                interfaceUnstableTabletManagerV1,
+	"zwp_tablet_manager_v2":                                interfaceStableTabletManagerV2,
+	"zwp_tablet_pad_dial_v2":                               interfaceStableTabletPadDialV2,
+	"zwp_tablet_pad_group_v2":                              interfaceStableTabletPadGroupV2,
+	"zwp_tablet_pad_ring_v2":                               interfaceStableTabletPadRingV2,
+	"zwp_tablet_pad_strip_v2":                              interfaceStableTabletPadStripV2,
+	"zwp_tablet_pad_v2":                                    interfaceStableTabletPadV2,
+	"zwp_tablet_seat_v1":                                   interfaceUnstableTabletSeatV1,
+	"zwp_tablet_seat_v2":                                   interfaceStableTabletSeatV2,
+	"zwp_tablet_tool_v1":                                   interfaceUnstableTabletToolV1,
+	"zwp_tablet_tool_v2":                                   interfaceStableTabletToolV2,
+	"zwp_tablet_v1":                                        interfaceUnstableTabletV1,
+	"zwp_tablet_v2":                                        interfaceStableTabletV2,
+	"zwp_text_input_manager_v1":                            interfaceUnstableTextinputManagerV1,
+	"zwp_text_input_manager_v3":                            interfaceUnstableTextinputManagerV3,
+	"zwp_text_input_v1":                                    interfaceUnstableTextinputV1,
+	"zwp_text_input_v3":                                    interfaceUnstableTextinputV3,
+	"zwp_xwayland_keyboard_grab_manager_v1":                interfaceUnstableXwaylandkeyboardgrabManagerV1,
+	"zwp_xwayland_keyboard_grab_v1":                        interfaceUnstableXwaylandkeyboardgrabV1,
+	"zxdg_decoration_manager_v1":                           interfaceUnstableXdgdecorationDecorationManagerV1,
+	"zxdg_exported_v1":                                     interfaceUnstableXdgforeignExportedV1,
+	"zxdg_exported_v2":                                     interfaceUnstableXdgforeignExportedV2,
+	"zxdg_exporter_v1":                                     interfaceUnstableXdgforeignExporterV1,
+	"zxdg_exporter_v2":                                     interfaceUnstableXdgforeignExporterV2,
+	"zxdg_imported_v1":                                     interfaceUnstableXdgforeignImportedV1,
+	"zxdg_imported_v2":                                     interfaceUnstableXdgforeignImportedV2,
+	"zxdg_importer_v1":                                     interfaceUnstableXdgforeignImporterV1,
+	"zxdg_importer_v2":                                     interfaceUnstableXdgforeignImporterV2,
+	"zxdg_output_manager_v1":                               interfaceUnstableXdgoutputManagerV1,
+	"zxdg_output_v1":                                       interfaceUnstableXdgoutputV1,
+	"zxdg_popup_v6":                                        interfaceUnstableXdgshellPopupV6,
+	"zxdg_positioner_v6":                                   interfaceUnstableXdgshellPositionerV6,
+	"zxdg_shell_v6":                                        interfaceUnstableXdgshellShellV6,
+	"zxdg_surface_v6":                                      interfaceUnstableXdgshellSurfaceV6,
+	"zxdg_toplevel_decoration_v1":                          interfaceUnstableXdgdecorationToplevelDecorationV1,
+	"zxdg_toplevel_v6":                                     interfaceUnstableXdgshellToplevelV6,
+}
+
+var allInterfaces = []*Interface{
+	interfaceDisplay,
+	interfaceRegistry,
+	interfaceCallback,
+	interfaceCompositor,
+	interfaceShmPool,
+	interfaceShm,
+	interfaceBuffer,
+	interfaceDataOffer,
+	interfaceDataSource,
+	interfaceDataDevice,
+	interfaceDataDeviceManager,
+	interfaceShell,
+	interfaceShellSurface,
+	interfaceSurface,
+	interfaceSeat,
+	interfacePointer,
+	interfaceKeyboard,
+	interfaceTouch,
+	interfaceOutput,
+	interfaceRegion,
+	interfaceSubcompositor,
+	interfaceSubsurface,
+	interfaceFixes,
+	interfaceExperimentalXxcutoutsManagerV1,
+	interfaceExperimentalXxcutoutsV1,
+	interfaceExperimentalXxfractionalscaleManagerV2,
+	interfaceExperimentalXxfractionalscaleV2,
+	interfaceExperimentalXxhotkeyManagerV1,
+	interfaceExperimentalXxhotkeyV1,
+	interfaceExperimentalXximagecapturecolormanagementColorManagerV1,
+	interfaceExperimentalXximagecapturecolormanagementSourceColorsV1,
+	interfaceExperimentalXxinputmethodMethodV1,
+	interfaceExperimentalXxinputmethodPopupSurfaceV2,
+	interfaceExperimentalXxinputmethodPopupPositionerV1,
+	interfaceExperimentalXxinputmethodMethodManagerV2,
+	interfaceExperimentalXxkeyboardfilterV1,
+	interfaceExperimentalXxkeyboardfilterManagerV1,
+	interfaceExperimentalXxsessionmanagementSessionManagerV1,
+	interfaceExperimentalXxsessionmanagementSessionV1,
+	interfaceExperimentalXxsessionmanagementToplevelSessionV1,
+	interfaceExperimentalXxtextinputV3,
+	interfaceExperimentalXxtextinputManagerV3,
+	interfaceExperimentalXxzonesManagerV1,
+	interfaceExperimentalXxzonesItemV1,
+	interfaceExperimentalXxzonesV1,
+	interfaceStableLinuxdmabufDmabufV1,
+	interfaceStableLinuxdmabufBufferParamsV1,
+	interfaceStableLinuxdmabufDmabufFeedbackV1,
+	interfaceStablePresentationtimePresentation,
+	interfaceStablePresentationtimePresentationFeedback,
+	interfaceStableTabletManagerV2,
+	interfaceStableTabletSeatV2,
+	interfaceStableTabletToolV2,
+	interfaceStableTabletV2,
+	interfaceStableTabletPadRingV2,
+	interfaceStableTabletPadStripV2,
+	interfaceStableTabletPadGroupV2,
+	interfaceStableTabletPadV2,
+	interfaceStableTabletPadDialV2,
+	interfaceStableViewporterViewporter,
+	interfaceStableViewporterViewport,
+	interfaceStableXdgshellWmBase,
+	interfaceStableXdgshellPositioner,
+	interfaceStableXdgshellSurface,
+	interfaceStableXdgshellToplevel,
+	interfaceStableXdgshellPopup,
+	interfaceStagingAlphamodifierV1,
+	interfaceStagingAlphamodifierSurfaceV1,
+	interfaceStagingColormanagementColorManagerV1,
+	interfaceStagingColormanagementColorManagementOutputV1,
+	interfaceStagingColormanagementColorManagementSurfaceV1,
+	interfaceStagingColormanagementColorManagementSurfaceFeedbackV1,
+	interfaceStagingColormanagementImageDescriptionCreatorIccV1,
+	interfaceStagingColormanagementImageDescriptionCreatorParamsV1,
+	interfaceStagingColormanagementImageDescriptionV1,
+	interfaceStagingColormanagementImageDescriptionInfoV1,
+	interfaceStagingColormanagementImageDescriptionReferenceV1,
+	interfaceStagingColorrepresentationManagerV1,
+	interfaceStagingColorrepresentationSurfaceV1,
+	interfaceStagingCommittimingTimingManagerV1,
+	interfaceStagingCommittimingTimerV1,
+	interfaceStagingContenttypeManagerV1,
+	interfaceStagingContenttypeV1,
+	interfaceStagingCursorshapeManagerV1,
+	interfaceStagingCursorshapeDeviceV1,
+	interfaceStagingDrmleaseDeviceV1,
+	interfaceStagingDrmleaseConnectorV1,
+	interfaceStagingDrmleaseRequestV1,
+	interfaceStagingDrmleaseV1,
+	interfaceStagingExtbackgroundeffectManagerV1,
+	interfaceStagingExtbackgroundeffectSurfaceV1,
+	interfaceStagingExtdatacontrolManagerV1,
+	interfaceStagingExtdatacontrolDeviceV1,
+	interfaceStagingExtdatacontrolSourceV1,
+	interfaceStagingExtdatacontrolOfferV1,
+	interfaceStagingExtforeigntoplevellistListV1,
+	interfaceStagingExtforeigntoplevellistHandleV1,
+	interfaceStagingExtidlenotifyNotifierV1,
+	interfaceStagingExtidlenotifyNotificationV1,
+	interfaceStagingExtimagecapturesourceImageCaptureSourceV1,
+	interfaceStagingExtimagecapturesourceOutputImageCaptureSourceManagerV1,
+	interfaceStagingExtimagecapturesourceForeignToplevelImageCaptureSourceManagerV1,
+	interfaceStagingExtimagecopycaptureManagerV1,
+	interfaceStagingExtimagecopycaptureSessionV1,
+	interfaceStagingExtimagecopycaptureFrameV1,
+	interfaceStagingExtimagecopycaptureCursorSessionV1,
+	interfaceStagingExtsessionlockManagerV1,
+	interfaceStagingExtsessionlockV1,
+	interfaceStagingExtsessionlockSurfaceV1,
+	interfaceStagingExttransientseatManagerV1,
+	interfaceStagingExttransientseatV1,
+	interfaceStagingExtworkspaceManagerV1,
+	interfaceStagingExtworkspaceGroupHandleV1,
+	interfaceStagingExtworkspaceHandleV1,
+	interfaceStagingFifoManagerV1,
+	interfaceStagingFifoV1,
+	interfaceStagingFractionalscaleManagerV1,
+	interfaceStagingFractionalscaleV1,
+	interfaceStagingLinuxdrmsyncobjManagerV1,
+	interfaceStagingLinuxdrmsyncobjTimelineV1,
+	interfaceStagingLinuxdrmsyncobjSurfaceV1,
+	interfaceStagingPointerwarpWpPointerWarpV1,
+	interfaceStagingSecuritycontextManagerV1,
+	interfaceStagingSecuritycontextV1,
+	interfaceStagingSinglepixelbufferWpSinglePixelBufferManagerV1,
+	interfaceStagingTearingcontrolManagerV1,
+	interfaceStagingTearingcontrolV1,
+	interfaceStagingXdgactivationV1,
+	interfaceStagingXdgactivationTokenV1,
+	interfaceStagingXdgdialogWmDialogV1,
+	interfaceStagingXdgdialogDialogV1,
+	interfaceStagingXdgsessionmanagementSessionManagerV1,
+	interfaceStagingXdgsessionmanagementSessionV1,
+	interfaceStagingXdgsessionmanagementToplevelSessionV1,
+	interfaceStagingXdgsystembellXdgSystemBellV1,
+	interfaceStagingXdgtopleveldragManagerV1,
+	interfaceStagingXdgtopleveldragV1,
+	interfaceStagingXdgtopleveliconManagerV1,
+	interfaceStagingXdgtopleveliconV1,
+	interfaceStagingXdgtopleveltagXdgToplevelTagManagerV1,
+	interfaceStagingXwaylandshellShellV1,
+	interfaceStagingXwaylandshellSurfaceV1,
+	interfaceUnstableFullscreenshellV1,
+	interfaceUnstableFullscreenshellModeFeedbackV1,
+	interfaceUnstableIdleinhibitInhibitManagerV1,
+	interfaceUnstableIdleinhibitInhibitorV1,
+	interfaceUnstableInputmethodMethodContextV1,
+	interfaceUnstableInputmethodMethodV1,
+	interfaceUnstableInputmethodPanelV1,
+	interfaceUnstableInputmethodPanelSurfaceV1,
+	interfaceUnstableInputtimestampsManagerV1,
+	interfaceUnstableInputtimestampsV1,
+	interfaceUnstableKeyboardshortcutsinhibitInhibitManagerV1,
+	interfaceUnstableKeyboardshortcutsinhibitInhibitorV1,
+	interfaceUnstableLinuxdmabufDmabufV1,
+	interfaceUnstableLinuxdmabufBufferParamsV1,
+	interfaceUnstableLinuxdmabufDmabufFeedbackV1,
+	interfaceUnstableLinuxexplicitsynchronizationExplicitSynchronizationV1,
+	interfaceUnstableLinuxexplicitsynchronizationSurfaceSynchronizationV1,
+	interfaceUnstableLinuxexplicitsynchronizationBufferReleaseV1,
+	interfaceUnstablePointerconstraintsPointerConstraintsV1,
+	interfaceUnstablePointerconstraintsLockedPointerV1,
+	interfaceUnstablePointerconstraintsConfinedPointerV1,
+	interfaceUnstablePointergesturesGesturesV1,
+	interfaceUnstablePointergesturesGestureSwipeV1,
+	interfaceUnstablePointergesturesGesturePinchV1,
+	interfaceUnstablePointergesturesGestureHoldV1,
+	interfaceUnstablePrimaryselectionDeviceManagerV1,
+	interfaceUnstablePrimaryselectionDeviceV1,
+	interfaceUnstablePrimaryselectionOfferV1,
+	interfaceUnstablePrimaryselectionSourceV1,
+	interfaceUnstableRelativepointerManagerV1,
+	interfaceUnstableRelativepointerV1,
+	interfaceUnstableTabletManagerV1,
+	interfaceUnstableTabletSeatV1,
+	interfaceUnstableTabletToolV1,
+	interfaceUnstableTabletV1,
+	interfaceUnstableTabletManagerV2,
+	interfaceUnstableTabletSeatV2,
+	interfaceUnstableTabletToolV2,
+	interfaceUnstableTabletV2,
+	interfaceUnstableTabletPadRingV2,
+	interfaceUnstableTabletPadStripV2,
+	interfaceUnstableTabletPadGroupV2,
+	interfaceUnstableTabletPadV2,
+	interfaceUnstableTextinputV1,
+	interfaceUnstableTextinputManagerV1,
+	interfaceUnstableTextinputV3,
+	interfaceUnstableTextinputManagerV3,
+	interfaceUnstableXdgdecorationDecorationManagerV1,
+	interfaceUnstableXdgdecorationToplevelDecorationV1,
+	interfaceUnstableXdgforeignExporterV1,
+	interfaceUnstableXdgforeignImporterV1,
+	interfaceUnstableXdgforeignExportedV1,
+	interfaceUnstableXdgforeignImportedV1,
+	interfaceUnstableXdgforeignExporterV2,
+	interfaceUnstableXdgforeignImporterV2,
+	interfaceUnstableXdgforeignExportedV2,
+	interfaceUnstableXdgforeignImportedV2,
+	interfaceUnstableXdgoutputManagerV1,
+	interfaceUnstableXdgoutputV1,
+	interfaceUnstableXdgshellShell,
+	interfaceUnstableXdgshellSurface,
+	interfaceUnstableXdgshellPopup,
+	interfaceUnstableXdgshellShellV6,
+	interfaceUnstableXdgshellPositionerV6,
+	interfaceUnstableXdgshellSurfaceV6,
+	interfaceUnstableXdgshellToplevelV6,
+	interfaceUnstableXdgshellPopupV6,
+	interfaceUnstableXwaylandkeyboardgrabManagerV1,
+	interfaceUnstableXwaylandkeyboardgrabV1,
 }

@@ -315,6 +315,22 @@ type Global struct {
 - 生成器校验: wayland.dtd, 必填属性, interface / enum 引用, opcode 连续, since / version, enum 值, allow-null, 重名, 跨协议 stable 优先; 失败不写输出.
 - 示例目录: registry, shm-surface, xdg-shell, input, output; 成功退出 0, 失败退出 1; 不提供 flag / usage 子命令.
 
+### 8.6 S-02 生成接缝与元数据
+
+- 每个生成类型新增 `Proxy() *Proxy` (协议包里是 `*wayland.Proxy`).
+- 有事件的类型新增 `New<T>(p, h) *T`; 无事件的类型新增 `New<T>(p) *T`; `Display` 无 handler, 新增 `NewDisplay(p)`.
+- 生成代码的跨包对象参数使用 `arg.Proxy().ID()`; 跨包 `new_id` 使用目标包的 `New<T>`; 不再访问未导出字段.
+- 不改变已有签名; 新增符号是生成 API 的一部分, 用户可使用.
+- 元数据扩展:
+  - `Interface.Frozen bool`, `Interface.Enums []Enum`.
+  - `Message.DeprecatedSince uint32`, `Message.Destructor bool`.
+  - `ArgSpec.Since uint32`, `ArgSpec.DeprecatedSince uint32`.
+  - `Enum{Name, Since, Bitfield, Entries}`; `EnumEntry{Name, Value, Since, DeprecatedSince}`.
+- 全部 interface 元数据在根包 `protocol_meta_gen.go` 生成; `allInterfaces` 保留全部, 包括重名失败方; `InterfaceByName` 按 stable 优先.
+- 重名 interface 的失败方在自己的协议包内生成局部 `Interface` 值, 供本包 `new_id` 使用; 不生成 `Bind<T>` helper.
+- 重名胜出方生成 `Bind<T>`; 所有类型生成 `Proxy()` 与 `New<T>`.
+- `Message.Destructor` 由运行时 `sendRequest` 使用: 成功发送后对象进入 destroyPending, 再发请求返回 `ErrObjectDestroyed`.
+
 ## 9. 指针
 
 - 行为与 AC: `docs/spec.md` v1.0.

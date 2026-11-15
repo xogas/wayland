@@ -4,24 +4,36 @@ package wayland
 
 import "fmt"
 
+type DisplayError int32
+
+const (
+	DisplayErrorInvalidObject  DisplayError = 0x0
+	DisplayErrorInvalidMethod  DisplayError = 0x1
+	DisplayErrorNoMemory       DisplayError = 0x2
+	DisplayErrorImplementation DisplayError = 0x3
+)
+
 type Display struct {
 	p *Proxy
+}
+
+func (display *Display) Proxy() *Proxy {
+	return display.p
+}
+
+func NewDisplay(p *Proxy) *Display {
+	return &Display{p: p}
 }
 
 func (display *Display) Sync(h CallbackHandler) (*Callback, error) {
 	if h == nil {
 		return nil, fmt.Errorf("sync: %w", ErrInvalidArgument)
 	}
-	p, err := display.p.NewObject(mustInterface("wl_callback"))
+	p, err := display.p.NewObject(MustInterface("wl_callback"))
 	if err != nil {
 		return nil, err
 	}
-	obj := &Callback{p: p, h: h}
-	if err := p.SetSink(obj); err != nil {
-		_ = p.Release()
-		return nil, err
-	}
-	p.markServerOwned()
+	obj := NewCallback(p, h)
 	if err := display.p.Send(0, NewID(p.ID())); err != nil {
 		_ = p.Release()
 		return nil, err
@@ -33,15 +45,11 @@ func (display *Display) GetRegistry(h RegistryHandler) (*Registry, error) {
 	if h == nil {
 		return nil, fmt.Errorf("get_registry: %w", ErrInvalidArgument)
 	}
-	p, err := display.p.NewObject(mustInterface("wl_registry"))
+	p, err := display.p.NewObject(MustInterface("wl_registry"))
 	if err != nil {
 		return nil, err
 	}
-	obj := &Registry{p: p, h: h}
-	if err := p.SetSink(obj); err != nil {
-		_ = p.Release()
-		return nil, err
-	}
+	obj := NewRegistry(p, h)
 	if err := display.p.Send(1, NewID(p.ID())); err != nil {
 		_ = p.Release()
 		return nil, err
@@ -50,18 +58,29 @@ func (display *Display) GetRegistry(h RegistryHandler) (*Registry, error) {
 }
 
 func BindDisplay(r *Registry, g Global) (*Display, error) {
-	v := min(g.Version, mustInterface("wl_display").Version)
+	v := min(g.Version, MustInterface("wl_display").Version)
 	p, err := r.Bind(g, v)
 	if err != nil {
 		return nil, err
 	}
-	obj := &Display{p: p}
-	return obj, nil
+	return NewDisplay(p), nil
 }
 
 type Registry struct {
 	p *Proxy
 	h RegistryHandler
+}
+
+func (registry *Registry) Proxy() *Proxy {
+	return registry.p
+}
+
+func NewRegistry(p *Proxy, h RegistryHandler) *Registry {
+	obj := &Registry{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
 }
 
 type RegistryHandler interface {
@@ -104,21 +123,30 @@ func BindRegistry(r *Registry, g Global, h RegistryHandler) (*Registry, error) {
 	if h == nil {
 		return nil, fmt.Errorf("bind Registry: %w", ErrInvalidArgument)
 	}
-	v := min(g.Version, mustInterface("wl_registry").Version)
+	v := min(g.Version, MustInterface("wl_registry").Version)
 	p, err := r.Bind(g, v)
 	if err != nil {
 		return nil, err
 	}
-	obj := &Registry{p: p, h: h}
-	if err := p.SetSink(obj); err != nil {
-		return nil, err
-	}
-	return obj, nil
+	return NewRegistry(p, h), nil
 }
 
 type Callback struct {
 	p *Proxy
 	h CallbackHandler
+}
+
+func (callback *Callback) Proxy() *Proxy {
+	return callback.p
+}
+
+func NewCallback(p *Proxy, h CallbackHandler) *Callback {
+	obj := &Callback{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	p.markServerOwned()
+	return obj
 }
 
 type CallbackHandler interface {
@@ -139,15 +167,1691 @@ func BindCallback(r *Registry, g Global, h CallbackHandler) (*Callback, error) {
 	if h == nil {
 		return nil, fmt.Errorf("bind Callback: %w", ErrInvalidArgument)
 	}
-	v := min(g.Version, mustInterface("wl_callback").Version)
+	v := min(g.Version, MustInterface("wl_callback").Version)
 	p, err := r.Bind(g, v)
 	if err != nil {
 		return nil, err
 	}
-	obj := &Callback{p: p, h: h}
-	if err := p.SetSink(obj); err != nil {
+	return NewCallback(p, h), nil
+}
+
+type Compositor struct {
+	p *Proxy
+}
+
+func (compositor *Compositor) Proxy() *Proxy {
+	return compositor.p
+}
+
+func NewCompositor(p *Proxy) *Compositor {
+	return &Compositor{p: p}
+}
+
+func (compositor *Compositor) CreateSurface(h SurfaceHandler) (*Surface, error) {
+	if h == nil {
+		return nil, fmt.Errorf("create_surface: %w", ErrInvalidArgument)
+	}
+	p, err := compositor.p.NewObject(MustInterface("wl_surface"))
+	if err != nil {
 		return nil, err
 	}
-	p.markServerOwned()
+	obj := NewSurface(p, h)
+	if err := compositor.p.Send(0, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
 	return obj, nil
+}
+
+func (compositor *Compositor) CreateRegion() (*Region, error) {
+	p, err := compositor.p.NewObject(MustInterface("wl_region"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewRegion(p)
+	if err := compositor.p.Send(1, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (compositor *Compositor) Release() error {
+	return compositor.p.Send(2)
+}
+
+func BindCompositor(r *Registry, g Global) (*Compositor, error) {
+	v := min(g.Version, MustInterface("wl_compositor").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewCompositor(p), nil
+}
+
+type ShmPoolError int32
+
+const (
+	ShmPoolErrorInvalidFormat ShmPoolError = 0x0
+	ShmPoolErrorInvalidStride ShmPoolError = 0x1
+)
+
+type ShmPool struct {
+	p *Proxy
+}
+
+func (shmPool *ShmPool) Proxy() *Proxy {
+	return shmPool.p
+}
+
+func NewShmPool(p *Proxy) *ShmPool {
+	return &ShmPool{p: p}
+}
+
+func (shmPool *ShmPool) CreateBuffer(offset int32, width int32, height int32, stride int32, format ShmFormat, h BufferHandler) (*Buffer, error) {
+	if h == nil {
+		return nil, fmt.Errorf("create_buffer: %w", ErrInvalidArgument)
+	}
+	p, err := shmPool.p.NewObject(MustInterface("wl_buffer"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewBuffer(p, h)
+	if err := shmPool.p.Send(0, NewID(p.ID()), Int(offset), Int(width), Int(height), Int(stride), Uint(uint32(format))); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (shmPool *ShmPool) Destroy() error {
+	return shmPool.p.Send(1)
+}
+
+func (shmPool *ShmPool) Resize(size int32) error {
+	return shmPool.p.Send(2, Int(size))
+}
+
+func BindShmPool(r *Registry, g Global) (*ShmPool, error) {
+	v := min(g.Version, MustInterface("wl_shm_pool").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewShmPool(p), nil
+}
+
+type ShmError int32
+
+const (
+	ShmErrorInvalidFormat ShmError = 0x0
+	ShmErrorInvalidStride ShmError = 0x1
+	ShmErrorInvalidFd     ShmError = 0x2
+)
+
+type ShmFormat int32
+
+const (
+	ShmFormatArgb8888             ShmFormat = 0x0
+	ShmFormatXrgb8888             ShmFormat = 0x1
+	ShmFormatC8                   ShmFormat = 0x20203843
+	ShmFormatRgb332               ShmFormat = 0x38424752
+	ShmFormatBgr233               ShmFormat = 0x38524742
+	ShmFormatXrgb4444             ShmFormat = 0x32315258
+	ShmFormatXbgr4444             ShmFormat = 0x32314258
+	ShmFormatRgbx4444             ShmFormat = 0x32315852
+	ShmFormatBgrx4444             ShmFormat = 0x32315842
+	ShmFormatArgb4444             ShmFormat = 0x32315241
+	ShmFormatAbgr4444             ShmFormat = 0x32314241
+	ShmFormatRgba4444             ShmFormat = 0x32314152
+	ShmFormatBgra4444             ShmFormat = 0x32314142
+	ShmFormatXrgb1555             ShmFormat = 0x35315258
+	ShmFormatXbgr1555             ShmFormat = 0x35314258
+	ShmFormatRgbx5551             ShmFormat = 0x35315852
+	ShmFormatBgrx5551             ShmFormat = 0x35315842
+	ShmFormatArgb1555             ShmFormat = 0x35315241
+	ShmFormatAbgr1555             ShmFormat = 0x35314241
+	ShmFormatRgba5551             ShmFormat = 0x35314152
+	ShmFormatBgra5551             ShmFormat = 0x35314142
+	ShmFormatRgb565               ShmFormat = 0x36314752
+	ShmFormatBgr565               ShmFormat = 0x36314742
+	ShmFormatRgb888               ShmFormat = 0x34324752
+	ShmFormatBgr888               ShmFormat = 0x34324742
+	ShmFormatXbgr8888             ShmFormat = 0x34324258
+	ShmFormatRgbx8888             ShmFormat = 0x34325852
+	ShmFormatBgrx8888             ShmFormat = 0x34325842
+	ShmFormatAbgr8888             ShmFormat = 0x34324241
+	ShmFormatRgba8888             ShmFormat = 0x34324152
+	ShmFormatBgra8888             ShmFormat = 0x34324142
+	ShmFormatXrgb2101010          ShmFormat = 0x30335258
+	ShmFormatXbgr2101010          ShmFormat = 0x30334258
+	ShmFormatRgbx1010102          ShmFormat = 0x30335852
+	ShmFormatBgrx1010102          ShmFormat = 0x30335842
+	ShmFormatArgb2101010          ShmFormat = 0x30335241
+	ShmFormatAbgr2101010          ShmFormat = 0x30334241
+	ShmFormatRgba1010102          ShmFormat = 0x30334152
+	ShmFormatBgra1010102          ShmFormat = 0x30334142
+	ShmFormatYuyv                 ShmFormat = 0x56595559
+	ShmFormatYvyu                 ShmFormat = 0x55595659
+	ShmFormatUyvy                 ShmFormat = 0x59565955
+	ShmFormatVyuy                 ShmFormat = 0x59555956
+	ShmFormatAyuv                 ShmFormat = 0x56555941
+	ShmFormatNv12                 ShmFormat = 0x3231564e
+	ShmFormatNv21                 ShmFormat = 0x3132564e
+	ShmFormatNv16                 ShmFormat = 0x3631564e
+	ShmFormatNv61                 ShmFormat = 0x3136564e
+	ShmFormatYuv410               ShmFormat = 0x39565559
+	ShmFormatYvu410               ShmFormat = 0x39555659
+	ShmFormatYuv411               ShmFormat = 0x31315559
+	ShmFormatYvu411               ShmFormat = 0x31315659
+	ShmFormatYuv420               ShmFormat = 0x32315559
+	ShmFormatYvu420               ShmFormat = 0x32315659
+	ShmFormatYuv422               ShmFormat = 0x36315559
+	ShmFormatYvu422               ShmFormat = 0x36315659
+	ShmFormatYuv444               ShmFormat = 0x34325559
+	ShmFormatYvu444               ShmFormat = 0x34325659
+	ShmFormatR8                   ShmFormat = 0x20203852
+	ShmFormatR16                  ShmFormat = 0x20363152
+	ShmFormatRg88                 ShmFormat = 0x38384752
+	ShmFormatGr88                 ShmFormat = 0x38385247
+	ShmFormatRg1616               ShmFormat = 0x32334752
+	ShmFormatGr1616               ShmFormat = 0x32335247
+	ShmFormatXrgb16161616f        ShmFormat = 0x48345258
+	ShmFormatXbgr16161616f        ShmFormat = 0x48344258
+	ShmFormatArgb16161616f        ShmFormat = 0x48345241
+	ShmFormatAbgr16161616f        ShmFormat = 0x48344241
+	ShmFormatXyuv8888             ShmFormat = 0x56555958
+	ShmFormatVuy888               ShmFormat = 0x34325556
+	ShmFormatVuy101010            ShmFormat = 0x30335556
+	ShmFormatY210                 ShmFormat = 0x30313259
+	ShmFormatY212                 ShmFormat = 0x32313259
+	ShmFormatY216                 ShmFormat = 0x36313259
+	ShmFormatY410                 ShmFormat = 0x30313459
+	ShmFormatY412                 ShmFormat = 0x32313459
+	ShmFormatY416                 ShmFormat = 0x36313459
+	ShmFormatXvyu2101010          ShmFormat = 0x30335658
+	ShmFormatXvyu1216161616       ShmFormat = 0x36335658
+	ShmFormatXvyu16161616         ShmFormat = 0x38345658
+	ShmFormatY0l0                 ShmFormat = 0x304c3059
+	ShmFormatX0l0                 ShmFormat = 0x304c3058
+	ShmFormatY0l2                 ShmFormat = 0x324c3059
+	ShmFormatX0l2                 ShmFormat = 0x324c3058
+	ShmFormatYuv4208bit           ShmFormat = 0x38305559
+	ShmFormatYuv42010bit          ShmFormat = 0x30315559
+	ShmFormatXrgb8888A8           ShmFormat = 0x38415258
+	ShmFormatXbgr8888A8           ShmFormat = 0x38414258
+	ShmFormatRgbx8888A8           ShmFormat = 0x38415852
+	ShmFormatBgrx8888A8           ShmFormat = 0x38415842
+	ShmFormatRgb888A8             ShmFormat = 0x38413852
+	ShmFormatBgr888A8             ShmFormat = 0x38413842
+	ShmFormatRgb565A8             ShmFormat = 0x38413552
+	ShmFormatBgr565A8             ShmFormat = 0x38413542
+	ShmFormatNv24                 ShmFormat = 0x3432564e
+	ShmFormatNv42                 ShmFormat = 0x3234564e
+	ShmFormatP210                 ShmFormat = 0x30313250
+	ShmFormatP010                 ShmFormat = 0x30313050
+	ShmFormatP012                 ShmFormat = 0x32313050
+	ShmFormatP016                 ShmFormat = 0x36313050
+	ShmFormatAxbxgxrx106106106106 ShmFormat = 0x30314241
+	ShmFormatNv15                 ShmFormat = 0x3531564e
+	ShmFormatQ410                 ShmFormat = 0x30313451
+	ShmFormatQ401                 ShmFormat = 0x31303451
+	ShmFormatXrgb16161616         ShmFormat = 0x38345258
+	ShmFormatXbgr16161616         ShmFormat = 0x38344258
+	ShmFormatArgb16161616         ShmFormat = 0x38345241
+	ShmFormatAbgr16161616         ShmFormat = 0x38344241
+	ShmFormatC1                   ShmFormat = 0x20203143
+	ShmFormatC2                   ShmFormat = 0x20203243
+	ShmFormatC4                   ShmFormat = 0x20203443
+	ShmFormatD1                   ShmFormat = 0x20203144
+	ShmFormatD2                   ShmFormat = 0x20203244
+	ShmFormatD4                   ShmFormat = 0x20203444
+	ShmFormatD8                   ShmFormat = 0x20203844
+	ShmFormatR1                   ShmFormat = 0x20203152
+	ShmFormatR2                   ShmFormat = 0x20203252
+	ShmFormatR4                   ShmFormat = 0x20203452
+	ShmFormatR10                  ShmFormat = 0x20303152
+	ShmFormatR12                  ShmFormat = 0x20323152
+	ShmFormatAvuy8888             ShmFormat = 0x59555641
+	ShmFormatXvuy8888             ShmFormat = 0x59555658
+	ShmFormatP030                 ShmFormat = 0x30333050
+	ShmFormatRgb161616            ShmFormat = 0x38344752
+	ShmFormatBgr161616            ShmFormat = 0x38344742
+	ShmFormatR16f                 ShmFormat = 0x48202052
+	ShmFormatGr1616f              ShmFormat = 0x48205247
+	ShmFormatBgr161616f           ShmFormat = 0x48524742
+	ShmFormatR32f                 ShmFormat = 0x46202052
+	ShmFormatGr3232f              ShmFormat = 0x46205247
+	ShmFormatBgr323232f           ShmFormat = 0x46524742
+	ShmFormatAbgr32323232f        ShmFormat = 0x46384241
+	ShmFormatNv20                 ShmFormat = 0x3032564e
+	ShmFormatNv30                 ShmFormat = 0x3033564e
+	ShmFormatS010                 ShmFormat = 0x30313053
+	ShmFormatS210                 ShmFormat = 0x30313253
+	ShmFormatS410                 ShmFormat = 0x30313453
+	ShmFormatS012                 ShmFormat = 0x32313053
+	ShmFormatS212                 ShmFormat = 0x32313253
+	ShmFormatS412                 ShmFormat = 0x32313453
+	ShmFormatS016                 ShmFormat = 0x36313053
+	ShmFormatS216                 ShmFormat = 0x36313253
+	ShmFormatS416                 ShmFormat = 0x36313453
+	ShmFormatXvuy2101010          ShmFormat = 0x30335958
+	ShmFormatP230                 ShmFormat = 0x30333250
+	ShmFormatT430                 ShmFormat = 0x30333454
+	ShmFormatY8                   ShmFormat = 0x59455247
+	ShmFormatXyyy2101010          ShmFormat = 0x34415059
+)
+
+type Shm struct {
+	p *Proxy
+	h ShmHandler
+}
+
+func (shm *Shm) Proxy() *Proxy {
+	return shm.p
+}
+
+func NewShm(p *Proxy, h ShmHandler) *Shm {
+	obj := &Shm{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type ShmHandler interface {
+	Format(format uint32)
+}
+
+func (shm *Shm) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		shm.h.Format(args[0].Uint())
+	default:
+		return fmt.Errorf("Shm event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (shm *Shm) CreatePool(fd int, size int32) (*ShmPool, error) {
+	p, err := shm.p.NewObject(MustInterface("wl_shm_pool"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewShmPool(p)
+	if err := shm.p.Send(0, NewID(p.ID()), FD(fd), Int(size)); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (shm *Shm) Release() error {
+	return shm.p.Send(1)
+}
+
+func BindShm(r *Registry, g Global, h ShmHandler) (*Shm, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Shm: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_shm").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewShm(p, h), nil
+}
+
+type Buffer struct {
+	p *Proxy
+	h BufferHandler
+}
+
+func (buffer *Buffer) Proxy() *Proxy {
+	return buffer.p
+}
+
+func NewBuffer(p *Proxy, h BufferHandler) *Buffer {
+	obj := &Buffer{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type BufferHandler interface {
+	Release()
+}
+
+func (buffer *Buffer) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		buffer.h.Release()
+	default:
+		return fmt.Errorf("Buffer event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (buffer *Buffer) Destroy() error {
+	return buffer.p.Send(0)
+}
+
+func BindBuffer(r *Registry, g Global, h BufferHandler) (*Buffer, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Buffer: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_buffer").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewBuffer(p, h), nil
+}
+
+type DataOfferError int32
+
+const (
+	DataOfferErrorInvalidFinish     DataOfferError = 0x0
+	DataOfferErrorInvalidActionMask DataOfferError = 0x1
+	DataOfferErrorInvalidAction     DataOfferError = 0x2
+	DataOfferErrorInvalidOffer      DataOfferError = 0x3
+)
+
+type DataOffer struct {
+	p *Proxy
+	h DataOfferHandler
+}
+
+func (dataOffer *DataOffer) Proxy() *Proxy {
+	return dataOffer.p
+}
+
+func NewDataOffer(p *Proxy, h DataOfferHandler) *DataOffer {
+	obj := &DataOffer{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type DataOfferHandler interface {
+	Offer(mimeType string)
+	SourceActions(sourceActions uint32)
+	Action(dndAction uint32)
+}
+
+func (dataOffer *DataOffer) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		dataOffer.h.Offer(args[0].String())
+	case 1:
+		dataOffer.h.SourceActions(args[0].Uint())
+	case 2:
+		dataOffer.h.Action(args[0].Uint())
+	default:
+		return fmt.Errorf("DataOffer event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (dataOffer *DataOffer) Accept(serial uint32, mimeType *string) error {
+	return dataOffer.p.Send(0, Uint(serial), String(mimeType))
+}
+
+func (dataOffer *DataOffer) Receive(mimeType string, fd int) error {
+	return dataOffer.p.Send(1, String(&mimeType), FD(fd))
+}
+
+func (dataOffer *DataOffer) Destroy() error {
+	return dataOffer.p.Send(2)
+}
+
+func (dataOffer *DataOffer) Finish() error {
+	return dataOffer.p.Send(3)
+}
+
+func (dataOffer *DataOffer) SetActions(dndActions DataDeviceManagerDndAction, preferredAction DataDeviceManagerDndAction) error {
+	return dataOffer.p.Send(4, Uint(uint32(dndActions)), Uint(uint32(preferredAction)))
+}
+
+func BindDataOffer(r *Registry, g Global, h DataOfferHandler) (*DataOffer, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind DataOffer: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_data_offer").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewDataOffer(p, h), nil
+}
+
+type DataSourceError int32
+
+const (
+	DataSourceErrorInvalidActionMask DataSourceError = 0x0
+	DataSourceErrorInvalidSource     DataSourceError = 0x1
+)
+
+type DataSource struct {
+	p *Proxy
+	h DataSourceHandler
+}
+
+func (dataSource *DataSource) Proxy() *Proxy {
+	return dataSource.p
+}
+
+func NewDataSource(p *Proxy, h DataSourceHandler) *DataSource {
+	obj := &DataSource{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type DataSourceHandler interface {
+	Target(mimeType *string)
+	Send(mimeType string, fd int)
+	Cancelled()
+	DndDropPerformed()
+	DndFinished()
+	Action(dndAction uint32)
+}
+
+func (dataSource *DataSource) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		dataSource.h.Target(args[0].StringPtr())
+	case 1:
+		dataSource.h.Send(args[0].String(), args[1].FD())
+	case 2:
+		dataSource.h.Cancelled()
+	case 3:
+		dataSource.h.DndDropPerformed()
+	case 4:
+		dataSource.h.DndFinished()
+	case 5:
+		dataSource.h.Action(args[0].Uint())
+	default:
+		return fmt.Errorf("DataSource event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (dataSource *DataSource) Offer(mimeType string) error {
+	return dataSource.p.Send(0, String(&mimeType))
+}
+
+func (dataSource *DataSource) Destroy() error {
+	return dataSource.p.Send(1)
+}
+
+func (dataSource *DataSource) SetActions(dndActions DataDeviceManagerDndAction) error {
+	return dataSource.p.Send(2, Uint(uint32(dndActions)))
+}
+
+func BindDataSource(r *Registry, g Global, h DataSourceHandler) (*DataSource, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind DataSource: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_data_source").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewDataSource(p, h), nil
+}
+
+type DataDeviceError int32
+
+const (
+	DataDeviceErrorRole       DataDeviceError = 0x0
+	DataDeviceErrorUsedSource DataDeviceError = 0x1
+)
+
+type DataDevice struct {
+	p *Proxy
+	h DataDeviceHandler
+}
+
+func (dataDevice *DataDevice) Proxy() *Proxy {
+	return dataDevice.p
+}
+
+func NewDataDevice(p *Proxy, h DataDeviceHandler) *DataDevice {
+	obj := &DataDevice{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type DataDeviceHandler interface {
+	DataOffer(id *Proxy)
+	Enter(serial uint32, surface *Proxy, x float64, y float64, id *Proxy)
+	Leave()
+	Motion(time uint32, x float64, y float64)
+	Drop()
+	Selection(id *Proxy)
+}
+
+func (dataDevice *DataDevice) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		dataDevice.h.DataOffer(args[0].Proxy())
+	case 1:
+		dataDevice.h.Enter(args[0].Uint(), args[1].Proxy(), args[2].Fixed(), args[3].Fixed(), args[4].Proxy())
+	case 2:
+		dataDevice.h.Leave()
+	case 3:
+		dataDevice.h.Motion(args[0].Uint(), args[1].Fixed(), args[2].Fixed())
+	case 4:
+		dataDevice.h.Drop()
+	case 5:
+		dataDevice.h.Selection(args[0].Proxy())
+	default:
+		return fmt.Errorf("DataDevice event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (dataDevice *DataDevice) StartDrag(source *DataSource, origin *Surface, icon *Surface, serial uint32) error {
+	if origin == nil {
+		return fmt.Errorf("start_drag: nil origin: %w", ErrInvalidArgument)
+	}
+	var objID0 uint32
+	if source != nil {
+		objID0 = source.Proxy().ID()
+	}
+	var objID2 uint32
+	if icon != nil {
+		objID2 = icon.Proxy().ID()
+	}
+	return dataDevice.p.Send(0, Object(objID0), Object(origin.Proxy().ID()), Object(objID2), Uint(serial))
+}
+
+func (dataDevice *DataDevice) SetSelection(source *DataSource, serial uint32) error {
+	var objID0 uint32
+	if source != nil {
+		objID0 = source.Proxy().ID()
+	}
+	return dataDevice.p.Send(1, Object(objID0), Uint(serial))
+}
+
+func (dataDevice *DataDevice) Release() error {
+	return dataDevice.p.Send(2)
+}
+
+func BindDataDevice(r *Registry, g Global, h DataDeviceHandler) (*DataDevice, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind DataDevice: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_data_device").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewDataDevice(p, h), nil
+}
+
+type DataDeviceManagerDndAction uint32
+
+const (
+	DataDeviceManagerDndActionNone DataDeviceManagerDndAction = 0x0
+	DataDeviceManagerDndActionCopy DataDeviceManagerDndAction = 0x1
+	DataDeviceManagerDndActionMove DataDeviceManagerDndAction = 0x2
+	DataDeviceManagerDndActionAsk  DataDeviceManagerDndAction = 0x4
+)
+
+type DataDeviceManager struct {
+	p *Proxy
+}
+
+func (dataDeviceManager *DataDeviceManager) Proxy() *Proxy {
+	return dataDeviceManager.p
+}
+
+func NewDataDeviceManager(p *Proxy) *DataDeviceManager {
+	return &DataDeviceManager{p: p}
+}
+
+func (dataDeviceManager *DataDeviceManager) CreateDataSource(h DataSourceHandler) (*DataSource, error) {
+	if h == nil {
+		return nil, fmt.Errorf("create_data_source: %w", ErrInvalidArgument)
+	}
+	p, err := dataDeviceManager.p.NewObject(MustInterface("wl_data_source"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewDataSource(p, h)
+	if err := dataDeviceManager.p.Send(0, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (dataDeviceManager *DataDeviceManager) GetDataDevice(seat *Seat, h DataDeviceHandler) (*DataDevice, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_data_device: %w", ErrInvalidArgument)
+	}
+	if seat == nil {
+		return nil, fmt.Errorf("get_data_device: nil seat: %w", ErrInvalidArgument)
+	}
+	p, err := dataDeviceManager.p.NewObject(MustInterface("wl_data_device"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewDataDevice(p, h)
+	if err := dataDeviceManager.p.Send(1, NewID(p.ID()), Object(seat.Proxy().ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (dataDeviceManager *DataDeviceManager) Release() error {
+	return dataDeviceManager.p.Send(2)
+}
+
+func BindDataDeviceManager(r *Registry, g Global) (*DataDeviceManager, error) {
+	v := min(g.Version, MustInterface("wl_data_device_manager").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewDataDeviceManager(p), nil
+}
+
+type ShellError int32
+
+const (
+	ShellErrorRole ShellError = 0x0
+)
+
+type Shell struct {
+	p *Proxy
+}
+
+func (shell *Shell) Proxy() *Proxy {
+	return shell.p
+}
+
+func NewShell(p *Proxy) *Shell {
+	return &Shell{p: p}
+}
+
+func (shell *Shell) GetShellSurface(surface *Surface, h ShellSurfaceHandler) (*ShellSurface, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_shell_surface: %w", ErrInvalidArgument)
+	}
+	if surface == nil {
+		return nil, fmt.Errorf("get_shell_surface: nil surface: %w", ErrInvalidArgument)
+	}
+	p, err := shell.p.NewObject(MustInterface("wl_shell_surface"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewShellSurface(p, h)
+	if err := shell.p.Send(0, NewID(p.ID()), Object(surface.Proxy().ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func BindShell(r *Registry, g Global) (*Shell, error) {
+	v := min(g.Version, MustInterface("wl_shell").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewShell(p), nil
+}
+
+type ShellSurfaceResize uint32
+
+const (
+	ShellSurfaceResizeNone        ShellSurfaceResize = 0x0
+	ShellSurfaceResizeTop         ShellSurfaceResize = 0x1
+	ShellSurfaceResizeBottom      ShellSurfaceResize = 0x2
+	ShellSurfaceResizeLeft        ShellSurfaceResize = 0x4
+	ShellSurfaceResizeTopLeft     ShellSurfaceResize = 0x5
+	ShellSurfaceResizeBottomLeft  ShellSurfaceResize = 0x6
+	ShellSurfaceResizeRight       ShellSurfaceResize = 0x8
+	ShellSurfaceResizeTopRight    ShellSurfaceResize = 0x9
+	ShellSurfaceResizeBottomRight ShellSurfaceResize = 0xa
+)
+
+type ShellSurfaceTransient uint32
+
+const (
+	ShellSurfaceTransientInactive ShellSurfaceTransient = 0x1
+)
+
+type ShellSurfaceFullscreenMethod int32
+
+const (
+	ShellSurfaceFullscreenMethodDefault ShellSurfaceFullscreenMethod = 0x0
+	ShellSurfaceFullscreenMethodScale   ShellSurfaceFullscreenMethod = 0x1
+	ShellSurfaceFullscreenMethodDriver  ShellSurfaceFullscreenMethod = 0x2
+	ShellSurfaceFullscreenMethodFill    ShellSurfaceFullscreenMethod = 0x3
+)
+
+type ShellSurface struct {
+	p *Proxy
+	h ShellSurfaceHandler
+}
+
+func (shellSurface *ShellSurface) Proxy() *Proxy {
+	return shellSurface.p
+}
+
+func NewShellSurface(p *Proxy, h ShellSurfaceHandler) *ShellSurface {
+	obj := &ShellSurface{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type ShellSurfaceHandler interface {
+	Ping(serial uint32)
+	Configure(edges uint32, width int32, height int32)
+	PopupDone()
+}
+
+func (shellSurface *ShellSurface) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		shellSurface.h.Ping(args[0].Uint())
+	case 1:
+		shellSurface.h.Configure(args[0].Uint(), args[1].Int(), args[2].Int())
+	case 2:
+		shellSurface.h.PopupDone()
+	default:
+		return fmt.Errorf("ShellSurface event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (shellSurface *ShellSurface) Pong(serial uint32) error {
+	return shellSurface.p.Send(0, Uint(serial))
+}
+
+func (shellSurface *ShellSurface) Move(seat *Seat, serial uint32) error {
+	if seat == nil {
+		return fmt.Errorf("move: nil seat: %w", ErrInvalidArgument)
+	}
+	return shellSurface.p.Send(1, Object(seat.Proxy().ID()), Uint(serial))
+}
+
+func (shellSurface *ShellSurface) Resize(seat *Seat, serial uint32, edges ShellSurfaceResize) error {
+	if seat == nil {
+		return fmt.Errorf("resize: nil seat: %w", ErrInvalidArgument)
+	}
+	return shellSurface.p.Send(2, Object(seat.Proxy().ID()), Uint(serial), Uint(uint32(edges)))
+}
+
+func (shellSurface *ShellSurface) SetToplevel() error {
+	return shellSurface.p.Send(3)
+}
+
+func (shellSurface *ShellSurface) SetTransient(parent *Surface, x int32, y int32, flags ShellSurfaceTransient) error {
+	if parent == nil {
+		return fmt.Errorf("set_transient: nil parent: %w", ErrInvalidArgument)
+	}
+	return shellSurface.p.Send(4, Object(parent.Proxy().ID()), Int(x), Int(y), Uint(uint32(flags)))
+}
+
+func (shellSurface *ShellSurface) SetFullscreen(method ShellSurfaceFullscreenMethod, framerate uint32, output *Output) error {
+	var objID2 uint32
+	if output != nil {
+		objID2 = output.Proxy().ID()
+	}
+	return shellSurface.p.Send(5, Uint(uint32(method)), Uint(framerate), Object(objID2))
+}
+
+func (shellSurface *ShellSurface) SetPopup(seat *Seat, serial uint32, parent *Surface, x int32, y int32, flags ShellSurfaceTransient) error {
+	if seat == nil {
+		return fmt.Errorf("set_popup: nil seat: %w", ErrInvalidArgument)
+	}
+	if parent == nil {
+		return fmt.Errorf("set_popup: nil parent: %w", ErrInvalidArgument)
+	}
+	return shellSurface.p.Send(6, Object(seat.Proxy().ID()), Uint(serial), Object(parent.Proxy().ID()), Int(x), Int(y), Uint(uint32(flags)))
+}
+
+func (shellSurface *ShellSurface) SetMaximized(output *Output) error {
+	var objID0 uint32
+	if output != nil {
+		objID0 = output.Proxy().ID()
+	}
+	return shellSurface.p.Send(7, Object(objID0))
+}
+
+func (shellSurface *ShellSurface) SetTitle(title string) error {
+	return shellSurface.p.Send(8, String(&title))
+}
+
+func (shellSurface *ShellSurface) SetClass(class string) error {
+	return shellSurface.p.Send(9, String(&class))
+}
+
+func BindShellSurface(r *Registry, g Global, h ShellSurfaceHandler) (*ShellSurface, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind ShellSurface: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_shell_surface").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewShellSurface(p, h), nil
+}
+
+type SurfaceError int32
+
+const (
+	SurfaceErrorInvalidScale      SurfaceError = 0x0
+	SurfaceErrorInvalidTransform  SurfaceError = 0x1
+	SurfaceErrorInvalidSize       SurfaceError = 0x2
+	SurfaceErrorInvalidOffset     SurfaceError = 0x3
+	SurfaceErrorDefunctRoleObject SurfaceError = 0x4
+	SurfaceErrorNoBuffer          SurfaceError = 0x5
+)
+
+type Surface struct {
+	p *Proxy
+	h SurfaceHandler
+}
+
+func (surface *Surface) Proxy() *Proxy {
+	return surface.p
+}
+
+func NewSurface(p *Proxy, h SurfaceHandler) *Surface {
+	obj := &Surface{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type SurfaceHandler interface {
+	Enter(output *Proxy)
+	Leave(output *Proxy)
+	PreferredBufferScale(factor int32)
+	PreferredBufferTransform(transform uint32)
+}
+
+func (surface *Surface) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		surface.h.Enter(args[0].Proxy())
+	case 1:
+		surface.h.Leave(args[0].Proxy())
+	case 2:
+		surface.h.PreferredBufferScale(args[0].Int())
+	case 3:
+		surface.h.PreferredBufferTransform(args[0].Uint())
+	default:
+		return fmt.Errorf("Surface event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (surface *Surface) Destroy() error {
+	return surface.p.Send(0)
+}
+
+func (surface *Surface) Attach(buffer *Buffer, x int32, y int32) error {
+	var objID0 uint32
+	if buffer != nil {
+		objID0 = buffer.Proxy().ID()
+	}
+	return surface.p.Send(1, Object(objID0), Int(x), Int(y))
+}
+
+func (surface *Surface) Damage(x int32, y int32, width int32, height int32) error {
+	return surface.p.Send(2, Int(x), Int(y), Int(width), Int(height))
+}
+
+func (surface *Surface) Frame(h CallbackHandler) (*Callback, error) {
+	if h == nil {
+		return nil, fmt.Errorf("frame: %w", ErrInvalidArgument)
+	}
+	p, err := surface.p.NewObject(MustInterface("wl_callback"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewCallback(p, h)
+	if err := surface.p.Send(3, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (surface *Surface) SetOpaqueRegion(region *Region) error {
+	var objID0 uint32
+	if region != nil {
+		objID0 = region.Proxy().ID()
+	}
+	return surface.p.Send(4, Object(objID0))
+}
+
+func (surface *Surface) SetInputRegion(region *Region) error {
+	var objID0 uint32
+	if region != nil {
+		objID0 = region.Proxy().ID()
+	}
+	return surface.p.Send(5, Object(objID0))
+}
+
+func (surface *Surface) Commit() error {
+	return surface.p.Send(6)
+}
+
+func (surface *Surface) SetBufferTransform(transform OutputTransform) error {
+	return surface.p.Send(7, Int(int32(transform)))
+}
+
+func (surface *Surface) SetBufferScale(scale int32) error {
+	return surface.p.Send(8, Int(scale))
+}
+
+func (surface *Surface) DamageBuffer(x int32, y int32, width int32, height int32) error {
+	return surface.p.Send(9, Int(x), Int(y), Int(width), Int(height))
+}
+
+func (surface *Surface) Offset(x int32, y int32) error {
+	return surface.p.Send(10, Int(x), Int(y))
+}
+
+func (surface *Surface) GetRelease(h CallbackHandler) (*Callback, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_release: %w", ErrInvalidArgument)
+	}
+	p, err := surface.p.NewObject(MustInterface("wl_callback"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewCallback(p, h)
+	if err := surface.p.Send(11, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func BindSurface(r *Registry, g Global, h SurfaceHandler) (*Surface, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Surface: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_surface").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewSurface(p, h), nil
+}
+
+type SeatCapability uint32
+
+const (
+	SeatCapabilityPointer  SeatCapability = 0x1
+	SeatCapabilityKeyboard SeatCapability = 0x2
+	SeatCapabilityTouch    SeatCapability = 0x4
+)
+
+type SeatError int32
+
+const (
+	SeatErrorMissingCapability SeatError = 0x0
+)
+
+type Seat struct {
+	p *Proxy
+	h SeatHandler
+}
+
+func (seat *Seat) Proxy() *Proxy {
+	return seat.p
+}
+
+func NewSeat(p *Proxy, h SeatHandler) *Seat {
+	obj := &Seat{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type SeatHandler interface {
+	Capabilities(capabilities uint32)
+	Name(name string)
+}
+
+func (seat *Seat) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		seat.h.Capabilities(args[0].Uint())
+	case 1:
+		seat.h.Name(args[0].String())
+	default:
+		return fmt.Errorf("Seat event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (seat *Seat) GetPointer(h PointerHandler) (*Pointer, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_pointer: %w", ErrInvalidArgument)
+	}
+	p, err := seat.p.NewObject(MustInterface("wl_pointer"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewPointer(p, h)
+	if err := seat.p.Send(0, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (seat *Seat) GetKeyboard(h KeyboardHandler) (*Keyboard, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_keyboard: %w", ErrInvalidArgument)
+	}
+	p, err := seat.p.NewObject(MustInterface("wl_keyboard"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewKeyboard(p, h)
+	if err := seat.p.Send(1, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (seat *Seat) GetTouch(h TouchHandler) (*Touch, error) {
+	if h == nil {
+		return nil, fmt.Errorf("get_touch: %w", ErrInvalidArgument)
+	}
+	p, err := seat.p.NewObject(MustInterface("wl_touch"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewTouch(p, h)
+	if err := seat.p.Send(2, NewID(p.ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (seat *Seat) Release() error {
+	return seat.p.Send(3)
+}
+
+func BindSeat(r *Registry, g Global, h SeatHandler) (*Seat, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Seat: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_seat").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewSeat(p, h), nil
+}
+
+type PointerError int32
+
+const (
+	PointerErrorRole PointerError = 0x0
+)
+
+type PointerButtonState int32
+
+const (
+	PointerButtonStateReleased PointerButtonState = 0x0
+	PointerButtonStatePressed  PointerButtonState = 0x1
+)
+
+type PointerAxis int32
+
+const (
+	PointerAxisVerticalScroll   PointerAxis = 0x0
+	PointerAxisHorizontalScroll PointerAxis = 0x1
+)
+
+type PointerAxisSource int32
+
+const (
+	PointerAxisSourceWheel      PointerAxisSource = 0x0
+	PointerAxisSourceFinger     PointerAxisSource = 0x1
+	PointerAxisSourceContinuous PointerAxisSource = 0x2
+	PointerAxisSourceWheelTilt  PointerAxisSource = 0x3
+)
+
+type PointerAxisRelativeDirection int32
+
+const (
+	PointerAxisRelativeDirectionIdentical PointerAxisRelativeDirection = 0x0
+	PointerAxisRelativeDirectionInverted  PointerAxisRelativeDirection = 0x1
+)
+
+type Pointer struct {
+	p *Proxy
+	h PointerHandler
+}
+
+func (pointer *Pointer) Proxy() *Proxy {
+	return pointer.p
+}
+
+func NewPointer(p *Proxy, h PointerHandler) *Pointer {
+	obj := &Pointer{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type PointerHandler interface {
+	Enter(serial uint32, surface *Proxy, surfaceX float64, surfaceY float64)
+	Leave(serial uint32, surface *Proxy)
+	Motion(time uint32, surfaceX float64, surfaceY float64)
+	Button(serial uint32, time uint32, button uint32, state uint32)
+	Axis(time uint32, axis uint32, value float64)
+	Frame()
+	AxisSource(axisSource uint32)
+	AxisStop(time uint32, axis uint32)
+	AxisDiscrete(axis uint32, discrete int32)
+	AxisValue120(axis uint32, value120 int32)
+	AxisRelativeDirection(axis uint32, direction uint32)
+	Warp(surfaceX float64, surfaceY float64)
+}
+
+func (pointer *Pointer) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		pointer.h.Enter(args[0].Uint(), args[1].Proxy(), args[2].Fixed(), args[3].Fixed())
+	case 1:
+		pointer.h.Leave(args[0].Uint(), args[1].Proxy())
+	case 2:
+		pointer.h.Motion(args[0].Uint(), args[1].Fixed(), args[2].Fixed())
+	case 3:
+		pointer.h.Button(args[0].Uint(), args[1].Uint(), args[2].Uint(), args[3].Uint())
+	case 4:
+		pointer.h.Axis(args[0].Uint(), args[1].Uint(), args[2].Fixed())
+	case 5:
+		pointer.h.Frame()
+	case 6:
+		pointer.h.AxisSource(args[0].Uint())
+	case 7:
+		pointer.h.AxisStop(args[0].Uint(), args[1].Uint())
+	case 8:
+		pointer.h.AxisDiscrete(args[0].Uint(), args[1].Int())
+	case 9:
+		pointer.h.AxisValue120(args[0].Uint(), args[1].Int())
+	case 10:
+		pointer.h.AxisRelativeDirection(args[0].Uint(), args[1].Uint())
+	case 11:
+		pointer.h.Warp(args[0].Fixed(), args[1].Fixed())
+	default:
+		return fmt.Errorf("Pointer event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (pointer *Pointer) SetCursor(serial uint32, surface *Surface, hotspotX int32, hotspotY int32) error {
+	var objID1 uint32
+	if surface != nil {
+		objID1 = surface.Proxy().ID()
+	}
+	return pointer.p.Send(0, Uint(serial), Object(objID1), Int(hotspotX), Int(hotspotY))
+}
+
+func (pointer *Pointer) Release() error {
+	return pointer.p.Send(1)
+}
+
+func BindPointer(r *Registry, g Global, h PointerHandler) (*Pointer, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Pointer: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_pointer").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewPointer(p, h), nil
+}
+
+type KeyboardKeymapFormat int32
+
+const (
+	KeyboardKeymapFormatNoKeymap KeyboardKeymapFormat = 0x0
+	KeyboardKeymapFormatXkbV1    KeyboardKeymapFormat = 0x1
+)
+
+type KeyboardKeyState int32
+
+const (
+	KeyboardKeyStateReleased KeyboardKeyState = 0x0
+	KeyboardKeyStatePressed  KeyboardKeyState = 0x1
+	KeyboardKeyStateRepeated KeyboardKeyState = 0x2
+)
+
+type Keyboard struct {
+	p *Proxy
+	h KeyboardHandler
+}
+
+func (keyboard *Keyboard) Proxy() *Proxy {
+	return keyboard.p
+}
+
+func NewKeyboard(p *Proxy, h KeyboardHandler) *Keyboard {
+	obj := &Keyboard{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type KeyboardHandler interface {
+	Keymap(format uint32, fd int, size uint32)
+	Enter(serial uint32, surface *Proxy, keys []byte)
+	Leave(serial uint32, surface *Proxy)
+	Key(serial uint32, time uint32, key uint32, state uint32)
+	Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32)
+	RepeatInfo(rate int32, delay int32)
+}
+
+func (keyboard *Keyboard) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		keyboard.h.Keymap(args[0].Uint(), args[1].FD(), args[2].Uint())
+	case 1:
+		keyboard.h.Enter(args[0].Uint(), args[1].Proxy(), args[2].Array())
+	case 2:
+		keyboard.h.Leave(args[0].Uint(), args[1].Proxy())
+	case 3:
+		keyboard.h.Key(args[0].Uint(), args[1].Uint(), args[2].Uint(), args[3].Uint())
+	case 4:
+		keyboard.h.Modifiers(args[0].Uint(), args[1].Uint(), args[2].Uint(), args[3].Uint(), args[4].Uint())
+	case 5:
+		keyboard.h.RepeatInfo(args[0].Int(), args[1].Int())
+	default:
+		return fmt.Errorf("Keyboard event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (keyboard *Keyboard) Release() error {
+	return keyboard.p.Send(0)
+}
+
+func BindKeyboard(r *Registry, g Global, h KeyboardHandler) (*Keyboard, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Keyboard: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_keyboard").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewKeyboard(p, h), nil
+}
+
+type Touch struct {
+	p *Proxy
+	h TouchHandler
+}
+
+func (touch *Touch) Proxy() *Proxy {
+	return touch.p
+}
+
+func NewTouch(p *Proxy, h TouchHandler) *Touch {
+	obj := &Touch{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type TouchHandler interface {
+	Down(serial uint32, time uint32, surface *Proxy, id int32, x float64, y float64)
+	Up(serial uint32, time uint32, id int32)
+	Motion(time uint32, id int32, x float64, y float64)
+	Frame()
+	Cancel()
+	Shape(id int32, major float64, minor float64)
+	Orientation(id int32, orientation float64)
+}
+
+func (touch *Touch) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		touch.h.Down(args[0].Uint(), args[1].Uint(), args[2].Proxy(), args[3].Int(), args[4].Fixed(), args[5].Fixed())
+	case 1:
+		touch.h.Up(args[0].Uint(), args[1].Uint(), args[2].Int())
+	case 2:
+		touch.h.Motion(args[0].Uint(), args[1].Int(), args[2].Fixed(), args[3].Fixed())
+	case 3:
+		touch.h.Frame()
+	case 4:
+		touch.h.Cancel()
+	case 5:
+		touch.h.Shape(args[0].Int(), args[1].Fixed(), args[2].Fixed())
+	case 6:
+		touch.h.Orientation(args[0].Int(), args[1].Fixed())
+	default:
+		return fmt.Errorf("Touch event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (touch *Touch) Release() error {
+	return touch.p.Send(0)
+}
+
+func BindTouch(r *Registry, g Global, h TouchHandler) (*Touch, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Touch: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_touch").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewTouch(p, h), nil
+}
+
+type OutputSubpixel int32
+
+const (
+	OutputSubpixelUnknown       OutputSubpixel = 0x0
+	OutputSubpixelNone          OutputSubpixel = 0x1
+	OutputSubpixelHorizontalRgb OutputSubpixel = 0x2
+	OutputSubpixelHorizontalBgr OutputSubpixel = 0x3
+	OutputSubpixelVerticalRgb   OutputSubpixel = 0x4
+	OutputSubpixelVerticalBgr   OutputSubpixel = 0x5
+)
+
+type OutputTransform int32
+
+const (
+	OutputTransformNormal     OutputTransform = 0x0
+	OutputTransform90         OutputTransform = 0x1
+	OutputTransform180        OutputTransform = 0x2
+	OutputTransform270        OutputTransform = 0x3
+	OutputTransformFlipped    OutputTransform = 0x4
+	OutputTransformFlipped90  OutputTransform = 0x5
+	OutputTransformFlipped180 OutputTransform = 0x6
+	OutputTransformFlipped270 OutputTransform = 0x7
+)
+
+type OutputMode uint32
+
+const (
+	OutputModeCurrent   OutputMode = 0x1
+	OutputModePreferred OutputMode = 0x2
+)
+
+type Output struct {
+	p *Proxy
+	h OutputHandler
+}
+
+func (output *Output) Proxy() *Proxy {
+	return output.p
+}
+
+func NewOutput(p *Proxy, h OutputHandler) *Output {
+	obj := &Output{p: p, h: h}
+	if h != nil {
+		_ = p.SetSink(obj)
+	}
+	return obj
+}
+
+type OutputHandler interface {
+	Geometry(x int32, y int32, physicalWidth int32, physicalHeight int32, subpixel int32, make string, model string, transform int32)
+	Mode(flags uint32, width int32, height int32, refresh int32)
+	Done()
+	Scale(factor int32)
+	Name(name string)
+	Description(description string)
+}
+
+func (output *Output) DispatchEvent(opcode uint16, args []Arg) error {
+	switch opcode {
+	case 0:
+		output.h.Geometry(args[0].Int(), args[1].Int(), args[2].Int(), args[3].Int(), args[4].Int(), args[5].String(), args[6].String(), args[7].Int())
+	case 1:
+		output.h.Mode(args[0].Uint(), args[1].Int(), args[2].Int(), args[3].Int())
+	case 2:
+		output.h.Done()
+	case 3:
+		output.h.Scale(args[0].Int())
+	case 4:
+		output.h.Name(args[0].String())
+	case 5:
+		output.h.Description(args[0].String())
+	default:
+		return fmt.Errorf("Output event %d: %w", opcode, ErrProtocolViolation)
+	}
+	return nil
+}
+
+func (output *Output) Release() error {
+	return output.p.Send(0)
+}
+
+func BindOutput(r *Registry, g Global, h OutputHandler) (*Output, error) {
+	if h == nil {
+		return nil, fmt.Errorf("bind Output: %w", ErrInvalidArgument)
+	}
+	v := min(g.Version, MustInterface("wl_output").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewOutput(p, h), nil
+}
+
+type Region struct {
+	p *Proxy
+}
+
+func (region *Region) Proxy() *Proxy {
+	return region.p
+}
+
+func NewRegion(p *Proxy) *Region {
+	return &Region{p: p}
+}
+
+func (region *Region) Destroy() error {
+	return region.p.Send(0)
+}
+
+func (region *Region) Add(x int32, y int32, width int32, height int32) error {
+	return region.p.Send(1, Int(x), Int(y), Int(width), Int(height))
+}
+
+func (region *Region) Subtract(x int32, y int32, width int32, height int32) error {
+	return region.p.Send(2, Int(x), Int(y), Int(width), Int(height))
+}
+
+func BindRegion(r *Registry, g Global) (*Region, error) {
+	v := min(g.Version, MustInterface("wl_region").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewRegion(p), nil
+}
+
+type SubcompositorError int32
+
+const (
+	SubcompositorErrorBadSurface SubcompositorError = 0x0
+	SubcompositorErrorBadParent  SubcompositorError = 0x1
+)
+
+type Subcompositor struct {
+	p *Proxy
+}
+
+func (subcompositor *Subcompositor) Proxy() *Proxy {
+	return subcompositor.p
+}
+
+func NewSubcompositor(p *Proxy) *Subcompositor {
+	return &Subcompositor{p: p}
+}
+
+func (subcompositor *Subcompositor) Destroy() error {
+	return subcompositor.p.Send(0)
+}
+
+func (subcompositor *Subcompositor) GetSubsurface(surface *Surface, parent *Surface) (*Subsurface, error) {
+	if surface == nil {
+		return nil, fmt.Errorf("get_subsurface: nil surface: %w", ErrInvalidArgument)
+	}
+	if parent == nil {
+		return nil, fmt.Errorf("get_subsurface: nil parent: %w", ErrInvalidArgument)
+	}
+	p, err := subcompositor.p.NewObject(MustInterface("wl_subsurface"))
+	if err != nil {
+		return nil, err
+	}
+	obj := NewSubsurface(p)
+	if err := subcompositor.p.Send(1, NewID(p.ID()), Object(surface.Proxy().ID()), Object(parent.Proxy().ID())); err != nil {
+		_ = p.Release()
+		return nil, err
+	}
+	return obj, nil
+}
+
+func BindSubcompositor(r *Registry, g Global) (*Subcompositor, error) {
+	v := min(g.Version, MustInterface("wl_subcompositor").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewSubcompositor(p), nil
+}
+
+type SubsurfaceError int32
+
+const (
+	SubsurfaceErrorBadSurface SubsurfaceError = 0x0
+)
+
+type Subsurface struct {
+	p *Proxy
+}
+
+func (subsurface *Subsurface) Proxy() *Proxy {
+	return subsurface.p
+}
+
+func NewSubsurface(p *Proxy) *Subsurface {
+	return &Subsurface{p: p}
+}
+
+func (subsurface *Subsurface) Destroy() error {
+	return subsurface.p.Send(0)
+}
+
+func (subsurface *Subsurface) SetPosition(x int32, y int32) error {
+	return subsurface.p.Send(1, Int(x), Int(y))
+}
+
+func (subsurface *Subsurface) PlaceAbove(sibling *Surface) error {
+	if sibling == nil {
+		return fmt.Errorf("place_above: nil sibling: %w", ErrInvalidArgument)
+	}
+	return subsurface.p.Send(2, Object(sibling.Proxy().ID()))
+}
+
+func (subsurface *Subsurface) PlaceBelow(sibling *Surface) error {
+	if sibling == nil {
+		return fmt.Errorf("place_below: nil sibling: %w", ErrInvalidArgument)
+	}
+	return subsurface.p.Send(3, Object(sibling.Proxy().ID()))
+}
+
+func (subsurface *Subsurface) SetSync() error {
+	return subsurface.p.Send(4)
+}
+
+func (subsurface *Subsurface) SetDesync() error {
+	return subsurface.p.Send(5)
+}
+
+func BindSubsurface(r *Registry, g Global) (*Subsurface, error) {
+	v := min(g.Version, MustInterface("wl_subsurface").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewSubsurface(p), nil
+}
+
+type FixesError int32
+
+const (
+	FixesErrorInvalidAckRemove FixesError = 0x0
+)
+
+type Fixes struct {
+	p *Proxy
+}
+
+func (fixes *Fixes) Proxy() *Proxy {
+	return fixes.p
+}
+
+func NewFixes(p *Proxy) *Fixes {
+	return &Fixes{p: p}
+}
+
+func (fixes *Fixes) Destroy() error {
+	return fixes.p.Send(0)
+}
+
+func (fixes *Fixes) DestroyRegistry(registry *Registry) error {
+	if registry == nil {
+		return fmt.Errorf("destroy_registry: nil registry: %w", ErrInvalidArgument)
+	}
+	return fixes.p.Send(1, Object(registry.Proxy().ID()))
+}
+
+func (fixes *Fixes) AckGlobalRemove(registry *Registry, name uint32) error {
+	if registry == nil {
+		return fmt.Errorf("ack_global_remove: nil registry: %w", ErrInvalidArgument)
+	}
+	return fixes.p.Send(2, Object(registry.Proxy().ID()), Uint(name))
+}
+
+func BindFixes(r *Registry, g Global) (*Fixes, error) {
+	v := min(g.Version, MustInterface("wl_fixes").Version)
+	p, err := r.Bind(g, v)
+	if err != nil {
+		return nil, err
+	}
+	return NewFixes(p), nil
 }

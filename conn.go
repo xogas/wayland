@@ -119,7 +119,7 @@ func newDisplay(uc *net.UnixConn) *Display {
 		state:   stateAlive,
 	}
 	c.objects[1] = p
-	return &Display{p: p}
+	return NewDisplay(p)
 }
 
 func (c *conn) isClosed() bool {
@@ -281,6 +281,9 @@ func (c *conn) sendRequest(p *Proxy, opcode uint16, args []Arg) error {
 	}
 	c.mu.Lock()
 	p.sent = true
+	if spec.Destructor {
+		p.state = stateDestroyPending
+	}
 	c.mu.Unlock()
 	return nil
 }
