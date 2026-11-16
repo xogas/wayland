@@ -1,3 +1,4 @@
+// Command shm-surface maps a solid shared-memory buffer and exits.
 package main
 
 import (
@@ -32,7 +33,8 @@ func (h registryHandler) GlobalRemove(name uint32) {
 	gs := *h.globals
 	for i := range gs {
 		if gs[i].Name == name {
-			*h.globals = append(gs[:i], gs[i+1:]...)
+			gs = append(gs[:i], gs[i+1:]...)
+			*h.globals = gs
 			return
 		}
 	}
@@ -48,10 +50,10 @@ func (h *shmHandler) Format(format uint32) {
 
 type wlSurfaceHandler struct{}
 
-func (wlSurfaceHandler) Enter(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) Leave(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) PreferredBufferScale(factor int32) {}
-func (wlSurfaceHandler) PreferredBufferTransform(uint32)   {}
+func (wlSurfaceHandler) Enter(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) Leave(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) PreferredBufferScale(_ int32)    {}
+func (wlSurfaceHandler) PreferredBufferTransform(uint32) {}
 
 type wmBaseHandler struct {
 	app *app

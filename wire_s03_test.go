@@ -260,11 +260,12 @@ func buildCoverageArgs(spec Message, fdPool []int, idc *uint32, null bool) ([]Ar
 		case ArgFixed:
 			args = append(args, Fixed(1.25))
 		case ArgString:
-			if null && as.AllowNull {
+			switch {
+			case null && as.AllowNull:
 				args = append(args, String(nil))
-			} else if i%2 == 0 {
+			case i%2 == 0:
 				args = append(args, String(strPtr("wire")))
-			} else {
+			default:
 				args = append(args, String(strPtr("")))
 			}
 		case ArgArray:
@@ -279,7 +280,7 @@ func buildCoverageArgs(spec Message, fdPool []int, idc *uint32, null bool) ([]Ar
 			if null && as.AllowNull {
 				args = append(args, NewID(0))
 			} else {
-				*idc = *idc + 1
+				*idc++
 				if as.Interface == "" {
 					id := 0x03000000 + *idc
 					targets[id] = &Proxy{id: id, version: 1, iface: mustInterface("wl_registry")}
@@ -292,7 +293,7 @@ func buildCoverageArgs(spec Message, fdPool []int, idc *uint32, null bool) ([]Ar
 			if null && as.AllowNull {
 				args = append(args, Object(0))
 			} else {
-				*idc = *idc + 1
+				*idc++
 				id := 0x02000000 + *idc
 				objects[id] = &Proxy{id: id, version: 1, iface: ifaceForNil(as.Interface)}
 				args = append(args, Object(id))
@@ -479,7 +480,7 @@ func TestWireFD(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		d.p.conn.oobLen = 16
+		installTestHooks(d.p.conn).oobLen = 16
 		iface := testInterface("s03_fd_ctrunc", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)

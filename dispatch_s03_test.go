@@ -26,7 +26,7 @@ func TestDispatchSerial(t *testing.T) {
 	var sendErr error
 	var inCallback atomic.Int32
 	parent := goroutineID()
-	if err := p.SetSink(funcSink{fn: func(opcode uint16, args []Arg) error {
+	if err := p.SetSink(funcSink{fn: func(_ uint16, args []Arg) error {
 		if gid := goroutineID(); gid != parent {
 			t.Errorf("callback on goroutine %d, want Dispatch caller %d", gid, parent)
 		}

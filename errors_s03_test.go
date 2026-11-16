@@ -3,9 +3,12 @@ package wayland
 import (
 	"context"
 	"errors"
+	"io"
+	"io/fs"
 	"net"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -129,6 +132,54 @@ func TestIOError(t *testing.T) {
 		}
 		if !d.p.conn.isClosed() {
 			t.Fatal("connection not closed after mid-frame EOF")
+		}
+	})
+}
+
+// TestErrorChain checks that wrapped errors keep both the public sentinel and
+// the underlying cause reachable through errors.Is. It does not assert message
+// text.
+func TestErrorChain(t *testing.T) {
+	t.Run("dial", func(t *testing.T) {
+		_, err := DialContext(context.Background(), filepath.Join(t.TempDir(), "missing.sock"))
+		if !errors.Is(err, ErrConnect) || !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("DialContext = %v, want ErrConnect and fs.ErrNotExist", err)
+		}
+	})
+
+	t.Run("read", func(t *testing.T) {
+		d, b := errorTestDisplay(t)
+		_ = b.Close()
+		err := d.Dispatch()
+		if !errors.Is(err, ErrIO) || !errors.Is(err, io.EOF) {
+			t.Fatalf("dispatch = %v, want ErrIO and io.EOF", err)
+		}
+	})
+
+	t.Run("write", func(t *testing.T) {
+		d, b := errorTestDisplay(t)
+		_ = b.Close()
+		err := d.p.conn.write([]byte{0, 0, 0, 0}, nil)
+		if !errors.Is(err, ErrIO) || !errors.Is(err, syscall.EPIPE) {
+			t.Fatalf("write = %v, want ErrIO and EPIPE", err)
+		}
+	})
+
+	t.Run("sink", func(t *testing.T) {
+		d, b := errorTestDisplay(t)
+		sinkErr := errors.New("sink failed")
+		iface := testInterface("s06_sink", 1, nil,
+			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
+		p := newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error {
+			return sinkErr
+		}})
+		writeFrame(t, b, p.ID(), 0, appendU32(nil, 1))
+		err := d.Dispatch()
+		if !errors.Is(err, ErrProtocolViolation) || !errors.Is(err, sinkErr) {
+			t.Fatalf("dispatch = %v, want ErrProtocolViolation and sink error", err)
+		}
+		if !d.p.conn.isClosed() {
+			t.Fatal("connection not closed after sink error")
 		}
 	})
 }

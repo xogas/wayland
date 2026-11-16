@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -189,7 +190,7 @@ func parseFile(path string) (*xmlProtocol, error) {
 	// Reject trailing elements after the document element.
 	for {
 		tok, err := dec.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

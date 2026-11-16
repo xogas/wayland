@@ -35,15 +35,6 @@ type Proxy struct {
 	// tombstone marks a canceled Roundtrip callback. Its events are consumed
 	// and discarded until the server sends delete_id.
 	tombstone bool
-	// rawName marks an object created by the test-only raw bind path for an
-	// interface without generated metadata. It is empty for generated
-	// objects. Events for a raw object are skipped by message length instead
-	// of being decoded; this is not a public API.
-	rawName string
-	// skippedEvents counts raw-object events consumed by the length-based
-	// skip path. Tests use it to prove an event was skipped rather than
-	// decoded; it is not a public API.
-	skippedEvents uint32
 }
 
 // ID returns the wire object ID.

@@ -1,3 +1,4 @@
+// Command output prints the outputs advertised by the compositor.
 package main
 
 import (
@@ -21,7 +22,8 @@ func (h registryHandler) GlobalRemove(name uint32) {
 	gs := *h.globals
 	for i := range gs {
 		if gs[i].Name == name {
-			*h.globals = append(gs[:i], gs[i+1:]...)
+			gs = append(gs[:i], gs[i+1:]...)
+			*h.globals = gs
 			return
 		}
 	}
@@ -54,13 +56,13 @@ type outputState struct {
 	done           bool
 }
 
-func (o *outputState) Geometry(x int32, y int32, physicalWidth int32, physicalHeight int32, subpixel int32, make string, model string, transform int32) {
+func (o *outputState) Geometry(x int32, y int32, physicalWidth int32, physicalHeight int32, subpixel int32, makeName string, model string, transform int32) {
 	o.x = x
 	o.y = y
 	o.physicalWidth = physicalWidth
 	o.physicalHeight = physicalHeight
 	o.subpixel = subpixel
-	o.make = make
+	o.make = makeName
 	o.model = model
 	o.transform = transform
 	o.hasGeometry = true

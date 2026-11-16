@@ -1,3 +1,4 @@
+// Command input prints raw keyboard and pointer events from a Wayland seat.
 package main
 
 import (
@@ -35,7 +36,8 @@ func (h registryHandler) GlobalRemove(name uint32) {
 	gs := *h.globals
 	for i := range gs {
 		if gs[i].Name == name {
-			*h.globals = append(gs[:i], gs[i+1:]...)
+			gs = append(gs[:i], gs[i+1:]...)
+			*h.globals = gs
 			return
 		}
 	}
@@ -51,10 +53,10 @@ func (h *shmHandler) Format(format uint32) {
 
 type wlSurfaceHandler struct{}
 
-func (wlSurfaceHandler) Enter(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) Leave(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) PreferredBufferScale(factor int32) {}
-func (wlSurfaceHandler) PreferredBufferTransform(uint32)   {}
+func (wlSurfaceHandler) Enter(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) Leave(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) PreferredBufferScale(_ int32)    {}
+func (wlSurfaceHandler) PreferredBufferTransform(uint32) {}
 
 type wmBaseHandler struct {
 	app *app
@@ -133,7 +135,7 @@ type keyboardHandler struct {
 	app *app
 }
 
-func (h *keyboardHandler) Keymap(format uint32, fd int, size uint32) {
+func (h *keyboardHandler) Keymap(_ uint32, fd int, _ uint32) {
 	// The caller owns the keymap descriptor; this example does not build a
 	// keymap, so close it immediately.
 	if fd >= 0 {
@@ -147,15 +149,15 @@ func (h *keyboardHandler) Enter(serial uint32, surface *wayland.Proxy, keys []by
 func (h *keyboardHandler) Leave(serial uint32, surface *wayland.Proxy) {
 	fmt.Printf("keyboard leave serial=%d surface=%d\n", serial, surface.ID())
 }
-func (h *keyboardHandler) Key(serial uint32, time uint32, key uint32, state uint32) {
+func (h *keyboardHandler) Key(_ uint32, _ uint32, key uint32, state uint32) {
 	fmt.Printf("key keycode=%d state=%d\n", key, state)
 	if key == 1 && (state == uint32(wayland.KeyboardKeyStatePressed) || state == uint32(wayland.KeyboardKeyStateRepeated)) {
 		h.app.stopping.Store(true)
 	}
 }
-func (h *keyboardHandler) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) {
+func (h *keyboardHandler) Modifiers(_, _, _, _, _ uint32) {
 }
-func (h *keyboardHandler) RepeatInfo(rate int32, delay int32) {}
+func (h *keyboardHandler) RepeatInfo(_, _ int32) {}
 
 type pointerHandler struct {
 	app *app
@@ -167,23 +169,23 @@ func (h *pointerHandler) Enter(serial uint32, surface *wayland.Proxy, surfaceX f
 func (h *pointerHandler) Leave(serial uint32, surface *wayland.Proxy) {
 	fmt.Printf("pointer leave serial=%d surface=%d\n", serial, surface.ID())
 }
-func (h *pointerHandler) Motion(time uint32, surfaceX float64, surfaceY float64) {
+func (h *pointerHandler) Motion(_ uint32, surfaceX float64, surfaceY float64) {
 	fmt.Printf("pointer motion x=%s y=%s\n", fixedValue(surfaceX), fixedValue(surfaceY))
 }
-func (h *pointerHandler) Button(serial uint32, time uint32, button uint32, state uint32) {
+func (h *pointerHandler) Button(_ uint32, _ uint32, button uint32, state uint32) {
 	fmt.Printf("pointer button button=%d state=%d\n", button, state)
 }
-func (h *pointerHandler) Axis(time uint32, axis uint32, value float64) {
+func (h *pointerHandler) Axis(_ uint32, axis uint32, value float64) {
 	fmt.Printf("pointer axis axis=%d value=%s\n", axis, fixedValue(value))
 }
-func (h *pointerHandler) Frame()                            {}
-func (h *pointerHandler) AxisSource(axisSource uint32)      {}
-func (h *pointerHandler) AxisStop(time uint32, axis uint32) {}
+func (h *pointerHandler) Frame()               {}
+func (h *pointerHandler) AxisSource(_ uint32)  {}
+func (h *pointerHandler) AxisStop(_, _ uint32) {}
 func (h *pointerHandler) AxisDiscrete(axis uint32, discrete int32) {
 	fmt.Printf("pointer axis_discrete axis=%d discrete=%d\n", axis, discrete)
 }
-func (h *pointerHandler) AxisValue120(axis uint32, value120 int32) {}
-func (h *pointerHandler) AxisRelativeDirection(axis uint32, direction uint32) {
+func (h *pointerHandler) AxisValue120(_ uint32, _ int32) {}
+func (h *pointerHandler) AxisRelativeDirection(_, _ uint32) {
 }
 func (h *pointerHandler) Warp(surfaceX float64, surfaceY float64) {
 	fmt.Printf("pointer warp x=%s y=%s\n", fixedValue(surfaceX), fixedValue(surfaceY))

@@ -691,15 +691,18 @@ func resolveArg(c *corpus, i *iface, m *msg, a *arg) error {
 			return inputError(path, field+".interface", err)
 		}
 		a.Target = target
-	} else if a.Type == "object" {
-		if m.IsRequest {
-			return inputError(path, field+".interface", fmt.Errorf("object request args require an interface"))
+	} else {
+		switch a.Type {
+		case "object":
+			if m.IsRequest {
+				return inputError(path, field+".interface", fmt.Errorf("object request args require an interface"))
+			}
+		case "new_id":
+			if i.Name != "wl_registry" || m.Name != "bind" || i.Pkg.ImportPath != "" {
+				return inputError(path, field+".interface", fmt.Errorf("dynamic new_id is only valid on wl_registry.bind"))
+			}
+			a.Dynamic = true
 		}
-	} else if a.Type == "new_id" {
-		if i.Name != "wl_registry" || m.Name != "bind" || i.Pkg.ImportPath != "" {
-			return inputError(path, field+".interface", fmt.Errorf("dynamic new_id is only valid on wl_registry.bind"))
-		}
-		a.Dynamic = true
 	}
 	if a.EnumName != "" {
 		enumIface := i

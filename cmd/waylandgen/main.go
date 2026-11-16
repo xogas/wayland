@@ -1,3 +1,4 @@
+// Command waylandgen generates Go bindings from Wayland protocol XML.
 package main
 
 import (

@@ -292,7 +292,7 @@ func findOutput(t *testing.T, files []renderedFile, rel string) []byte {
 	return nil
 }
 
-func compareMessages(t *testing.T, rel string, i *iface, got []*msg, want []xmlMessage, request bool) {
+func compareMessages(t *testing.T, rel string, i *iface, got []*msg, want []xmlMessage, _ bool) {
 	t.Helper()
 	if len(got) != len(want) {
 		t.Fatalf("%s: %s messages = %d, want %d", rel, i.Name, len(got), len(want))

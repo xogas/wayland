@@ -1,3 +1,4 @@
+// Command xdg-shell opens a small xdg-shell window.
 package main
 
 import (
@@ -33,7 +34,8 @@ func (h registryHandler) GlobalRemove(name uint32) {
 	gs := *h.globals
 	for i := range gs {
 		if gs[i].Name == name {
-			*h.globals = append(gs[:i], gs[i+1:]...)
+			gs = append(gs[:i], gs[i+1:]...)
+			*h.globals = gs
 			return
 		}
 	}
@@ -49,10 +51,10 @@ func (h *shmHandler) Format(format uint32) {
 
 type wlSurfaceHandler struct{}
 
-func (wlSurfaceHandler) Enter(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) Leave(output *wayland.Proxy)       {}
-func (wlSurfaceHandler) PreferredBufferScale(factor int32) {}
-func (wlSurfaceHandler) PreferredBufferTransform(uint32)   {}
+func (wlSurfaceHandler) Enter(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) Leave(_ *wayland.Proxy)          {}
+func (wlSurfaceHandler) PreferredBufferScale(_ int32)    {}
+func (wlSurfaceHandler) PreferredBufferTransform(uint32) {}
 
 type wmBaseHandler struct {
 	app *app
@@ -131,7 +133,7 @@ type keyboardHandler struct {
 	app *app
 }
 
-func (h *keyboardHandler) Keymap(format uint32, fd int, size uint32) {
+func (h *keyboardHandler) Keymap(_ uint32, fd int, _ uint32) {
 	// The caller owns the keymap descriptor; this example does not build a
 	// keymap, so close it immediately.
 	if fd >= 0 {
@@ -139,17 +141,17 @@ func (h *keyboardHandler) Keymap(format uint32, fd int, size uint32) {
 	}
 }
 
-func (h *keyboardHandler) Enter(serial uint32, surface *wayland.Proxy, keys []byte) {}
-func (h *keyboardHandler) Leave(serial uint32, surface *wayland.Proxy)              {}
-func (h *keyboardHandler) Key(serial uint32, time uint32, key uint32, state uint32) {
+func (h *keyboardHandler) Enter(_ uint32, _ *wayland.Proxy, _ []byte) {}
+func (h *keyboardHandler) Leave(_ uint32, _ *wayland.Proxy)           {}
+func (h *keyboardHandler) Key(_ uint32, _ uint32, key uint32, state uint32) {
 	fmt.Printf("key keycode=%d state=%d\n", key, state)
 	if key == 1 && (state == uint32(wayland.KeyboardKeyStatePressed) || state == uint32(wayland.KeyboardKeyStateRepeated)) {
 		h.app.stopping.Store(true)
 	}
 }
-func (h *keyboardHandler) Modifiers(serial uint32, modsDepressed uint32, modsLatched uint32, modsLocked uint32, group uint32) {
+func (h *keyboardHandler) Modifiers(_, _, _, _, _ uint32) {
 }
-func (h *keyboardHandler) RepeatInfo(rate int32, delay int32) {}
+func (h *keyboardHandler) RepeatInfo(_, _ int32) {}
 
 type app struct {
 	display     *wayland.Display

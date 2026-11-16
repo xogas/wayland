@@ -3,6 +3,7 @@ package wayland
 // ArgType is the wire type of a message argument.
 type ArgType uint8
 
+// Wire argument types.
 const (
 	ArgInt ArgType = iota
 	ArgUint

@@ -1,7 +1,14 @@
 version: "2"
 
 run:
-  timeout: 5m
+  timeout: 10m
+
+linters:
+  enable:
+    - revive
+    - gocritic
+    - errorlint
+    - misspell
 
 issues:
   # Generated bindings carry the standard generated header. They are

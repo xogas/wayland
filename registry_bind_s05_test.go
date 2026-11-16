@@ -55,18 +55,19 @@ func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	c := reg.Proxy().conn
 	// A synthetic metadata value carries the unknown name and version so the
 	// existing dynamic new_id expansion can serialize the bind frame. The
-	// rawName marker keeps dispatch away from the empty signature.
+	// raw name hook keeps dispatch away from the empty signature.
 	iface := &Interface{Name: g.Interface, Version: g.Version}
 	p, err := c.newObject(iface, g.Version, false)
 	if err != nil {
 		return nil, fmt.Errorf("raw bind %s v%d: %w", g.Interface, g.Version, err)
 	}
+	hooks := installTestHooks(c)
 	c.mu.Lock()
-	p.rawName = g.Interface
+	hooks.rawNames[p.ID()] = g.Interface
 	// Unknown interfaces may create server-owned child objects whose events
 	// the runtime cannot decode without a signature. Enable the test-only
 	// broad skip for those IDs; public dispatch keeps E-07.
-	c.skipUnknownServer = true
+	hooks.skipUnknownServer = true
 	c.mu.Unlock()
 	if err := reg.Proxy().Send(0, Uint(g.Name), NewID(p.ID())); err != nil {
 		_ = p.Release()
@@ -160,7 +161,7 @@ func registryBindRoundtrip(ctx context.Context, d *Display, res *registryBindRes
 // closes any descriptors the runtime delivered.
 type bindDiscardSink struct{}
 
-func (bindDiscardSink) DispatchEvent(opcode uint16, args []Arg) error {
+func (bindDiscardSink) DispatchEvent(_ uint16, args []Arg) error {
 	seen := make(map[int]bool)
 	for _, arg := range args {
 		if arg.typ == ArgFD {
@@ -280,8 +281,15 @@ func TestRawBindWire(t *testing.T) {
 	if err != nil {
 		t.Fatalf("raw bind: %v", err)
 	}
-	if p.rawName != g.Interface || p.Version() != g.Version {
-		t.Fatalf("raw object = %q v%d", p.rawName, p.Version())
+	c := d.p.conn
+	c.mu.Lock()
+	rawName := c.hooks.rawNames[p.ID()]
+	c.mu.Unlock()
+	if rawName != g.Interface || p.Version() != g.Version {
+		t.Fatalf("raw object = %q v%d", rawName, p.Version())
+	}
+	if got := skippedEventCount(c, p.ID()); got != 0 {
+		t.Fatalf("skipped events = %d, want 0 before any event", got)
 	}
 	if p.Interface() == nil || p.Interface().Name != g.Interface {
 		t.Fatalf("raw interface metadata = %+v", p.Interface())

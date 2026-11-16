@@ -1,3 +1,4 @@
+// Command registry prints the globals advertised by the compositor.
 package main
 
 import (
@@ -22,7 +23,8 @@ func (h handler) GlobalRemove(name uint32) {
 	gs := *h.globals
 	for i := range gs {
 		if gs[i].Name == name {
-			*h.globals = append(gs[:i], gs[i+1:]...)
+			gs = append(gs[:i], gs[i+1:]...)
+			*h.globals = gs
 			return
 		}
 	}

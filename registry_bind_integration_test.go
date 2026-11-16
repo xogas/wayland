@@ -16,7 +16,7 @@ import (
 func (r *registryBindResult) unknownSkips() int {
 	n := 0
 	for _, b := range r.Binds {
-		n += int(b.Proxy.skippedEvents)
+		n += int(skippedEventCount(b.Proxy.conn, b.Proxy.ID()))
 	}
 	return n
 }
@@ -30,7 +30,10 @@ func (r *registryBindResult) unknownServerSkips() int {
 	c := r.Binds[0].Proxy.conn
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.unknownServerSkips
+	if c.hooks == nil {
+		return 0
+	}
+	return c.hooks.unknownServerSkips
 }
 
 // typedBinders exercises the generated Bind<T> helpers for a practical subset
@@ -219,11 +222,12 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 		if err != nil {
 			t.Fatalf("roundtrip after raw bind %s v%d: %v", g.Interface, g.Version, err)
 		}
-		if p.skippedEvents == 0 {
+		skipped := skippedEventCount(d.p.conn, p.ID())
+		if skipped == 0 {
 			t.Logf("raw bind %s v%d emitted no skipped event", g.Interface, g.Version)
 			continue
 		}
-		t.Logf("raw bind %s v%d id=%d skipped_events=%d", g.Interface, g.Version, p.ID(), p.skippedEvents)
+		t.Logf("raw bind %s v%d id=%d skipped_events=%d", g.Interface, g.Version, p.ID(), skipped)
 		ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
 		err = d.Roundtrip(ctx2)
 		cancel2()
@@ -271,7 +275,7 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 	if err := d.Roundtrip(ctx2); err != nil {
 		t.Fatalf("unknown event roundtrip: %v", err)
 	}
-	if p.skippedEvents == 0 {
+	if skippedEventCount(d.p.conn, p.ID()) == 0 {
 		t.Fatal("unknown event was not skipped")
 	}
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 5*time.Second)
@@ -286,7 +290,7 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 		}
 	default:
 	}
-	t.Logf("fake server: raw bind %s v%d id=%d skipped_events=%d", h.globals[0].Interface, h.globals[0].Version, p.ID(), p.skippedEvents)
+	t.Logf("fake server: raw bind %s v%d id=%d skipped_events=%d", h.globals[0].Interface, h.globals[0].Version, p.ID(), skippedEventCount(d.p.conn, p.ID()))
 }
 
 // serveFakeRegistryBindUnknown drives the socketpair substitution: advertise
