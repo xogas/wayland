@@ -4,12 +4,188 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
 	"net"
 	"os"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 )
+
+func unixPair(t *testing.T) (*net.UnixConn, *net.UnixConn) {
+	t.Helper()
+	fds, err := syscall.Socketpair(syscall.AF_UNIX, syscall.SOCK_STREAM, 0)
+	if err != nil {
+		t.Fatalf("socketpair: %v", err)
+	}
+	mk := func(fd int, name string) *net.UnixConn {
+		f := os.NewFile(uintptr(fd), name)
+		raw, err := net.FileConn(f)
+		_ = f.Close()
+		if err != nil {
+			t.Fatalf("fileconn: %v", err)
+		}
+		uc, ok := raw.(*net.UnixConn)
+		if !ok {
+			_ = raw.Close()
+			t.Fatalf("fileconn returned %T", raw)
+		}
+		return uc
+	}
+	return mk(fds[0], "wayland-a"), mk(fds[1], "wayland-b")
+}
+
+type testServer struct {
+	conn *net.UnixConn
+	buf  []byte
+	fds  []int
+}
+
+func newTestServer(c *net.UnixConn) *testServer {
+	return &testServer{conn: c}
+}
+
+func (s *testServer) nextFrame() (uint32, uint16, []byte, []int, error) {
+	for {
+		if len(s.buf) >= 8 {
+			size := int(binary.LittleEndian.Uint32(s.buf[4:8]) >> 16)
+			if size < 8 {
+				return 0, 0, nil, nil, fmt.Errorf("server frame size %d", size)
+			}
+			if len(s.buf) >= size {
+				objectID := binary.LittleEndian.Uint32(s.buf[0:4])
+				opcode := uint16(binary.LittleEndian.Uint32(s.buf[4:8]))
+				body := append([]byte(nil), s.buf[8:size]...)
+				s.buf = s.buf[size:]
+				fds := s.fds
+				s.fds = nil
+				return objectID, opcode, body, fds, nil
+			}
+		}
+		tmp := make([]byte, messageMax+8)
+		oob := make([]byte, 4096)
+		n, oobn, _, _, err := s.conn.ReadMsgUnix(tmp, oob)
+		if err != nil {
+			return 0, 0, nil, nil, err
+		}
+		if n == 0 {
+			return 0, 0, nil, nil, io.ErrUnexpectedEOF
+		}
+		s.buf = append(s.buf, tmp[:n]...)
+		if oobn > 0 {
+			msgs, err := syscall.ParseSocketControlMessage(oob[:oobn])
+			if err != nil {
+				return 0, 0, nil, nil, err
+			}
+			for i := range msgs {
+				rights, err := syscall.ParseUnixRights(&msgs[i])
+				if err != nil {
+					return 0, 0, nil, nil, err
+				}
+				s.fds = append(s.fds, rights...)
+			}
+		}
+	}
+}
+
+func (s *testServer) readFrame(t *testing.T) (uint32, uint16, []byte, []int) {
+	t.Helper()
+	objectID, opcode, body, fds, err := s.nextFrame()
+	if err != nil {
+		t.Fatalf("server read: %v", err)
+	}
+	return objectID, opcode, body, fds
+}
+
+func writeFrameMsg(t *testing.T, srv *net.UnixConn, objectID uint32, opcode uint16, body []byte, fds []int) {
+	t.Helper()
+	size := 8 + len(body)
+	if size > messageMax {
+		t.Fatalf("frame too large: %d", size)
+	}
+	msg := make([]byte, 8, size)
+	binary.LittleEndian.PutUint32(msg[0:4], objectID)
+	binary.LittleEndian.PutUint32(msg[4:8], uint32(size)<<16|uint32(opcode))
+	msg = append(msg, body...)
+	var oob []byte
+	if len(fds) > 0 {
+		oob = syscall.UnixRights(fds...)
+	}
+	for len(msg) > 0 {
+		var n int
+		var err error
+		if len(oob) > 0 {
+			n, _, err = srv.WriteMsgUnix(msg, oob, nil)
+		} else {
+			n, err = srv.Write(msg)
+		}
+		if err != nil {
+			t.Fatalf("write frame: %v", err)
+		}
+		if n == 0 {
+			t.Fatalf("write frame: short write")
+		}
+		oob = nil
+		msg = msg[n:]
+	}
+}
+
+func writeRawHeader(t *testing.T, srv *net.UnixConn, objectID uint32, opcode uint16, size uint16) {
+	t.Helper()
+	var hdr [8]byte
+	binary.LittleEndian.PutUint32(hdr[0:4], objectID)
+	binary.LittleEndian.PutUint32(hdr[4:8], uint32(size)<<16|uint32(opcode))
+	if _, err := srv.Write(hdr[:]); err != nil {
+		t.Fatalf("write header: %v", err)
+	}
+}
+
+func assertNoBytes(t *testing.T, srv *net.UnixConn) {
+	t.Helper()
+	if err := srv.SetReadDeadline(time.Now().Add(50 * time.Millisecond)); err != nil {
+		t.Fatalf("set deadline: %v", err)
+	}
+	defer func() { _ = srv.SetReadDeadline(time.Time{}) }()
+	var buf [1]byte
+	n, err := srv.Read(buf[:])
+	if n > 0 {
+		t.Fatalf("unexpected %d byte(s) written", n)
+	}
+	if err == nil {
+		t.Fatal("read returned nil error with no bytes")
+	}
+	var ne net.Error
+	if !errors.As(err, &ne) || !ne.Timeout() {
+		t.Fatalf("expected read timeout, got %v", err)
+	}
+}
+
+func pipeFDs(t *testing.T) (int, int) {
+	t.Helper()
+	var fds [2]int
+	if err := syscall.Pipe2(fds[:], syscall.O_CLOEXEC); err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	return fds[0], fds[1]
+}
+
+func fdIdentity(t *testing.T, fd int) (uint64, uint64) {
+	t.Helper()
+	var st syscall.Stat_t
+	if err := syscall.Fstat(fd, &st); err != nil {
+		t.Fatalf("fstat fd %d: %v", fd, err)
+	}
+	return uint64(st.Dev), st.Ino
+}
+
+func sameFD(t *testing.T, a, b int) bool {
+	t.Helper()
+	da, ia := fdIdentity(t, a)
+	db, ib := fdIdentity(t, b)
+	return da == db && ia == ib
+}
 
 func TestWireRoundtrip(t *testing.T) {
 	rfd, wfd := pipeFDs(t)
@@ -673,4 +849,112 @@ func TestWireOversize(t *testing.T) {
 			t.Fatalf("body length = %d, want 65524", len(body))
 		}
 	})
+}
+
+func TestSinceGuard(t *testing.T) {
+	a, b := unixPair(t)
+	d := newDisplay(a)
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
+	iface := testInterface("test_since", 4, []Message{
+		{Name: "early", Since: 1},
+		{Name: "late", Since: 4},
+	}, nil)
+	p := newTestProxy(t, d, iface, 3, nil)
+
+	err := p.Send(1)
+	if !errors.Is(err, ErrSince) {
+		t.Fatalf("send since 4 on v3 = %v, want ErrSince", err)
+	}
+	if !strings.Contains(err.Error(), "wl_surface") || !strings.Contains(err.Error(), "late") {
+		t.Fatalf("error lacks interface/message context: %v", err)
+	}
+	assertNoBytes(t, b)
+
+	if err := p.Send(0); err != nil {
+		t.Fatalf("send early: %v", err)
+	}
+	srv := newTestServer(b)
+	objectID, opcode, body, _ := srv.readFrame(t)
+	if objectID != p.ID() || opcode != 0 || len(body) != 0 {
+		t.Fatalf("early frame = id %d op %d body %d", objectID, opcode, len(body))
+	}
+}
+
+func TestDynamicNewID(t *testing.T) {
+	a, b := unixPair(t)
+	d := newDisplay(a)
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
+	reg, regP := newRegistryForTest(t, d)
+
+	p, err := reg.Bind(Global{Name: 7, Interface: "wl_compositor", Version: 6}, 3)
+	if err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if p.Interface().Name != "wl_compositor" {
+		t.Fatalf("interface = %q, want wl_compositor", p.Interface().Name)
+	}
+	if p.Version() != 3 {
+		t.Fatalf("version = %d, want requested 3", p.Version())
+	}
+	if p.ID() < 1 || p.ID() > clientIDMax {
+		t.Fatalf("id %d outside client range", p.ID())
+	}
+
+	srv := newTestServer(b)
+	objectID, opcode, body, _ := srv.readFrame(t)
+	if objectID != regP.ID() || opcode != 0 {
+		t.Fatalf("bind frame = id %d op %d", objectID, opcode)
+	}
+	name, ifaceName, version, id := parseBindFrame(t, body)
+	if name != 7 || ifaceName != "wl_compositor" || version != 3 || id != p.ID() {
+		t.Fatalf("bind frame = name %d iface %q v%d id %d", name, ifaceName, version, id)
+	}
+	if d.p.conn.lookup(p.ID()) != p {
+		t.Fatal("dynamic new_id object not registered")
+	}
+}
+
+func TestDynamicNewIDUnknown(t *testing.T) {
+	a, b := unixPair(t)
+	d := newDisplay(a)
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
+	reg, _ := newRegistryForTest(t, d)
+
+	_, err := reg.Bind(Global{Name: 3, Interface: "test_no_such_interface", Version: 1}, 1)
+	if !errors.Is(err, ErrInvalidArgument) {
+		t.Fatalf("bind unknown = %v, want ErrInvalidArgument", err)
+	}
+	if !strings.Contains(err.Error(), "bind") || !strings.Contains(err.Error(), "test_no_such_interface") {
+		t.Fatalf("error lacks operation/interface context: %v", err)
+	}
+	assertNoBytes(t, b)
+}
+
+func wireTestInterface() (*Proxy, Message) {
+	spec := Message{
+		Name:  "all",
+		Since: 1,
+		Args: []ArgSpec{
+			{Name: "i", Type: ArgInt},
+			{Name: "u", Type: ArgUint},
+			{Name: "f", Type: ArgFixed},
+			{Name: "s", Type: ArgString, AllowNull: true},
+			{Name: "a", Type: ArgArray, AllowNull: true},
+			{Name: "fd", Type: ArgFD},
+			{Name: "sn", Type: ArgString, AllowNull: true},
+			{Name: "an", Type: ArgArray, AllowNull: true},
+		},
+	}
+	iface := &Interface{Name: "test", Version: 1, Requests: []Message{spec}}
+	return &Proxy{id: 1, version: 1, iface: iface}, spec
+}
+
+func TestEncodeArgCount(t *testing.T) {
+	p, spec := wireTestInterface()
+	if _, _, err := encodeRequest(p, 0, spec, nil); !errors.Is(err, ErrInvalidArgument) {
+		t.Fatalf("arg count = %v, want ErrInvalidArgument", err)
+	}
 }

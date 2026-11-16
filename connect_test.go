@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 )
 
 func TestConnectMissingSource(t *testing.T) {
@@ -16,7 +15,7 @@ func TestConnectMissingSource(t *testing.T) {
 	}
 }
 
-func TestConnectSway(t *testing.T) {
+func TestConnectLive(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
 		t.Skipf("no Wayland session: %v", err)
@@ -47,32 +46,5 @@ func TestClosedOperations(t *testing.T) {
 	}
 	if err := d.Roundtrip(context.Background()); !errors.Is(err, ErrClosed) {
 		t.Fatalf("roundtrip = %v, want ErrClosed", err)
-	}
-}
-
-func TestRegistrySwayRoundtrip(t *testing.T) {
-	d, err := Connect()
-	if err != nil {
-		t.Skipf("no Wayland session: %v", err)
-	}
-	t.Cleanup(func() { _ = d.Close() })
-	var h registryRecorder
-	if _, err := d.GetRegistry(&h); err != nil {
-		t.Fatalf("get_registry: %v", err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := d.Roundtrip(ctx); err != nil {
-		t.Fatalf("roundtrip: %v", err)
-	}
-	found := false
-	for _, g := range h.globals {
-		if g.Interface == "wl_compositor" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatalf("wl_compositor not in %d globals", len(h.globals))
 	}
 }

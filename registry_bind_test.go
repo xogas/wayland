@@ -2,6 +2,7 @@ package wayland
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
@@ -240,5 +241,147 @@ func TestRawBindWire(t *testing.T) {
 	name, ifaceName, version, id := parseBindFrame(t, body)
 	if name != g.Name || ifaceName != g.Interface || version != g.Version || id != p.ID() {
 		t.Fatalf("bind frame = name %d iface %q v%d id %d", name, ifaceName, version, id)
+	}
+}
+
+type registryRecorder struct {
+	globals []Global
+}
+
+func (r *registryRecorder) Global(g Global) { r.globals = append(r.globals, g) }
+
+func (r *registryRecorder) GlobalRemove(name uint32) {
+	for i := range r.globals {
+		if r.globals[i].Name == name {
+			r.globals = append(r.globals[:i], r.globals[i+1:]...)
+			return
+		}
+	}
+}
+
+type callbackRecorder struct {
+	done uint32
+}
+
+func (c *callbackRecorder) Done(v uint32) { c.done = v }
+
+func newRegistryForTest(t *testing.T, d *Display) (*Registry, *Proxy) {
+	t.Helper()
+	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
+	if err != nil {
+		t.Fatalf("new registry: %v", err)
+	}
+	return NewRegistry(p, &registryRecorder{}), p
+}
+
+func TestBindVersion(t *testing.T) {
+	a, b := unixPair(t)
+	d := newDisplay(a)
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
+	reg, _ := newRegistryForTest(t, d)
+
+	cases := []struct {
+		name    string
+		global  Global
+		version uint32
+	}{
+		{"above_advertised", Global{Name: 7, Interface: "xdg_surface", Version: 5}, 6},
+		{"above_interface", Global{Name: 7, Interface: "xdg_surface", Version: 9}, 8},
+		{"zero", Global{Name: 7, Interface: "xdg_surface", Version: 7}, 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := reg.Bind(tc.global, tc.version)
+			if !errors.Is(err, ErrVersion) {
+				t.Fatalf("bind = %v, want ErrVersion", err)
+			}
+			if !strings.Contains(err.Error(), tc.global.Interface) {
+				t.Fatalf("error lacks interface context: %v", err)
+			}
+			assertNoBytes(t, b)
+		})
+	}
+
+	p, err := reg.Bind(Global{Name: 42, Interface: "xdg_surface", Version: 7}, 5)
+	if err != nil {
+		t.Fatalf("valid bind: %v", err)
+	}
+	if p.Interface().Name != "xdg_surface" || p.Version() != 5 {
+		t.Fatalf("bound object = %s v%d", p.Interface().Name, p.Version())
+	}
+	srv := newTestServer(b)
+	objectID, opcode, body, _ := srv.readFrame(t)
+	if objectID != reg.Proxy().ID() || opcode != 0 {
+		t.Fatalf("bind frame = id %d op %d", objectID, opcode)
+	}
+	name, ifaceName, version, id := parseBindFrame(t, body)
+	if name != 42 || ifaceName != "xdg_surface" || version != 5 || id != p.ID() {
+		t.Fatalf("bind frame = name %d iface %q v%d id %d", name, ifaceName, version, id)
+	}
+}
+
+func parseBindFrame(t *testing.T, body []byte) (uint32, string, uint32, uint32) {
+	t.Helper()
+	if len(body) < 12 {
+		t.Fatalf("bind body too short: %d", len(body))
+	}
+	name := binary.LittleEndian.Uint32(body[0:4])
+	n := int(binary.LittleEndian.Uint32(body[4:8]))
+	off := 8
+	if n < 1 || off+n > len(body) {
+		t.Fatalf("bind interface length %d", n)
+	}
+	ifaceName := string(body[off : off+n-1])
+	off += n
+	off = (off + 3) &^ 3
+	if off+8 > len(body) {
+		t.Fatalf("bind body truncated at %d", off)
+	}
+	version := binary.LittleEndian.Uint32(body[off : off+4])
+	id := binary.LittleEndian.Uint32(body[off+4 : off+8])
+	return name, ifaceName, version, id
+}
+
+type orderedRegistryRecorder struct {
+	events []string
+}
+
+func (r *orderedRegistryRecorder) Global(g Global) {
+	r.events = append(r.events, "global:"+g.Interface)
+}
+
+func (r *orderedRegistryRecorder) GlobalRemove(name uint32) {
+	r.events = append(r.events, fmt.Sprintf("remove:%d", name))
+}
+
+func TestRegistryEventOrder(t *testing.T) {
+	a, b := unixPair(t)
+	d := newDisplay(a)
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
+	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
+	if err != nil {
+		t.Fatalf("new registry: %v", err)
+	}
+	rec := &orderedRegistryRecorder{}
+	_ = NewRegistry(p, rec)
+
+	writeFrame(t, b, p.ID(), 0, registryGlobalBody(7, "wl_compositor", 6))
+	writeFrame(t, b, p.ID(), 1, appendU32(nil, 7))
+	writeFrame(t, b, p.ID(), 0, registryGlobalBody(9, "wl_shm", 2))
+	for i := 0; i < 3; i++ {
+		if err := d.Dispatch(); err != nil {
+			t.Fatalf("dispatch %d: %v", i, err)
+		}
+	}
+	want := []string{"global:wl_compositor", "remove:7", "global:wl_shm"}
+	if len(rec.events) != len(want) {
+		t.Fatalf("events = %v, want %v", rec.events, want)
+	}
+	for i := range want {
+		if rec.events[i] != want[i] {
+			t.Fatalf("event %d = %q, want %q", i, rec.events[i], want[i])
+		}
 	}
 }
