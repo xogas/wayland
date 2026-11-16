@@ -3,7 +3,7 @@
 generate:
 	rm -rf protocols
 	rm -f ./*_gen.go
-	go run ./cmd/waylandgen -root wayland-protocols -out .
+	go run ./cmd/wayland-gen -root wayland-protocols -out .
 
 test:
 	go test -race ./...

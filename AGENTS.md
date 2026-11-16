@@ -12,9 +12,9 @@ It targets the Wayland protocol, not a specific compositor.
 - `wayland-protocols/` is the official upstream input. Update it by replacing the
   directory from upstream; never hand-edit its XML or DTD.
 - `wayland_gen.go`, `interfaces_gen.go`, and `protocols/**` are generated. Never
-  hand-edit them; change the XML or `cmd/waylandgen` and run `make generate`.
+  hand-edit them; change the XML or `cmd/wayland-gen` and run `make generate`.
 - `make generate` owns cleanup: `rm -rf protocols`, `rm -f ./*_gen.go`, then
-  `go run ./cmd/waylandgen`. Do not use `go generate` or add `generate.go`.
+  `go run ./cmd/wayland-gen`. Do not use `go generate` or add `generate.go`.
 - Public API is stable. Ask before changing exported signatures, semantics, or
   error identities. Keep the `Proxy()` / generated `New` seam and error sentinels.
 - Comments stay high-signal: why, protocol, concurrency, fd ownership, boundaries.
@@ -49,7 +49,7 @@ It targets the Wayland protocol, not a specific compositor.
 
 - Package and file layout: `doc.go`
 - Commands: `README.md`, `Makefile`
-- Generator: `cmd/waylandgen`
+- Generator: `cmd/wayland-gen`
 - Protocol XML: `wayland-protocols/`
 - Lint: `.golangci.yml`
 - Uncovered: ask

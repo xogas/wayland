@@ -23,6 +23,6 @@ vendor/
 AGENTS.local.md
 CLAUDE.local.md
 
-/waylandgen
+/wayland-gen
 
-/cmd/waylandgen/waylandgen
+/cmd/wayland-gen/wayland-gen

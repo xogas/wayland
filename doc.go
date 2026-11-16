@@ -2,7 +2,7 @@
 //
 // It uses the standard library only: no CGO, no libwayland, no
 // wayland-scanner. Protocol bindings are generated from wayland-protocols/
-// by cmd/waylandgen.
+// by cmd/wayland-gen.
 //
 // Files:
 //
@@ -27,7 +27,7 @@
 //
 // Tools and examples:
 //
-//	cmd/waylandgen  XML -> Go bindings
+//	cmd/wayland-gen  XML -> Go bindings
 //	examples/       standalone programs: registry, output, input, and
 //	                shm-surface, xdg-shell, cube, imageviewer, subsurface,
 //	                clipboard, cursor, dmabuf

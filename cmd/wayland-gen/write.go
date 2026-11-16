@@ -28,7 +28,7 @@ func writeOutputs(out string, files []renderedFile) error {
 			removeTemps()
 			return fmt.Errorf("mkdir %s: %w", filepath.Dir(final), err)
 		}
-		tmp, err := os.CreateTemp(filepath.Dir(final), ".waylandgen-*")
+		tmp, err := os.CreateTemp(filepath.Dir(final), ".wayland-gen-*")
 		if err != nil {
 			removeTemps()
 			return fmt.Errorf("create temp for %s: %w", f.Rel, err)

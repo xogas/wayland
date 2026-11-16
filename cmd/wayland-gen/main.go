@@ -1,4 +1,4 @@
-// Command waylandgen generates Go bindings from Wayland protocol XML.
+// Command wayland-gen generates Go bindings from Wayland protocol XML.
 package main
 
 import (
@@ -41,6 +41,6 @@ func generate(opt options) error {
 }
 
 func fail(err error) {
-	fmt.Fprintln(os.Stderr, "waylandgen:", err)
+	fmt.Fprintln(os.Stderr, "wayland-gen:", err)
 	os.Exit(1)
 }
