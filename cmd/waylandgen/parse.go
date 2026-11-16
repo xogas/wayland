@@ -180,7 +180,7 @@ func parseFile(path string) (*xmlProtocol, error) {
 	if err != nil {
 		return nil, inputError(path, "open", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	var p xmlProtocol
 	dec := xml.NewDecoder(f)
 	if err := dec.Decode(&p); err != nil {

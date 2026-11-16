@@ -583,7 +583,7 @@ func TestGeneratorRejectsInvalidInput(t *testing.T) {
 		copyDTD(t, root)
 		out := sentinelOut(t)
 		err := generate(options{Root: root, Out: out})
-		requireGeneratorError(t, err, "input")
+		_ = requireGeneratorError(t, err, "input")
 		assertOutUntouched(t, out)
 	})
 	t.Run("missing DTD", func(t *testing.T) {

@@ -38,8 +38,8 @@ func registryGlobalBody(name uint32, iface string, version uint32) []byte {
 func TestDispatchRegistryGlobal(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
 	if err != nil {
 		t.Fatalf("new registry: %v", err)
@@ -65,8 +65,8 @@ func TestDispatchRegistryGlobal(t *testing.T) {
 func TestDispatchUnknownObject(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	writeFrame(t, b, 99, 0, nil)
 	if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
 		t.Fatalf("dispatch unknown = %v, want ErrProtocolViolation", err)
@@ -79,8 +79,8 @@ func TestDispatchUnknownObject(t *testing.T) {
 func TestDispatchDeleteID(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
 	if err != nil {
 		t.Fatalf("new registry: %v", err)
@@ -99,8 +99,8 @@ func TestDispatchDeleteID(t *testing.T) {
 func TestDispatchNoHandler(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
 	if err != nil {
 		t.Fatalf("new registry: %v", err)

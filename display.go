@@ -21,6 +21,10 @@ func (h *roundtripHandler) Done(uint32) {
 // Dispatch reads and dispatches one wire message.
 func (d *Display) Dispatch() error {
 	c := d.p.conn
+	if err := c.beginDispatch(); err != nil {
+		return fmt.Errorf("dispatch: %w", err)
+	}
+	defer c.dispatchWG.Done()
 	c.dispatchMu.Lock()
 	defer c.dispatchMu.Unlock()
 	if c.isClosed() {
@@ -37,6 +41,10 @@ func (d *Display) Roundtrip(ctx context.Context) error {
 		return fmt.Errorf("roundtrip: nil context: %w", ErrInvalidArgument)
 	}
 	c := d.p.conn
+	if err := c.beginDispatch(); err != nil {
+		return fmt.Errorf("roundtrip: %w", err)
+	}
+	defer c.dispatchWG.Done()
 	c.dispatchMu.Lock()
 	defer c.dispatchMu.Unlock()
 	if c.isClosed() {
@@ -120,8 +128,7 @@ func (d *Display) Close() error {
 		err = c.close()
 	}
 	// Even a repeat Close waits for a dispatch that is still unwinding.
-	c.dispatchMu.Lock()
-	c.dispatchMu.Unlock()
+	c.dispatchWG.Wait()
 	return err
 }
 

@@ -99,8 +99,8 @@ func TestDestroyedSend(t *testing.T) {
 	t.Run("destroy_pending", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_destroy", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
 		}, nil)
@@ -150,8 +150,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("unknown_event_object", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		writeFrame(t, b, 99, 0, nil)
 		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
 			t.Fatalf("dispatch = %v, want ErrProtocolViolation", err)
@@ -162,8 +162,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("unknown_opcode", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_opcode", 1, nil, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
 		writeFrame(t, b, p.ID(), 9, nil)
@@ -176,8 +176,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("unknown_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		writeFrame(t, b, 1, 1, appendU32(nil, 999))
 		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
 			t.Fatalf("dispatch = %v, want ErrProtocolViolation", err)
@@ -188,8 +188,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("live_client_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_live", 1, nil, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
 		writeFrame(t, b, 1, 1, appendU32(nil, p.ID()))
@@ -202,8 +202,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("display_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		writeFrame(t, b, 1, 1, appendU32(nil, 1))
 		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
 			t.Fatalf("dispatch = %v, want ErrProtocolViolation", err)
@@ -214,8 +214,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("server_owned_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		p, err := d.p.conn.newIncomingObject(mustInterface("wl_callback"), 1, 0xFF000001)
 		if err != nil {
 			t.Fatalf("incoming callback: %v", err)
@@ -235,8 +235,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("destroy_pending_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_pending", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
 		}, nil)
@@ -256,8 +256,8 @@ func TestUnknownObject(t *testing.T) {
 	t.Run("repeated_delete_id", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		p, err := d.p.conn.newIncomingObject(mustInterface("wl_callback"), 1, 0xFF000002)
 		if err != nil {
 			t.Fatalf("incoming callback: %v", err)
@@ -279,8 +279,8 @@ func TestUnknownObject(t *testing.T) {
 func TestObjectIDExhausted(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	d.p.conn.nextID = clientIDMax
 	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
 	if err != nil {

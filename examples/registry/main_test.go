@@ -53,7 +53,7 @@ func serveNoGlobals(f *os.File) error {
 			callbackID := binary.LittleEndian.Uint32(body[0:4])
 			var frame [12]byte
 			binary.LittleEndian.PutUint32(frame[0:4], callbackID)
-			binary.LittleEndian.PutUint32(frame[4:8], uint32(len(frame))<<16|0)
+			binary.LittleEndian.PutUint32(frame[4:8], uint32(len(frame))<<16)
 			binary.LittleEndian.PutUint32(frame[8:12], 0)
 			if _, err := f.Write(frame[:]); err != nil {
 				return fmt.Errorf("write callback.done: %w", err)
@@ -76,7 +76,7 @@ func TestRegistryNoGlobals(t *testing.T) {
 	t.Setenv("WAYLAND_DISPLAY", "")
 
 	server := os.NewFile(uintptr(fds[1]), "fake-wayland-server")
-	defer server.Close()
+	t.Cleanup(func() { _ = server.Close() })
 
 	serverErr := make(chan error, 1)
 	go func() { serverErr <- serveNoGlobals(server) }()

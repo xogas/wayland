@@ -37,28 +37,6 @@ type registryBind struct {
 	Raw    bool
 }
 
-// unknownSkips reports how many events the length-based skip path consumed
-// for raw-bound objects.
-func (r *registryBindResult) unknownSkips() int {
-	n := 0
-	for _, b := range r.Binds {
-		n += int(b.Proxy.skippedEvents)
-	}
-	return n
-}
-
-// unknownServerSkips reports how many events or delete_id messages for
-// unknown child objects the test-only broad skip path consumed.
-func (r *registryBindResult) unknownServerSkips() int {
-	if len(r.Binds) == 0 {
-		return 0
-	}
-	c := r.Binds[0].Proxy.conn
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.unknownServerSkips
-}
-
 // bindUnknownRaw is the AC-RB01 / AC-RB02 test-only raw bind path. It creates
 // an object for an interface that has no generated metadata and sends
 // wl_registry.bind through the runtime, so the dynamic new_id wire expansion
@@ -131,8 +109,8 @@ func bindRegistryGlobals(reg *Registry, globals []Global, typed map[string]typed
 				p, err = reg.Bind(g, g.Version)
 				if err == nil {
 					res.KnownGeneric++
-					if err := p.SetSink(bindDiscardSink{}); err != nil {
-						err = fmt.Errorf("set sink %s v%d: %w", g.Interface, g.Version, err)
+					if sinkErr := p.SetSink(bindDiscardSink{}); sinkErr != nil {
+						err = fmt.Errorf("set sink %s v%d: %w", g.Interface, g.Version, sinkErr)
 					}
 				}
 			}
@@ -207,8 +185,8 @@ func (bindDiscardSink) DispatchEvent(opcode uint16, args []Arg) error {
 func TestRegistryBindError(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 
 	reg, err := d.GetRegistry(&registryRecorder{})
 	if err != nil {
@@ -277,8 +255,8 @@ func ptr(s string) *string { return &s }
 func TestRawSkipMarkerOffDoesNotWeakenUnknownObjects(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	writeFrame(t, b, 0xFF000001, 0, appendU32(nil, 1))
 	if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
 		t.Fatalf("dispatch = %v, want ErrProtocolViolation", err)
@@ -293,8 +271,8 @@ func TestRawSkipMarkerOffDoesNotWeakenUnknownObjects(t *testing.T) {
 func TestRawBindWire(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	reg, _ := newRegistryForTest(t, d)
 
 	g := Global{Name: 77, Interface: "s05_unknown_interface", Version: 3}

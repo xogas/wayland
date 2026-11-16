@@ -40,7 +40,7 @@ func TestRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Skipf("no Wayland session: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() { _ = d.Close() })
 
 	var h registryRecorder
 	reg, err := d.GetRegistry(&h)
@@ -85,7 +85,7 @@ func TestBindVersions(t *testing.T) {
 	if err != nil {
 		t.Skipf("no Wayland session: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() { _ = d.Close() })
 
 	var h registryRecorder
 	reg, err := d.GetRegistry(&h)

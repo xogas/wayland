@@ -31,8 +31,8 @@ func TestWireRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pipe: %v", err)
 	}
-	defer r.Close()
-	defer w.Close()
+	t.Cleanup(func() { _ = r.Close() })
+	t.Cleanup(func() { _ = w.Close() })
 	s := "hi"
 	args := []Arg{
 		Int(-3),

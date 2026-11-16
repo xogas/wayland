@@ -14,8 +14,8 @@ import (
 func TestDispatchSerial(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_serial", 1,
 		[]Message{{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}},
 		[]Message{{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
@@ -81,8 +81,8 @@ func TestDispatchSerial(t *testing.T) {
 func TestConcurrentSend(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_concurrent", 1, []Message{
 		{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "worker", Type: ArgInt}, {Name: "seq", Type: ArgInt}}},
 	}, nil)
@@ -172,7 +172,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("blocked_dispatch", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer b.Close()
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_close", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		_ = newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error { return nil }})
@@ -199,7 +199,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("concurrent_close", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer b.Close()
+		t.Cleanup(func() { _ = b.Close() })
 		const goroutines = 8
 		errCh := make(chan error, goroutines)
 		var wg sync.WaitGroup
@@ -225,7 +225,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("concurrent_close_during_callback", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer b.Close()
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_close_callback", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		entered := make(chan struct{})
@@ -271,7 +271,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("reentrant_close", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer b.Close()
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_reentrant", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		var closeErr error
@@ -299,8 +299,8 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 func TestDispatchProtocolError(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_dispatch_error", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var calls int
@@ -351,7 +351,7 @@ func TestDispatchProtocolError(t *testing.T) {
 func TestConcurrentDispatch(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
+	t.Cleanup(func() { _ = d.Close() })
 	iface := testInterface("s03_concurrent_dispatch", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var active atomic.Int32
@@ -412,8 +412,8 @@ func TestConcurrentDispatch(t *testing.T) {
 func TestSendBlocking(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_send_blocking", 1, []Message{
 		{Name: "big", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 	}, nil)

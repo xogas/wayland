@@ -21,8 +21,8 @@ func newRegistryForTest(t *testing.T, d *Display) (*Registry, *Proxy) {
 func TestBindVersion(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	reg, _ := newRegistryForTest(t, d)
 
 	cases := []struct {
@@ -91,8 +91,8 @@ func parseBindFrame(t *testing.T, body []byte) (uint32, string, uint32, uint32) 
 func TestSinceGuard(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_since", 4, []Message{
 		{Name: "early", Since: 1},
 		{Name: "late", Since: 4},
@@ -122,8 +122,8 @@ func TestSinceGuard(t *testing.T) {
 func TestDynamicNewID(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	reg, regP := newRegistryForTest(t, d)
 
 	p, err := reg.Bind(Global{Name: 7, Interface: "wl_compositor", Version: 6}, 3)
@@ -158,8 +158,8 @@ func TestDynamicNewID(t *testing.T) {
 func TestDynamicNewIDUnknown(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	reg, _ := newRegistryForTest(t, d)
 
 	_, err := reg.Bind(Global{Name: 3, Interface: "s03_no_such_interface", Version: 1}, 1)
@@ -189,8 +189,8 @@ func (r *orderedRegistryRecorder) GlobalRemove(name uint32) {
 func TestRegistryEventOrder(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	p, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false)
 	if err != nil {
 		t.Fatalf("new registry: %v", err)

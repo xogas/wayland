@@ -8,8 +8,8 @@ import (
 func TestDestructorMarksDestroyPending(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 
 	iface := &Interface{
 		Name:    "test_destructor",
@@ -33,8 +33,8 @@ func TestDestructorMarksDestroyPending(t *testing.T) {
 func TestNonDestructorStaysAlive(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 
 	iface := &Interface{
 		Name:    "test_alive",

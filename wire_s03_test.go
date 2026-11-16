@@ -348,8 +348,8 @@ func TestWireMalformed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a, b := unixPair(t)
 			d := newDisplay(a)
-			defer d.Close()
-			defer b.Close()
+			t.Cleanup(func() { _ = d.Close() })
+			t.Cleanup(func() { _ = b.Close() })
 			writeRawHeader(t, b, 1, 0, tc.size)
 			if err := d.Dispatch(); !errors.Is(err, ErrMalformedMessage) {
 				t.Fatalf("dispatch = %v, want ErrMalformedMessage", err)
@@ -366,8 +366,8 @@ func TestWireFD(t *testing.T) {
 	t.Run("two_and_one", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_fd", 1, []Message{
 			{Name: "two", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}},
 			{Name: "one", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}}},
@@ -419,8 +419,8 @@ func TestWireFD(t *testing.T) {
 	t.Run("skipped_event_fd_closed", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_fd_event", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -448,8 +448,8 @@ func TestWireFD(t *testing.T) {
 	t.Run("destroy_pending_event_fd_closed", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_fd_pending", 1,
 			[]Message{{Name: "destroy", Since: 1, Destructor: true}},
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}}})
@@ -477,8 +477,8 @@ func TestWireFD(t *testing.T) {
 	t.Run("msg_ctrunc", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		d.p.conn.oobLen = 16
 		iface := testInterface("s03_fd_ctrunc", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}}})
@@ -502,8 +502,8 @@ func TestWireFD(t *testing.T) {
 	t.Run("partial_write_ancillary", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_fd_partial", 1, []Message{
 			{Name: "big", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}, {Name: "data", Type: ArgArray}}},
 		}, nil)
@@ -584,8 +584,8 @@ func TestWireInvalidNull(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a, b := unixPair(t)
 			d := newDisplay(a)
-			defer d.Close()
-			defer b.Close()
+			t.Cleanup(func() { _ = d.Close() })
+			t.Cleanup(func() { _ = b.Close() })
 			iface := testInterface("s03_null", 1, []Message{{Name: "msg", Since: 1, Args: []ArgSpec{spec}}}, nil)
 			p := newTestProxy(t, d, iface, 1, nil)
 			err := p.Send(0, arg)
@@ -677,8 +677,8 @@ func TestWireOversize(t *testing.T) {
 	t.Run("oversize", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_oversize", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 		}, nil)
@@ -692,8 +692,8 @@ func TestWireOversize(t *testing.T) {
 	t.Run("max_size", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
-		defer d.Close()
-		defer b.Close()
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
 		iface := testInterface("s03_oversize", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 		}, nil)

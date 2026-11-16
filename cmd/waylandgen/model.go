@@ -611,7 +611,7 @@ func assignPackageNames(pk *pkg) error {
 			}
 			if prev, ok := seen[i.GoName]; ok {
 				if fallback {
-					return inputError(i.Protocol.XML, i.Name, fmt.Errorf("Go type name %q collides with %s after full-name fallback", i.GoName, prev.Protocol.XML))
+					return inputError(i.Protocol.XML, i.Name, fmt.Errorf("go type name %q collides with %s after full-name fallback", i.GoName, prev.Protocol.XML))
 				}
 				fallback = true
 				break
@@ -696,7 +696,7 @@ func resolveArg(c *corpus, i *iface, m *msg, a *arg) error {
 			return inputError(path, field+".interface", fmt.Errorf("object request args require an interface"))
 		}
 	} else if a.Type == "new_id" {
-		if !(i.Name == "wl_registry" && m.Name == "bind" && i.Pkg.ImportPath == "") {
+		if i.Name != "wl_registry" || m.Name != "bind" || i.Pkg.ImportPath != "" {
 			return inputError(path, field+".interface", fmt.Errorf("dynamic new_id is only valid on wl_registry.bind"))
 		}
 		a.Dynamic = true

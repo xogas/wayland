@@ -23,8 +23,8 @@ func (s *countSink) DispatchEvent(uint16, []Arg) error {
 func TestRoundtripCancel(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	srv := newTestServer(b)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
@@ -122,8 +122,8 @@ func TestRoundtripCancel(t *testing.T) {
 func TestRoundtripCancelPreservesEvents(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 	iface := testInterface("s03_preserve", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var calls int

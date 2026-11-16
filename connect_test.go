@@ -55,7 +55,7 @@ func TestRegistrySwayRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Skipf("no Wayland session: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() { _ = d.Close() })
 	var h registryRecorder
 	if _, err := d.GetRegistry(&h); err != nil {
 		t.Fatalf("get_registry: %v", err)

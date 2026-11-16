@@ -11,6 +11,28 @@ import (
 	"time"
 )
 
+// unknownSkips reports how many events the length-based skip path consumed
+// for raw-bound objects.
+func (r *registryBindResult) unknownSkips() int {
+	n := 0
+	for _, b := range r.Binds {
+		n += int(b.Proxy.skippedEvents)
+	}
+	return n
+}
+
+// unknownServerSkips reports how many events or delete_id messages for
+// unknown child objects the test-only broad skip path consumed.
+func (r *registryBindResult) unknownServerSkips() int {
+	if len(r.Binds) == 0 {
+		return 0
+	}
+	c := r.Binds[0].Proxy.conn
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.unknownServerSkips
+}
+
 // typedBinders exercises the generated Bind<T> helpers for a practical subset
 // of known globals; the rest of the known globals use the public generic
 // Registry.Bind path.
@@ -77,7 +99,7 @@ func TestRegistryBind(t *testing.T) {
 	if err != nil {
 		t.Skipf("no Wayland session: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() { _ = d.Close() })
 
 	var h registryRecorder
 	reg, err := d.GetRegistry(&h)
@@ -221,8 +243,8 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 func testRegistryBindUnknownEventsFake(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
-	defer d.Close()
-	defer b.Close()
+	t.Cleanup(func() { _ = d.Close() })
+	t.Cleanup(func() { _ = b.Close() })
 
 	serverErr := make(chan error, 1)
 	go serveFakeRegistryBindUnknown(b, serverErr)
