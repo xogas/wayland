@@ -61,14 +61,12 @@ func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("raw bind %s v%d: %w", g.Interface, g.Version, err)
 	}
-	hooks := installTestHooks(c)
-	c.mu.Lock()
-	hooks.rawNames[p.ID()] = g.Interface
+	installTestHooks(c)
+	c.testSetRawName(p.ID(), g.Interface)
 	// Unknown interfaces may create server-owned child objects whose events
 	// the runtime cannot decode without a signature. Enable the test-only
 	// broad skip for those IDs; public dispatch keeps E-07.
-	hooks.skipUnknownServer = true
-	c.mu.Unlock()
+	c.testSetSkipUnknownServer(true)
 	if err := reg.Proxy().Send(0, Uint(g.Name), NewID(p.ID())); err != nil {
 		_ = p.Release()
 		return nil, fmt.Errorf("raw bind %s v%d: %w", g.Interface, g.Version, err)
@@ -265,6 +263,9 @@ func TestRawSkipMarkerOffDoesNotWeakenUnknownObjects(t *testing.T) {
 	if !d.p.conn.isClosed() {
 		t.Fatal("connection not closed after unknown server object")
 	}
+	if got := d.p.conn.testUnknownServerSkips(); got != 0 {
+		t.Fatalf("default dispatch counted %d unknown-server skips, want 0", got)
+	}
 }
 
 // TestRawBindWire checks the test-only raw bind sends name / interface /
@@ -282,9 +283,7 @@ func TestRawBindWire(t *testing.T) {
 		t.Fatalf("raw bind: %v", err)
 	}
 	c := d.p.conn
-	c.mu.Lock()
-	rawName := c.hooks.rawNames[p.ID()]
-	c.mu.Unlock()
+	rawName := c.testRawName(p.ID())
 	if rawName != g.Interface || p.Version() != g.Version {
 		t.Fatalf("raw object = %q v%d", rawName, p.Version())
 	}

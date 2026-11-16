@@ -480,7 +480,7 @@ func TestWireFD(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		installTestHooks(d.p.conn).oobLen = 16
+		d.p.conn.testSetOOBLen(16)
 		iface := testInterface("s03_fd_ctrunc", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)

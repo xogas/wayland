@@ -1,22 +1,9 @@
 package wayland
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"time"
 )
-
-type roundtripHandler struct {
-	done chan struct{}
-}
-
-func (h *roundtripHandler) Done(uint32) {
-	select {
-	case h.done <- struct{}{}:
-	default:
-	}
-}
 
 // Dispatch reads and dispatches one wire message.
 func (d *Display) Dispatch() error {
@@ -33,105 +20,6 @@ func (d *Display) Dispatch() error {
 	return d.dispatchOne()
 }
 
-// Roundtrip sends wl_display.sync and dispatches until the callback is done.
-// Cancellation wakes a blocked read with a read deadline; the deadline is a
-// soft timeout that leaves the connection usable.
-func (d *Display) Roundtrip(ctx context.Context) error {
-	if ctx == nil {
-		return fmt.Errorf("roundtrip: nil context: %w", ErrInvalidArgument)
-	}
-	c := d.p.conn
-	if err := c.beginDispatch(); err != nil {
-		return fmt.Errorf("roundtrip: %w", err)
-	}
-	defer c.dispatchWG.Done()
-	c.dispatchMu.Lock()
-	defer c.dispatchMu.Unlock()
-	if c.isClosed() {
-		return fmt.Errorf("roundtrip: %w", ErrClosed)
-	}
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	done := make(chan struct{}, 1)
-	cb, err := d.Sync(&roundtripHandler{done: done})
-	if err != nil {
-		return err
-	}
-
-	// Install the cancellation hook before the first blocking read. The
-	// callback sets a deadline; readMore turns that deadline into
-	// errSoftTimeout instead of closing the connection.
-	c.softTimeout = true
-	c.roundtripCanceled.Store(false)
-	cancelRead := make(chan struct{})
-	uc := c.uc
-	stop := context.AfterFunc(ctx, func() {
-		// Mark the callback before waking the reader so an event that is
-		// already in flight is discarded rather than delivered, and flag
-		// the cancellation so a frame that arrives after this point is
-		// unread for the next Dispatch.
-		c.markTombstone(cb.Proxy())
-		c.roundtripCanceled.Store(true)
-		_ = uc.SetReadDeadline(time.Now())
-		close(cancelRead)
-	})
-	defer func() {
-		if !stop() {
-			<-cancelRead
-		}
-		c.roundtripCanceled.Store(false)
-		_ = uc.SetReadDeadline(time.Time{})
-		c.softTimeout = false
-	}()
-
-	for {
-		if err := ctx.Err(); err != nil {
-			c.markTombstone(cb.Proxy())
-			return err
-		}
-		err := d.dispatchOne()
-		if errors.Is(err, errSoftTimeout) {
-			c.markTombstone(cb.Proxy())
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			return fmt.Errorf("roundtrip: %w", ErrIO)
-		}
-		if err != nil {
-			return err
-		}
-		select {
-		case <-done:
-			return nil
-		default:
-		}
-	}
-}
-
-// Close closes the connection. It closes the socket first, then waits for an
-// in-flight Dispatch or Roundtrip to exit. Calling Close from a callback is an
-// invalid reentrant operation and returns ErrInvalidOperation without waiting.
-func (d *Display) Close() error {
-	c := d.p.conn
-	c.closeMu.Lock()
-	defer c.closeMu.Unlock()
-	if c.callbackActive.Load() {
-		// Close from a callback, or concurrent with one, is illegal. Close
-		// the socket so the dispatch loop stops, but never wait on the
-		// dispatchMu held by the callback.
-		_ = c.close()
-		return ErrInvalidOperation
-	}
-	var err error
-	if !c.isClosed() {
-		err = c.close()
-	}
-	// Even a repeat Close waits for a dispatch that is still unwinding.
-	c.dispatchWG.Wait()
-	return err
-}
-
 func (d *Display) dispatchOne() error {
 	c := d.p.conn
 	objectID, opcode, body, err := c.readFrame()
@@ -145,8 +33,8 @@ func (d *Display) dispatchOne() error {
 		_ = c.close()
 		return err
 	}
-	if c.roundtripCanceled.Load() {
-		c.unreadFrame(objectID, opcode, body)
+	if st := c.roundtrip; st != nil && st.canceled.Load() {
+		st.unread(c, objectID, opcode, body)
 		return errSoftTimeout
 	}
 	if objectID == 1 {
@@ -154,34 +42,23 @@ func (d *Display) dispatchOne() error {
 	}
 	p := c.lookup(objectID)
 	if p == nil {
-		c.mu.Lock()
-		if c.hooks != nil && c.hooks.skipUnknownServer && objectID >= serverIDMin {
-			c.hooks.unknownServerSkips++
-			c.mu.Unlock()
-			// A child object created by a raw-bound unknown interface. Its
-			// interface signature is unavailable, so the already-consumed
-			// frame is skipped by length. This test-only path is enabled by
-			// bindUnknownRaw; public dispatch still reports E-07.
+		// A child object created by a raw-bound unknown interface has no
+		// signature, so the test-only hook consumes the already-read frame.
+		// Public dispatch still reports E-07.
+		if c.testSkipUnknownServer(objectID) {
 			return nil
 		}
-		c.mu.Unlock()
 		_ = c.close()
 		return fmt.Errorf("event object %d: %w", objectID, ErrProtocolViolation)
 	}
-	c.mu.Lock()
-	raw := c.hooks != nil && c.hooks.rawNames[objectID] != ""
-	if raw {
-		c.hooks.skippedEvents[objectID]++
-	}
-	c.mu.Unlock()
-	if raw {
-		// Test-only raw bind: there is no generated signature for this
-		// interface, so the event body cannot be decoded. The frame was
-		// already consumed by readFrame, which makes skipping by message
-		// length safe for the connection. Descriptors carried by such an
-		// event cannot be identified without a signature; the runtime
-		// documents this limitation and tests avoid fd events on raw
-		// objects.
+	// Test-only raw bind: there is no generated signature for this
+	// interface, so the event body cannot be decoded. The frame was already
+	// consumed by readFrame, which makes skipping by message length safe for
+	// the connection. Descriptors carried by such an event cannot be
+	// identified without a signature; the runtime documents this limitation
+	// and tests avoid fd events on raw objects.
+	if c.testRawName(objectID) != "" {
+		c.testNoteSkipped(objectID)
 		return nil
 	}
 	if p.iface == nil {

@@ -6,31 +6,6 @@ import (
 	"syscall"
 )
 
-func closeArgFDs(args []Arg) {
-	for _, arg := range args {
-		if arg.typ == ArgFD && arg.fd >= 0 {
-			_ = syscall.Close(arg.fd)
-		}
-	}
-}
-
-func closeOOBFds(oob []byte) {
-	if len(oob) == 0 {
-		return
-	}
-	msgs, err := syscall.ParseSocketControlMessage(oob)
-	if err != nil {
-		return
-	}
-	for i := range msgs {
-		rights, err := syscall.ParseUnixRights(&msgs[i])
-		if err != nil {
-			continue
-		}
-		closeFDs(rights)
-	}
-}
-
 func encodeRequest(p *Proxy, opcode uint16, spec Message, args []Arg) ([]byte, []int, error) {
 	if p == nil || p.iface == nil {
 		return nil, nil, fmt.Errorf("encode: nil object: %w", ErrInvalidArgument)

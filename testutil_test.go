@@ -244,26 +244,13 @@ func newTestProxy(t *testing.T, d *Display, iface *Interface, version uint32, si
 // installTestHooks installs the test-only conn hooks with initialized counters.
 // Production paths leave c.hooks nil.
 func installTestHooks(c *conn) *testHooks {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.hooks == nil {
-		c.hooks = &testHooks{
-			rawNames:      make(map[uint32]string),
-			skippedEvents: make(map[uint32]uint32),
-		}
-	}
-	return c.hooks
+	return c.testInstallHooks()
 }
 
 // skippedEventCount reports how many raw-object events the length-based skip
 // path consumed for id.
 func skippedEventCount(c *conn, id uint32) uint32 {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.hooks == nil {
-		return 0
-	}
-	return c.hooks.skippedEvents[id]
+	return c.testSkippedEventCount(id)
 }
 
 type funcSink struct {

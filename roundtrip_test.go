@@ -135,14 +135,17 @@ func TestRoundtripCancelPreservesEvents(t *testing.T) {
 
 	// Simulate the window between a canceled Roundtrip reading a frame and
 	// returning: the frame must be put back, not delivered.
-	d.p.conn.roundtripCanceled.Store(true)
+	c := d.p.conn
+	st := &roundtripState{softTimeout: true}
+	st.canceled.Store(true)
+	c.roundtrip = st
 	if err := d.Dispatch(); !errors.Is(err, errSoftTimeout) {
 		t.Fatalf("dispatch during cancellation = %v, want errSoftTimeout", err)
 	}
+	c.roundtrip = nil
 	if calls != 0 {
 		t.Fatalf("event delivered during cancellation: %d", calls)
 	}
-	d.p.conn.roundtripCanceled.Store(false)
 	if err := d.Dispatch(); err != nil {
 		t.Fatalf("dispatch after cancellation: %v", err)
 	}

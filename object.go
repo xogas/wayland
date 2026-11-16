@@ -105,23 +105,28 @@ func (c *conn) release(p *Proxy) error {
 // wl_callback that received done) are eligible.
 func (c *conn) deleteID(id uint32) error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	p, ok := c.objects[id]
 	if !ok {
-		if c.hooks != nil && c.hooks.skipUnknownServer && id >= serverIDMin {
-			c.hooks.unknownServerSkips++
+		c.mu.Unlock()
+		// The test-only broad skip consumes delete_id for an unknown child
+		// object created by a raw-bound interface; testSkipUnknownServer
+		// takes c.mu itself.
+		if c.testSkipUnknownServer(id) {
 			return nil
 		}
 		return fmt.Errorf("delete_id %d: %w", id, ErrProtocolViolation)
 	}
 	if !p.serverOwned && p.state != stateDestroyPending {
-		return fmt.Errorf("delete_id %d for live %s: %w", id, p.iface.Name, ErrProtocolViolation)
+		name := p.iface.Name
+		c.mu.Unlock()
+		return fmt.Errorf("delete_id %d for live %s: %w", id, name, ErrProtocolViolation)
 	}
 	delete(c.objects, id)
 	p.state = stateDestroyed
 	if id >= 1 && id <= clientIDMax {
 		c.free = append(c.free, id)
 	}
+	c.mu.Unlock()
 	return nil
 }
 

@@ -28,12 +28,7 @@ func (r *registryBindResult) unknownServerSkips() int {
 		return 0
 	}
 	c := r.Binds[0].Proxy.conn
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.hooks == nil {
-		return 0
-	}
-	return c.hooks.unknownServerSkips
+	return c.testUnknownServerSkips()
 }
 
 // typedBinders exercises the generated Bind<T> helpers for a practical subset
