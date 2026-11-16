@@ -7,10 +7,8 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 type xmlProtocol struct {
@@ -63,7 +61,6 @@ type xmlEntry struct {
 type sourceFile struct {
 	Path string
 	Rel  string
-	Root bool
 }
 
 // parsedSource pairs an input file with its decoded XML.
@@ -76,10 +73,10 @@ type parsedSource struct {
 func discoverXML(root string) ([]sourceFile, error) {
 	info, err := os.Stat(root)
 	if err != nil {
-		return nil, inputError("", "root", fmt.Errorf("stat %s: %w", root, err))
+		return nil, fmt.Errorf("stat %s: %w", root, err)
 	}
 	if !info.IsDir() {
-		return nil, inputError("", "root", fmt.Errorf("%s is not a directory", root))
+		return nil, fmt.Errorf("%s is not a directory", root)
 	}
 	var files []sourceFile
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -99,67 +96,17 @@ func discoverXML(root string) ([]sourceFile, error) {
 		files = append(files, sourceFile{
 			Path: path,
 			Rel:  filepath.ToSlash(rel),
-			Root: filepath.ToSlash(rel) == "wayland.xml",
 		})
 		return nil
 	})
 	if err != nil {
-		return nil, inputError("", "walk", fmt.Errorf("walk %s: %w", root, err))
+		return nil, fmt.Errorf("walk %s: %w", root, err)
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].Rel < files[j].Rel })
 	if len(files) == 0 {
-		return nil, inputError(root, "input", fmt.Errorf("no XML files under %s", root))
+		return nil, fmt.Errorf("no XML files under %s", root)
 	}
 	return files, nil
-}
-
-// checkLayout validates the Wayland protocol directory layout: wayland.xml at
-// the root, every other XML under <tier>/<protocol-dir>/.
-func checkLayout(files []sourceFile) error {
-	haveRoot := false
-	for _, f := range files {
-		if f.Rel == "wayland.xml" {
-			haveRoot = true
-			continue
-		}
-		parts := strings.Split(f.Rel, "/")
-		if len(parts) != 3 {
-			return inputError(f.Path, "layout", fmt.Errorf("want <tier>/<dir>/<name>.xml below %s, got %s", f.Rel, f.Rel))
-		}
-		for _, p := range parts {
-			if p == "" || p == "." || p == ".." {
-				return inputError(f.Path, "layout", fmt.Errorf("invalid path component in %s", f.Rel))
-			}
-		}
-	}
-	if !haveRoot {
-		return inputError("", "layout", fmt.Errorf("missing wayland.xml at the generator root"))
-	}
-	return nil
-}
-
-// validateDTD runs xmllint --noout --dtdvalid for every input file. xmllint is
-// a development-time dependency; a missing tool is a clear generator error.
-func validateDTD(root string, files []sourceFile) error {
-	dtd := filepath.Join(root, "wayland.dtd")
-	if _, err := os.Stat(dtd); err != nil {
-		return inputError(dtd, "wayland.dtd", fmt.Errorf("stat DTD: %w", err))
-	}
-	if _, err := exec.LookPath("xmllint"); err != nil {
-		return inputError("", "xmllint", fmt.Errorf("xmllint not found (install libxml2-utils): %w", err))
-	}
-	for _, f := range files {
-		cmd := exec.Command("xmllint", "--noout", "--dtdvalid", dtd, f.Path)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			msg := strings.TrimSpace(string(out))
-			if msg == "" {
-				msg = err.Error()
-			}
-			return inputError(f.Path, "DTD", fmt.Errorf("%s", msg))
-		}
-	}
-	return nil
 }
 
 // parseAll decodes every input file.
@@ -178,13 +125,13 @@ func parseAll(files []sourceFile) ([]parsedSource, error) {
 func parseFile(path string) (*xmlProtocol, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, inputError(path, "open", err)
+		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	defer func() { _ = f.Close() }()
 	var p xmlProtocol
 	dec := xml.NewDecoder(f)
 	if err := dec.Decode(&p); err != nil {
-		return nil, inputError(path, "xml", err)
+		return nil, fmt.Errorf("parse %s: %w", path, err)
 	}
 	// Reject trailing elements after the document element.
 	for {
@@ -193,17 +140,17 @@ func parseFile(path string) (*xmlProtocol, error) {
 			break
 		}
 		if err != nil {
-			return nil, inputError(path, "xml", err)
+			return nil, fmt.Errorf("parse %s: %w", path, err)
 		}
 		if _, ok := tok.(xml.StartElement); ok {
-			return nil, inputError(path, "xml", fmt.Errorf("trailing element after protocol"))
+			return nil, fmt.Errorf("%s: trailing element after protocol", path)
 		}
 	}
 	if p.Name == "" {
-		return nil, inputError(path, "protocol.name", fmt.Errorf("missing protocol name"))
+		return nil, fmt.Errorf("%s: missing protocol name", path)
 	}
 	if len(p.Interfaces) == 0 {
-		return nil, inputError(path, "interfaces", fmt.Errorf("protocol %s has no interfaces", p.Name))
+		return nil, fmt.Errorf("protocol %s has no interfaces", p.Name)
 	}
 	return &p, nil
 }

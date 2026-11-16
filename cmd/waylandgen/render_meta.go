@@ -52,7 +52,7 @@ func renderRootMeta(c *corpus) ([]byte, error) {
 	b.WriteString("}\n")
 	src, err := format.Source([]byte(b.String()))
 	if err != nil {
-		return nil, inputError("", "interfaces_gen.go", fmt.Errorf("gofmt generated source: %w", err))
+		return nil, fmt.Errorf("gofmt generated source: %w", err)
 	}
 	return src, nil
 }

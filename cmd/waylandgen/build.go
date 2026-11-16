@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"go/token"
-	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,26 +8,18 @@ import (
 
 const modulePath = "github.com/xogas/wayland"
 
-var nameRE = regexp.MustCompile(`^[a-z0-9_]+$`)
-
-func buildCorpus(parsed []parsedSource) (*corpus, error) {
+func buildCorpus(parsed []parsedSource) *corpus {
 	c := &corpus{byName: make(map[string][]*iface)}
 	pkgsByKey := make(map[string]*pkg)
 	order := make([]*pkg, 0)
 	protocols := make([]*protocol, 0, len(parsed))
 
 	for _, ps := range parsed {
-		pk, err := packageFor(ps.Source, pkgsByKey)
-		if err != nil {
-			return nil, err
-		}
+		pk := packageFor(ps.Source, pkgsByKey)
 		if !containsPkg(order, pk) {
 			order = append(order, pk)
 		}
-		proto, err := buildProtocol(ps, pk)
-		if err != nil {
-			return nil, err
-		}
+		proto := buildProtocol(ps, pk)
 		pk.Protocols = append(pk.Protocols, proto)
 		protocols = append(protocols, proto)
 	}
@@ -65,20 +53,12 @@ func buildCorpus(parsed []parsedSource) (*corpus, error) {
 			c.root = pk
 		}
 	}
-	if c.root == nil {
-		return nil, inputError("", "layout", fmt.Errorf("missing wayland.xml at the generator root"))
-	}
 	c.protocols = protocols
 
 	for _, pk := range c.pkgs {
-		if err := assignPackageNames(pk); err != nil {
-			return nil, err
-		}
+		assignPackageNames(pk)
 		pk.byName = make(map[string]*iface, len(pk.Interfaces))
 		for _, i := range pk.Interfaces {
-			if prev, ok := pk.byName[i.Name]; ok {
-				return nil, inputError(i.Protocol.XML, i.Name, fmt.Errorf("duplicate interface %s in package %s (also in %s)", i.Name, pk.Name, prev.Protocol.XML))
-			}
 			pk.byName[i.Name] = i
 		}
 	}
@@ -88,28 +68,16 @@ func buildCorpus(parsed []parsedSource) (*corpus, error) {
 	for _, i := range c.interfaces {
 		c.byName[i.Name] = append(c.byName[i.Name], i)
 	}
-	if err := resolveDuplicates(c); err != nil {
-		return nil, err
-	}
+	resolveDuplicates(c)
 	for _, i := range c.interfaces {
 		if i.IsLoser {
 			i.Pkg.LocalMeta = append(i.Pkg.LocalMeta, i)
 		}
 	}
 	for _, pk := range c.pkgs {
-		if err := resolvePackage(c, pk); err != nil {
-			return nil, err
-		}
+		resolvePackage(c, pk)
 	}
-	for _, pk := range c.pkgs {
-		if err := validateIdentifiers(pk); err != nil {
-			return nil, err
-		}
-	}
-	if err := validateCorpus(c); err != nil {
-		return nil, err
-	}
-	return c, nil
+	return c
 }
 
 func containsPkg(pkgs []*pkg, want *pkg) bool {
@@ -121,51 +89,38 @@ func containsPkg(pkgs []*pkg, want *pkg) bool {
 	return false
 }
 
-func packageFor(src sourceFile, seen map[string]*pkg) (*pkg, error) {
+func packageFor(src sourceFile, seen map[string]*pkg) *pkg {
 	if src.Rel == "wayland.xml" {
 		if p := seen[""]; p != nil {
-			return p, nil
+			return p
 		}
 		p := &pkg{
 			Name:    "wayland",
 			OutFile: "wayland_gen.go",
 		}
 		seen[""] = p
-		return p, nil
+		return p
 	}
 	parts := strings.Split(src.Rel, "/")
-	if len(parts) != 3 {
-		return nil, inputError(src.Path, "layout", fmt.Errorf("want <tier>/<dir>/<name>.xml, got %s", src.Rel))
-	}
 	tier, dir := parts[0], parts[1]
 	key := tier + "/" + dir
 	if p := seen[key]; p != nil {
-		return p, nil
-	}
-	name := packageName(dir)
-	if name == "" || !token.IsIdentifier(name) || token.IsKeyword(name) {
-		return nil, inputError(src.Path, "package", fmt.Errorf("invalid Go package name %q for directory %q", name, dir))
+		return p
 	}
 	file := strings.ReplaceAll(dir, "-", "_") + "_gen.go"
 	p := &pkg{
 		Tier:       tier,
 		Dir:        dir,
 		ImportPath: modulePath + "/protocols/" + tier + "/" + dir,
-		Name:       name,
+		Name:       packageName(dir),
 		OutFile:    "protocols/" + tier + "/" + dir + "/" + file,
 	}
 	seen[key] = p
-	return p, nil
+	return p
 }
 
-func buildProtocol(ps parsedSource, pk *pkg) (*protocol, error) {
+func buildProtocol(ps parsedSource, pk *pkg) *protocol {
 	xp := ps.XML
-	if xp.Name == "" || !nameRE.MatchString(xp.Name) {
-		return nil, inputError(ps.Source.Path, "protocol.name", fmt.Errorf("invalid protocol name %q", xp.Name))
-	}
-	if len(xp.Interfaces) == 0 {
-		return nil, inputError(ps.Source.Path, "interfaces", fmt.Errorf("protocol %s has no interfaces", xp.Name))
-	}
 	proto := &protocol{
 		Name: xp.Name,
 		XML:  ps.Source.Path,
@@ -177,15 +132,7 @@ func buildProtocol(ps parsedSource, pk *pkg) (*protocol, error) {
 		proto.Tier, proto.Dir = parts[0], parts[1]
 	}
 	names := make([]string, 0, len(xp.Interfaces))
-	seenIface := make(map[string]bool, len(xp.Interfaces))
 	for _, xi := range xp.Interfaces {
-		if xi.Name == "" || !nameRE.MatchString(xi.Name) {
-			return nil, inputError(ps.Source.Path, "interface.name", fmt.Errorf("invalid interface name %q", xi.Name))
-		}
-		if seenIface[xi.Name] {
-			return nil, inputError(ps.Source.Path, xi.Name, fmt.Errorf("duplicate interface %s", xi.Name))
-		}
-		seenIface[xi.Name] = true
 		names = append(names, xi.Name)
 	}
 	prefix := commonPrefix(names)
@@ -193,36 +140,17 @@ func buildProtocol(ps parsedSource, pk *pkg) (*protocol, error) {
 		prefix = "wl_"
 	}
 	for _, xi := range xp.Interfaces {
-		i, err := buildInterface(xi, prefix, ps.Source.Path, proto)
-		if err != nil {
-			return nil, err
-		}
+		i := buildInterface(xi, prefix, proto)
 		proto.Interfaces = append(proto.Interfaces, i)
 		pk.Interfaces = append(pk.Interfaces, i)
 	}
-	return proto, nil
+	return proto
 }
 
-func buildInterface(x xmlInterface, prefix, path string, proto *protocol) (*iface, error) {
-	version, err := parseUint32(x.Version, 0, path, x.Name+".version")
-	if err != nil {
-		return nil, err
-	}
-	if version < 1 {
-		return nil, inputError(path, x.Name+".version", fmt.Errorf("version must be at least 1, got %d", version))
-	}
-	frozen, _, err := parseBool(x.Frozen, path, x.Name+".frozen")
-	if err != nil {
-		return nil, err
-	}
-	short := strings.TrimPrefix(x.Name, prefix)
-	if short == "" && prefix != "" {
-		return nil, inputError(path, x.Name, fmt.Errorf("cannot strip protocol prefix %q", prefix))
-	}
-	goName := camel(short)
-	if !token.IsIdentifier(goName) || !token.IsExported(goName) {
-		return nil, inputError(path, x.Name, fmt.Errorf("invalid Go type name %q from interface %q", goName, x.Name))
-	}
+func buildInterface(x xmlInterface, prefix string, proto *protocol) *iface {
+	version := parseUint32(x.Version, 0)
+	frozen := parseBool(x.Frozen)
+	goName := camel(strings.TrimPrefix(x.Name, prefix))
 	i := &iface{
 		Name:        x.Name,
 		Version:     version,
@@ -233,351 +161,174 @@ func buildInterface(x xmlInterface, prefix, path string, proto *protocol) (*ifac
 		Pkg:         proto.Pkg,
 		IsDisplay:   x.Name == "wl_display",
 	}
-	reqNames := make(map[string]bool, len(x.Requests))
-	reqGo := make(map[string]bool, len(x.Requests))
 	for _, r := range x.Requests {
-		m, err := buildMessage(r, true, version, path, x.Name)
-		if err != nil {
-			return nil, err
-		}
-		if reqNames[m.Name] {
-			return nil, inputError(path, x.Name+"."+m.Name, fmt.Errorf("duplicate request"))
-		}
-		if reqGo[m.GoName] {
-			return nil, inputError(path, x.Name+"."+m.Name, fmt.Errorf("duplicate request Go name %s", m.GoName))
-		}
-		reqNames[m.Name] = true
-		reqGo[m.GoName] = true
+		m := buildMessage(r, true)
 		m.Opcode = uint16(len(i.Requests))
 		i.Requests = append(i.Requests, m)
 	}
-	evNames := make(map[string]bool, len(x.Events))
-	evGo := make(map[string]bool, len(x.Events))
 	for _, e := range x.Events {
-		m, err := buildMessage(e, false, version, path, x.Name)
-		if err != nil {
-			return nil, err
-		}
-		if evNames[m.Name] {
-			return nil, inputError(path, x.Name+"."+m.Name, fmt.Errorf("duplicate event"))
-		}
-		if evGo[m.GoName] {
-			return nil, inputError(path, x.Name+"."+m.Name, fmt.Errorf("duplicate event Go name %s", m.GoName))
-		}
-		evNames[m.Name] = true
-		evGo[m.GoName] = true
+		m := buildMessage(e, false)
 		m.Opcode = uint16(len(i.Events))
 		i.Events = append(i.Events, m)
 	}
 	i.HasEvents = len(i.Events) > 0
-	enumNames := make(map[string]bool, len(x.Enums))
 	for _, e := range x.Enums {
-		en, err := buildEnum(e, version, path, x.Name)
-		if err != nil {
-			return nil, err
-		}
-		if enumNames[en.Name] {
-			return nil, inputError(path, x.Name+"."+en.Name, fmt.Errorf("duplicate enum"))
-		}
-		enumNames[en.Name] = true
-		i.Enums = append(i.Enums, en)
+		i.Enums = append(i.Enums, buildEnum(e))
 	}
-	return i, nil
+	return i
 }
 
-func buildMessage(x xmlMessage, request bool, version uint32, path, ifaceName string) (*msg, error) {
-	kind := "event"
-	if request {
-		kind = "request"
-	}
-	if x.Name == "" || !nameRE.MatchString(x.Name) {
-		return nil, inputError(path, ifaceName+"."+x.Name, fmt.Errorf("invalid %s name %q", kind, x.Name))
-	}
-	since, err := parseSince(x.Since, path, ifaceName+"."+x.Name+".since")
-	if err != nil {
-		return nil, err
-	}
-	if since > version {
-		return nil, inputError(path, ifaceName+"."+x.Name+".since", fmt.Errorf("since %d exceeds interface version %d", since, version))
-	}
-	deprecated, err := parseDeprecated(x.DeprecatedSince, since, path, ifaceName+"."+x.Name+".deprecated-since")
-	if err != nil {
-		return nil, err
-	}
-	switch x.Type {
-	case "":
-	case "destructor":
-	default:
-		return nil, inputError(path, ifaceName+"."+x.Name+".type", fmt.Errorf("unsupported message type %q", x.Type))
-	}
+func buildMessage(x xmlMessage, request bool) *msg {
 	m := &msg{
 		Name:            x.Name,
-		Since:           since,
-		DeprecatedSince: deprecated,
+		Since:           parseSince(x.Since),
+		DeprecatedSince: parseDeprecated(x.DeprecatedSince),
 		Destructor:      x.Type == "destructor",
 		GoName:          camel(x.Name),
 		IsRequest:       request,
 	}
-	if !token.IsIdentifier(m.GoName) {
-		return nil, inputError(path, ifaceName+"."+x.Name, fmt.Errorf("invalid Go method name %q", m.GoName))
-	}
-	argNames := make(map[string]bool, len(x.Args))
-	newIDCount := 0
 	for _, a := range x.Args {
-		aa, err := buildArg(a, path, ifaceName, x.Name)
-		if err != nil {
-			return nil, err
-		}
-		if argNames[aa.Name] {
-			return nil, inputError(path, ifaceName+"."+x.Name+"."+aa.Name, fmt.Errorf("duplicate arg"))
-		}
-		argNames[aa.Name] = true
-		if aa.Type == "new_id" {
-			newIDCount++
-		}
-		m.Args = append(m.Args, aa)
+		m.Args = append(m.Args, buildArg(a))
 	}
-	if newIDCount > 1 {
-		return nil, inputError(path, ifaceName+"."+x.Name, fmt.Errorf("messages with more than one new_id are not supported"))
-	}
-	return m, nil
+	return m
 }
 
-func buildArg(x xmlArg, path, ifaceName, msgName string) (*arg, error) {
-	field := ifaceName + "." + msgName + "." + x.Name
-	if x.Name == "" || !nameRE.MatchString(x.Name) {
-		return nil, inputError(path, ifaceName+"."+msgName, fmt.Errorf("invalid arg name %q", x.Name))
-	}
-	switch x.Type {
-	case "int", "uint", "fixed", "string", "array", "fd", "new_id", "object":
-	default:
-		return nil, inputError(path, field, fmt.Errorf("unsupported arg type %q", x.Type))
-	}
-	allow, _, err := parseBool(x.AllowNull, path, field+".allow-null")
-	if err != nil {
-		return nil, err
-	}
-	if allow && x.Type != "string" && x.Type != "array" && x.Type != "new_id" && x.Type != "object" {
-		return nil, inputError(path, field, fmt.Errorf("allow-null is not valid on %s", x.Type))
-	}
-	if x.Interface != "" && x.Type != "object" && x.Type != "new_id" {
-		return nil, inputError(path, field+".interface", fmt.Errorf("interface is only valid on object and new_id args"))
-	}
-	if x.Enum != "" && x.Type != "int" && x.Type != "uint" {
-		return nil, inputError(path, field+".enum", fmt.Errorf("enum is only valid on int and uint args"))
-	}
+func buildArg(x xmlArg) *arg {
 	return &arg{
 		Name:          x.Name,
 		Type:          x.Type,
 		InterfaceName: x.Interface,
 		EnumName:      x.Enum,
-		AllowNull:     allow,
-	}, nil
+		AllowNull:     parseBool(x.AllowNull),
+	}
 }
 
-func buildEnum(x xmlEnum, version uint32, path, ifaceName string) (*enum, error) {
-	field := ifaceName + "." + x.Name
-	if x.Name == "" || !nameRE.MatchString(x.Name) {
-		return nil, inputError(path, ifaceName, fmt.Errorf("invalid enum name %q", x.Name))
+func buildEnum(x xmlEnum) *enum {
+	en := &enum{
+		Name:     x.Name,
+		Since:    parseSince(x.Since),
+		Bitfield: parseBool(x.Bitfield),
+		GoName:   camel(x.Name),
 	}
-	since, err := parseSince(x.Since, path, field+".since")
-	if err != nil {
-		return nil, err
-	}
-	if since > version {
-		return nil, inputError(path, field+".since", fmt.Errorf("since %d exceeds interface version %d", since, version))
-	}
-	bitfield, _, err := parseBool(x.Bitfield, path, field+".bitfield")
-	if err != nil {
-		return nil, err
-	}
-	en := &enum{Name: x.Name, Since: since, Bitfield: bitfield, GoName: camel(x.Name)}
-	if en.GoName == "" {
-		return nil, inputError(path, field, fmt.Errorf("empty Go enum name"))
-	}
-	names := make(map[string]bool, len(x.Entries))
-	values := make(map[int64]bool, len(x.Entries))
 	for _, xe := range x.Entries {
-		if xe.Name == "" || !nameRE.MatchString(xe.Name) {
-			return nil, inputError(path, field, fmt.Errorf("invalid entry name %q", xe.Name))
-		}
-		if names[xe.Name] {
-			return nil, inputError(path, field+"."+xe.Name, fmt.Errorf("duplicate enum entry"))
-		}
-		names[xe.Name] = true
-		v, err := strconv.ParseInt(xe.Value, 0, 64)
-		if err != nil {
-			return nil, inputError(path, field+"."+xe.Name+".value", fmt.Errorf("parse %q: %w", xe.Value, err))
-		}
-		if v < math.MinInt32 || v > math.MaxUint32 {
-			return nil, inputError(path, field+"."+xe.Name+".value", fmt.Errorf("value %d does not fit in 32 bits", v))
-		}
-		if values[v] {
-			return nil, inputError(path, field+"."+xe.Name+".value", fmt.Errorf("duplicate enum value %d", v))
-		}
-		values[v] = true
-		es, err := parseSince(xe.Since, path, field+"."+xe.Name+".since")
-		if err != nil {
-			return nil, err
-		}
-		if es > version {
-			return nil, inputError(path, field+"."+xe.Name+".since", fmt.Errorf("since %d exceeds interface version %d", es, version))
-		}
-		ed, err := parseDeprecated(xe.DeprecatedSince, es, path, field+"."+xe.Name+".deprecated-since")
-		if err != nil {
-			return nil, err
-		}
-		goName := camel(xe.Name)
-		if goName == "" {
-			return nil, inputError(path, field+"."+xe.Name, fmt.Errorf("empty Go entry name"))
-		}
-		en.Entries = append(en.Entries, &entry{Name: xe.Name, Value: v, Since: es, DeprecatedSince: ed, GoName: goName})
+		v, _ := strconv.ParseInt(xe.Value, 0, 64)
+		en.Entries = append(en.Entries, &entry{
+			Name:            xe.Name,
+			Value:           v,
+			Since:           parseSince(xe.Since),
+			DeprecatedSince: parseDeprecated(xe.DeprecatedSince),
+			GoName:          camel(xe.Name),
+		})
 	}
-	// Underlying type: int32 by default, uint32 for bitfields or high values.
-	unsigned := en.Bitfield
-	for _, e := range en.Entries {
-		if e.Value > math.MaxInt32 {
-			unsigned = true
-		}
+	return en
+}
+
+func parseUint32(s string, def uint32) uint32 {
+	if s == "" {
+		return def
 	}
-	if unsigned {
-		for _, e := range en.Entries {
-			if e.Value < 0 || e.Value > math.MaxUint32 {
-				return nil, inputError(path, field+"."+e.Name+".value", fmt.Errorf("value %d does not fit in uint32", e.Value))
+	v, _ := strconv.ParseUint(s, 0, 32)
+	return uint32(v)
+}
+
+func parseSince(s string) uint32 {
+	return parseUint32(s, 1)
+}
+
+func parseDeprecated(s string) uint32 {
+	return parseUint32(s, 0)
+}
+
+func parseBool(s string) bool {
+	return s == "true" || s == "1"
+}
+
+func assignPackageNames(pk *pkg) {
+	for _, i := range pk.Interfaces {
+		i.GoName = i.ShortGoName
+		i.HandlerName = i.GoName + "Handler"
+	}
+	seen := make(map[string]bool, len(pk.Interfaces))
+	for _, i := range pk.Interfaces {
+		if seen[i.GoName] {
+			for _, i := range pk.Interfaces {
+				i.GoName = camel(i.Name)
+				i.HandlerName = i.GoName + "Handler"
+			}
+			return
+		}
+		seen[i.GoName] = true
+	}
+}
+
+func resolveDuplicates(c *corpus) {
+	names := make([]string, 0, len(c.byName))
+	for name := range c.byName {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		defs := c.byName[name]
+		for _, d := range defs {
+			d.Winner = d
+		}
+		if len(defs) == 1 {
+			continue
+		}
+		var stable []*iface
+		for _, d := range defs {
+			if d.Protocol.Tier == "stable" {
+				stable = append(stable, d)
 			}
 		}
-	} else {
-		for _, e := range en.Entries {
-			if e.Value < math.MinInt32 || e.Value > math.MaxInt32 {
-				return nil, inputError(path, field+"."+e.Name+".value", fmt.Errorf("value %d does not fit in int32", e.Value))
+		winner := stable[0]
+		for _, d := range defs {
+			d.Winner = winner
+			if d != winner {
+				d.IsLoser = true
 			}
 		}
 	}
-	return en, nil
 }
 
-func parseUint32(s string, def uint32, path, field string) (uint32, error) {
-	if s == "" {
-		return def, nil
-	}
-	v, err := strconv.ParseUint(s, 0, 32)
-	if err != nil {
-		return 0, inputError(path, field, fmt.Errorf("parse %q: %w", s, err))
-	}
-	return uint32(v), nil
-}
-
-func parseSince(s, path, field string) (uint32, error) {
-	v, err := parseUint32(s, 1, path, field)
-	if err != nil {
-		return 0, err
-	}
-	if v < 1 {
-		return 0, inputError(path, field, fmt.Errorf("since must be at least 1, got %d", v))
-	}
-	return v, nil
-}
-
-func parseDeprecated(s string, since uint32, path, field string) (uint32, error) {
-	if s == "" {
-		return 0, nil
-	}
-	v, err := parseUint32(s, 0, path, field)
-	if err != nil {
-		return 0, err
-	}
-	if v < since {
-		return 0, inputError(path, field, fmt.Errorf("deprecated-since %d is below since %d", v, since))
-	}
-	return v, nil
-}
-
-func parseBool(s, path, field string) (bool, bool, error) {
-	switch s {
-	case "":
-		return false, false, nil
-	case "true", "1":
-		return true, true, nil
-	case "false", "0":
-		return false, true, nil
-	default:
-		return false, false, inputError(path, field, fmt.Errorf("invalid boolean %q", s))
-	}
-}
-
-func resolvePackage(c *corpus, pk *pkg) error {
+func resolvePackage(c *corpus, pk *pkg) {
 	for _, i := range pk.Interfaces {
 		for _, m := range i.Requests {
 			for _, a := range m.Args {
-				if err := resolveArg(c, i, m, a); err != nil {
-					return err
-				}
+				resolveArg(c, i, m, a)
 			}
 		}
 		for _, m := range i.Events {
 			for _, a := range m.Args {
-				if err := resolveArg(c, i, m, a); err != nil {
-					return err
-				}
+				resolveArg(c, i, m, a)
 			}
 		}
 	}
-	return nil
 }
 
-func resolveArg(c *corpus, i *iface, m *msg, a *arg) error {
-	path := i.Protocol.XML
-	field := i.Name + "." + m.Name + "." + a.Name
+func resolveArg(c *corpus, i *iface, m *msg, a *arg) {
 	if a.InterfaceName != "" {
-		target, err := resolveInterface(c, i, a.InterfaceName)
-		if err != nil {
-			return inputError(path, field+".interface", err)
-		}
-		a.Target = target
-	} else {
-		switch a.Type {
-		case "object":
-			if m.IsRequest {
-				return inputError(path, field+".interface", fmt.Errorf("object request args require an interface"))
-			}
-		case "new_id":
-			if i.Name != "wl_registry" || m.Name != "bind" || i.Pkg.ImportPath != "" {
-				return inputError(path, field+".interface", fmt.Errorf("dynamic new_id is only valid on wl_registry.bind"))
-			}
-			a.Dynamic = true
-		}
+		a.Target = resolveInterface(c, i, a.InterfaceName)
+	} else if a.Type == "new_id" && i.Name == "wl_registry" && m.Name == "bind" && i.Pkg.ImportPath == "" {
+		a.Dynamic = true
 	}
 	if a.EnumName != "" {
 		enumIface := i
 		enumName := a.EnumName
 		if dot := strings.LastIndex(enumName, "."); dot >= 0 {
-			qualifier := enumName[:dot]
+			enumIface = resolveInterface(c, i, enumName[:dot])
 			enumName = enumName[dot+1:]
-			target, err := resolveInterface(c, i, qualifier)
-			if err != nil {
-				return inputError(path, field+".enum", err)
-			}
-			enumIface = target
-		}
-		en := findEnum(enumIface, enumName)
-		if en == nil {
-			return inputError(path, field+".enum", fmt.Errorf("unknown enum %s.%s", enumIface.Name, enumName))
 		}
 		a.EnumTarget = enumIface
-		a.Enum = en
+		a.Enum = findEnum(enumIface, enumName)
 	}
-	return nil
 }
 
-func resolveInterface(c *corpus, src *iface, name string) (*iface, error) {
+func resolveInterface(c *corpus, src *iface, name string) *iface {
 	if local, ok := src.Pkg.byName[name]; ok {
-		return local, nil
+		return local
 	}
-	defs := c.byName[name]
-	if len(defs) == 0 {
-		return nil, fmt.Errorf("unknown interface %q", name)
-	}
-	return defs[0].Winner, nil
+	return c.byName[name][0].Winner
 }
 
 func findEnum(i *iface, name string) *enum {

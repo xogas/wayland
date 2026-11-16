@@ -117,7 +117,7 @@ func (r *renderCtx) finish(pkgName string) ([]byte, error) {
 	b.WriteString(body)
 	src, err := format.Source([]byte(b.String()))
 	if err != nil {
-		return nil, inputError("", pkgName, fmt.Errorf("gofmt generated source: %w", err))
+		return nil, fmt.Errorf("gofmt generated source: %w", err)
 	}
 	return src, nil
 }

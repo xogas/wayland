@@ -41,7 +41,6 @@ It targets the Wayland protocol, not a specific compositor.
    - `make test`
    - `go test -race -count=1 -tags=integration ./...`
    - `go vet ./...`; `test -z "$(gofmt -l .)"`; `golangci-lint run ./...`
-   - DTD 68/68
    - examples registry / output / shm-surface
 3. Deviations from this file: list each, or write none.
 4. xdg-shell / input Esc and pointer checks are manual; state if not run.

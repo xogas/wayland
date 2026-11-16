@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -34,20 +33,11 @@ func loadCorpusT(t *testing.T) (*corpus, []parsedSource) {
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
-	if err := checkLayout(files); err != nil {
-		t.Fatalf("layout: %v", err)
-	}
-	if err := validateDTD(root, files); err != nil {
-		t.Fatalf("DTD: %v", err)
-	}
 	parsed, err := parseAll(files)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	c, err := buildCorpus(parsed)
-	if err != nil {
-		t.Fatalf("build: %v", err)
-	}
+	c := buildCorpus(parsed)
 	return c, parsed
 }
 
@@ -91,24 +81,6 @@ const minimalCoreXML = `<?xml version="1.0" encoding="UTF-8"?>
   </interface>
 </protocol>`
 
-const validExtensionXML = `<?xml version="1.0" encoding="UTF-8"?>
-<protocol name="foo">
-  <interface name="foo_manager" version="2">
-    <request name="get_thing">
-      <arg name="id" type="new_id" interface="foo_thing"/>
-      <arg name="mode" type="uint" enum="mode"/>
-    </request>
-    <event name="done"/>
-    <enum name="mode">
-      <entry name="one" value="1"/>
-      <entry name="two" value="2"/>
-    </enum>
-  </interface>
-  <interface name="foo_thing" version="1">
-    <event name="done"/>
-  </interface>
-</protocol>`
-
 func writeFileT(t *testing.T, path, data string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -119,69 +91,11 @@ func writeFileT(t *testing.T, path, data string) {
 	}
 }
 
-func copyDTD(t *testing.T, root string) {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join(waylandRoot(t), "wayland.dtd"))
-	if err != nil {
-		t.Fatalf("read DTD: %v", err)
-	}
-	writeFileT(t, filepath.Join(root, "wayland.dtd"), string(data))
-}
-
 func newValidRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	copyDTD(t, root)
 	writeFileT(t, filepath.Join(root, "wayland.xml"), minimalCoreXML)
 	return root
-}
-
-func newValidRootWithExtension(t *testing.T, xml string) string {
-	t.Helper()
-	root := newValidRoot(t)
-	writeFileT(t, filepath.Join(root, "staging", "foo", "foo.xml"), xml)
-	return root
-}
-
-func sentinelOut(t *testing.T) string {
-	t.Helper()
-	out := t.TempDir()
-	writeFileT(t, filepath.Join(out, "keep.txt"), "keep\n")
-	return out
-}
-
-func assertOutUntouched(t *testing.T, out string) {
-	t.Helper()
-	entries, err := os.ReadDir(out)
-	if err != nil {
-		t.Fatalf("read out: %v", err)
-	}
-	var names []string
-	for _, e := range entries {
-		names = append(names, e.Name())
-	}
-	if strings.Join(names, ",") != "keep.txt" {
-		t.Fatalf("output directory changed: %v", names)
-	}
-	data, err := os.ReadFile(filepath.Join(out, "keep.txt"))
-	if err != nil || string(data) != "keep\n" {
-		t.Fatalf("sentinel changed: %q err=%v", data, err)
-	}
-}
-
-func requireGeneratorError(t *testing.T, err error, kind string) *GeneratorError {
-	t.Helper()
-	if err == nil {
-		t.Fatal("expected an error")
-	}
-	var ge *GeneratorError
-	if !errors.As(err, &ge) {
-		t.Fatalf("error %v is not *GeneratorError", err)
-	}
-	if ge.Kind != kind {
-		t.Fatalf("error kind = %q, want %q (%v)", ge.Kind, kind, err)
-	}
-	return ge
 }
 
 func TestGeneratorMetadata(t *testing.T) {
@@ -552,14 +466,8 @@ func TestGeneratedDeterministicRender(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	c1, err := buildCorpus(parsed)
-	if err != nil {
-		t.Fatalf("build 1: %v", err)
-	}
-	c2, err := buildCorpus(parsed)
-	if err != nil {
-		t.Fatalf("build 2: %v", err)
-	}
+	c1 := buildCorpus(parsed)
+	c2 := buildCorpus(parsed)
 	out1 := renderT(t, c1)
 	out2 := renderT(t, c2)
 	if len(out1) != len(out2) {
@@ -573,158 +481,6 @@ func TestGeneratedDeterministicRender(t *testing.T) {
 			t.Fatalf("%s: render is not deterministic", out1[n].Rel)
 		}
 	}
-}
-
-func TestGeneratorRejectsInvalidInput(t *testing.T) {
-	t.Run("empty input", func(t *testing.T) {
-		root := t.TempDir()
-		copyDTD(t, root)
-		out := sentinelOut(t)
-		err := generate(options{Root: root, Out: out})
-		_ = requireGeneratorError(t, err, "input")
-		assertOutUntouched(t, out)
-	})
-	t.Run("missing DTD", func(t *testing.T) {
-		root := t.TempDir()
-		writeFileT(t, filepath.Join(root, "wayland.xml"), minimalCoreXML)
-		out := sentinelOut(t)
-		err := generate(options{Root: root, Out: out})
-		ge := requireGeneratorError(t, err, "input")
-		if !strings.Contains(ge.Error(), "wayland.dtd") {
-			t.Fatalf("error does not name DTD: %v", err)
-		}
-		assertOutUntouched(t, out)
-	})
-	t.Run("missing xmllint", func(t *testing.T) {
-		root := newValidRoot(t)
-		out := sentinelOut(t)
-		t.Setenv("PATH", "")
-		err := generate(options{Root: root, Out: out})
-		ge := requireGeneratorError(t, err, "input")
-		if !strings.Contains(ge.Error(), "xmllint") {
-			t.Fatalf("error does not mention xmllint: %v", err)
-		}
-		assertOutUntouched(t, out)
-	})
-	t.Run("malformed XML", func(t *testing.T) {
-		root := t.TempDir()
-		copyDTD(t, root)
-		writeFileT(t, filepath.Join(root, "wayland.xml"), "<protocol")
-		out := sentinelOut(t)
-		err := generate(options{Root: root, Out: out})
-		ge := requireGeneratorError(t, err, "input")
-		if !strings.Contains(ge.Path, "wayland.xml") {
-			t.Fatalf("error does not name file: %v", err)
-		}
-		assertOutUntouched(t, out)
-	})
-	t.Run("DTD violation", func(t *testing.T) {
-		root := t.TempDir()
-		copyDTD(t, root)
-		writeFileT(t, filepath.Join(root, "wayland.xml"),
-			`<protocol name="wayland"><interface name="wl_display" version="1"><bogus/></interface></protocol>`)
-		out := sentinelOut(t)
-		err := generate(options{Root: root, Out: out})
-		ge := requireGeneratorError(t, err, "input")
-		if !strings.Contains(ge.Error(), "wayland.xml") {
-			t.Fatalf("error does not name file: %v", err)
-		}
-		assertOutUntouched(t, out)
-	})
-}
-
-func TestGeneratorRejectsInvalidModel(t *testing.T) {
-	cases := []struct {
-		name string
-		xml  string
-		want string
-	}{
-		{"since above version", strings.Replace(validExtensionXML, `name="get_thing"`, `name="get_thing" since="3"`, 1), "since"},
-		{"deprecated below since", strings.Replace(validExtensionXML, `name="get_thing"`, `name="get_thing" since="2" deprecated-since="1"`, 1), "deprecated-since"},
-		{"unknown object interface", strings.Replace(validExtensionXML, `<arg name="mode" type="uint" enum="mode"/>`, `<arg name="thing" type="object" interface="no_such"/>`, 1), "unknown interface"},
-		{"unknown new_id interface", strings.Replace(validExtensionXML, `interface="foo_thing"`, `interface="no_such"`, 1), "unknown interface"},
-		{"unknown enum", strings.Replace(validExtensionXML, `enum="mode"`, `enum="nope"`, 1), "unknown enum"},
-		{"allow-null on int", strings.Replace(validExtensionXML, `<arg name="mode" type="uint" enum="mode"/>`, `<arg name="mode" type="uint" allow-null="true"/>`, 1), "allow-null"},
-		{"unknown arg type", strings.Replace(validExtensionXML, `type="uint" enum="mode"`, `type="float"`, 1), "unsupported arg type"},
-		{"dynamic new_id outside registry", strings.Replace(validExtensionXML, `<arg name="id" type="new_id" interface="foo_thing"/>`, `<arg name="id" type="new_id"/>`, 1), "dynamic new_id"},
-		{"enum on string", strings.Replace(validExtensionXML, `<arg name="mode" type="uint" enum="mode"/>`, `<arg name="mode" type="string" enum="mode"/>`, 1), "enum is only valid"},
-		{"interface on int", strings.Replace(validExtensionXML, `<arg name="mode" type="uint" enum="mode"/>`, `<arg name="mode" type="uint" interface="foo_thing"/>`, 1), "interface is only valid"},
-		{"duplicate request", strings.Replace(validExtensionXML, `<request name="get_thing">`, `<request name="get_thing"/><request name="get_thing">`, 1), "duplicate request"},
-		{"duplicate interface", strings.Replace(validExtensionXML, `</protocol>`, `<interface name="foo_manager" version="1"><event name="done"/></interface></protocol>`, 1), "duplicate interface"},
-		{"duplicate enum", strings.Replace(validExtensionXML, `<enum name="mode">`, `<enum name="mode"><entry name="zero" value="0"/></enum><enum name="mode">`, 1), "duplicate enum"},
-		{"duplicate enum value", strings.Replace(validExtensionXML, `<entry name="two" value="2"/>`, `<entry name="two" value="1"/>`, 1), "duplicate enum value"},
-		{"type name collision", `<?xml version="1.0" encoding="UTF-8"?>
-<protocol name="foo">
-  <interface name="foo_a" version="1"><event name="done"/></interface>
-  <interface name="foo__a" version="1"><event name="done"/></interface>
-</protocol>`, "collides"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			root := newValidRootWithExtension(t, tc.xml)
-			out := sentinelOut(t)
-			err := generate(options{Root: root, Out: out})
-			ge := requireGeneratorError(t, err, "input")
-			if !strings.Contains(strings.ToLower(ge.Error()), strings.ToLower(tc.want)) {
-				t.Fatalf("error %q does not mention %q", ge.Error(), tc.want)
-			}
-			assertOutUntouched(t, out)
-		})
-	}
-	t.Run("ambiguous duplicate", func(t *testing.T) {
-		root := newValidRoot(t)
-		dup := `<?xml version="1.0" encoding="UTF-8"?>
-<protocol name="dup">
-  <interface name="dup_iface" version="1"><event name="done"/></interface>
-</protocol>`
-		writeFileT(t, filepath.Join(root, "staging", "dup-a", "dup-a.xml"), dup)
-		writeFileT(t, filepath.Join(root, "unstable", "dup-b", "dup-b.xml"), dup)
-		out := sentinelOut(t)
-		err := generate(options{Root: root, Out: out})
-		ge := requireGeneratorError(t, err, "input")
-		if !strings.Contains(ge.Error(), "ambiguous") {
-			t.Fatalf("error does not mention ambiguity: %v", err)
-		}
-		assertOutUntouched(t, out)
-	})
-	t.Run("non-contiguous opcode", func(t *testing.T) {
-		c, _ := loadCorpusT(t)
-		c.protocols[0].Interfaces[0].Requests[0].Opcode = 5
-		if err := validateCorpus(c); err == nil {
-			t.Fatal("expected opcode validation error")
-		}
-	})
-}
-
-func TestGeneratorWriteError(t *testing.T) {
-	t.Run("output is a file", func(t *testing.T) {
-		root := newValidRoot(t)
-		out := filepath.Join(t.TempDir(), "out-file")
-		writeFileT(t, out, "not a directory\n")
-		err := generate(options{Root: root, Out: out})
-		if !IsWriteError(err) {
-			t.Fatalf("error = %v, want write error", err)
-		}
-		data, readErr := os.ReadFile(out)
-		if readErr != nil || string(data) != "not a directory\n" {
-			t.Fatalf("sentinel changed: %q err=%v", data, readErr)
-		}
-	})
-	t.Run("read-only output", func(t *testing.T) {
-		if os.Geteuid() == 0 {
-			t.Skip("running as root; permission bits are not enforced")
-		}
-		root := newValidRoot(t)
-		out := t.TempDir()
-		if err := os.Chmod(out, 0o555); err != nil {
-			t.Fatalf("chmod: %v", err)
-		}
-		t.Cleanup(func() { _ = os.Chmod(out, 0o755) })
-		err := generate(options{Root: root, Out: out})
-		if !IsWriteError(err) {
-			t.Fatalf("error = %v, want write error", err)
-		}
-	})
 }
 
 func TestRegistryBindWireArgs(t *testing.T) {

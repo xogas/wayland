@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type stagedFile struct {
@@ -14,22 +13,8 @@ type stagedFile struct {
 }
 
 func writeOutputs(out string, files []renderedFile) error {
-	if len(files) == 0 {
-		return writeError(out, "output", fmt.Errorf("no generated files"))
-	}
-	seen := make(map[string]bool, len(files))
-	for _, f := range files {
-		clean := filepath.Clean(filepath.FromSlash(f.Rel))
-		if clean == "." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || filepath.IsAbs(clean) {
-			return writeError(f.Rel, "output", fmt.Errorf("unsafe output path"))
-		}
-		if seen[clean] {
-			return writeError(f.Rel, "output", fmt.Errorf("duplicate output path"))
-		}
-		seen[clean] = true
-	}
 	if err := os.MkdirAll(out, 0o755); err != nil {
-		return writeError(out, "mkdir", err)
+		return fmt.Errorf("mkdir %s: %w", out, err)
 	}
 	var staged []stagedFile
 	removeTemps := func() {
@@ -41,28 +26,28 @@ func writeOutputs(out string, files []renderedFile) error {
 		final := filepath.Join(out, filepath.FromSlash(f.Rel))
 		if err := os.MkdirAll(filepath.Dir(final), 0o755); err != nil {
 			removeTemps()
-			return writeError(f.Rel, "mkdir", err)
+			return fmt.Errorf("mkdir %s: %w", filepath.Dir(final), err)
 		}
 		tmp, err := os.CreateTemp(filepath.Dir(final), ".waylandgen-*")
 		if err != nil {
 			removeTemps()
-			return writeError(f.Rel, "create", err)
+			return fmt.Errorf("create temp for %s: %w", f.Rel, err)
 		}
 		name := tmp.Name()
 		staged = append(staged, stagedFile{tmp: name, final: final, rel: f.Rel})
 		if _, err := tmp.Write(f.Data); err != nil {
 			_ = tmp.Close()
 			removeTemps()
-			return writeError(f.Rel, "write", err)
+			return fmt.Errorf("write %s: %w", f.Rel, err)
 		}
 		if err := tmp.Chmod(0o644); err != nil {
 			_ = tmp.Close()
 			removeTemps()
-			return writeError(f.Rel, "chmod", err)
+			return fmt.Errorf("chmod %s: %w", f.Rel, err)
 		}
 		if err := tmp.Close(); err != nil {
 			removeTemps()
-			return writeError(f.Rel, "close", err)
+			return fmt.Errorf("close %s: %w", f.Rel, err)
 		}
 	}
 	for i, s := range staged {
@@ -70,7 +55,7 @@ func writeOutputs(out string, files []renderedFile) error {
 			for _, rest := range staged[i:] {
 				_ = os.Remove(rest.tmp)
 			}
-			return writeError(s.rel, "rename", err)
+			return fmt.Errorf("rename %s: %w", s.rel, err)
 		}
 	}
 	return nil

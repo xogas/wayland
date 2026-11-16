@@ -118,11 +118,11 @@ func (r *renderCtx) renderRequest(i *iface, m *msg) error {
 	var target *iface
 	if newID != nil {
 		if newID.Dynamic {
-			return inputError(i.Protocol.XML, i.Name+"."+m.Name, fmt.Errorf("dynamic new_id must use the wl_registry.bind template"))
+			return fmt.Errorf("dynamic new_id must use the wl_registry.bind template")
 		}
 		target = newID.Target
 		if target == nil {
-			return inputError(i.Protocol.XML, i.Name+"."+m.Name+"."+newID.Name, fmt.Errorf("unresolved new_id target"))
+			return fmt.Errorf("unresolved new_id target")
 		}
 	}
 	recv := receiverName(i)
@@ -140,7 +140,7 @@ func (r *renderCtx) renderRequest(i *iface, m *msg) error {
 		}
 		typ, err := r.requestArgType(a)
 		if err != nil {
-			return inputError(i.Protocol.XML, i.Name+"."+m.Name+"."+a.Name, err)
+			return err
 		}
 		params = append(params, requestParam{arg: a, name: uniqueName(goParamName(a.Name), used), typ: typ})
 	}
@@ -190,7 +190,7 @@ func (r *renderCtx) renderRequest(i *iface, m *msg) error {
 	}
 	args, err := r.requestArgs(m, params, nullIDs)
 	if err != nil {
-		return inputError(i.Protocol.XML, i.Name+"."+m.Name, err)
+		return err
 	}
 	if target != nil {
 		fmt.Fprintf(&r.body, "\tif err := %s.p.Send(%d, %s); err != nil {\n\t\t_ = p.Release()\n\t\treturn nil, err\n\t}\n", recv, m.Opcode, strings.Join(args, ", "))

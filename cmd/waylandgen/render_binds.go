@@ -4,7 +4,7 @@ import "fmt"
 
 func (r *renderCtx) renderDynamicBind(i *iface, m *msg) error {
 	if !r.isRoot() || i.Name != "wl_registry" || m.Name != "bind" {
-		return inputError(i.Protocol.XML, i.Name+"."+m.Name, fmt.Errorf("dynamic bind template is only valid for root wl_registry.bind"))
+		return fmt.Errorf("dynamic bind template is only valid for root wl_registry.bind")
 	}
 	r.body.WriteString("func (r *Registry) Bind(g Global, version uint32) (*Proxy, error) {\n")
 	r.body.WriteString("\tiface, ok := InterfaceByName(g.Interface)\n")
