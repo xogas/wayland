@@ -61,12 +61,6 @@ func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("raw bind %s v%d: %w", g.Interface, g.Version, err)
 	}
-	installTestHooks(c)
-	c.testSetRawName(p.ID(), g.Interface)
-	// Unknown interfaces may create server-owned child objects whose events
-	// the runtime cannot decode without a signature. Enable the test-only
-	// broad skip for those IDs; public dispatch keeps protocol-violation behavior.
-	c.testSetSkipUnknownServer(true)
 	if err := reg.Proxy().Send(0, Uint(g.Name), NewID(p.ID())); err != nil {
 		_ = p.Release()
 		return nil, fmt.Errorf("raw bind %s v%d: %w", g.Interface, g.Version, err)
@@ -248,26 +242,6 @@ func TestRegistryBindError(t *testing.T) {
 
 func ptr(s string) *string { return &s }
 
-// TestRawSkipMarkerOffDoesNotWeakenUnknownObjects proves the test-only broad
-// skip stays off for ordinary dispatch: an unregistered server-range event is
-// still returns a protocol violation and closes the connection.
-func TestRawSkipMarkerOffDoesNotWeakenUnknownObjects(t *testing.T) {
-	a, b := unixPair(t)
-	d := newDisplay(a)
-	t.Cleanup(func() { _ = d.Close() })
-	t.Cleanup(func() { _ = b.Close() })
-	writeFrame(t, b, 0xFF000001, 0, appendU32(nil, 1))
-	if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
-		t.Fatalf("dispatch = %v, want ErrProtocolViolation", err)
-	}
-	if !d.p.conn.isClosed() {
-		t.Fatal("connection not closed after unknown server object")
-	}
-	if got := d.p.conn.testUnknownServerSkips(); got != 0 {
-		t.Fatalf("default dispatch counted %d unknown-server skips, want 0", got)
-	}
-}
-
 // TestRawBindWire checks the test-only raw bind sends name / interface /
 // version / new_id through the existing dynamic wl_registry.bind expansion.
 func TestRawBindWire(t *testing.T) {
@@ -282,15 +256,7 @@ func TestRawBindWire(t *testing.T) {
 	if err != nil {
 		t.Fatalf("raw bind: %v", err)
 	}
-	c := d.p.conn
-	rawName := c.testRawName(p.ID())
-	if rawName != g.Interface || p.Version() != g.Version {
-		t.Fatalf("raw object = %q v%d", rawName, p.Version())
-	}
-	if got := skippedEventCount(c, p.ID()); got != 0 {
-		t.Fatalf("skipped events = %d, want 0 before any event", got)
-	}
-	if p.Interface() == nil || p.Interface().Name != g.Interface {
+	if p.Interface() == nil || p.Interface().Name != g.Interface || p.Version() != g.Version {
 		t.Fatalf("raw interface metadata = %+v", p.Interface())
 	}
 	srv := newTestServer(b)

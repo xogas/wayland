@@ -103,7 +103,7 @@ func TestSinceGuard(t *testing.T) {
 	if !errors.Is(err, ErrSince) {
 		t.Fatalf("send since 4 on v3 = %v, want ErrSince", err)
 	}
-	if !strings.Contains(err.Error(), "test_since") || !strings.Contains(err.Error(), "late") {
+	if !strings.Contains(err.Error(), "wl_surface") || !strings.Contains(err.Error(), "late") {
 		t.Fatalf("error lacks interface/message context: %v", err)
 	}
 	assertNoBytes(t, b)

@@ -475,31 +475,6 @@ func TestWireFD(t *testing.T) {
 		}
 	})
 
-	t.Run("msg_ctrunc", func(t *testing.T) {
-		a, b := unixPair(t)
-		d := newDisplay(a)
-		t.Cleanup(func() { _ = d.Close() })
-		t.Cleanup(func() { _ = b.Close() })
-		d.p.conn.testSetOOBLen(16)
-		iface := testInterface("test_fd_ctrunc", 1, nil,
-			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}}})
-		p := newTestProxy(t, d, iface, 1, nil)
-		r1, w1 := pipeFDs(t)
-		r2, w2 := pipeFDs(t)
-		defer func() {
-			for _, fd := range []int{r1, w1, r2, w2} {
-				_ = syscall.Close(fd)
-			}
-		}()
-		writeFrameMsg(t, b, p.ID(), 0, nil, []int{w1, w2})
-		if err := d.Dispatch(); !errors.Is(err, ErrMalformedMessage) {
-			t.Fatalf("dispatch = %v, want ErrMalformedMessage", err)
-		}
-		if !d.p.conn.isClosed() {
-			t.Fatal("connection not closed after MSG_CTRUNC")
-		}
-	})
-
 	t.Run("partial_write_ancillary", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)

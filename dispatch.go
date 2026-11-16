@@ -42,28 +42,26 @@ func (d *Display) dispatchOne() error {
 	}
 	p := c.lookup(objectID)
 	if p == nil {
-		// A child object created by a raw-bound unknown interface has no
-		// signature, so the test-only hook consumes the already-read frame.
-		// Public dispatch still reports E-07.
-		if c.testSkipUnknownServer(objectID) {
+		// An unknown server-range object was allocated by the server for an
+		// interface this client has no signature for. The frame is already
+		// read, so skip it by length. Client-range unknown IDs remain protocol
+		// errors.
+		if objectID >= serverIDMin {
 			return nil
 		}
 		_ = c.close()
 		return fmt.Errorf("event object %d: %w", objectID, ErrProtocolViolation)
 	}
-	// Test-only raw bind: there is no generated signature for this
-	// interface, so the event body cannot be decoded. The frame was already
-	// consumed by readFrame, which makes skipping by message length safe for
-	// the connection. Descriptors carried by such an event cannot be
-	// identified without a signature; the runtime documents this limitation
-	// and tests avoid fd events on raw objects.
-	if c.testRawName(objectID) != "" {
-		c.testNoteSkipped(objectID)
-		return nil
-	}
 	if p.iface == nil {
 		_ = c.close()
 		return fmt.Errorf("event object %d: nil interface: %w", objectID, ErrProtocolViolation)
+	}
+	if _, known := InterfaceByName(p.iface.Name); !known {
+		// No generated metadata for this interface: the frame cannot be
+		// decoded safely. It is already read, so skip it by length. Descriptors
+		// on such an event cannot be identified without a signature; callers
+		// that create raw objects should avoid fd-bearing events.
+		return nil
 	}
 	if int(opcode) >= len(p.iface.Events) {
 		_ = c.close()

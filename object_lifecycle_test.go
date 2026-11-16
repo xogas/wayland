@@ -159,6 +159,34 @@ func TestUnknownObject(t *testing.T) {
 		mustClosed(t, d)
 	})
 
+	t.Run("unknown_server_range_event", func(t *testing.T) {
+		a, b := unixPair(t)
+		d := newDisplay(a)
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
+		writeFrame(t, b, serverIDMin, 0, nil)
+		if err := d.Dispatch(); err != nil {
+			t.Fatalf("dispatch = %v, want nil for unknown server-range object", err)
+		}
+		if d.p.conn.isClosed() {
+			t.Fatal("connection closed for unknown server-range object")
+		}
+	})
+
+	t.Run("unknown_server_range_delete_id", func(t *testing.T) {
+		a, b := unixPair(t)
+		d := newDisplay(a)
+		t.Cleanup(func() { _ = d.Close() })
+		t.Cleanup(func() { _ = b.Close() })
+		writeFrame(t, b, 1, 1, appendU32(nil, serverIDMin+1))
+		if err := d.Dispatch(); err != nil {
+			t.Fatalf("dispatch = %v, want nil for unknown server-range delete_id", err)
+		}
+		if d.p.conn.isClosed() {
+			t.Fatal("connection closed for unknown server-range delete_id")
+		}
+	})
+
 	t.Run("unknown_opcode", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
@@ -268,10 +296,12 @@ func TestUnknownObject(t *testing.T) {
 			t.Fatalf("first delete_id: %v", err)
 		}
 		writeFrame(t, b, 1, 1, body)
-		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
-			t.Fatalf("second delete_id = %v, want ErrProtocolViolation", err)
+		if err := d.Dispatch(); err != nil {
+			t.Fatalf("second delete_id = %v, want nil for unknown server-range", err)
 		}
-		mustClosed(t, d)
+		if d.p.conn.isClosed() {
+			t.Fatal("connection closed by repeated server delete_id")
+		}
 	})
 }
 

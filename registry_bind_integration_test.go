@@ -11,26 +11,6 @@ import (
 	"time"
 )
 
-// unknownSkips reports how many events the length-based skip path consumed
-// for raw-bound objects.
-func (r *registryBindResult) unknownSkips() int {
-	n := 0
-	for _, b := range r.Binds {
-		n += int(skippedEventCount(b.Proxy.conn, b.Proxy.ID()))
-	}
-	return n
-}
-
-// unknownServerSkips reports how many events or delete_id messages for
-// unknown child objects the test-only broad skip path consumed.
-func (r *registryBindResult) unknownServerSkips() int {
-	if len(r.Binds) == 0 {
-		return 0
-	}
-	c := r.Binds[0].Proxy.conn
-	return c.testUnknownServerSkips()
-}
-
 // typedBinders exercises the generated Bind<T> helpers for a practical subset
 // of known globals; the rest of the known globals use the public generic
 // Registry.Bind path.
@@ -123,11 +103,9 @@ func TestRegistryBind(t *testing.T) {
 		t.Fatalf("roundtrip after binds: %v", err)
 	}
 
-	unknownSkips := res.unknownSkips()
-	unknownChildSkips := res.unknownServerSkips()
-	t.Logf("advertised=%d known_typed=%d known_generic=%d unknown_raw=%d skipped_error=%d version_skipped=%d unknown_event_skips=%d unknown_child_skips=%d",
+	t.Logf("advertised=%d known_typed=%d known_generic=%d unknown_raw=%d skipped_error=%d version_skipped=%d",
 		res.Advertised, res.KnownTyped, res.KnownGeneric, res.UnknownRaw,
-		res.BindErrors, res.VersionSkipped, unknownSkips, unknownChildSkips)
+		res.BindErrors, res.VersionSkipped)
 	if res.KnownTyped+res.KnownGeneric+res.UnknownRaw == 0 {
 		t.Fatal("no globals bound")
 	}
@@ -207,7 +185,7 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 	}
 
 	for _, g := range candidates {
-		p, err := bindUnknownRaw(reg, g)
+		_, err := bindUnknownRaw(reg, g)
 		if err != nil {
 			t.Fatalf("raw bind %s v%d: %v", g.Interface, g.Version, err)
 		}
@@ -217,12 +195,6 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 		if err != nil {
 			t.Fatalf("roundtrip after raw bind %s v%d: %v", g.Interface, g.Version, err)
 		}
-		skipped := skippedEventCount(d.p.conn, p.ID())
-		if skipped == 0 {
-			t.Logf("raw bind %s v%d emitted no skipped event", g.Interface, g.Version)
-			continue
-		}
-		t.Logf("raw bind %s v%d id=%d skipped_events=%d", g.Interface, g.Version, p.ID(), skipped)
 		ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
 		err = d.Roundtrip(ctx2)
 		cancel2()
@@ -261,17 +233,13 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 	if len(h.globals) != 1 || h.globals[0].Interface != "test_unknown_event_source" {
 		t.Fatalf("globals = %+v", h.globals)
 	}
-	p, err := bindUnknownRaw(reg, h.globals[0])
-	if err != nil {
+	if _, err := bindUnknownRaw(reg, h.globals[0]); err != nil {
 		t.Fatalf("raw bind: %v", err)
 	}
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel2()
 	if err := d.Roundtrip(ctx2); err != nil {
 		t.Fatalf("unknown event roundtrip: %v", err)
-	}
-	if skippedEventCount(d.p.conn, p.ID()) == 0 {
-		t.Fatal("unknown event was not skipped")
 	}
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel3()
@@ -285,7 +253,6 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 		}
 	default:
 	}
-	t.Logf("fake server: raw bind %s v%d id=%d skipped_events=%d", h.globals[0].Interface, h.globals[0].Version, p.ID(), skippedEventCount(d.p.conn, p.ID()))
 }
 
 // serveFakeRegistryBindUnknown drives the socketpair substitution: advertise

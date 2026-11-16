@@ -9,6 +9,8 @@ import (
 	"syscall"
 )
 
+const oobSize = 4096
+
 // errSoftTimeout marks a read deadline that the runtime installed for a
 // canceled Roundtrip. Unlike a real IO error it must not close the connection.
 var errSoftTimeout = errors.New("wayland: soft read timeout")
@@ -108,16 +110,9 @@ func (c *conn) ensure(n int) error {
 	}
 }
 
-func (c *conn) oobSize() int {
-	if n := c.testOOBLen(); n > 0 {
-		return n
-	}
-	return 4096
-}
-
 func (c *conn) readMore() error {
 	buf := make([]byte, messageMax+8)
-	oob := make([]byte, c.oobSize())
+	oob := make([]byte, oobSize)
 	n, oobn, flags, _, err := c.uc.ReadMsgUnix(buf, oob)
 	if err != nil {
 		if c.isClosed() {

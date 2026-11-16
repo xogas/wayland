@@ -251,7 +251,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.As(err, &pe) {
 			t.Fatalf("dispatch = %v, want *ProtocolError", err)
 		}
-		if pe.Interface != "test_e05" || pe.Message != "e05" {
+		if pe.Interface != "wl_surface" || pe.Message != "e05" {
 			t.Fatalf("protocol error = %+v", pe)
 		}
 	})
@@ -303,7 +303,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrSince) {
 			t.Fatalf("send = %v, want ErrSince", err)
 		}
-		if !strings.Contains(err.Error(), "test_e09") || !strings.Contains(err.Error(), "late") {
+		if !strings.Contains(err.Error(), "wl_surface") || !strings.Contains(err.Error(), "late") {
 			t.Fatalf("error lacks interface/message context: %v", err)
 		}
 	})
@@ -318,7 +318,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrInvalidArgument) {
 			t.Fatalf("send = %v, want ErrInvalidArgument", err)
 		}
-		if !strings.Contains(err.Error(), "test_e10") || !strings.Contains(err.Error(), "msg") {
+		if !strings.Contains(err.Error(), "wl_surface") || !strings.Contains(err.Error(), "msg") {
 			t.Fatalf("error lacks interface/message context: %v", err)
 		}
 	})
@@ -391,7 +391,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrNoHandler) {
 			t.Fatalf("dispatch = %v, want ErrNoHandler", err)
 		}
-		if !strings.Contains(err.Error(), "test_nohandler") {
+		if !strings.Contains(err.Error(), "wl_surface") {
 			t.Fatalf("error lacks interface context: %v", err)
 		}
 		if d.p.conn.isClosed() {

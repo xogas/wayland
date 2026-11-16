@@ -30,7 +30,6 @@ to sway.
 | `object.go` | object table, client ID allocation, delete_id, destroy state |
 | `proxy.go` | `Proxy` handle, `EventSink`, `Global` |
 | `roundtrip.go` | `Roundtrip`, cancellation, callback tombstone, unread frame |
-| `testhooks.go` | test-only raw-bind and unknown-event skip hooks; nil in production |
 | `wire.go` | request encoding, event decoding, dynamic `wl_registry.bind` fields |
 | `protocol_gen.go` | generated core `wl_*` bindings |
 | `protocol_meta_gen.go` | generated metadata for all interfaces |
@@ -114,8 +113,7 @@ socket fd. Integration tests use `-tags=integration` and the same session.
 ## Limitations
 
 - Public typed bindings cover the 68 XML files. Unknown sway globals (wlroots /
-  KDE) have no public binding; the registry-bind tests use an unexported
-  test-only raw bind.
+  KDE) have no public typed binding; the registry-bind tests use a raw helper.
 - `xdg-shell` and `input` need a human to press Esc and move the pointer for the
   final manual check; automated runs verify startup, mapping, and close.
 - `ArgSpec.Since` and `ArgSpec.DeprecatedSince` exist but are always 0 because

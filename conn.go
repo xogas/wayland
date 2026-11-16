@@ -29,8 +29,6 @@ type conn struct {
 	// roundtrip is non-nil only while a Roundtrip is active. The goroutine
 	// that holds dispatchMu reads and writes it.
 	roundtrip *roundtripState
-	// hooks is nil in production and installed only by tests.
-	hooks *testHooks
 }
 
 func (c *conn) isClosed() bool {

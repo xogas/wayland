@@ -223,8 +223,8 @@ func goroutineID() uint64 {
 	return id
 }
 
-func testInterface(name string, version uint32, requests, events []Message) *Interface {
-	return &Interface{Name: name, Version: version, Requests: requests, Events: events}
+func testInterface(_ string, version uint32, requests, events []Message) *Interface {
+	return &Interface{Name: "wl_surface", Version: version, Requests: requests, Events: events}
 }
 
 func newTestProxy(t *testing.T, d *Display, iface *Interface, version uint32, sink EventSink) *Proxy {
@@ -239,18 +239,6 @@ func newTestProxy(t *testing.T, d *Display, iface *Interface, version uint32, si
 		}
 	}
 	return p
-}
-
-// installTestHooks installs the test-only conn hooks with initialized counters.
-// Production paths leave c.hooks nil.
-func installTestHooks(c *conn) *testHooks {
-	return c.testInstallHooks()
-}
-
-// skippedEventCount reports how many raw-object events the length-based skip
-// path consumed for id.
-func skippedEventCount(c *conn, id uint32) uint32 {
-	return c.testSkippedEventCount(id)
 }
 
 type funcSink struct {

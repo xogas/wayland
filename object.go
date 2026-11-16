@@ -108,10 +108,10 @@ func (c *conn) deleteID(id uint32) error {
 	p, ok := c.objects[id]
 	if !ok {
 		c.mu.Unlock()
-		// The test-only broad skip consumes delete_id for an unknown child
-		// object created by a raw-bound interface; testSkipUnknownServer
-		// takes c.mu itself.
-		if c.testSkipUnknownServer(id) {
+		// Unknown server-range children belong to an interface this client has
+		// no signature for; delete_id for them is safe to ignore. Unknown
+		// client-range IDs remain protocol errors.
+		if id >= serverIDMin {
 			return nil
 		}
 		return fmt.Errorf("delete_id %d: %w", id, ErrProtocolViolation)
