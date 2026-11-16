@@ -27,8 +27,9 @@
 //
 // Tools and examples:
 //
-//	cmd/wayland-gen  XML -> Go bindings
-//	examples/       standalone programs: registry, output, input, and
-//	                shm-surface, xdg-shell, cube, imageviewer, subsurface,
-//	                clipboard, cursor, dmabuf
+//	cmd/wayland-gen   XML -> Go bindings
+//	cmd/wayland-info  print globals and output/seat/shm details
+//	examples/         standalone programs: registry, output, input, and
+//	                  shm-surface, xdg-shell, cube, imageviewer, subsurface,
+//	                  clipboard, cursor, dmabuf
 package wayland
