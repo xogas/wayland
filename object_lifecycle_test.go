@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestObjectLifecycle covers AC-O01.
+// TestObjectLifecycle covers object lifecycle.
 func TestObjectLifecycle(t *testing.T) {
 	c := newTestConn()
 	iface := mustInterface("wl_registry")
@@ -94,14 +94,14 @@ func TestObjectLifecycle(t *testing.T) {
 	}
 }
 
-// TestDestroyedSend covers AC-O02.
+// TestDestroyedSend covers destroyed objects.
 func TestDestroyedSend(t *testing.T) {
 	t.Run("destroy_pending", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_destroy", 1, []Message{
+		iface := testInterface("test_destroy", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -124,7 +124,7 @@ func TestDestroyedSend(t *testing.T) {
 
 	t.Run("destroyed", func(t *testing.T) {
 		c := newTestConn()
-		iface := testInterface("s03_destroyed", 1, []Message{
+		iface := testInterface("test_destroyed", 1, []Message{
 			{Name: "ping", Since: 1},
 		}, nil)
 		p, err := c.newObject(iface, 1, false)
@@ -138,7 +138,7 @@ func TestDestroyedSend(t *testing.T) {
 	})
 }
 
-// TestUnknownObject covers AC-O03.
+// TestUnknownObject covers unknown objects.
 func TestUnknownObject(t *testing.T) {
 	mustClosed := func(t *testing.T, d *Display) {
 		t.Helper()
@@ -164,7 +164,7 @@ func TestUnknownObject(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_opcode", 1, nil, nil)
+		iface := testInterface("test_opcode", 1, nil, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
 		writeFrame(t, b, p.ID(), 9, nil)
 		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
@@ -190,7 +190,7 @@ func TestUnknownObject(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_live", 1, nil, nil)
+		iface := testInterface("test_live", 1, nil, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
 		writeFrame(t, b, 1, 1, appendU32(nil, p.ID()))
 		if err := d.Dispatch(); !errors.Is(err, ErrProtocolViolation) {
@@ -237,7 +237,7 @@ func TestUnknownObject(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_pending", 1, []Message{
+		iface := testInterface("test_pending", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -275,7 +275,7 @@ func TestUnknownObject(t *testing.T) {
 	})
 }
 
-// TestObjectIDExhausted covers AC-O04.
+// TestObjectIDExhausted covers id exhaustion.
 func TestObjectIDExhausted(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

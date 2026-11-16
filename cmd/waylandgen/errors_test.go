@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// TestErrorCategories covers the generator side of AC-E03: E-13 input errors
+// TestErrorCategories covers the generator side of error categories: E-13 input errors
 // and E-14 write errors are distinguishable and carry path/field/message.
 func TestErrorCategories(t *testing.T) {
 	t.Run("E13_input", func(t *testing.T) {

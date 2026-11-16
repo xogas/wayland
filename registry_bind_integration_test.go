@@ -88,7 +88,7 @@ type seatTestHandler struct{}
 func (seatTestHandler) Capabilities(uint32) {}
 func (seatTestHandler) Name(string)         {}
 
-// TestRegistryBind covers AC-RB01: bind every advertised global at its
+// TestRegistryBind covers registry-bind: bind every advertised global at its
 // advertised version, using generated typed helpers / Registry.Bind for known
 // interfaces and the test-only raw bind path for unknown interfaces, then run
 // a roundtrip and require no protocol error.
@@ -153,7 +153,7 @@ func TestRegistryBind(t *testing.T) {
 	t.Logf("queued_fds_after_roundtrips=%d", queuedFDs)
 }
 
-// TestRegistryBindUnknownEvents covers AC-RB02: bind an unknown global through
+// TestRegistryBindUnknownEvents covers unknown events: bind an unknown global through
 // the test-only raw helper, receive at least one event for it, and skip that
 // event by message length while keeping the connection usable.
 func TestRegistryBindUnknownEvents(t *testing.T) {
@@ -237,7 +237,7 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 	testRegistryBindUnknownEventsFake(t)
 }
 
-// testRegistryBindUnknownEventsFake is the AC-RB02 substitution when the live
+// testRegistryBindUnknownEventsFake is the unknown events substitution when the live
 // session has no unknown interface emitting an event.
 func testRegistryBindUnknownEventsFake(t *testing.T) {
 	a, b := unixPair(t)
@@ -258,7 +258,7 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 	if err := d.Roundtrip(ctx); err != nil {
 		t.Fatalf("global roundtrip: %v", err)
 	}
-	if len(h.globals) != 1 || h.globals[0].Interface != "s05_unknown_event_source" {
+	if len(h.globals) != 1 || h.globals[0].Interface != "test_unknown_event_source" {
 		t.Fatalf("globals = %+v", h.globals)
 	}
 	p, err := bindUnknownRaw(reg, h.globals[0])
@@ -303,7 +303,7 @@ func serveFakeRegistryBindUnknown(srv *net.UnixConn, errCh chan<- error) {
 		return
 	}
 	regID := uint32(2)
-	if err := writeWireFrame(srv, regID, 0, registryGlobalBody(55, "s05_unknown_event_source", 1)); err != nil {
+	if err := writeWireFrame(srv, regID, 0, registryGlobalBody(55, "test_unknown_event_source", 1)); err != nil {
 		errCh <- err
 		return
 	}
@@ -328,7 +328,7 @@ func serveFakeRegistryBindUnknown(srv *net.UnixConn, errCh chan<- error) {
 		errCh <- err
 		return
 	}
-	if ifaceName != "s05_unknown_event_source" || version != 1 {
+	if ifaceName != "test_unknown_event_source" || version != 1 {
 		errCh <- fmt.Errorf("bind = %q v%d", ifaceName, version)
 		return
 	}
@@ -369,7 +369,7 @@ func answerSync(s *testServer) (uint32, error) {
 	return callbackID, nil
 }
 
-// TestRegistryBindUnknownEventsFake runs the AC-RB02 socketpair substitution
+// TestRegistryBindUnknownEventsFake runs the unknown events socketpair substitution
 // directly so it is verified even when a live sway session is available.
 func TestRegistryBindUnknownEventsFake(t *testing.T) {
 	testRegistryBindUnknownEventsFake(t)

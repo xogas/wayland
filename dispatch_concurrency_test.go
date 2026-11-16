@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-// TestDispatchSerial covers AC-D01: callbacks are serial, run on the Dispatch
+// TestDispatchSerial covers serial dispatch: callbacks are serial, run on the Dispatch
 // caller's goroutine, and may send requests without deadlocking.
 func TestDispatchSerial(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_serial", 1,
+	iface := testInterface("test_serial", 1,
 		[]Message{{Name: "ping", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}},
 		[]Message{{Name: "pong", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	p := newTestProxy(t, d, iface, 1, nil)
@@ -76,14 +76,14 @@ func TestDispatchSerial(t *testing.T) {
 	}
 }
 
-// TestConcurrentSend covers AC-D02: eight goroutines send concurrently,
+// TestConcurrentSend covers concurrent send: eight goroutines send concurrently,
 // messages stay atomic and per-goroutine order is preserved.
 func TestConcurrentSend(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_concurrent", 1, []Message{
+	iface := testInterface("test_concurrent", 1, []Message{
 		{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "worker", Type: ArgInt}, {Name: "seq", Type: ArgInt}}},
 	}, nil)
 	p := newTestProxy(t, d, iface, 1, nil)
@@ -167,13 +167,13 @@ func TestConcurrentSend(t *testing.T) {
 	}
 }
 
-// TestCloseUnblocksDispatch covers AC-D03.
+// TestCloseUnblocksDispatch covers close unblocks dispatch.
 func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("blocked_dispatch", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_close", 1, nil,
+		iface := testInterface("test_close", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		_ = newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error { return nil }})
 
@@ -226,7 +226,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_close_callback", 1, nil,
+		iface := testInterface("test_close_callback", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		entered := make(chan struct{})
 		release := make(chan struct{})
@@ -272,7 +272,7 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_reentrant", 1, nil,
+		iface := testInterface("test_reentrant", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		var closeErr error
 		p := newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error {
@@ -295,13 +295,13 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	})
 }
 
-// TestDispatchProtocolError covers AC-D04.
+// TestDispatchProtocolError covers protocol error dispatch.
 func TestDispatchProtocolError(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_dispatch_error", 1, nil,
+	iface := testInterface("test_dispatch_error", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var calls int
 	p := newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error {
@@ -347,12 +347,12 @@ func TestDispatchProtocolError(t *testing.T) {
 	}
 }
 
-// TestConcurrentDispatch covers AC-D05.
+// TestConcurrentDispatch covers concurrent dispatch.
 func TestConcurrentDispatch(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
-	iface := testInterface("s03_concurrent_dispatch", 1, nil,
+	iface := testInterface("test_concurrent_dispatch", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var active atomic.Int32
 	var count atomic.Int32
@@ -408,13 +408,13 @@ func TestConcurrentDispatch(t *testing.T) {
 	}
 }
 
-// TestSendBlocking covers AC-R03.
+// TestSendBlocking covers blocked send.
 func TestSendBlocking(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_send_blocking", 1, []Message{
+	iface := testInterface("test_send_blocking", 1, []Message{
 		{Name: "big", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 	}, nil)
 	p := newTestProxy(t, d, iface, 1, nil)

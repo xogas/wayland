@@ -24,10 +24,10 @@ func errorTestDisplay(t *testing.T) (*Display, *net.UnixConn) {
 	return d, b
 }
 
-// TestProtocolError covers AC-E01.
+// TestProtocolError covers protocol error.
 func TestProtocolError(t *testing.T) {
 	d, b := errorTestDisplay(t)
-	iface := testInterface("s03_error", 1, nil,
+	iface := testInterface("test_error", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	p := newTestProxy(t, d, iface, 1, nil)
 
@@ -88,7 +88,7 @@ func TestProtocolErrorZeroObject(t *testing.T) {
 	}
 }
 
-// TestIOError covers AC-E02.
+// TestIOError covers io error.
 func TestIOError(t *testing.T) {
 	t.Run("dispatch_eof", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
@@ -104,7 +104,7 @@ func TestIOError(t *testing.T) {
 
 	t.Run("send_eof", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
-		iface := testInterface("s03_io", 1, []Message{{Name: "ping", Since: 1}}, nil)
+		iface := testInterface("test_io", 1, []Message{{Name: "ping", Since: 1}}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
 		_ = b.Close()
 		var err error
@@ -168,7 +168,7 @@ func TestErrorChain(t *testing.T) {
 	t.Run("sink", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
 		sinkErr := errors.New("sink failed")
-		iface := testInterface("s06_sink", 1, nil,
+		iface := testInterface("test_sink", 1, nil,
 			[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		p := newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error {
 			return sinkErr
@@ -184,7 +184,7 @@ func TestErrorChain(t *testing.T) {
 	})
 }
 
-// TestErrorCategories covers AC-E03: every runtime sentinel E-01 through E-16
+// TestErrorCategories covers error categories: every runtime sentinel E-01 through E-16
 // is distinguishable with errors.Is / errors.As, with operation context.
 func TestErrorCategories(t *testing.T) {
 	t.Run("E01_source", func(t *testing.T) {
@@ -238,7 +238,7 @@ func TestErrorCategories(t *testing.T) {
 
 	t.Run("E05_protocol_error", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
-		p := newTestProxy(t, d, testInterface("s03_e05", 1, nil, nil), 1, nil)
+		p := newTestProxy(t, d, testInterface("test_e05", 1, nil, nil), 1, nil)
 		msg := "e05"
 		spec := mustInterface("wl_display").Events[0]
 		data, _, err := encodeRequest(d.p, 0, spec, []Arg{Object(p.ID()), Uint(2), String(&msg)})
@@ -251,7 +251,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.As(err, &pe) {
 			t.Fatalf("dispatch = %v, want *ProtocolError", err)
 		}
-		if pe.Interface != "s03_e05" || pe.Message != "e05" {
+		if pe.Interface != "test_e05" || pe.Message != "e05" {
 			t.Fatalf("protocol error = %+v", pe)
 		}
 	})
@@ -294,7 +294,7 @@ func TestErrorCategories(t *testing.T) {
 
 	t.Run("E09_since", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
-		iface := testInterface("s03_e09", 4, []Message{
+		iface := testInterface("test_e09", 4, []Message{
 			{Name: "early", Since: 1},
 			{Name: "late", Since: 4},
 		}, nil)
@@ -303,14 +303,14 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrSince) {
 			t.Fatalf("send = %v, want ErrSince", err)
 		}
-		if !strings.Contains(err.Error(), "s03_e09") || !strings.Contains(err.Error(), "late") {
+		if !strings.Contains(err.Error(), "test_e09") || !strings.Contains(err.Error(), "late") {
 			t.Fatalf("error lacks interface/message context: %v", err)
 		}
 	})
 
 	t.Run("E10_invalid_argument", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
-		iface := testInterface("s03_e10", 1, []Message{
+		iface := testInterface("test_e10", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "s", Type: ArgString}}},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -318,14 +318,14 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrInvalidArgument) {
 			t.Fatalf("send = %v, want ErrInvalidArgument", err)
 		}
-		if !strings.Contains(err.Error(), "s03_e10") || !strings.Contains(err.Error(), "msg") {
+		if !strings.Contains(err.Error(), "test_e10") || !strings.Contains(err.Error(), "msg") {
 			t.Fatalf("error lacks interface/message context: %v", err)
 		}
 	})
 
 	t.Run("E11_object_destroyed", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
-		iface := testInterface("s03_e11", 1, []Message{
+		iface := testInterface("test_e11", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -357,7 +357,7 @@ func TestErrorCategories(t *testing.T) {
 	t.Run("E15_dynamic_unknown", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		reg, _ := newRegistryForTest(t, d)
-		_, err := reg.Bind(Global{Name: 1, Interface: "s03_e15_missing", Version: 1}, 1)
+		_, err := reg.Bind(Global{Name: 1, Interface: "test_e15_missing", Version: 1}, 1)
 		if !errors.Is(err, ErrInvalidArgument) {
 			t.Fatalf("bind = %v, want ErrInvalidArgument", err)
 		}
@@ -383,7 +383,7 @@ func TestErrorCategories(t *testing.T) {
 
 	t.Run("ErrNoHandler", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
-		iface := testInterface("s03_nohandler", 1, nil,
+		iface := testInterface("test_nohandler", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 		p := newTestProxy(t, d, iface, 1, nil)
 		writeFrame(t, b, p.ID(), 0, appendU32(nil, 1))
@@ -391,7 +391,7 @@ func TestErrorCategories(t *testing.T) {
 		if !errors.Is(err, ErrNoHandler) {
 			t.Fatalf("dispatch = %v, want ErrNoHandler", err)
 		}
-		if !strings.Contains(err.Error(), "s03_nohandler") {
+		if !strings.Contains(err.Error(), "test_nohandler") {
 			t.Fatalf("error lacks interface context: %v", err)
 		}
 		if d.p.conn.isClosed() {
@@ -401,7 +401,7 @@ func TestErrorCategories(t *testing.T) {
 
 	t.Run("ErrInvalidOperation", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
-		iface := testInterface("s03_invalid_op", 1, []Message{
+		iface := testInterface("test_invalid_op", 1, []Message{
 			{Name: "ping", Since: 1},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)

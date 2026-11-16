@@ -17,7 +17,7 @@ func newRegistryForTest(t *testing.T, d *Display) (*Registry, *Proxy) {
 	return NewRegistry(p, &registryRecorder{}), p
 }
 
-// TestBindVersion covers AC-V01.
+// TestBindVersion covers bind version.
 func TestBindVersion(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -87,13 +87,13 @@ func parseBindFrame(t *testing.T, body []byte) (uint32, string, uint32, uint32) 
 	return name, ifaceName, version, id
 }
 
-// TestSinceGuard covers AC-V02.
+// TestSinceGuard covers since.
 func TestSinceGuard(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_since", 4, []Message{
+	iface := testInterface("test_since", 4, []Message{
 		{Name: "early", Since: 1},
 		{Name: "late", Since: 4},
 	}, nil)
@@ -103,7 +103,7 @@ func TestSinceGuard(t *testing.T) {
 	if !errors.Is(err, ErrSince) {
 		t.Fatalf("send since 4 on v3 = %v, want ErrSince", err)
 	}
-	if !strings.Contains(err.Error(), "s03_since") || !strings.Contains(err.Error(), "late") {
+	if !strings.Contains(err.Error(), "test_since") || !strings.Contains(err.Error(), "late") {
 		t.Fatalf("error lacks interface/message context: %v", err)
 	}
 	assertNoBytes(t, b)
@@ -118,7 +118,7 @@ func TestSinceGuard(t *testing.T) {
 	}
 }
 
-// TestDynamicNewID covers AC-V04.
+// TestDynamicNewID covers dynamic new_id.
 func TestDynamicNewID(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -154,7 +154,7 @@ func TestDynamicNewID(t *testing.T) {
 	}
 }
 
-// TestDynamicNewIDUnknown covers AC-V05.
+// TestDynamicNewIDUnknown covers unknown dynamic new_id.
 func TestDynamicNewIDUnknown(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -162,11 +162,11 @@ func TestDynamicNewIDUnknown(t *testing.T) {
 	t.Cleanup(func() { _ = b.Close() })
 	reg, _ := newRegistryForTest(t, d)
 
-	_, err := reg.Bind(Global{Name: 3, Interface: "s03_no_such_interface", Version: 1}, 1)
+	_, err := reg.Bind(Global{Name: 3, Interface: "test_no_such_interface", Version: 1}, 1)
 	if !errors.Is(err, ErrInvalidArgument) {
 		t.Fatalf("bind unknown = %v, want ErrInvalidArgument", err)
 	}
-	if !strings.Contains(err.Error(), "bind") || !strings.Contains(err.Error(), "s03_no_such_interface") {
+	if !strings.Contains(err.Error(), "bind") || !strings.Contains(err.Error(), "test_no_such_interface") {
 		t.Fatalf("error lacks operation/interface context: %v", err)
 	}
 	assertNoBytes(t, b)
@@ -185,7 +185,7 @@ func (r *orderedRegistryRecorder) GlobalRemove(name uint32) {
 }
 
 // TestRegistryEventOrder checks that global and global_remove events are
-// delivered in server order (AC-V03 event ordering).
+// delivered in server order (bind versions event ordering).
 func TestRegistryEventOrder(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

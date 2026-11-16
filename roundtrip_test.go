@@ -17,7 +17,7 @@ func (s *countSink) DispatchEvent(uint16, []Arg) error {
 	return nil
 }
 
-// TestRoundtripCancel covers AC-R02: a canceled or timed-out Roundtrip returns
+// TestRoundtripCancel covers roundtrip cancellation: a canceled or timed-out Roundtrip returns
 // the context error, leaves the connection usable, suppresses the canceled
 // callback and keeps a tombstone until delete_id.
 func TestRoundtripCancel(t *testing.T) {
@@ -124,7 +124,7 @@ func TestRoundtripCancelPreservesEvents(t *testing.T) {
 	d := newDisplay(a)
 	t.Cleanup(func() { _ = d.Close() })
 	t.Cleanup(func() { _ = b.Close() })
-	iface := testInterface("s03_preserve", 1, nil,
+	iface := testInterface("test_preserve", 1, nil,
 		[]Message{{Name: "e", Since: 1, Args: []ArgSpec{{Name: "n", Type: ArgUint}}}})
 	var calls int
 	p := newTestProxy(t, d, iface, 1, funcSink{fn: func(uint16, []Arg) error {

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// TestWireRoundtrip covers AC-W01: every argument type, null/empty/non-empty
+// TestWireRoundtrip covers wire argument types: every argument type, null/empty/non-empty
 // strings and arrays, fixed-point endpoints, fd, new_id and object values.
 func TestWireRoundtrip(t *testing.T) {
 	rfd, wfd := pipeFDs(t)
@@ -22,7 +22,7 @@ func TestWireRoundtrip(t *testing.T) {
 	run := func(name string, specs []ArgSpec, vals []Arg, prep func(*conn)) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
-			iface := testInterface("s03_wire", 1, []Message{{Name: "msg", Since: 1, Args: specs}}, nil)
+			iface := testInterface("test_wire", 1, []Message{{Name: "msg", Since: 1, Args: specs}}, nil)
 			c := &conn{objects: make(map[uint32]*Proxy), nextID: 2}
 			p := &Proxy{conn: c, id: 1, version: 1, iface: iface}
 			c.objects[1] = p
@@ -95,7 +95,7 @@ func TestWireRoundtrip(t *testing.T) {
 
 	t.Run("little_endian", func(t *testing.T) {
 		specs := []ArgSpec{{Name: "v", Type: ArgInt}}
-		iface := testInterface("s03_endian", 1, []Message{{Name: "msg", Since: 1, Args: specs}}, nil)
+		iface := testInterface("test_endian", 1, []Message{{Name: "msg", Since: 1, Args: specs}}, nil)
 		p := &Proxy{id: 1, version: 1, iface: iface}
 		data, _, err := encodeRequest(p, 0, iface.Requests[0], []Arg{Int(0x01020304)})
 		if err != nil {
@@ -166,7 +166,7 @@ func compareWireValues(t *testing.T, specs []ArgSpec, want, got []Arg) {
 	}
 }
 
-// TestWireCoverage covers AC-W02: every generated request and event has at
+// TestWireCoverage covers all generated messages: every generated request and event has at
 // least one encode/decode case and the values round-trip.
 func TestWireCoverage(t *testing.T) {
 	var files []*os.File
@@ -314,7 +314,7 @@ func ifaceForNil(name string) *Interface {
 	return iface
 }
 
-// TestWireMalformed covers AC-W03: truncated, undersized and misaligned wire
+// TestWireMalformed covers malformed messages: truncated, undersized and misaligned wire
 // data returns ErrMalformedMessage without panicking.
 func TestWireMalformed(t *testing.T) {
 	c := &conn{objects: make(map[uint32]*Proxy)}
@@ -362,14 +362,14 @@ func TestWireMalformed(t *testing.T) {
 	}
 }
 
-// TestWireFD covers AC-W04.
+// TestWireFD covers fd ownership.
 func TestWireFD(t *testing.T) {
 	t.Run("two_and_one", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_fd", 1, []Message{
+		iface := testInterface("test_fd", 1, []Message{
 			{Name: "two", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}},
 			{Name: "one", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}}},
 		}, nil)
@@ -422,7 +422,7 @@ func TestWireFD(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_fd_event", 1, nil,
+		iface := testInterface("test_fd_event", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)
 
@@ -451,7 +451,7 @@ func TestWireFD(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_fd_pending", 1,
+		iface := testInterface("test_fd_pending", 1,
 			[]Message{{Name: "destroy", Since: 1, Destructor: true}},
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -481,7 +481,7 @@ func TestWireFD(t *testing.T) {
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
 		d.p.conn.testSetOOBLen(16)
-		iface := testInterface("s03_fd_ctrunc", 1, nil,
+		iface := testInterface("test_fd_ctrunc", 1, nil,
 			[]Message{{Name: "data", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}}}})
 		p := newTestProxy(t, d, iface, 1, nil)
 		r1, w1 := pipeFDs(t)
@@ -505,7 +505,7 @@ func TestWireFD(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_fd_partial", 1, []Message{
+		iface := testInterface("test_fd_partial", 1, []Message{
 			{Name: "big", Since: 1, Args: []ArgSpec{{Name: "a", Type: ArgFD}, {Name: "b", Type: ArgFD}, {Name: "data", Type: ArgArray}}},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -578,7 +578,7 @@ func TestWireFD(t *testing.T) {
 	})
 }
 
-// TestWireInvalidNull covers AC-W05.
+// TestWireInvalidNull covers invalid null.
 func TestWireInvalidNull(t *testing.T) {
 	run := func(name string, spec ArgSpec, arg Arg, allowed bool) {
 		t.Helper()
@@ -587,7 +587,7 @@ func TestWireInvalidNull(t *testing.T) {
 			d := newDisplay(a)
 			t.Cleanup(func() { _ = d.Close() })
 			t.Cleanup(func() { _ = b.Close() })
-			iface := testInterface("s03_null", 1, []Message{{Name: "msg", Since: 1, Args: []ArgSpec{spec}}}, nil)
+			iface := testInterface("test_null", 1, []Message{{Name: "msg", Since: 1, Args: []ArgSpec{spec}}}, nil)
 			p := newTestProxy(t, d, iface, 1, nil)
 			err := p.Send(0, arg)
 			if !allowed {
@@ -637,7 +637,7 @@ func TestWireInvalidNull(t *testing.T) {
 	})
 }
 
-// TestWireInvalidFD covers AC-W06.
+// TestWireInvalidFD covers invalid fd.
 func TestWireInvalidFD(t *testing.T) {
 	setup := func(t *testing.T) (*Display, *net.UnixConn, *Proxy) {
 		t.Helper()
@@ -647,7 +647,7 @@ func TestWireInvalidFD(t *testing.T) {
 			_ = d.Close()
 			_ = b.Close()
 		})
-		iface := testInterface("s03_fd_invalid", 1, []Message{
+		iface := testInterface("test_fd_invalid", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "fd", Type: ArgFD}}},
 		}, nil)
 		return d, b, newTestProxy(t, d, iface, 1, nil)
@@ -673,14 +673,14 @@ func TestWireInvalidFD(t *testing.T) {
 	})
 }
 
-// TestWireOversize covers AC-W07.
+// TestWireOversize covers oversized messages.
 func TestWireOversize(t *testing.T) {
 	t.Run("oversize", func(t *testing.T) {
 		a, b := unixPair(t)
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_oversize", 1, []Message{
+		iface := testInterface("test_oversize", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)
@@ -695,7 +695,7 @@ func TestWireOversize(t *testing.T) {
 		d := newDisplay(a)
 		t.Cleanup(func() { _ = d.Close() })
 		t.Cleanup(func() { _ = b.Close() })
-		iface := testInterface("s03_oversize", 1, []Message{
+		iface := testInterface("test_oversize", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "data", Type: ArgArray}}},
 		}, nil)
 		p := newTestProxy(t, d, iface, 1, nil)

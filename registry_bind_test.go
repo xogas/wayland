@@ -17,7 +17,7 @@ import (
 type typedBinder func(*Registry, Global) (*Proxy, error)
 
 // registryBindResult reports what a registry-bind run did. It is test-only
-// bookkeeping for AC-RB01 and AC-RB03.
+// bookkeeping for registry-bind and bind errors.
 type registryBindResult struct {
 	Advertised      int
 	KnownTyped      int
@@ -37,7 +37,7 @@ type registryBind struct {
 	Raw    bool
 }
 
-// bindUnknownRaw is the AC-RB01 / AC-RB02 test-only raw bind path. It creates
+// bindUnknownRaw is the registry-bind / unknown events test-only raw bind path. It creates
 // an object for an interface that has no generated metadata and sends
 // wl_registry.bind through the runtime, so the dynamic new_id wire expansion
 // still writes name / interface / version / new_id. The object is marked raw:
@@ -129,7 +129,7 @@ func bindRegistryGlobals(reg *Registry, globals []Global, typed map[string]typed
 }
 
 // registryBindRoundtrip runs the final roundtrip and attaches bind context to
-// a server error so AC-RB03 reports interface, requested version and the
+// a server error so bind errors reports interface, requested version and the
 // server message instead of only the raw protocol error.
 func registryBindRoundtrip(ctx context.Context, d *Display, res *registryBindResult) error {
 	err := d.Roundtrip(ctx)
@@ -177,7 +177,7 @@ func (bindDiscardSink) DispatchEvent(_ uint16, args []Arg) error {
 	return nil
 }
 
-// TestRegistryBindError covers AC-RB03 with a fake Unix server. The server
+// TestRegistryBindError covers bind errors with a fake Unix server. The server
 // reads the bind request and answers with wl_display.error; the registry-bind
 // run must report the interface, requested version and server message without
 // hanging.
@@ -277,7 +277,7 @@ func TestRawBindWire(t *testing.T) {
 	t.Cleanup(func() { _ = b.Close() })
 	reg, _ := newRegistryForTest(t, d)
 
-	g := Global{Name: 77, Interface: "s05_unknown_interface", Version: 3}
+	g := Global{Name: 77, Interface: "test_unknown_interface", Version: 3}
 	p, err := bindUnknownRaw(reg, g)
 	if err != nil {
 		t.Fatalf("raw bind: %v", err)

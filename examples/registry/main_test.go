@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// serveNoGlobals is a minimal Wayland server for AC-X07. It answers
+// serveNoGlobals is a minimal Wayland server for registry example. It answers
 // wl_display.get_registry and wl_display.sync without ever advertising a
 // global, then returns once the sync callback has been delivered.
 func serveNoGlobals(f *os.File) error {
@@ -65,7 +65,7 @@ func serveNoGlobals(f *os.File) error {
 	}
 }
 
-// TestRegistryNoGlobals covers AC-X07: a server that sends no global events
+// TestRegistryNoGlobals covers registry example: a server that sends no global events
 // makes run return a "no globals" error, without a real sway session.
 func TestRegistryNoGlobals(t *testing.T) {
 	fds, err := syscall.Socketpair(syscall.AF_UNIX, syscall.SOCK_STREAM, 0)

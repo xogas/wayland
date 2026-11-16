@@ -34,7 +34,7 @@ func (discardSink) DispatchEvent(opcode uint16, args []Arg) error {
 	return nil
 }
 
-// TestRoundtrip covers AC-R01 against a real sway session.
+// TestRoundtrip covers roundtrip against a real sway session.
 func TestRoundtrip(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
@@ -77,9 +77,9 @@ func TestRoundtrip(t *testing.T) {
 	t.Logf("roundtrip delivered %d globals in server order", len(h.globals))
 }
 
-// TestBindVersions covers AC-V03 against a real sway session. Globals without
+// TestBindVersions covers bind versions against a real sway session. Globals without
 // generated metadata, or advertised above the generated interface version, are
-// reported and skipped; the unknown-interface raw bind belongs to S-05.
+// reported and skipped; the unknown-interface raw bind is test-only.
 func TestBindVersions(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
