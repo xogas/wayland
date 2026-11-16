@@ -235,7 +235,7 @@ func TestGeneratorMetadata(t *testing.T) {
 
 	metaVars := metaVariableNames(c)
 	outputs := renderT(t, c)
-	meta := findOutput(t, outputs, "protocol_meta_gen.go")
+	meta := findOutput(t, outputs, "interfaces_gen.go")
 	for _, i := range c.interfaces {
 		varName := metaVars[i]
 		if strings.Count(string(meta), "var "+varName+" = &Interface{") != 1 {
@@ -440,9 +440,8 @@ func TestGeneratedLayout(t *testing.T) {
 	if len(outputs) != wantFiles {
 		t.Fatalf("outputs = %d, want %d", len(outputs), wantFiles)
 	}
-	if outputs[0].Rel != "protocol_gen.go" || outputs[1].Rel != "protocol_meta_gen.go" {
-		t.Fatalf("root outputs = %q, %q", outputs[0].Rel, outputs[1].Rel)
-	}
+	findOutput(t, outputs, "wayland_gen.go")
+	findOutput(t, outputs, "interfaces_gen.go")
 	for _, o := range outputs {
 		if !bytes.HasPrefix(o.Data, []byte(generatedHeader)) {
 			t.Fatalf("%s: missing generated header", o.Rel)

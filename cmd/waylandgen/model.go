@@ -218,7 +218,7 @@ func packageFor(src sourceFile, seen map[string]*pkg) (*pkg, error) {
 		}
 		p := &pkg{
 			Name:    "wayland",
-			OutFile: "protocol_gen.go",
+			OutFile: "wayland_gen.go",
 		}
 		seen[""] = p
 		return p, nil

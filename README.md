@@ -31,8 +31,8 @@ to sway.
 | `proxy.go` | `Proxy` handle, `EventSink`, `Global` |
 | `roundtrip.go` | `Roundtrip`, cancellation, callback tombstone, unread frame |
 | `wire.go` | request encoding, event decoding, dynamic `wl_registry.bind` fields |
-| `protocol_gen.go` | generated core `wl_*` bindings |
-| `protocol_meta_gen.go` | generated metadata for all interfaces |
+| `wayland_gen.go` | generated core `wl_*` bindings from `wayland.xml` |
+| `interfaces_gen.go` | generated metadata for all interfaces |
 
 ### Generator, `cmd/waylandgen`
 
@@ -68,8 +68,8 @@ Single `package main`; no subpackages.
 
 `go generate ./...` runs `cmd/waylandgen` and writes:
 
-- `protocol_gen.go`: core `wl_*` types in the root package.
-- `protocol_meta_gen.go`: metadata for all 211 interfaces, including the
+- `wayland_gen.go`: core `wl_*` types in the root package, from `wayland.xml`.
+- `interfaces_gen.go`: metadata for all 211 interfaces, including the
   stable-preference map and all duplicate entries.
 - `protocols/<tier>/<protocol>/<protocol>_gen.go`: typed bindings for the
   remaining protocols.

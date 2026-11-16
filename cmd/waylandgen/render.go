@@ -23,8 +23,8 @@ func renderCorpus(c *corpus) ([]renderedFile, error) {
 		return nil, err
 	}
 	files = append(files,
-		renderedFile{Rel: "protocol_gen.go", Data: rootGen},
-		renderedFile{Rel: "protocol_meta_gen.go", Data: rootMeta},
+		renderedFile{Rel: "wayland_gen.go", Data: rootGen},
+		renderedFile{Rel: "interfaces_gen.go", Data: rootMeta},
 	)
 	for _, pk := range c.pkgs {
 		if pk.ImportPath == "" {
