@@ -28,5 +28,7 @@
 // Tools and examples:
 //
 //	cmd/waylandgen  XML -> Go bindings
-//	examples/       standalone usage programs
+//	examples/       standalone programs: registry, output, input, and
+//	                shm-surface, xdg-shell, cube, imageviewer, subsurface,
+//	                clipboard, cursor, dmabuf
 package wayland
