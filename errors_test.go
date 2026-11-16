@@ -184,10 +184,10 @@ func TestErrorChain(t *testing.T) {
 	})
 }
 
-// TestErrorCategories covers error categories: every runtime sentinel E-01 through E-16
+// TestErrorCategories covers error categories: every runtime sentinel category
 // is distinguishable with errors.Is / errors.As, with operation context.
 func TestErrorCategories(t *testing.T) {
-	t.Run("E01_source", func(t *testing.T) {
+	t.Run("source", func(t *testing.T) {
 		t.Setenv("WAYLAND_SOCKET", "")
 		t.Setenv("WAYLAND_DISPLAY", "")
 		t.Setenv("XDG_RUNTIME_DIR", "")
@@ -200,7 +200,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E02_connect", func(t *testing.T) {
+	t.Run("connect", func(t *testing.T) {
 		_, err := DialContext(context.Background(), filepath.Join(t.TempDir(), "missing.sock"))
 		if !errors.Is(err, ErrConnect) || errors.Is(err, ErrSource) {
 			t.Fatalf("DialContext = %v, want ErrConnect", err)
@@ -210,7 +210,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E03_closed", func(t *testing.T) {
+	t.Run("closed", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		if err := d.Close(); err != nil {
 			t.Fatalf("close: %v", err)
@@ -224,7 +224,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E04_io", func(t *testing.T) {
+	t.Run("io", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
 		_ = b.Close()
 		err := d.Dispatch()
@@ -236,7 +236,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E05_protocol_error", func(t *testing.T) {
+	t.Run("protocol_error", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
 		p := newTestProxy(t, d, testInterface("test_e05", 1, nil, nil), 1, nil)
 		msg := "e05"
@@ -256,7 +256,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E06_malformed", func(t *testing.T) {
+	t.Run("malformed", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
 		writeRawHeader(t, b, 1, 0, 4)
 		err := d.Dispatch()
@@ -268,7 +268,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E07_protocol_violation", func(t *testing.T) {
+	t.Run("protocol_violation", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
 		writeFrame(t, b, 999, 0, nil)
 		err := d.Dispatch()
@@ -280,7 +280,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E08_version", func(t *testing.T) {
+	t.Run("version", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		reg, _ := newRegistryForTest(t, d)
 		_, err := reg.Bind(Global{Name: 1, Interface: "xdg_surface", Version: 5}, 6)
@@ -292,7 +292,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E09_since", func(t *testing.T) {
+	t.Run("since", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		iface := testInterface("test_e09", 4, []Message{
 			{Name: "early", Since: 1},
@@ -308,7 +308,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E10_invalid_argument", func(t *testing.T) {
+	t.Run("invalid_argument", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		iface := testInterface("test_e10", 1, []Message{
 			{Name: "msg", Since: 1, Args: []ArgSpec{{Name: "s", Type: ArgString}}},
@@ -323,7 +323,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E11_object_destroyed", func(t *testing.T) {
+	t.Run("object_destroyed", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		iface := testInterface("test_e11", 1, []Message{
 			{Name: "destroy", Since: 1, Destructor: true},
@@ -341,7 +341,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E12_context_canceled", func(t *testing.T) {
+	t.Run("context_canceled", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -354,7 +354,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E15_dynamic_unknown", func(t *testing.T) {
+	t.Run("dynamic_unknown", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		reg, _ := newRegistryForTest(t, d)
 		_, err := reg.Bind(Global{Name: 1, Interface: "test_e15_missing", Version: 1}, 1)
@@ -366,7 +366,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E16_id_exhausted", func(t *testing.T) {
+	t.Run("id_exhausted", func(t *testing.T) {
 		d, _ := errorTestDisplay(t)
 		d.p.conn.nextID = clientIDMax
 		if _, err := d.p.conn.newObject(mustInterface("wl_registry"), 1, false); err != nil {

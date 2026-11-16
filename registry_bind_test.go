@@ -65,7 +65,7 @@ func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	c.testSetRawName(p.ID(), g.Interface)
 	// Unknown interfaces may create server-owned child objects whose events
 	// the runtime cannot decode without a signature. Enable the test-only
-	// broad skip for those IDs; public dispatch keeps E-07.
+	// broad skip for those IDs; public dispatch keeps protocol-violation behavior.
 	c.testSetSkipUnknownServer(true)
 	if err := reg.Proxy().Send(0, Uint(g.Name), NewID(p.ID())); err != nil {
 		_ = p.Release()
@@ -250,7 +250,7 @@ func ptr(s string) *string { return &s }
 
 // TestRawSkipMarkerOffDoesNotWeakenUnknownObjects proves the test-only broad
 // skip stays off for ordinary dispatch: an unregistered server-range event is
-// still E-07 and closes the connection.
+// still returns a protocol violation and closes the connection.
 func TestRawSkipMarkerOffDoesNotWeakenUnknownObjects(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-// TestErrorCategories covers the generator side of error categories: E-13 input errors
-// and E-14 write errors are distinguishable and carry path/field/message.
+// TestErrorCategories covers the generator side of error categories: input input errors
+// and write write errors are distinguishable and carry path/field/message.
 func TestErrorCategories(t *testing.T) {
-	t.Run("E13_input", func(t *testing.T) {
+	t.Run("input", func(t *testing.T) {
 		err := inputError("proto.xml", "version", errors.New("bad version"))
 		var ge *GeneratorError
 		if !errors.As(err, &ge) {
@@ -42,7 +42,7 @@ func TestErrorCategories(t *testing.T) {
 		}
 	})
 
-	t.Run("E14_write", func(t *testing.T) {
+	t.Run("write", func(t *testing.T) {
 		err := writeError("out.go", "write", errors.New("disk full"))
 		var ge *GeneratorError
 		if !errors.As(err, &ge) {
