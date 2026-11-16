@@ -2,12 +2,12 @@ package wayland
 
 import "fmt"
 
-// EventSink receives decoded events for one object.
+// EventSink receives decoded events.
 type EventSink interface {
 	DispatchEvent(opcode uint16, args []Arg) error
 }
 
-// Global is one wl_registry.global entry.
+// Global is one registry global.
 type Global struct {
 	Name      uint32
 	Interface string
@@ -22,7 +22,7 @@ const (
 	stateDestroyed
 )
 
-// Proxy is the runtime handle behind a generated object.
+// Proxy is a runtime object handle.
 type Proxy struct {
 	conn        *conn
 	id          uint32
@@ -37,16 +37,16 @@ type Proxy struct {
 	tombstone bool
 }
 
-// ID returns the wire object ID.
+// ID returns the wire object id.
 func (p *Proxy) ID() uint32 { return p.id }
 
 // Version returns the object version.
 func (p *Proxy) Version() uint32 { return p.version }
 
-// Interface returns the object interface metadata.
+// Interface returns the object metadata.
 func (p *Proxy) Interface() *Interface { return p.iface }
 
-// SetSink installs the event sink for an event-created object.
+// SetSink installs the event sink.
 func (p *Proxy) SetSink(sink EventSink) error {
 	if sink == nil {
 		return fmt.Errorf("set sink: %w", ErrInvalidArgument)
@@ -87,7 +87,7 @@ func (p *Proxy) markServerOwned() {
 	p.conn.mu.Unlock()
 }
 
-// Release frees an object that was allocated but never sent.
+// Release frees an unsent object.
 func (p *Proxy) Release() error {
 	return p.conn.release(p)
 }

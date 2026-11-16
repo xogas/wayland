@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestErrorCategories covers the generator side of error categories: input input errors
-// and write write errors are distinguishable and carry path/field/message.
 func TestErrorCategories(t *testing.T) {
 	t.Run("input", func(t *testing.T) {
 		err := inputError("proto.xml", "version", errors.New("bad version"))

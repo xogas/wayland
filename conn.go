@@ -1,4 +1,3 @@
-// Package wayland is a pure Go Wayland client protocol library.
 package wayland
 
 import (

@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-// TestWireRoundtrip covers wire argument types: every argument type, null/empty/non-empty
-// strings and arrays, fixed-point endpoints, fd, new_id and object values.
 func TestWireRoundtrip(t *testing.T) {
 	rfd, wfd := pipeFDs(t)
 	defer func() { _ = syscall.Close(rfd) }()
@@ -166,8 +164,6 @@ func compareWireValues(t *testing.T, specs []ArgSpec, want, got []Arg) {
 	}
 }
 
-// TestWireCoverage covers all generated messages: every generated request and event has at
-// least one encode/decode case and the values round-trip.
 func TestWireCoverage(t *testing.T) {
 	var files []*os.File
 	var fdPool []int
@@ -314,8 +310,6 @@ func ifaceForNil(name string) *Interface {
 	return iface
 }
 
-// TestWireMalformed covers malformed messages: truncated, undersized and misaligned wire
-// data returns ErrMalformedMessage without panicking.
 func TestWireMalformed(t *testing.T) {
 	c := &conn{objects: make(map[uint32]*Proxy)}
 	parent := &Proxy{version: 1}
@@ -362,7 +356,6 @@ func TestWireMalformed(t *testing.T) {
 	}
 }
 
-// TestWireFD covers fd ownership.
 func TestWireFD(t *testing.T) {
 	t.Run("two_and_one", func(t *testing.T) {
 		a, b := unixPair(t)
@@ -553,7 +546,6 @@ func TestWireFD(t *testing.T) {
 	})
 }
 
-// TestWireInvalidNull covers invalid null.
 func TestWireInvalidNull(t *testing.T) {
 	run := func(name string, spec ArgSpec, arg Arg, allowed bool) {
 		t.Helper()
@@ -612,7 +604,6 @@ func TestWireInvalidNull(t *testing.T) {
 	})
 }
 
-// TestWireInvalidFD covers invalid fd.
 func TestWireInvalidFD(t *testing.T) {
 	setup := func(t *testing.T) (*Display, *net.UnixConn, *Proxy) {
 		t.Helper()
@@ -648,7 +639,6 @@ func TestWireInvalidFD(t *testing.T) {
 	})
 }
 
-// TestWireOversize covers oversized messages.
 func TestWireOversize(t *testing.T) {
 	t.Run("oversize", func(t *testing.T) {
 		a, b := unixPair(t)

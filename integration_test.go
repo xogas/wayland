@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-// discardSink accepts every event for objects bound by the generic registry
-// helper and closes any descriptors the runtime handed to us.
 type discardSink struct{}
 
 func (discardSink) DispatchEvent(opcode uint16, args []Arg) error {
@@ -34,7 +32,6 @@ func (discardSink) DispatchEvent(opcode uint16, args []Arg) error {
 	return nil
 }
 
-// TestRoundtrip covers roundtrip against a real sway session.
 func TestRoundtrip(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
@@ -77,9 +74,6 @@ func TestRoundtrip(t *testing.T) {
 	t.Logf("roundtrip delivered %d globals in server order", len(h.globals))
 }
 
-// TestBindVersions covers bind versions against a real sway session. Globals without
-// generated metadata, or advertised above the generated interface version, are
-// reported and skipped; the unknown-interface raw bind is test-only.
 func TestBindVersions(t *testing.T) {
 	d, err := Connect()
 	if err != nil {

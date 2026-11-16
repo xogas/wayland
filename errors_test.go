@@ -24,7 +24,6 @@ func errorTestDisplay(t *testing.T) (*Display, *net.UnixConn) {
 	return d, b
 }
 
-// TestProtocolError covers protocol error.
 func TestProtocolError(t *testing.T) {
 	d, b := errorTestDisplay(t)
 	iface := testInterface("test_error", 1, nil,
@@ -88,7 +87,6 @@ func TestProtocolErrorZeroObject(t *testing.T) {
 	}
 }
 
-// TestIOError covers io error.
 func TestIOError(t *testing.T) {
 	t.Run("dispatch_eof", func(t *testing.T) {
 		d, b := errorTestDisplay(t)
@@ -136,9 +134,6 @@ func TestIOError(t *testing.T) {
 	})
 }
 
-// TestErrorChain checks that wrapped errors keep both the public sentinel and
-// the underlying cause reachable through errors.Is. It does not assert message
-// text.
 func TestErrorChain(t *testing.T) {
 	t.Run("dial", func(t *testing.T) {
 		_, err := DialContext(context.Background(), filepath.Join(t.TempDir(), "missing.sock"))
@@ -184,8 +179,6 @@ func TestErrorChain(t *testing.T) {
 	})
 }
 
-// TestErrorCategories covers error categories: every runtime sentinel category
-// is distinguishable with errors.Is / errors.As, with operation context.
 func TestErrorCategories(t *testing.T) {
 	t.Run("source", func(t *testing.T) {
 		t.Setenv("WAYLAND_SOCKET", "")

@@ -13,7 +13,6 @@ import (
 	"strings"
 )
 
-// xmlProtocol is the encoding/xml view of one protocol file.
 type xmlProtocol struct {
 	Name       string         `xml:"name,attr"`
 	Interfaces []xmlInterface `xml:"interface"`

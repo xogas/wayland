@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// TestObjectLifecycle covers object lifecycle.
 func TestObjectLifecycle(t *testing.T) {
 	c := newTestConn()
 	iface := mustInterface("wl_registry")
@@ -94,7 +93,6 @@ func TestObjectLifecycle(t *testing.T) {
 	}
 }
 
-// TestDestroyedSend covers destroyed objects.
 func TestDestroyedSend(t *testing.T) {
 	t.Run("destroy_pending", func(t *testing.T) {
 		a, b := unixPair(t)
@@ -138,7 +136,6 @@ func TestDestroyedSend(t *testing.T) {
 	})
 }
 
-// TestUnknownObject covers unknown objects.
 func TestUnknownObject(t *testing.T) {
 	mustClosed := func(t *testing.T, d *Display) {
 		t.Helper()
@@ -305,7 +302,6 @@ func TestUnknownObject(t *testing.T) {
 	})
 }
 
-// TestObjectIDExhausted covers id exhaustion.
 func TestObjectIDExhausted(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

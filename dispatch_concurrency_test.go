@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-// TestDispatchSerial covers serial dispatch: callbacks are serial, run on the Dispatch
-// caller's goroutine, and may send requests without deadlocking.
 func TestDispatchSerial(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -76,8 +74,6 @@ func TestDispatchSerial(t *testing.T) {
 	}
 }
 
-// TestConcurrentSend covers concurrent send: eight goroutines send concurrently,
-// messages stay atomic and per-goroutine order is preserved.
 func TestConcurrentSend(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -167,7 +163,6 @@ func TestConcurrentSend(t *testing.T) {
 	}
 }
 
-// TestCloseUnblocksDispatch covers close unblocks dispatch.
 func TestCloseUnblocksDispatch(t *testing.T) {
 	t.Run("blocked_dispatch", func(t *testing.T) {
 		a, b := unixPair(t)
@@ -295,7 +290,6 @@ func TestCloseUnblocksDispatch(t *testing.T) {
 	})
 }
 
-// TestDispatchProtocolError covers protocol error dispatch.
 func TestDispatchProtocolError(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -347,7 +341,6 @@ func TestDispatchProtocolError(t *testing.T) {
 	}
 }
 
-// TestConcurrentDispatch covers concurrent dispatch.
 func TestConcurrentDispatch(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -408,7 +401,6 @@ func TestConcurrentDispatch(t *testing.T) {
 	}
 }
 
-// TestSendBlocking covers blocked send.
 func TestSendBlocking(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

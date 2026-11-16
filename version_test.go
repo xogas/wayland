@@ -17,7 +17,6 @@ func newRegistryForTest(t *testing.T, d *Display) (*Registry, *Proxy) {
 	return NewRegistry(p, &registryRecorder{}), p
 }
 
-// TestBindVersion covers bind version.
 func TestBindVersion(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -87,7 +86,6 @@ func parseBindFrame(t *testing.T, body []byte) (uint32, string, uint32, uint32) 
 	return name, ifaceName, version, id
 }
 
-// TestSinceGuard covers since.
 func TestSinceGuard(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -118,7 +116,6 @@ func TestSinceGuard(t *testing.T) {
 	}
 }
 
-// TestDynamicNewID covers dynamic new_id.
 func TestDynamicNewID(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -154,7 +151,6 @@ func TestDynamicNewID(t *testing.T) {
 	}
 }
 
-// TestDynamicNewIDUnknown covers unknown dynamic new_id.
 func TestDynamicNewIDUnknown(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -184,8 +180,6 @@ func (r *orderedRegistryRecorder) GlobalRemove(name uint32) {
 	r.events = append(r.events, fmt.Sprintf("remove:%d", name))
 }
 
-// TestRegistryEventOrder checks that global and global_remove events are
-// delivered in server order (bind versions event ordering).
 func TestRegistryEventOrder(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

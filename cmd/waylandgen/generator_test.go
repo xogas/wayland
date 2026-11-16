@@ -60,7 +60,6 @@ func renderT(t *testing.T, c *corpus) []renderedFile {
 	return files
 }
 
-// minimalCoreXML is a DTD-valid core protocol used by the rejection tests.
 const minimalCoreXML = `<?xml version="1.0" encoding="UTF-8"?>
 <protocol name="wayland">
   <interface name="wl_display" version="1">

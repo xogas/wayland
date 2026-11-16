@@ -22,7 +22,7 @@ func Connect() (*Display, error) {
 	return DialContext(context.Background(), path)
 }
 
-// DialContext opens an explicit Wayland socket path.
+// DialContext opens path as a Wayland connection.
 func DialContext(ctx context.Context, path string) (*Display, error) {
 	if path == "" {
 		return nil, fmt.Errorf("dial: empty path: %w", ErrSource)

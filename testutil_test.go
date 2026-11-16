@@ -59,9 +59,6 @@ type callbackRecorder struct {
 
 func (c *callbackRecorder) Done(v uint32) { c.done = v }
 
-// testServer reads framed messages from the peer end of a socketpair. It keeps
-// a byte buffer and collected descriptors so partial reads and ancillary data
-// are handled uniformly.
 type testServer struct {
 	conn *net.UnixConn
 	buf  []byte

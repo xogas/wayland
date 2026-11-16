@@ -223,7 +223,6 @@ var initialisms = map[string]string{
 	"uuid":  "UUID",
 }
 
-// goParamName converts a wire argument name to an idiomatic Go parameter name.
 func goParamName(s string) string {
 	parts := strings.Split(strings.ReplaceAll(s, "-", "_"), "_")
 	var b strings.Builder

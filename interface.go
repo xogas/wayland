@@ -1,6 +1,6 @@
 package wayland
 
-// ArgType is the wire type of a message argument.
+// ArgType is a wire argument type.
 type ArgType uint8
 
 // Wire argument types.
@@ -15,7 +15,7 @@ const (
 	ArgObject
 )
 
-// ArgSpec describes one argument in a request or event signature.
+// ArgSpec is one request/event argument.
 type ArgSpec struct {
 	Name            string
 	Type            ArgType
@@ -26,7 +26,7 @@ type ArgSpec struct {
 	DeprecatedSince uint32
 }
 
-// EnumEntry describes one value of a protocol enum.
+// EnumEntry is one enum value.
 type EnumEntry struct {
 	Name            string
 	Value           int64
@@ -34,7 +34,7 @@ type EnumEntry struct {
 	DeprecatedSince uint32
 }
 
-// Enum describes one protocol enum declared on an interface.
+// Enum is one interface enum.
 type Enum struct {
 	Name     string
 	Since    uint32
@@ -42,7 +42,7 @@ type Enum struct {
 	Entries  []EnumEntry
 }
 
-// Message describes one request or event.
+// Message is one request or event.
 type Message struct {
 	Name            string
 	Since           uint32
@@ -51,7 +51,7 @@ type Message struct {
 	Args            []ArgSpec
 }
 
-// Interface is the generated metadata for one protocol interface.
+// Interface is generated protocol metadata.
 type Interface struct {
 	Name     string
 	Version  uint32
@@ -68,7 +68,7 @@ func InterfaceByName(name string) (*Interface, bool) {
 	return iface, ok
 }
 
-// MustInterface returns generated metadata by wire name.
+// MustInterface returns metadata or panics.
 func MustInterface(name string) *Interface {
 	return mustInterface(name)
 }

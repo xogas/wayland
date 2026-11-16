@@ -11,9 +11,6 @@ import (
 	"time"
 )
 
-// typedBinders exercises the generated Bind<T> helpers for a practical subset
-// of known globals; the rest of the known globals use the public generic
-// Registry.Bind path.
 var typedBinders = map[string]typedBinder{
 	"wl_compositor": func(r *Registry, g Global) (*Proxy, error) {
 		obj, err := BindCompositor(r, g)
@@ -68,10 +65,6 @@ type seatTestHandler struct{}
 func (seatTestHandler) Capabilities(uint32) {}
 func (seatTestHandler) Name(string)         {}
 
-// TestRegistryBind covers registry-bind: bind every advertised global at its
-// advertised version, using generated typed helpers / Registry.Bind for known
-// interfaces and the test-only raw bind path for unknown interfaces, then run
-// a roundtrip and require no protocol error.
 func TestRegistryBind(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
@@ -131,9 +124,6 @@ func TestRegistryBind(t *testing.T) {
 	t.Logf("queued_fds_after_roundtrips=%d", queuedFDs)
 }
 
-// TestRegistryBindUnknownEvents covers unknown events: bind an unknown global through
-// the test-only raw helper, receive at least one event for it, and skip that
-// event by message length while keeping the connection usable.
 func TestRegistryBindUnknownEvents(t *testing.T) {
 	d, err := Connect()
 	if err != nil {
@@ -209,8 +199,6 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 	testRegistryBindUnknownEventsFake(t)
 }
 
-// testRegistryBindUnknownEventsFake is the unknown events substitution when the live
-// session has no unknown interface emitting an event.
 func testRegistryBindUnknownEventsFake(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -255,9 +243,6 @@ func testRegistryBindUnknownEventsFake(t *testing.T) {
 	}
 }
 
-// serveFakeRegistryBindUnknown drives the socketpair substitution: advertise
-// one unknown global, answer two roundtrips, and send one unknown event after
-// the raw bind.
 func serveFakeRegistryBindUnknown(srv *net.UnixConn, errCh chan<- error) {
 	s := newTestServer(srv)
 	_, opcode, _, _, err := s.nextFrame()
@@ -317,7 +302,6 @@ func serveFakeRegistryBindUnknown(srv *net.UnixConn, errCh chan<- error) {
 	errCh <- nil
 }
 
-// answerSync reads the next wl_display.sync request and answers it.
 func answerSync(s *testServer) (uint32, error) {
 	objectID, opcode, body, _, err := s.nextFrame()
 	if err != nil {
@@ -336,8 +320,6 @@ func answerSync(s *testServer) (uint32, error) {
 	return callbackID, nil
 }
 
-// TestRegistryBindUnknownEventsFake runs the unknown events socketpair substitution
-// directly so it is verified even when a live sway session is available.
 func TestRegistryBindUnknownEventsFake(t *testing.T) {
 	testRegistryBindUnknownEventsFake(t)
 }

@@ -103,7 +103,6 @@ type entry struct {
 	GoName          string
 }
 
-// buildCorpus turns parsed XML into the naming, reference and metadata model.
 func buildCorpus(parsed []parsedSource) (*corpus, error) {
 	c := &corpus{byName: make(map[string][]*iface)}
 	pkgsByKey := make(map[string]*pkg)

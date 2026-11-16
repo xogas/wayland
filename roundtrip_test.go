@@ -17,9 +17,6 @@ func (s *countSink) DispatchEvent(uint16, []Arg) error {
 	return nil
 }
 
-// TestRoundtripCancel covers roundtrip cancellation: a canceled or timed-out Roundtrip returns
-// the context error, leaves the connection usable, suppresses the canceled
-// callback and keeps a tombstone until delete_id.
 func TestRoundtripCancel(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -117,8 +114,6 @@ func TestRoundtripCancel(t *testing.T) {
 	}
 }
 
-// TestRoundtripCancelPreservesEvents checks that a cancellation that races with
-// an unrelated event leaves that event for the next Dispatch.
 func TestRoundtripCancelPreservesEvents(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)

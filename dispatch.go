@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Dispatch reads and dispatches one wire message.
+// Dispatch reads and dispatches one message.
 func (d *Display) Dispatch() error {
 	c := d.p.conn
 	if err := c.beginDispatch(); err != nil {

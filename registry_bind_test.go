@@ -10,14 +10,8 @@ import (
 	"time"
 )
 
-// typedBinder is a generated Bind<T> helper adapted to the generic
-// registry-bind test harness. Typed helpers without events are safe to call
-// without a handler; event-carrying helpers wrap the proxy in the generated
-// type and return it through Proxy().
 type typedBinder func(*Registry, Global) (*Proxy, error)
 
-// registryBindResult reports what a registry-bind run did. It is test-only
-// bookkeeping for registry-bind and bind errors.
 type registryBindResult struct {
 	Advertised      int
 	KnownTyped      int
@@ -37,11 +31,6 @@ type registryBind struct {
 	Raw    bool
 }
 
-// bindUnknownRaw is the registry-bind / unknown events test-only raw bind path. It creates
-// an object for an interface that has no generated metadata and sends
-// wl_registry.bind through the runtime, so the dynamic new_id wire expansion
-// still writes name / interface / version / new_id. The object is marked raw:
-// its events are skipped by message length instead of decoded.
 func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	if reg == nil || reg.Proxy() == nil {
 		return nil, fmt.Errorf("raw bind %s: nil registry: %w", g.Interface, ErrInvalidArgument)
@@ -68,11 +57,6 @@ func bindUnknownRaw(reg *Registry, g Global) (*Proxy, error) {
 	return p, nil
 }
 
-// bindRegistryGlobals binds every global at its advertised version. Known
-// interfaces use the public Registry.Bind path, or a generated Bind<T> helper
-// when the caller supplies one; unknown interfaces use the test-only raw bind
-// path. Globals advertised above the generated interface version are reported
-// as version skips instead of being bound at an invalid version.
 func bindRegistryGlobals(reg *Registry, globals []Global, typed map[string]typedBinder) (*registryBindResult, error) {
 	res := &registryBindResult{Advertised: len(globals), RegistryID: reg.Proxy().ID()}
 	for _, g := range globals {
@@ -122,9 +106,6 @@ func bindRegistryGlobals(reg *Registry, globals []Global, typed map[string]typed
 	return res, nil
 }
 
-// registryBindRoundtrip runs the final roundtrip and attaches bind context to
-// a server error so bind errors reports interface, requested version and the
-// server message instead of only the raw protocol error.
 func registryBindRoundtrip(ctx context.Context, d *Display, res *registryBindResult) error {
 	err := d.Roundtrip(ctx)
 	if err == nil {
@@ -149,8 +130,6 @@ func registryBindRoundtrip(ctx context.Context, d *Display, res *registryBindRes
 	return fmt.Errorf("registry bind after %d binds: %w", len(res.Binds), err)
 }
 
-// bindDiscardSink accepts events for generically bound known objects and
-// closes any descriptors the runtime delivered.
 type bindDiscardSink struct{}
 
 func (bindDiscardSink) DispatchEvent(_ uint16, args []Arg) error {
@@ -171,10 +150,6 @@ func (bindDiscardSink) DispatchEvent(_ uint16, args []Arg) error {
 	return nil
 }
 
-// TestRegistryBindError covers bind errors with a fake Unix server. The server
-// reads the bind request and answers with wl_display.error; the registry-bind
-// run must report the interface, requested version and server message without
-// hanging.
 func TestRegistryBindError(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
@@ -242,8 +217,6 @@ func TestRegistryBindError(t *testing.T) {
 
 func ptr(s string) *string { return &s }
 
-// TestRawBindWire checks the test-only raw bind sends name / interface /
-// version / new_id through the existing dynamic wl_registry.bind expansion.
 func TestRawBindWire(t *testing.T) {
 	a, b := unixPair(t)
 	d := newDisplay(a)
