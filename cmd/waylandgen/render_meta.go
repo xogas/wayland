@@ -59,30 +59,30 @@ func renderRootMeta(c *corpus) ([]byte, error) {
 
 func renderInterfaceLiteral(i *iface, prefix string) string {
 	var b strings.Builder
-	b.WriteString("&" + prefix + "Interface{\n")
+	fmt.Fprintf(&b, "&%sInterface{\n", prefix)
 	fmt.Fprintf(&b, "\tName: %s,\n", strconv.Quote(i.Name))
 	fmt.Fprintf(&b, "\tVersion: %d,\n", i.Version)
 	if i.Frozen {
 		b.WriteString("\tFrozen: true,\n")
 	}
 	if len(i.Requests) > 0 {
-		b.WriteString("\tRequests: []" + prefix + "Message{\n")
+		fmt.Fprintf(&b, "\tRequests: []%sMessage{\n", prefix)
 		for _, m := range i.Requests {
-			b.WriteString("\t\t" + renderMessageLiteral(m, prefix) + ",\n")
+			fmt.Fprintf(&b, "\t\t%s,\n", renderMessageLiteral(m, prefix))
 		}
 		b.WriteString("\t},\n")
 	}
 	if len(i.Events) > 0 {
-		b.WriteString("\tEvents: []" + prefix + "Message{\n")
+		fmt.Fprintf(&b, "\tEvents: []%sMessage{\n", prefix)
 		for _, m := range i.Events {
-			b.WriteString("\t\t" + renderMessageLiteral(m, prefix) + ",\n")
+			fmt.Fprintf(&b, "\t\t%s,\n", renderMessageLiteral(m, prefix))
 		}
 		b.WriteString("\t},\n")
 	}
 	if len(i.Enums) > 0 {
-		b.WriteString("\tEnums: []" + prefix + "Enum{\n")
+		fmt.Fprintf(&b, "\tEnums: []%sEnum{\n", prefix)
 		for _, en := range i.Enums {
-			b.WriteString("\t\t" + renderEnumLiteral(en, prefix) + ",\n")
+			fmt.Fprintf(&b, "\t\t%s,\n", renderEnumLiteral(en, prefix))
 		}
 		b.WriteString("\t},\n")
 	}
