@@ -10,8 +10,8 @@ to sway.
 - Dependencies: standard library only. No CGO, no libwayland, no wayland-scanner.
 - Protocol input: `wayland-protocols/` with 68 XML files and `wayland.dtd`;
   wayland 1.26.0 and wayland-protocols 1.50.
-- Generated code is committed. `go generate ./...` is deterministic and must
-  leave the generated paths unchanged after a second run.
+- Generated code is committed. `make generate` is deterministic and must leave
+  the generated paths unchanged after a second run.
 
 ## Repository layout
 
@@ -66,7 +66,7 @@ Single `package main`; no subpackages.
 
 ## Generated code
 
-`go generate ./...` runs `cmd/waylandgen` and writes:
+`make generate` runs `cmd/waylandgen` and writes:
 
 - `wayland_gen.go`: core `wl_*` types in the root package, from `wayland.xml`.
 - `interfaces_gen.go`: metadata for all 211 interfaces, including the
@@ -75,6 +75,8 @@ Single `package main`; no subpackages.
   remaining protocols.
 
 Do not edit generated files by hand. Change the generator and regenerate.
+`make generate` deletes `protocols/` and root `*_gen.go` before running the
+generator, so removed XML files cannot leave code behind.
 
 ## Public API
 
@@ -147,8 +149,8 @@ go mod tidy && git diff --exit-code -- go.mod go.sum
 Generation and protocol validation:
 
 ```bash
-go generate ./...
-go generate ./...
+make generate
+make generate
 git diff --exit-code
 for f in $(find wayland-protocols -name '*.xml'); do
   xmllint --noout --dtdvalid wayland-protocols/wayland.dtd "$f" || exit 1

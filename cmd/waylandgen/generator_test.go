@@ -471,10 +471,10 @@ func TestGeneratedLayout(t *testing.T) {
 		}
 		onDisk, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(o.Rel)))
 		if err != nil {
-			t.Fatalf("%s: not generated on disk (run go generate ./...): %v", o.Rel, err)
+			t.Fatalf("%s: not generated on disk (run make generate): %v", o.Rel, err)
 		}
 		if !bytes.Equal(onDisk, o.Data) {
-			t.Fatalf("%s: committed output is stale (run go generate ./...)", o.Rel)
+			t.Fatalf("%s: committed output is stale (run make generate)", o.Rel)
 		}
 	}
 	// No extra or handwritten Go files under protocols/.

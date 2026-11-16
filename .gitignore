@@ -22,3 +22,5 @@ vendor/
 # Local agent overrides
 AGENTS.local.md
 CLAUDE.local.md
+
+/waylandgen
