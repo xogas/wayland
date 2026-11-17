@@ -175,29 +175,32 @@ func TestRegistryBindUnknownEvents(t *testing.T) {
 		}
 	}
 
-	for _, g := range candidates {
-		_, err := bindUnknownRaw(reg, g)
-		if err != nil {
-			t.Fatalf("raw bind %s v%d: %v", g.Interface, g.Version, err)
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err = d.Roundtrip(ctx)
-		cancel()
-		if err != nil {
-			t.Fatalf("roundtrip after raw bind %s v%d: %v", g.Interface, g.Version, err)
-		}
-		ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
-		err = d.Roundtrip(ctx2)
-		cancel2()
-		if err != nil {
-			t.Fatalf("connection unusable after skipped unknown event: %v", err)
-		}
+	// Only the first candidate is bound: the fallback chain ends at the first
+	// unknown global the compositor actually advertises. With no candidate the
+	// socketpair fake server stands in for a live compositor.
+	if len(candidates) == 0 {
 		d.Close()
+		t.Logf("no unknown global emitted an event; using socketpair fake server substitution")
+		testRegistryBindUnknownEventsFake(t)
 		return
 	}
+	g := candidates[0]
+	if _, err := bindUnknownRaw(reg, g); err != nil {
+		t.Fatalf("raw bind %s v%d: %v", g.Interface, g.Version, err)
+	}
+	rtCtx, rtCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	err = d.Roundtrip(rtCtx)
+	rtCancel()
+	if err != nil {
+		t.Fatalf("roundtrip after raw bind %s v%d: %v", g.Interface, g.Version, err)
+	}
+	rtCtx2, rtCancel2 := context.WithTimeout(context.Background(), 5*time.Second)
+	err = d.Roundtrip(rtCtx2)
+	rtCancel2()
+	if err != nil {
+		t.Fatalf("connection unusable after skipped unknown event: %v", err)
+	}
 	d.Close()
-	t.Logf("no unknown global emitted an event; using socketpair fake server substitution")
-	testRegistryBindUnknownEventsFake(t)
 }
 
 func testRegistryBindUnknownEventsFake(t *testing.T) {
