@@ -23,12 +23,11 @@ const (
 	windowHeight = 320
 	windowTitle  = "cube"
 
-	// backgroundColor is opaque ARGB8888, like every pixel this example writes.
 	backgroundColor = 0xff101018
 
-	// Model-to-pixels setup: the camera sits at the view-space origin looking
-	// down +z, the cube is pushed cameraDistance in front of it, and
-	// focalLength is the pinhole-to-projection-plane distance in pixels.
+	// The camera sits at the view-space origin looking down +z; the cube is
+	// pushed cameraDistance in front of it, and focalLength is the
+	// pinhole-to-projection-plane distance in pixels.
 	cameraDistance = 3.5
 	focalLength    = 300.0
 
@@ -46,24 +45,22 @@ const (
 	cubeFaceCount   = 6
 )
 
-// screenPoint is a projected cube vertex in surface pixels.
 type screenPoint struct {
 	x, y int32
 }
 
-// vec3 is a point in model space. The cube is tiny, so float64 math is plenty.
+// float64 is plenty: the cube is tiny.
 type vec3 struct {
 	x, y, z float64
 }
 
-// projection holds the perspective projection of all eight cube vertices plus
-// the view-space depth of each, which the painter's sort consumes.
+// projection holds the screen position of every vertex plus its view-space
+// depth, which the painter's sort consumes.
 type projection struct {
 	screen [cubeVertexCount]screenPoint
 	depth  [cubeVertexCount]float64
 }
 
-// cubeVertices are the eight corners of the cube centered on the origin.
 var cubeVertices = [cubeVertexCount]vec3{
 	{-1, -1, -1},
 	{+1, -1, -1},
@@ -75,15 +72,14 @@ var cubeVertices = [cubeVertexCount]vec3{
 	{-1, +1, +1},
 }
 
-// cubeFace is one quad: four cubeVertices indices in cyclic order around the
-// face plus one opaque fill color. Opaque colors are what let a painter's
-// algorithm overlap faces without leaking what is behind them.
+// cubeFace is one quad: four cubeVertices indices in cyclic order plus an
+// opaque fill color. Opacity is what lets the painter's algorithm overlap faces
+// without leaking what is behind them.
 type cubeFace struct {
 	color   uint32
 	corners [4]int
 }
 
-// cubeFaces lists all six sides with distinct colors.
 var cubeFaces = [cubeFaceCount]cubeFace{
 	{color: 0xff3a6ea5, corners: [4]int{0, 1, 2, 3}}, // z = -1
 	{color: 0xffe05a47, corners: [4]int{4, 5, 6, 7}}, // z = +1
@@ -93,8 +89,8 @@ var cubeFaces = [cubeFaceCount]cubeFace{
 	{color: 0xff5ac8d8, corners: [4]int{3, 2, 6, 7}}, // y = +1
 }
 
-// faceDraw pairs a face with its average view depth so the six faces can be
-// drawn far to near each frame.
+// faceDraw pairs a face with its average view depth so the faces can be drawn
+// far to near each frame.
 type faceDraw struct {
 	face  cubeFace
 	depth float64
@@ -148,8 +144,8 @@ type xdgSurfaceHandler struct {
 	app *app
 }
 
-// Configure acks every configure, as the protocol requires. The window is
-// fixed-size, so only the first configure is used: it starts the animation.
+// Configure acks every configure, as the protocol requires; the window is
+// fixed-size, so only the first one starts the animation.
 func (h *xdgSurfaceHandler) Configure(serial uint32) {
 	a := h.app
 	if err := a.xdgSurface.AckConfigure(serial); err != nil {
@@ -157,8 +153,6 @@ func (h *xdgSurfaceHandler) Configure(serial uint32) {
 		return
 	}
 	if a.started {
-		// Later configures still got their ack; a fixed-size demo ignores the
-		// configured size it cannot honor.
 		return
 	}
 	// Clock 0 draws the first frame; the first wl_callback.done that follows
@@ -181,8 +175,6 @@ type toplevelHandler struct {
 	app *app
 }
 
-// Configure ignores the compositor's suggested size: this is a fixed-size demo
-// that always keeps its declared 320x320 geometry.
 func (h *toplevelHandler) Configure(int32, int32, []byte) {}
 func (h *toplevelHandler) Close()                         { h.app.stopping.Store(true) }
 func (h *toplevelHandler) ConfigureBounds(int32, int32)   {}
@@ -194,8 +186,6 @@ type bufferHandler struct{}
 
 func (bufferHandler) Release() {}
 
-// seatHandler ignores seat metadata; the keyboard is requested unconditionally
-// right after the seat is bound, as in examples/xdg-shell.
 type seatHandler struct{}
 
 func (seatHandler) Capabilities(uint32) {}
@@ -308,12 +298,10 @@ func findGlobal(globals []wayland.Global, name string) (wayland.Global, bool) {
 	return wayland.Global{}, false
 }
 
-// createShmBuffer creates an unlinked shared memory file, maps it, and wraps it
-// in a wl_shm pool plus one ARGB8888 buffer. The client descriptor is closed
-// after the request is written; the mapping and the buffer stay alive until
-// cleanup. The single buffer is safe because the next frame is only drawn after
-// the previous frame's wl_callback.done, by which time the compositor released
-// the old contents.
+// createShmBuffer creates an unlinked shm file, maps it and wraps it in a pool
+// plus one ARGB8888 buffer. One buffer suffices because the next frame is only
+// drawn after the previous wl_callback.done, by which time the compositor has
+// released the old contents.
 func (a *app) createShmBuffer(width, height int32) error {
 	size := int(width) * int(height) * 4
 	f, err := os.CreateTemp("", "wayland-go-shm-*")
@@ -351,11 +339,10 @@ func (a *app) createShmBuffer(width, height int32) error {
 	return nil
 }
 
-// requestFrame arms exactly one wl_callback for the next presented frame. A
-// frame request only takes effect on the next commit, so callers must commit
-// right after this returns. The callback object is server-owned: the compositor
-// reaps it after done, so the returned pointer is deliberately dropped and no
-// method is ever called on it.
+// requestFrame arms exactly one wl_callback for the next presented frame; the
+// request only takes effect on the next commit, so callers must commit right
+// after this returns. The callback object is server-owned: the compositor reaps
+// it after done, so the returned pointer is deliberately dropped.
 func (a *app) requestFrame() error {
 	if a.framePending {
 		return fmt.Errorf("wl_surface.frame: frame callback already outstanding")
@@ -367,8 +354,8 @@ func (a *app) requestFrame() error {
 	return nil
 }
 
-// present attaches the single buffer, damages the whole surface and commits.
-// The commit also arms the frame callback requested just before it.
+// present attaches the single buffer, damages the whole surface and commits,
+// which also arms the frame callback requested just before it.
 func (a *app) present() error {
 	if err := a.surface.Attach(a.buffer, 0, 0); err != nil {
 		return fmt.Errorf("wl_surface.attach: %w", err)
@@ -383,8 +370,8 @@ func (a *app) present() error {
 }
 
 // onFrame runs from wl_callback.done: draw the next frame, arm the following
-// frame callback and present. callbackData is the compositor frame clock in
-// milliseconds; it is the animation's only time source.
+// callback and present. callbackData is the compositor frame clock in
+// milliseconds, the animation's only time source.
 func (a *app) onFrame(callbackData uint32) {
 	if a.stopping.Load() {
 		return
@@ -400,8 +387,8 @@ func (a *app) onFrame(callbackData uint32) {
 	}
 }
 
-// render clears the buffer and paints the six cube faces for the given clock
-// value in (doubled) milliseconds.
+// render clears the buffer and paints the faces for the given clock value in
+// (doubled) milliseconds.
 func (a *app) render(clockMs float64) {
 	for offset := 0; offset+4 <= len(a.pixels); offset += 4 {
 		binary.LittleEndian.PutUint32(a.pixels[offset:offset+4], backgroundColor)
@@ -434,15 +421,15 @@ func (a *app) render(clockMs float64) {
 	}
 }
 
-// projectCube rotates every vertex around Y then X and perspective-projects it.
-// The fixed rotation order makes the cube tumble as it spins.
+// projectCube rotates every vertex around Y then X and perspective-projects it;
+// the fixed rotation order makes the cube tumble as it spins.
 func projectCube(yaw, pitch float64) projection {
 	var proj projection
 	for i, v := range cubeVertices {
 		r := rotateY(v, yaw)
 		r = rotateX(r, pitch)
-		// Translate in front of the camera before the perspective divide; every
-		// vertex keeps a positive depth for the rotations shown here.
+		// Translate in front of the camera before the perspective divide; the
+		// rotations shown here keep every vertex at positive depth.
 		depth := r.z + cameraDistance
 		scale := focalLength / depth
 		proj.depth[i] = depth
@@ -454,13 +441,11 @@ func projectCube(yaw, pitch float64) projection {
 	return proj
 }
 
-// rotateX applies a right-handed rotation around the X axis.
 func rotateX(v vec3, angle float64) vec3 {
 	s, c := math.Sincos(angle)
 	return vec3{x: v.x, y: v.y*c - v.z*s, z: v.y*s + v.z*c}
 }
 
-// rotateY applies a right-handed rotation around the Y axis.
 func rotateY(v vec3, angle float64) vec3 {
 	s, c := math.Sincos(angle)
 	return vec3{x: v.x*c + v.z*s, y: v.y, z: -v.x*s + v.z*c}
@@ -472,8 +457,8 @@ func edge(a, b, c screenPoint) int64 {
 	return int64(b.x-a.x)*int64(c.y-a.y) - int64(b.y-a.y)*int64(c.x-a.x)
 }
 
-// fillTriangle paints one triangle with a flat opaque color by testing every
-// pixel center inside its bounding box against the three edge functions.
+// fillTriangle paints one triangle with a flat opaque color by testing pixel
+// centers in its bounding box against the three edge functions.
 func fillTriangle(pixels []byte, width, height int, p0, p1, p2 screenPoint, color uint32) {
 	area := edge(p0, p1, p2)
 	if area == 0 {

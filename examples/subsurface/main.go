@@ -99,10 +99,9 @@ func (h *xdgSurfaceHandler) Configure(serial uint32) {
 	if a.mapped {
 		return
 	}
-	// Initial map. The child is synchronized, so its position and buffer are
-	// committed first and cached; the parent commit below applies them. That
-	// keeps the first presented frame consistent instead of showing the child
-	// at a default position for one frame.
+	// The child is synchronized, so its position and buffer are committed first
+	// and cached; the parent commit below applies them, which keeps the first
+	// presented frame consistent instead of showing the child unplaced.
 	if err := a.subsurface.SetPosition((parentWidth-childSize)/2, (parentHeight-childSize)/2); err != nil {
 		a.setErr(fmt.Errorf("wl_subsurface.set_position: %w", err))
 		return
@@ -140,8 +139,8 @@ type toplevelHandler struct {
 	app *app
 }
 
-// Configure ignores the configured size: the parent is fixed at 480x320 and
-// the compositor is expected to letterbox it rather than resize our buffers.
+// Configure ignores the configured size: the parent is fixed at 480x320 and the
+// compositor is expected to letterbox it rather than resize our buffers.
 func (h *toplevelHandler) Configure(_ int32, _ int32, _ []byte) {}
 func (h *toplevelHandler) Close()                               { h.app.stopping.Store(true) }
 func (h *toplevelHandler) ConfigureBounds(int32, int32)         {}
@@ -149,12 +148,10 @@ func (h *toplevelHandler) WmCapabilities([]byte)                {}
 
 type bufferHandler struct{}
 
-// Release reports that the compositor no longer reads the buffer. Each surface
-// keeps one buffer attached for its whole lifetime, so release events need no
-// bookkeeping here.
+// Release needs no bookkeeping: each surface keeps one buffer for its whole
+// lifetime.
 func (bufferHandler) Release() {}
 
-// frameHandler advances the animation once per presented parent frame.
 type frameHandler struct {
 	app *app
 }
@@ -176,19 +173,18 @@ func (h *frameHandler) Done(_ uint32) {
 		a.setErr(fmt.Errorf("child wl_surface.commit: %w", err))
 		return
 	}
+	// Full-surface damage: the child's previous position must be repainted, so
+	// partial damage would leave stale child pixels behind.
 	if err := a.parentSurface.Damage(0, 0, parentWidth, parentHeight); err != nil {
 		a.setErr(fmt.Errorf("parent wl_surface.damage: %w", err))
 		return
 	}
-	// Queue the next callback before this commit: wl_surface.frame is only
-	// armed by a commit, and requesting it here keeps exactly one outstanding.
+	// wl_surface.frame is only armed by a commit, so request the next callback
+	// before this one; that keeps exactly one outstanding.
 	if err := a.requestFrame(); err != nil {
 		a.setErr(err)
 		return
 	}
-	// Full-surface damage is required because the child's previous position must
-	// be repainted; the compositor also tracks the moved subsurface across this
-	// commit, so partial damage would leave stale child pixels behind.
 	if err := a.parentSurface.Commit(); err != nil {
 		a.setErr(fmt.Errorf("parent wl_surface.commit: %w", err))
 		return
@@ -228,8 +224,8 @@ func (h *keyboardHandler) Modifiers(_, _, _, _, _ uint32) {
 }
 func (h *keyboardHandler) RepeatInfo(_, _ int32) {}
 
-// shmBuffer bundles one mapped, unlinked shared memory file with the pool and
-// wl_buffer created from it. destroy releases everything it owns.
+// shmBuffer bundles one mapped, unlinked shm file with the pool and wl_buffer
+// created from it.
 type shmBuffer struct {
 	pool   *wayland.ShmPool
 	buffer *wayland.Buffer
@@ -281,7 +277,6 @@ func (a *app) destroy() {
 	if a.parentSurface != nil {
 		_ = a.parentSurface.Destroy()
 	}
-	// Buffer, pool and mapping stay alive until the connection closes.
 	if a.childBuf != nil {
 		a.childBuf.destroy()
 	}
@@ -296,8 +291,8 @@ func (a *app) destroy() {
 	}
 }
 
-// requestFrame queues one wl_surface.frame callback on the parent. The request
-// must be followed by a parent commit to be armed.
+// requestFrame queues one wl_surface.frame callback on the parent; only a parent
+// commit arms it.
 func (a *app) requestFrame() error {
 	if _, err := a.parentSurface.Frame(&frameHandler{app: a}); err != nil {
 		return fmt.Errorf("wl_surface.frame: %w", err)
@@ -305,9 +300,8 @@ func (a *app) requestFrame() error {
 	return nil
 }
 
-// createShmBuffer creates an unlinked shared memory file, maps it, fills it via
-// fill and sends the pool descriptor. The client descriptor is closed after the
-// request is written; the mapping and buffer stay alive until destroy.
+// createShmBuffer creates an unlinked shm file, maps it, fills it via fill and
+// sends the pool descriptor; the mapping and buffer stay alive until destroy.
 func (a *app) createShmBuffer(width int32, height int32, fill func([]byte)) (*shmBuffer, error) {
 	size := int(width) * int(height) * 4
 	f, err := os.CreateTemp("", "wayland-go-shm-*")
@@ -346,7 +340,7 @@ func (a *app) createShmBuffer(width int32, height int32, fill func([]byte)) (*sh
 	return &shmBuffer{pool: pool, buffer: buffer, mmap: mmap}, nil
 }
 
-// fillCheckerboard paints the parent background with two dark tones.
+// fillCheckerboard uses two dark tones so the child's motion stands out.
 func fillCheckerboard(buf []byte) {
 	for y := 0; y < parentHeight; y++ {
 		row := y * parentWidth * 4
@@ -360,8 +354,8 @@ func fillCheckerboard(buf []byte) {
 	}
 }
 
-// fillChild paints the child as an opaque square with a contrasting border and
-// a centered crosshair that makes its translation visible.
+// fillChild paints an opaque square with a centered crosshair that makes its
+// translation visible.
 func fillChild(buf []byte) {
 	centerX, centerY := childSize/2, childSize/2
 	for y := 0; y < childSize; y++ {
@@ -384,8 +378,8 @@ func fillChild(buf []byte) {
 	}
 }
 
-// orbitPosition places the child on an ellipse around the parent center. The
-// radii keep the 120x120 child inside the 480x320 parent on both axes.
+// orbitPosition places the child on an ellipse around the parent center; the
+// radii keep the child inside the parent on both axes.
 func orbitPosition(ms int64) (int32, int32) {
 	const (
 		radiusX = (parentWidth-childSize)/2 - 20
@@ -564,8 +558,8 @@ func run() error {
 		return fmt.Errorf("xdg_surface.set_window_geometry: %w", err)
 	}
 
-	// The child surface has no role of its own; the subsurface role is assigned
-	// by wl_subcompositor and places it inside the parent surface.
+	// The child surface has no role of its own; wl_subcompositor assigns the
+	// subsurface role that places it inside the parent.
 	childSurface, err := compositor.CreateSurface(wlSurfaceHandler{})
 	if err != nil {
 		return fmt.Errorf("wl_compositor.create_surface (child): %w", err)
@@ -576,9 +570,9 @@ func run() error {
 		return fmt.Errorf("wl_subcompositor.get_subsurface: %w", err)
 	}
 	a.subsurface = subsurface
-	// Synchronized mode is the default for new subsurfaces, but request it
-	// explicitly: the child state is cached and applied atomically on the
-	// parent's commit, which keeps position and repaint in lockstep.
+	// Synchronized mode is the default, but request it explicitly: cached child
+	// state is applied atomically on the parent's commit, keeping position and
+	// repaint in lockstep.
 	if err := subsurface.SetSync(); err != nil {
 		return fmt.Errorf("wl_subsurface.set_sync: %w", err)
 	}

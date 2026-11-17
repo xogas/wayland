@@ -155,13 +155,11 @@ func (h *keyboardHandler) Modifiers(_, _, _, _, _ uint32) {}
 func (h *keyboardHandler) RepeatInfo(_, _ int32)          {}
 
 // dataSourceHandler serves wl_data_source events while this client owns the
-// selection; the compositor asks for the bytes through Send when a target
-// pastes.
+// selection; the compositor asks for the bytes through Send.
 type dataSourceHandler struct {
 	app *app
 }
 
-// Target is drag-and-drop feedback and is unused for selections.
 func (h *dataSourceHandler) Target(_ *string) {}
 
 // Send writes the clipboard text into the descriptor carried by the event. The
@@ -181,7 +179,7 @@ func (h *dataSourceHandler) Send(mimeType string, fd int) {
 	fmt.Printf("clipboard: source served %s\n", mimeType)
 }
 
-// Cancelled drops the source; a wl_data_source is single-use, so the next copy
+// Cancelled drops the source; wl_data_source is single-use, so the next copy
 // creates a fresh one.
 func (h *dataSourceHandler) Cancelled() {
 	if h.app.dataSource == nil {
@@ -196,9 +194,8 @@ func (h *dataSourceHandler) DndDropPerformed() {}
 func (h *dataSourceHandler) DndFinished()      {}
 func (h *dataSourceHandler) Action(_ uint32)   {}
 
-// dataOfferHandler records the MIME types of one wl_data_offer. The offer is
-// introduced by wl_data_device.data_offer and its types arrive in the
-// immediately following wl_data_offer.offer events.
+// dataOfferHandler records the MIME types of one wl_data_offer; the types
+// arrive in the wl_data_offer.offer events that follow data_offer.
 type dataOfferHandler struct {
 	app *app
 	id  uint32
@@ -208,18 +205,15 @@ func (h *dataOfferHandler) Offer(mimeType string) {
 	h.app.offerMIME[h.id] = append(h.app.offerMIME[h.id], mimeType)
 }
 
-// SourceActions and Action are drag-and-drop negotiation.
 func (h *dataOfferHandler) SourceActions(_ uint32) {}
 func (h *dataOfferHandler) Action(_ uint32)        {}
 
-// dataDeviceHandler tracks the offers the compositor introduces and which one
-// carries the selection.
 type dataDeviceHandler struct {
 	app *app
 }
 
 // DataOffer introduces a server-created wl_data_offer. The object arrives
-// without an event sink, so wrap it now: the offer's MIME type events follow
+// without an event sink, so wrap it now: the MIME type events follow
 // immediately and would fail without a handler installed.
 func (h *dataDeviceHandler) DataOffer(id *wayland.Proxy) {
 	if id == nil {
@@ -231,7 +225,6 @@ func (h *dataDeviceHandler) DataOffer(id *wayland.Proxy) {
 	h.app.wrapOffer(id)
 }
 
-// Enter, Leave, Motion, and Drop describe drag-and-drop positions.
 func (h *dataDeviceHandler) Enter(uint32, *wayland.Proxy, float64, float64, *wayland.Proxy) {
 }
 func (h *dataDeviceHandler) Leave()                          {}
@@ -239,8 +232,8 @@ func (h *dataDeviceHandler) Motion(uint32, float64, float64) {}
 func (h *dataDeviceHandler) Drop()                           {}
 
 // Selection announces the offer that carries the clipboard. The compositor also
-// sends it when keyboard focus changes, so the offer may describe another
-// client's data or a compositor-provided selection.
+// sends it on keyboard focus changes, so the offer may describe another client's
+// data or a compositor-provided selection.
 func (h *dataDeviceHandler) Selection(id *wayland.Proxy) {
 	a := h.app
 	// The protocol requires the destination to destroy the previous selection
@@ -293,9 +286,9 @@ func (a *app) setErr(err error) {
 	}
 }
 
-// setSerial records the newest input serial; wl_data_device.set_selection only
-// accepts a serial from a real input event. Both callers run on the dispatch
-// goroutine, so no lock is needed.
+// setSerial records the newest input serial; set_selection only accepts a
+// serial from a real input event. Both callers run on the dispatch goroutine,
+// so no lock is needed.
 func (a *app) setSerial(serial uint32) {
 	a.serial = serial
 	a.hasSerial = true
@@ -322,7 +315,6 @@ func (a *app) destroyOffer(id uint32) {
 	}
 }
 
-// destroy releases every protocol object, the selection side first.
 func (a *app) destroy() {
 	if a.dataSource != nil {
 		_ = a.dataSource.Destroy()

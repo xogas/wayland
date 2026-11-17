@@ -28,12 +28,11 @@ const (
 
 	leftButton = 0x110
 
-	// Opaque ARGB8888 background color.
 	solidColor = 0xff18323d
 )
 
-// cursorShapes is cycled by clicks and re-applied on enter (the compositor
-// resets the cursor there).
+// cursorShapes is cycled by clicks and re-applied on enter, where the compositor
+// resets the cursor.
 var cursorShapes = []struct {
 	name  string
 	shape cursorshape.DeviceV1Shape
@@ -126,7 +125,7 @@ func (h *toplevelHandler) Close()                         { h.app.stopping.Store
 func (h *toplevelHandler) ConfigureBounds(int32, int32)   {}
 func (h *toplevelHandler) WmCapabilities([]byte)          {}
 
-// bufferHandler ignores wl_buffer.release; both images are written once.
+// bufferHandler needs no bookkeeping: both images are written once.
 type bufferHandler struct{}
 
 func (bufferHandler) Release() {}
@@ -162,11 +161,9 @@ type pointerHandler struct {
 	app *app
 }
 
-// Enter stores the enter serial. wl_pointer.set_cursor and
-// wp_cursor_shape_device_v1.set_shape both require the serial of the latest
-// wl_pointer.enter event, not the serial of a button press, so clicks reuse it
-// until the next enter replaces it. The compositor resets the cursor on enter,
-// so the current cursor is re-applied here.
+// Enter stores the enter serial: both set_cursor and set_shape require the
+// serial of the latest wl_pointer.enter, not of a button press, so clicks reuse
+// it. The compositor resets the cursor on enter, so re-apply it here.
 func (h *pointerHandler) Enter(serial uint32, _ *wayland.Proxy, _, _ float64) {
 	a := h.app
 	a.enterSerial = serial
@@ -190,7 +187,6 @@ func (h *pointerHandler) Button(_ uint32, _ uint32, button uint32, state uint32)
 		return
 	}
 	if a.cursorDevice == nil {
-		// The fallback image cannot change; it stays the custom arrow.
 		return
 	}
 	a.shapeIndex = (a.shapeIndex + 1) % len(cursorShapes)
@@ -201,7 +197,6 @@ func (h *pointerHandler) Button(_ uint32, _ uint32, button uint32, state uint32)
 	fmt.Printf("cursor: shape %s\n", cursorShapes[a.shapeIndex].name)
 }
 
-// shmImage is one mapped ARGB8888 image plus the pool and buffer sharing it.
 type shmImage struct {
 	pool   *wayland.ShmPool
 	buffer *wayland.Buffer
@@ -238,7 +233,6 @@ func (a *app) setErr(err error) {
 	}
 }
 
-// applyCursor sends the current cursor for an enter serial.
 func (a *app) applyCursor(serial uint32) error {
 	if a.cursorDevice != nil {
 		if err := a.cursorDevice.SetShape(serial, cursorShapes[a.shapeIndex].shape); err != nil {
@@ -315,8 +309,8 @@ func findGlobal(globals []wayland.Global, name string) (wayland.Global, bool) {
 	return wayland.Global{}, false
 }
 
-// createShmImage maps a new unlinked shm file and sends its pool and buffer.
-// The client descriptor is closed afterwards; pixels are zeroed for the caller.
+// createShmImage maps a new unlinked shm file and sends its pool and buffer;
+// the pixels start zeroed.
 func (a *app) createShmImage(prefix string, width int32, height int32) (*shmImage, error) {
 	size := int(width) * int(height) * 4
 	f, err := os.CreateTemp("", prefix)
@@ -347,7 +341,6 @@ func (a *app) createShmImage(prefix string, width int32, height int32) (*shmImag
 	return &shmImage{pool: pool, buffer: buffer, mmap: mmap}, nil
 }
 
-// createCustomCursor rasterizes the fallback arrow on its own wl_surface.
 func (a *app) createCustomCursor() error {
 	image, err := a.createShmImage("wayland-go-cursor-image-*", cursorSize, cursorSize)
 	if err != nil {
@@ -373,8 +366,7 @@ func (a *app) createCustomCursor() error {
 }
 
 // drawCursorArrow draws a white arrow triangle with a black outline on a
-// transparent background; the tip is the hotspot. The arrow pixels are opaque;
-// every pixel the loop does not touch stays transparent.
+// transparent background; the tip is the hotspot.
 func drawCursorArrow(pixels []byte) {
 	for y := 0; y < cursorSize; y++ {
 		width := 1 + y*3/4
@@ -394,7 +386,7 @@ func run() error {
 		return err
 	}
 	a := &app{}
-	// Destroy created objects first, then close and flush the connection.
+	// Destroy created objects first, then close the connection.
 	defer func() {
 		a.destroy()
 		if cerr := d.Close(); cerr != nil {

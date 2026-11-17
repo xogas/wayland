@@ -68,7 +68,6 @@ type xdgSurfaceHandler struct {
 
 func (h *xdgSurfaceHandler) Configure(serial uint32) {
 	a := h.app
-	// Every configure must be acknowledged, including repeated ones.
 	if err := a.xdgSurface.AckConfigure(serial); err != nil {
 		a.setErr(fmt.Errorf("xdg_surface.ack_configure: %w", err))
 		return
@@ -76,8 +75,8 @@ func (h *xdgSurfaceHandler) Configure(serial uint32) {
 	if a.mapped {
 		return
 	}
-	// The image is ready before the first commit, so map it on the first
-	// configure and keep the same buffer attached for the window lifetime.
+	// The image is ready before the first commit, so map on the first configure
+	// and keep the same buffer for the window lifetime.
 	if err := a.surface.Attach(a.buffer, 0, 0); err != nil {
 		a.setErr(fmt.Errorf("wl_surface.attach: %w", err))
 		return
@@ -97,8 +96,8 @@ type toplevelHandler struct {
 	app *app
 }
 
-// Configure ignores the suggested size: this is a fixed-size demo, and window
-// and buffer are pinned to the image size.
+// Configure ignores the suggested size: window and buffer are pinned to the
+// image size.
 func (h *toplevelHandler) Configure(int32, int32, []byte) {}
 func (h *toplevelHandler) Close()                         { h.app.stopping.Store(true) }
 func (h *toplevelHandler) ConfigureBounds(int32, int32)   {}
@@ -222,8 +221,6 @@ func loadImage(path string) (image.Image, error) {
 	return img, nil
 }
 
-// generatedPattern builds the fallback image: a diagonal ramp, a checker
-// overlay and a light border that makes a wrong window or buffer size visible.
 func generatedPattern() *image.RGBA {
 	const w, h, border, cell = 480, 320, 4, 32
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -249,8 +246,8 @@ func generatedPattern() *image.RGBA {
 	return img
 }
 
-// fitSize caps an image at 1024x768 while preserving its aspect ratio. It
-// never upscales: images that already fit keep their native size.
+// fitSize caps an image at 1024x768 while preserving its aspect ratio; images
+// that already fit keep their native size.
 func fitSize(w, h int) (int, int) {
 	const maxWidth, maxHeight = 1024, 768
 	if w <= maxWidth && h <= maxHeight {
@@ -264,8 +261,7 @@ func fitSize(w, h int) (int, int) {
 }
 
 // blitARGB8888 writes img into dst, an ARGB8888 wl_shm mapping of dstW x dstH
-// pixels. Sampling is nearest-neighbor: destination pixel i takes source pixel
-// (2*i+1)*src/(2*dst), the source pixel nearest its center.
+// pixels, sampling nearest-neighbor at the source pixel nearest each center.
 func blitARGB8888(dst []byte, img image.Image, dstW, dstH int) {
 	b := img.Bounds()
 	srcW, srcH := b.Dx(), b.Dy()
@@ -297,8 +293,8 @@ func blitARGB8888(dst []byte, img image.Image, dstW, dstH int) {
 }
 
 // createShmBuffer creates the single wl_shm buffer backing the window and fills
-// it with img. The mapping is written in place before the buffer is advertised,
-// so the compositor never sees a partially rendered frame.
+// it with img before advertising the buffer, so the compositor never sees a
+// partially rendered frame.
 func (a *app) createShmBuffer(width, height int, img image.Image) error {
 	size := width * height * 4
 	f, err := os.CreateTemp("", "wayland-go-shm-*")

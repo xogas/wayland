@@ -38,35 +38,32 @@ const (
 	drmIoctlPrimeHandleToFD = 0xc00c642d // _IOWR('d', 0x2d), drm_prime_handle, 12 bytes
 )
 
-// drmModeCreateDumb mirrors struct drm_mode_create_dumb from drm_mode.h: the six
-// uint32 fields in declaration order, then Size at offset 24 (32 bytes total).
+// The field order and alignment mirror struct drm_mode_create_dumb from
+// drm_mode.h; the kernel rejects a mismatch with EINVAL.
 type drmModeCreateDumb struct {
 	Height, Width, Bpp, Flags, Handle, Pitch uint32
 	Size                                     uint64
 }
 
-// drmModeMapDumb mirrors struct drm_mode_map_dumb; Pad keeps Offset 8-byte
-// aligned, and the driver writes the mmap offset into Offset.
+// Pad keeps Offset 8-byte aligned, as struct drm_mode_map_dumb requires.
 type drmModeMapDumb struct {
 	Handle, Pad uint32
 	Offset      uint64
 }
 
-// drmModeDestroyDumb mirrors struct drm_mode_destroy_dumb.
 type drmModeDestroyDumb struct{ Handle uint32 }
 
-// drmPrimeHandle mirrors struct drm_prime_handle. Flags 0 means no DRM_CLOEXEC
-// and no DRM_RDWR; Fd is a new client-owned dma-buf descriptor.
+// Flags 0 means no DRM_CLOEXEC and no DRM_RDWR; Fd is a new client-owned
+// dma-buf descriptor.
 type drmPrimeHandle struct {
 	Handle, Flags uint32
 	Fd            int32
 }
 
 var (
-	// errNoDRMDevice means no candidate node under /dev/dri could be opened.
 	errNoDRMDevice = errors.New("no DRM device under /dev/dri; this example needs a DRM node")
-	// errNoDumbBuffer means nodes opened but none accepted a dumb buffer, e.g. a
-	// render node that forbids it; it is wrapped with the last errno.
+	// A render node can forbid dumb buffers that a card node accepts; the wrap
+	// keeps the errno of the last attempt.
 	errNoDumbBuffer = errors.New("no DRM device under /dev/dri accepted a dumb buffer; this example needs a DRM node that supports dumb buffers")
 )
 
@@ -128,9 +125,8 @@ func drmIoctl(fd int, req uintptr, arg unsafe.Pointer) error {
 	return nil
 }
 
-// createDumb allocates a 32-bit-per-pixel dumb buffer and records its handle,
-// pitch and size; dumb buffers are CPU-mappable, so no GPU command stream is
-// needed to paint the pattern.
+// createDumb allocates the buffer fillPattern paints directly: dumb buffers are
+// CPU-mappable, so no GPU command stream is needed.
 func (d *drmDevice) createDumb() error {
 	arg := drmModeCreateDumb{Width: bufferWidth, Height: bufferHeight, Bpp: bufferBPP}
 	if err := drmIoctl(d.fd, drmIoctlModeCreateDumb, unsafe.Pointer(&arg)); err != nil {
@@ -148,8 +144,6 @@ func (d *drmDevice) createDumb() error {
 	return nil
 }
 
-// mapDumb maps the dumb buffer, so fillPattern can write the pixels the display
-// engine will read.
 func (d *drmDevice) mapDumb() error {
 	arg := drmModeMapDumb{Handle: d.handle}
 	if err := drmIoctl(d.fd, drmIoctlModeMapDumb, unsafe.Pointer(&arg)); err != nil {
@@ -165,8 +159,8 @@ func (d *drmDevice) mapDumb() error {
 	return nil
 }
 
-// fillPattern writes a premultiplied ARGB8888 gradient with diagonal stripes and
-// a white border; alpha is 0xff, so premultiplied values are straight ones.
+// fillPattern writes an opaque ARGB8888 pattern; alpha 0xff means premultiplied
+// values are the straight ones.
 func fillPattern(pixels []byte, width int, height int, pitch int) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
@@ -201,7 +195,6 @@ func (d *drmDevice) exportPrime() error {
 	return nil
 }
 
-// close releases the buffer in reverse allocation order.
 func (d *drmDevice) close() {
 	if d.mapped != nil {
 		_ = syscall.Munmap(d.mapped)
@@ -278,7 +271,7 @@ type xdgSurfaceHandler struct {
 	app *app
 }
 
-// Configure acks every serial and, on the first configure, maps the window.
+// Configure acks every serial; only the first one maps the window.
 func (h *xdgSurfaceHandler) Configure(serial uint32) {
 	a := h.app
 	if err := a.xdgSurface.AckConfigure(serial); err != nil {
@@ -307,7 +300,6 @@ type toplevelHandler struct {
 	app *app
 }
 
-// Configure reports the size the compositor chose; the window is fixed at 320x240.
 func (h *toplevelHandler) Configure(width int32, height int32, states []byte) {
 	fmt.Printf("dmabuf: xdg_toplevel.configure width=%d height=%d states=%d\n", width, height, len(states))
 }
@@ -369,7 +361,6 @@ func (a *app) setErr(err error) {
 	}
 }
 
-// destroy tears down the created protocol objects, params after its create.
 func (a *app) destroy() {
 	if a.toplevel != nil {
 		_ = a.toplevel.Destroy()
