@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test, vet, lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: build
+        run: go build ./...
+      - name: vet
+        run: make vet
+      - name: test
+        run: make test
+      - name: lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15
+      - name: generated files are current
+        run: |
+          make generate
+          git diff --exit-code -- wayland_gen.go interfaces_gen.go protocols
+
+  integration:
+    name: integration (headless sway)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: install sway
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends sway
+      - name: run integration tests
+        run: |
+          mkdir -p /tmp/wayland-ci && chmod 700 /tmp/wayland-ci
+          export XDG_RUNTIME_DIR=/tmp/wayland-ci
+          export WLR_BACKENDS=headless
+          sway -c /dev/null >/tmp/wayland-ci/sway.log 2>&1 &
+          make integration_test
