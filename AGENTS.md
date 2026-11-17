@@ -29,8 +29,7 @@ It targets the Wayland protocol, not a specific compositor.
 
 1. State scope: what changes, what does not, and the affected files.
 2. Ask before public API, generated layout, protocol set, tag, or `go.mod` changes.
-3. Make the smallest change. No drive-by refactors, dependency upgrades, or next
-   tasks.
+3. Make the smallest change. No drive-by refactors, dependency upgrades, or next tasks.
 4. Stop when done; report unverified items.
 
 ## Verification
@@ -59,5 +58,6 @@ It targets the Wayland protocol, not a specific compositor.
 - English Conventional Commits: `type: subject`; types: feat, fix, docs, style,
   refactor, perf, test, build, ci, chore, revert.
 - Subject: imperative, lowercase start, no trailing period, 72 chars max.
+- No body: the message is the subject line only.
 - One logical change per commit; sign.
 - Do not push, tag, amend pushed commits, or force-push.
