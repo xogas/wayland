@@ -38,8 +38,8 @@ It targets the Wayland protocol, not a specific compositor.
 2. Raw output, not a summary:
    - `make generate` twice; `git diff --exit-code -- wayland_gen.go interfaces_gen.go protocols`
    - `make test`
-   - `go test -race -count=1 -tags=integration ./...`
-   - `go vet ./...`; `test -z "$(gofmt -l .)"`; `golangci-lint run ./...`
+   - `make integration_test`
+   - `make vet`; `test -z "$(gofmt -l .)"`; `make lint`
    - examples registry / output / shm-surface
 3. Deviations from this file: list each, or write none.
 4. xdg-shell / input Esc and pointer checks are manual; state if not run.
