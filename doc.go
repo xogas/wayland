@@ -7,13 +7,12 @@
 // Files:
 //
 //	arg.go        wire argument constructors and accessors
-//	close.go      Display.Close, socket shutdown, fd cleanup
 //	conn.go       connection state, dispatch guard
 //	connect.go    Connect, Dial, socket resolution
 //	dispatch.go   Dispatch, frame dispatch, event delivery
 //	errors.go     error sentinels, ProtocolError
 //	interface.go  interface metadata, InterfaceByName
-//	io.go         read/write loop, frame IO, fd queue
+//	io.go         read/write loop, frame IO, fd queue, close
 //	object.go     object table, client IDs, delete_id
 //	proxy.go      Proxy, EventSink, Global
 //	roundtrip.go  Roundtrip, cancellation, tombstone
