@@ -9,9 +9,5 @@ linters:
     - gocritic
     - errorlint
     - misspell
-
-issues:
-  # Generated bindings carry the standard generated header. They are
-  # deliverables, but not hand-maintained Go code; lint the hand-written
-  # runtime, generator, examples, and tests instead.
-  exclude-generated: lax
+  exclusions:
+    generated: lax
